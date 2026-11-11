@@ -316,7 +316,16 @@ function drawMonster(m) {
   const x = gx, y = gy - h;
 
   if (m.isBoss) selRing(gx, gy, r * 1.35, r * 0.62, '#ff4a34', 0.9);
+  else if (m.isElite) selRing(gx, gy, r * 1.15, r * 0.5, '#ffd24a', 0.75);
   else selRing(gx, gy, r * 1.05, r * 0.46, '#8b3a3a', 0.4);
+
+  if (m.isElite) {
+    const eg = CTX.createRadialGradient(gx, gy, r * 0.5, gx, gy, r * 2.2);
+    eg.addColorStop(0, 'rgba(255,210,74,.20)');
+    eg.addColorStop(1, 'rgba(255,210,74,0)');
+    CTX.fillStyle = eg;
+    CTX.beginPath(); CTX.arc(gx, gy, r * 2.2, 0, 6.283); CTX.fill();
+  }
 
   CTX.fillStyle = 'rgba(0,0,0,.45)';
   CTX.beginPath(); CTX.ellipse(gx, gy, r * 0.9, r * 0.9 * YS * 0.55, 0, 0, 6.283); CTX.fill();
@@ -325,7 +334,7 @@ function drawMonster(m) {
   const MON_IDX = { centaur:8, kobold:9, grunt:10, skeleton:11, doomguard:12, abyssal:13 };
   let drawn = false;
   if (imgReady('units')) {
-    const S = m.isBoss ? 2.9 : 1.35;
+    const S = m.isBoss ? 2.9 : (m.isElite ? 1.6 : 1.35);
     const sw = U_FRAME_W * S, sh = U_FRAME_H * S;
     const BOSS_IDX = { bossWolf:8, bossKobold:9, bossGrom:10, bossKel:11, bossMannoroth:12, bossArchimonde:13 };
     const idx = (MON_IDX[m.kind] !== undefined) ? MON_IDX[m.kind]

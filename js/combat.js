@@ -59,13 +59,16 @@ function damagePlayer(amount, source) {
 
 function playerDie() {
   const p = G.player;
+  if (p.dead) return;          // 防止一帧多次触发
+  p.dead = true;
+  if (G.tower && G.tower.active) { G.tower.active = false; G.tower.floor = 1; }
   p.hp = 0;
   logMsg('☠ 你倒下了……返回城镇', 'bad');
   toast('你被击败了，返回城镇');
   const lost = Math.floor(p.gold * 0.1);
   p.gold -= lost;
   if (lost > 0) logMsg(`损失金币 ${lost}`, 'bad');
-  setTimeout(() => { p.hp = p.stats.hpMax; p.mp = p.stats.mpMax; enterRoom(TOWN); }, 900);
+  setTimeout(() => { p.dead = false; p.hp = p.stats.hpMax; p.mp = p.stats.mpMax; enterRoom(TOWN); }, 900);
 }
 
 /* ---------------- 普通攻击 ---------------- */

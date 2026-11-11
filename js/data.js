@@ -71,7 +71,7 @@ DATA.SKILLS = {
   manaSurge:    {name:'法力涌动',cls:'mage', type:'passive', kind:'passive', desc:'击杀敌人恢复 8% 法力', passive:{killMana:0.08}},
 
   /* --- 弓箭手 --- */
-  multishot:    {name:'多重射击',cls:'archer', type:'active', kind:'proj', cd:5,  cost:8,  dmg:0.9, count:3, spread:0.30, speed:20, desc:'同时射出 3 箭，每箭 90%'},
+  multishot:    {name:'多重射击',cls:'archer', type:'active', kind:'proj', cd:5,  cost:8,  dmg:0.9, count:3,  spread:0.30, speed:20, desc:'同时射出 3 箭，每箭 90%'},
   pierceArrow:  {name:'穿透箭', cls:'archer', type:'active', kind:'proj', cd:7,  cost:10, dmg:2.2, speed:26, pierce:true, desc:'直线穿透，220% 攻击力'},
   freezeTrap:   {name:'冰冻陷阱',cls:'archer', type:'active', kind:'trap', cd:14, cost:12, dmg:1.2, root:2.5, radius:2.6, desc:'放置陷阱，触发定身 2.5 秒'},
   rapidFire:    {name:'急速射击',cls:'archer', type:'active', kind:'buff', cd:24, cost:0, buff:{asPct:0.60, dur:8}, desc:'8 秒内攻速 +60%'},
@@ -94,7 +94,8 @@ DATA.SLOTS = {
   weapon:{name:'武器', icon:'⚔'}, helm:{name:'头盔', icon:'⛑'},
   chest:{name:'胸甲', icon:'🛡'},  legs:{name:'护腿', icon:'👖'},
   boots:{name:'战靴', icon:'🥾'},  neck:{name:'项链', icon:'📿'},
-  ring:{name:'戒指', icon:'💍'},   trinket:{name:'饰品', icon:'🔮'}
+  ring:{name:'戒指', icon:'💍'},   ring2:{name:'印记', icon:'◎'},
+  trinket:{name:'饰品', icon:'🔮'}
 };
 
 /* 品质：白→绿→蓝→紫→橙→红（数值拉开，让"集齐某档"有质变） */
@@ -155,12 +156,12 @@ DATA.BOSSES = {
 
 /* ---------------- 房间 ---------------- */
 DATA.ROOMS = [
-  {id:0, name:'贫瘠之地',    lv:1,  mons:'centaur',   boss:'bossWolf',      count:8,  bg:'#26221a', accent:'#5a4a32', desc:'半人马在荒野游荡'},
-  {id:1, name:'废弃矿洞',    lv:6,  mons:'kobold',    boss:'bossKobold',    count:10, bg:'#241f18', accent:'#5a4a30', desc:'矿车早已锈死'},
-  {id:2, name:'兽人营地',    lv:11, mons:'grunt',     boss:'bossGrom',      count:12, bg:'#241a14', accent:'#6b4a2a', desc:'战鼓声从未停歇'},
-  {id:3, name:'亡灵墓穴',    lv:16, mons:'skeleton',  boss:'bossKel',       count:12, bg:'#1a1f26', accent:'#3f5568', desc:'死亡并非终点'},
-  {id:4, name:'燃烧军团裂隙',lv:21, mons:'doomguard', boss:'bossMannoroth', count:15, bg:'#26141a', accent:'#6b2438', desc:'虚空在低语'},
-  {id:5, name:'深渊祭坛',    lv:26, mons:'abyssal',   boss:'bossArchimonde',count:15, bg:'#1c1226', accent:'#4a2a6b', desc:'污染者的王座'}
+  {id:0, name:'贫瘠之地',    lv:1,  mons:'centaur',   boss:'bossWolf',      count:50, elite:20, bosses:2,  bg:'#26221a', accent:'#5a4a32', desc:'半人马在荒野游荡'},
+  {id:1, name:'废弃矿洞',    lv:6,  mons:'kobold',    boss:'bossKobold',    count:50, elite:20, bosses:2, bg:'#241f18', accent:'#5a4a30', desc:'矿车早已锈死'},
+  {id:2, name:'兽人营地',    lv:11, mons:'grunt',     boss:'bossGrom',      count:50, elite:20, bosses:2, bg:'#241a14', accent:'#6b4a2a', desc:'战鼓声从未停歇'},
+  {id:3, name:'亡灵墓穴',    lv:16, mons:'skeleton',  boss:'bossKel',       count:50, elite:20, bosses:2, bg:'#1a1f26', accent:'#3f5568', desc:'死亡并非终点'},
+  {id:4, name:'燃烧军团裂隙',lv:21, mons:'doomguard', boss:'bossMannoroth', count:50, elite:20, bosses:2, bg:'#26141a', accent:'#6b2438', desc:'虚空在低语'},
+  {id:5, name:'深渊祭坛',    lv:26, mons:'abyssal',   boss:'bossArchimonde',count:50, elite:20, bosses:2, bg:'#1c1226', accent:'#4a2a6b', desc:'污染者的王座'}
 ];
 
 DATA.POTIONS = [
@@ -189,7 +190,11 @@ DATA.MATERIALS = {
   iron:   {name:'魔铁锭', color:'#9aa0a6', icon:'▰'},
   mithril:{name:'秘银矿', color:'#7fb3d5', icon:'▰'},
   scale:  {name:'龙鳞片', color:'#ff9a2e', icon:'▰'},
-  shard:  {name:'虚空碎片', color:'#b45cff', icon:'▰'}
+  shard:  {name:'虚空碎片', color:'#b45cff', icon:'▰'},
+  stone:  {name:'强化石',     color:'#9aa0a6', icon:'◆'},
+  protect:{name:'强化保护券', color:'#4a9eff', icon:'◇'},
+  skillT: {name:'技能强化券', color:'#3fd45a', icon:'✦'},
+  breakT: {name:'技能突破券', color:'#b45cff', icon:'✧'}
 };
 
 /* 合成配方：3 材料 + 金币 → 指定品质随机部位 */
@@ -240,6 +245,59 @@ DATA.SKILL_ICON = {
   eagleEye:20, swiftness:6,
   backstab:22, poisonBlade:3, fanOfKnives:23, vanish:5, shadowstep:21,
   lethality:11, shadowDance:5
+};
+
+/* ---------------- 强化 ---------------- */
+DATA.ENHANCE = {
+  max: 15,
+  goldCost: lv => 120 * (lv + 1) * (lv + 1),
+  stoneCost: lv => 1 + Math.floor(lv / 2),
+  rate: lv => lv < 5 ? 1.0 : (lv < 10 ? 0.72 : 0.45),
+  failDrop: lv => lv >= 11 ? 1 : 0,
+  statMul: lv => 1 + lv * 0.06          // +15 → +90%
+};
+
+/* ---------------- 技能强化 ---------------- */
+DATA.SKILL_TIER = {
+  maxTier: 5,
+  needProf: 100,
+  tierDmg: 0.08,       // 每层 +8% 伤害
+  tierCd: 0.05,        // 每层 -5% 冷却
+  killProf: 1.5,       // 每杀一只怪 +1.5%
+  ticketProf: 15       // 技能强化券 +15%
+};
+
+/* ---------------- 爬塔 ---------------- */
+DATA.TOWER = {
+  maxFloor: 20,
+  dailyAttempts: 2,
+  hpMul: f => 1 + (f - 1) * 0.62,
+  atkMul: f => 1 + (f - 1) * 0.30,
+  reward: f => ({
+    gold: 1200 * f,
+    stone: 2 + Math.floor(f / 2),
+    protect: f % 5 === 0 ? 1 : 0,
+    skillT: f % 3 === 0 ? 1 : 0,
+    breakT: f % 10 === 0 ? 1 : 0
+  })
+};
+
+/* ---------------- 材料 / 券 ---------------- */
+DATA.MATS2 = {
+  stone:   {name:'强化石',     color:'#9aa0a6'},
+  protect: {name:'强化保护券', color:'#4a9eff'},
+  skillT:  {name:'技能强化券', color:'#3fd45a'},
+  breakT:  {name:'技能突破券', color:'#b45cff'}
+};
+
+/* ---------------- BOSS 首杀戒指 ---------------- */
+DATA.BOSS_RINGS = {
+  bossWolf:      {name:'可汗之戒', effect:{expBonus:0.15},  desc:'经验获取 +15%'},
+  bossKobold:    {name:'矿脉之戒', effect:{goldBonus:0.30}, desc:'金币获取 +30%'},
+  bossGrom:      {name:'战歌之戒', effect:{lifesteal:0.05}, desc:'吸血 +5%'},
+  bossKel:       {name:'亡灵之戒', effect:{cleave:0.05},    desc:'5% 概率斩掉目标 5% 最大生命'},
+  bossMannoroth: {name:'燃烧之戒', effect:{critDmg:0.35},   desc:'暴击伤害 +35%'},
+  bossArchimonde:{name:'深渊之戒', effect:{dropBonus:0.35}, desc:'掉落品质 +35%'}
 };
 
 DATA.MAX_LEVEL = 30;

@@ -514,6 +514,13 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 }
 .eq-slot.locked{position:relative}
 
+/* 技能熟练度条 */
+.prof-bar{position:relative;height:9px;margin-top:4px;border-radius:4px;overflow:hidden;
+  background:#0d0a06;border:1px solid #3a3020}
+.prof-bar i{display:block;height:100%;transition:width .2s ease}
+.prof-bar span{position:absolute;inset:0;text-align:center;font-size:8px;line-height:9px;
+  color:#fff;text-shadow:0 1px 2px #000}
+
 </style>
 </head>
 <body>
@@ -750,7 +757,7 @@ DATA.SKILLS = {
   manaSurge:    {name:'法力涌动',cls:'mage', type:'passive', kind:'passive', desc:'击杀敌人恢复 8% 法力', passive:{killMana:0.08}},
 
   /* --- 弓箭手 --- */
-  multishot:    {name:'多重射击',cls:'archer', type:'active', kind:'proj', cd:5,  cost:8,  dmg:0.9, count:3, spread:0.30, speed:20, desc:'同时射出 3 箭，每箭 90%'},
+  multishot:    {name:'多重射击',cls:'archer', type:'active', kind:'proj', cd:5,  cost:8,  dmg:0.9, count:3,  spread:0.30, speed:20, desc:'同时射出 3 箭，每箭 90%'},
   pierceArrow:  {name:'穿透箭', cls:'archer', type:'active', kind:'proj', cd:7,  cost:10, dmg:2.2, speed:26, pierce:true, desc:'直线穿透，220% 攻击力'},
   freezeTrap:   {name:'冰冻陷阱',cls:'archer', type:'active', kind:'trap', cd:14, cost:12, dmg:1.2, root:2.5, radius:2.6, desc:'放置陷阱，触发定身 2.5 秒'},
   rapidFire:    {name:'急速射击',cls:'archer', type:'active', kind:'buff', cd:24, cost:0, buff:{asPct:0.60, dur:8}, desc:'8 秒内攻速 +60%'},
@@ -773,7 +780,8 @@ DATA.SLOTS = {
   weapon:{name:'武器', icon:'⚔'}, helm:{name:'头盔', icon:'⛑'},
   chest:{name:'胸甲', icon:'🛡'},  legs:{name:'护腿', icon:'👖'},
   boots:{name:'战靴', icon:'🥾'},  neck:{name:'项链', icon:'📿'},
-  ring:{name:'戒指', icon:'💍'},   trinket:{name:'饰品', icon:'🔮'}
+  ring:{name:'戒指', icon:'💍'},   ring2:{name:'印记', icon:'◎'},
+  trinket:{name:'饰品', icon:'🔮'}
 };
 
 /* 品质：白→绿→蓝→紫→橙→红（数值拉开，让"集齐某档"有质变） */
@@ -834,12 +842,12 @@ DATA.BOSSES = {
 
 /* ---------------- 房间 ---------------- */
 DATA.ROOMS = [
-  {id:0, name:'贫瘠之地',    lv:1,  mons:'centaur',   boss:'bossWolf',      count:8,  bg:'#26221a', accent:'#5a4a32', desc:'半人马在荒野游荡'},
-  {id:1, name:'废弃矿洞',    lv:6,  mons:'kobold',    boss:'bossKobold',    count:10, bg:'#241f18', accent:'#5a4a30', desc:'矿车早已锈死'},
-  {id:2, name:'兽人营地',    lv:11, mons:'grunt',     boss:'bossGrom',      count:12, bg:'#241a14', accent:'#6b4a2a', desc:'战鼓声从未停歇'},
-  {id:3, name:'亡灵墓穴',    lv:16, mons:'skeleton',  boss:'bossKel',       count:12, bg:'#1a1f26', accent:'#3f5568', desc:'死亡并非终点'},
-  {id:4, name:'燃烧军团裂隙',lv:21, mons:'doomguard', boss:'bossMannoroth', count:15, bg:'#26141a', accent:'#6b2438', desc:'虚空在低语'},
-  {id:5, name:'深渊祭坛',    lv:26, mons:'abyssal',   boss:'bossArchimonde',count:15, bg:'#1c1226', accent:'#4a2a6b', desc:'污染者的王座'}
+  {id:0, name:'贫瘠之地',    lv:1,  mons:'centaur',   boss:'bossWolf',      count:50, elite:20, bosses:2,  bg:'#26221a', accent:'#5a4a32', desc:'半人马在荒野游荡'},
+  {id:1, name:'废弃矿洞',    lv:6,  mons:'kobold',    boss:'bossKobold',    count:50, elite:20, bosses:2, bg:'#241f18', accent:'#5a4a30', desc:'矿车早已锈死'},
+  {id:2, name:'兽人营地',    lv:11, mons:'grunt',     boss:'bossGrom',      count:50, elite:20, bosses:2, bg:'#241a14', accent:'#6b4a2a', desc:'战鼓声从未停歇'},
+  {id:3, name:'亡灵墓穴',    lv:16, mons:'skeleton',  boss:'bossKel',       count:50, elite:20, bosses:2, bg:'#1a1f26', accent:'#3f5568', desc:'死亡并非终点'},
+  {id:4, name:'燃烧军团裂隙',lv:21, mons:'doomguard', boss:'bossMannoroth', count:50, elite:20, bosses:2, bg:'#26141a', accent:'#6b2438', desc:'虚空在低语'},
+  {id:5, name:'深渊祭坛',    lv:26, mons:'abyssal',   boss:'bossArchimonde',count:50, elite:20, bosses:2, bg:'#1c1226', accent:'#4a2a6b', desc:'污染者的王座'}
 ];
 
 DATA.POTIONS = [
@@ -868,7 +876,11 @@ DATA.MATERIALS = {
   iron:   {name:'魔铁锭', color:'#9aa0a6', icon:'▰'},
   mithril:{name:'秘银矿', color:'#7fb3d5', icon:'▰'},
   scale:  {name:'龙鳞片', color:'#ff9a2e', icon:'▰'},
-  shard:  {name:'虚空碎片', color:'#b45cff', icon:'▰'}
+  shard:  {name:'虚空碎片', color:'#b45cff', icon:'▰'},
+  stone:  {name:'强化石',     color:'#9aa0a6', icon:'◆'},
+  protect:{name:'强化保护券', color:'#4a9eff', icon:'◇'},
+  skillT: {name:'技能强化券', color:'#3fd45a', icon:'✦'},
+  breakT: {name:'技能突破券', color:'#b45cff', icon:'✧'}
 };
 
 /* 合成配方：3 材料 + 金币 → 指定品质随机部位 */
@@ -919,6 +931,59 @@ DATA.SKILL_ICON = {
   eagleEye:20, swiftness:6,
   backstab:22, poisonBlade:3, fanOfKnives:23, vanish:5, shadowstep:21,
   lethality:11, shadowDance:5
+};
+
+/* ---------------- 强化 ---------------- */
+DATA.ENHANCE = {
+  max: 15,
+  goldCost: lv => 120 * (lv + 1) * (lv + 1),
+  stoneCost: lv => 1 + Math.floor(lv / 2),
+  rate: lv => lv < 5 ? 1.0 : (lv < 10 ? 0.72 : 0.45),
+  failDrop: lv => lv >= 11 ? 1 : 0,
+  statMul: lv => 1 + lv * 0.06          // +15 → +90%
+};
+
+/* ---------------- 技能强化 ---------------- */
+DATA.SKILL_TIER = {
+  maxTier: 5,
+  needProf: 100,
+  tierDmg: 0.08,       // 每层 +8% 伤害
+  tierCd: 0.05,        // 每层 -5% 冷却
+  killProf: 1.5,       // 每杀一只怪 +1.5%
+  ticketProf: 15       // 技能强化券 +15%
+};
+
+/* ---------------- 爬塔 ---------------- */
+DATA.TOWER = {
+  maxFloor: 20,
+  dailyAttempts: 2,
+  hpMul: f => 1 + (f - 1) * 0.62,
+  atkMul: f => 1 + (f - 1) * 0.30,
+  reward: f => ({
+    gold: 1200 * f,
+    stone: 2 + Math.floor(f / 2),
+    protect: f % 5 === 0 ? 1 : 0,
+    skillT: f % 3 === 0 ? 1 : 0,
+    breakT: f % 10 === 0 ? 1 : 0
+  })
+};
+
+/* ---------------- 材料 / 券 ---------------- */
+DATA.MATS2 = {
+  stone:   {name:'强化石',     color:'#9aa0a6'},
+  protect: {name:'强化保护券', color:'#4a9eff'},
+  skillT:  {name:'技能强化券', color:'#3fd45a'},
+  breakT:  {name:'技能突破券', color:'#b45cff'}
+};
+
+/* ---------------- BOSS 首杀戒指 ---------------- */
+DATA.BOSS_RINGS = {
+  bossWolf:      {name:'可汗之戒', effect:{expBonus:0.15},  desc:'经验获取 +15%'},
+  bossKobold:    {name:'矿脉之戒', effect:{goldBonus:0.30}, desc:'金币获取 +30%'},
+  bossGrom:      {name:'战歌之戒', effect:{lifesteal:0.05}, desc:'吸血 +5%'},
+  bossKel:       {name:'亡灵之戒', effect:{cleave:0.05},    desc:'5% 概率斩掉目标 5% 最大生命'},
+  bossMannoroth: {name:'燃烧之戒', effect:{critDmg:0.35},   desc:'暴击伤害 +35%'},
+  bossArchimonde:{name:'深渊之戒', effect:{dropBonus:0.35}, desc:'掉落品质 +35%'}
 };
 
 DATA.MAX_LEVEL = 30;
@@ -978,7 +1043,8 @@ function createPlayer(raceKey, clsKey) {
     hp: 0, mp: 0,
     x: 0, y: 0, r: 18, dir: 0,
     room: TOWN, unlocked: [0],
-    materials: { iron:0, mithril:0, scale:0, shard:0 },
+    materials: { iron:0, mithril:0, scale:0, shard:0, stone:0, protect:0, skillT:0, breakT:0 },
+    skillProf: {}, firstKills: {},
     quest: null, questDone: 0,
     kills: 0, bossKills: 0,
     stats: {}
@@ -1010,7 +1076,8 @@ function recalcStats(p) {
                critDmg:0, armor:0, hp:0, dodge:0, lifesteal:0, hit:0, mp:0, all:0 };
   for (const s in p.equip) {
     const it = p.equip[s]; if (!it) continue;
-    for (const k in it.stats) eq[k] = (eq[k] || 0) + it.stats[k];
+    const st = itemStats(it);
+    for (const k in st) eq[k] = (eq[k] || 0) + st[k];
   }
 
   const baseAll = eq.all || 0;
@@ -1163,7 +1230,7 @@ function makeItem(slot, ilvl, forcedQuality, preferMagic) {
   return {
     id: 'i' + Math.random().toString(36).slice(2, 9),
     slot, qKey, qName: q.name, color: q.color,
-    name, ilvl, reqLv: Math.max(1, ilvl + q.lvl), stats
+    name, ilvl, reqLv: Math.max(1, ilvl + q.lvl), stats, enh: 0
   };
 }
 
@@ -1226,6 +1293,106 @@ function sellItem(p, item) {
   toast(`出售 ${item.name} +${price} 金`);
 }
 
+/* ---------------- 装备强化 ---------------- */
+function enhMul(it) { return DATA.ENHANCE.statMul(it.enh || 0); }
+
+/* 强化后的词条（不修改原数据） */
+function itemStats(it) {
+  const m = enhMul(it);
+  if (m === 1) return it.stats;
+  const out = {};
+  for (const k in it.stats) out[k] = it.stats[k] * m;
+  return out;
+}
+
+/* 强化一次，返回 {ok, msg} */
+function enhanceItem(p, it, useProtect) {
+  const lv = it.enh || 0;
+  if (lv >= DATA.ENHANCE.max) return { ok:false, msg:'已达到 +15 上限' };
+  const gold = DATA.ENHANCE.goldCost(lv);
+  const stone = DATA.ENHANCE.stoneCost(lv);
+  if (p.gold < gold) return { ok:false, msg:`金币不足（需 ${fmt(gold)}）` };
+  if ((p.materials.stone || 0) < stone) return { ok:false, msg:`强化石不足（需 ${stone}）` };
+  if (useProtect && (p.materials.protect || 0) < 1) return { ok:false, msg:'没有强化保护券' };
+
+  p.gold -= gold;
+  p.materials.stone -= stone;
+  if (useProtect) p.materials.protect -= 1;
+
+  const rate = DATA.ENHANCE.rate(lv);
+  if (Math.random() < rate) {
+    it.enh = lv + 1;
+    return { ok:true, msg:`强化成功 → +${it.enh}`, up:true };
+  }
+  // 失败：+11 起掉一级，保护券可免
+  if (!useProtect && lv >= 11) {
+    it.enh = Math.max(0, lv - DATA.ENHANCE.failDrop(lv));
+    return { ok:true, msg:`强化失败，降至 +${it.enh}`, down:true };
+  }
+  return { ok:true, msg:'强化失败，等级不变', down:true };
+}
+
+/* ---------------- 技能强化 ---------------- */
+function skillProfOf(p, key) {
+  if (!p.skillProf) p.skillProf = {};
+  if (!p.skillProf[key]) p.skillProf[key] = { tier:1, prof:0 };
+  return p.skillProf[key];
+}
+
+/* 杀怪加熟练度（该职业全部主动技能） */
+function gainSkillProf(p, amount) {
+  const cls = DATA.CLASSES[p.cls];
+  const keys = [cls.keymap.q, cls.keymap.w, cls.keymap.e, cls.keymap.r, cls.keymap.d];
+  for (const k of keys) {
+    const sp = skillProfOf(p, k);
+    if (sp.tier >= DATA.SKILL_TIER.maxTier && sp.prof >= DATA.SKILL_TIER.needProf) continue;
+    sp.prof = Math.min(DATA.SKILL_TIER.needProf, sp.prof + amount);
+  }
+}
+
+/* 用券加熟练度 */
+function useSkillTicket(p) {
+  const cls = DATA.CLASSES[p.cls];
+  const keys = [cls.keymap.q, cls.keymap.w, cls.keymap.e, cls.keymap.r, cls.keymap.d];
+  const target = keys.map(k => skillProfOf(p, k))
+    .find(x => x.tier < DATA.SKILL_TIER.maxTier && x.prof < DATA.SKILL_TIER.needProf);
+  if (!target) return false;
+  target.prof = Math.min(DATA.SKILL_TIER.needProf, target.prof + DATA.SKILL_TIER.ticketProf);
+  return true;
+}
+
+/* 突破：满级熟练 + 突破券 */
+function breakthrough(p, key) {
+  const sp = skillProfOf(p, key);
+  if (sp.tier >= DATA.SKILL_TIER.maxTier) return 'max';
+  if (sp.prof < DATA.SKILL_TIER.needProf) return 'prof';
+  if ((p.materials.breakT || 0) < 1) return 'ticket';
+  p.materials.breakT -= 1;
+  sp.tier += 1;
+  sp.prof = 0;
+  return 'ok';
+}
+
+/* ---------------- BOSS 首杀戒指 ---------------- */
+function grantFirstKillRing(p, bossKey) {
+  const def = DATA.BOSS_RINGS[bossKey];
+  if (!def) return null;
+  if (!p.firstKills) p.firstKills = {};
+  if (p.firstKills[bossKey]) return null;
+  p.firstKills[bossKey] = true;
+  const ring = {
+    id: 'ring_' + bossKey + '_' + Date.now(),
+    type: 'ring', slot: 'ring2', qKey: 'legendary', qName: '传说',
+    color: '#ff9a2e', name: def.name, ilvl: 20, reqLv: 1, enh: 0,
+    setKey: null, stats: {}, effect: def.effect, effectDesc: def.desc,
+    bound: true
+  };
+  if (!p.equip.ring2) p.equip.ring2 = ring;
+  else addToBag(p, ring);
+  recalcStats(p);
+  return ring;
+}
+
 /* ---------------- 职业套装 ---------------- */
 function setBonus(p) {
   const set = DATA.SETS[p.cls];
@@ -1251,9 +1418,10 @@ const PCT_AFFIX = ['as','crit','critDmg','dodge','lifesteal','hit'];
 function itemPower(it) {
   if (!it) return 0;
   const qi = DATA.QUALITY.findIndex(q => q.key === it.qKey);
-  let v = (qi + 1) * 30 + it.ilvl * 6;
+  const m = enhMul(it);
+  let v = ((qi + 1) * 30 + it.ilvl * 6) * m + (it.enh || 0) * 22;
   for (const k in it.stats) {
-    const s = it.stats[k];
+    const s = it.stats[k] * m;
     v += PCT_AFFIX.includes(k) ? s * 600 : s * 1.6;
   }
   return v;
@@ -1393,6 +1561,10 @@ function loadGame() {
   G.player.quest = G.player.quest || null;
   G.player.questDone = G.player.questDone || 0;
   G.player.bagPage = G.player.bagPage || 0;
+  G.player.skillProf = G.player.skillProf || {};
+  G.player.firstKills = G.player.firstKills || {};
+  if (!G.player.materials) G.player.materials = {};
+  ['stone','protect','skillT','breakT'].forEach(k => { G.player.materials[k] = G.player.materials[k] || 0; });
   (G.player.bag || []).forEach(it => { if (it.type === 'potion' && !it.count) it.count = 1; });
   G.player.bossKills = G.player.bossKills || 0;
   recalcStats(G.player);
@@ -1447,6 +1619,7 @@ const nextId = () => ENTITY_ID++;
 
 /* ---------------- 进入房间 ---------------- */
 function enterRoom(roomId) {
+  if (G.player) G.player.dead = false;
   const p = G.player;
   p.room = roomId;
   const isTown = roomId === TOWN;
@@ -1513,19 +1686,28 @@ function buildTown() {
 }
 
 /* ---------------- 生成怪物 ---------------- */
-function makeMonster(kindKey, x, y, isBoss, level, diff) {
+function makeMonster(kindKey, x, y, isBoss, level, diff, isElite) {
   const tpl = (isBoss ? DATA.BOSSES : DATA.MONSTERS)[kindKey];
-  const d = DATA.DIFFICULTY[diff];
-  const hp = Math.round(tpl.hp * d.hpMul);
-  const atk = Math.round(tpl.atk * d.atkMul);
+  const d = DATA.DIFFICULTY[diff] || DATA.DIFFICULTY.normal;
+  let hpMul = d.hpMul, atkMul = d.atkMul, expMul = d.expMul || 1;
+  // 爬塔倍率
+  if (G.tower && G.tower.active) {
+    hpMul *= DATA.TOWER.hpMul(G.tower.floor);
+    atkMul *= DATA.TOWER.atkMul(G.tower.floor);
+    expMul *= 1 + G.tower.floor * 0.15;
+  }
+  // 精英
+  if (isElite) { hpMul *= 2.6; atkMul *= 1.6; expMul *= 3; }
+  const hp = Math.round(tpl.hp * hpMul);
+  const atk = Math.round(tpl.atk * atkMul);
   return {
-    id: nextId(), kind: kindKey, name: tpl.name,
-    isBoss: !!isBoss, title: tpl.title || '',
-    x, y, r: tpl.r, color: tpl.color,
+    id: nextId(), kind: kindKey, name: (isElite ? '精英·' : '') + tpl.name,
+    isBoss: !!isBoss, isElite: !!isElite, title: tpl.title || '',
+    x, y, r: tpl.r * (isElite ? 1.25 : 1), color: tpl.color,
     hp, hpMax: hp, atk,
     spd: tpl.spd * 60,          // px/s
-    exp: Math.round(tpl.exp * d.expMul),
-    gold: tpl.gold,
+    exp: Math.round(tpl.exp * expMul),
+    gold: isElite ? [tpl.gold[0]*3, tpl.gold[1]*3] : tpl.gold,
     level,
     alive: true,
     attackCd: 0, attackSpeed: isBoss ? 1.4 : 1.1,
@@ -1539,22 +1721,38 @@ function makeMonster(kindKey, x, y, isBoss, level, diff) {
 }
 
 function spawnWave(room) {
+  if (G.tower && G.tower.active) return;   // 爬塔层不补怪
   const w = G.world;
-  const exist = w.monsters.filter(m => !m.isBoss && m.alive).length;
-  const need = room.count - exist;
-  for (let i = 0; i < need; i++) {
+  const normal = w.monsters.filter(m => !m.isBoss && !m.isElite && m.alive).length;
+  const elite  = w.monsters.filter(m => m.isElite && m.alive).length;
+  const needN = (room.count || 50) - normal;
+  const needE = (room.elite || 20) - elite;
+  for (let i = 0; i < needN; i++) {
     const pos = randomSpawnPos(w, true);
-    w.monsters.push(makeMonster(room.mons, pos.x, pos.y, false, room.lv, G.diff));
+    w.monsters.push(makeMonster(room.mons, pos.x, pos.y, false, room.lv, G.diff, false));
+  }
+  for (let i = 0; i < needE; i++) {
+    const pos = randomSpawnPos(w, true);
+    w.monsters.push(makeMonster(room.mons, pos.x, pos.y, false, room.lv, G.diff, true));
   }
 }
 
 function spawnBoss(room) {
   const w = G.world;
-  if (w.monsters.some(m => m.isBoss && m.alive)) return;
-  const pos = randomSpawnPos(w, false);
-  const boss = makeMonster(room.boss, pos.x, pos.y, true, room.lv + 3, G.diff);
-  w.monsters.push(boss);
-  w.bossAlive = true;
+  const alive = w.monsters.filter(m => m.isBoss && m.alive).length;
+  const want = room.bosses || 2;
+  for (let i = alive; i < want; i++) {
+    const pos = randomSpawnPos(w, false);
+    const b = makeMonster(room.boss, pos.x, pos.y, true, room.lv + 3, G.diff);
+    if (i > 0) {                       // 第二只做小 BOSS
+      b.hp = Math.round(b.hp * 0.6); b.hpMax = b.hp;
+      b.atk = Math.round(b.atk * 0.8);
+      b.name = '幼·' + b.name;
+      b.isMinorBoss = true;
+    }
+    w.monsters.push(b);
+    w.bossAlive = true;
+  }
 }
 
 function randomSpawnPos(w, awayFromPlayer) {
@@ -1622,7 +1820,7 @@ function updateMonsters(dt) {
     if (!m.alive) continue;
 
     const d = dist(m, p);
-    const aggroRange = m.isBoss ? 9999 : 420;
+    const aggroRange = m.isBoss ? 9999 : (m.isElite ? 360 : 280);
     if (!m.aggro && d < aggroRange) m.aggro = true;
 
     if (m.aggro) {
@@ -1794,13 +1992,16 @@ function damagePlayer(amount, source) {
 
 function playerDie() {
   const p = G.player;
+  if (p.dead) return;          // 防止一帧多次触发
+  p.dead = true;
+  if (G.tower && G.tower.active) { G.tower.active = false; G.tower.floor = 1; }
   p.hp = 0;
   logMsg('☠ 你倒下了……返回城镇', 'bad');
   toast('你被击败了，返回城镇');
   const lost = Math.floor(p.gold * 0.1);
   p.gold -= lost;
   if (lost > 0) logMsg(`损失金币 ${lost}`, 'bad');
-  setTimeout(() => { p.hp = p.stats.hpMax; p.mp = p.stats.mpMax; enterRoom(TOWN); }, 900);
+  setTimeout(() => { p.dead = false; p.hp = p.stats.hpMax; p.mp = p.stats.mpMax; enterRoom(TOWN); }, 900);
 }
 
 /* ---------------- 普通攻击 ---------------- */
@@ -2440,7 +2641,16 @@ function drawMonster(m) {
   const x = gx, y = gy - h;
 
   if (m.isBoss) selRing(gx, gy, r * 1.35, r * 0.62, '#ff4a34', 0.9);
+  else if (m.isElite) selRing(gx, gy, r * 1.15, r * 0.5, '#ffd24a', 0.75);
   else selRing(gx, gy, r * 1.05, r * 0.46, '#8b3a3a', 0.4);
+
+  if (m.isElite) {
+    const eg = CTX.createRadialGradient(gx, gy, r * 0.5, gx, gy, r * 2.2);
+    eg.addColorStop(0, 'rgba(255,210,74,.20)');
+    eg.addColorStop(1, 'rgba(255,210,74,0)');
+    CTX.fillStyle = eg;
+    CTX.beginPath(); CTX.arc(gx, gy, r * 2.2, 0, 6.283); CTX.fill();
+  }
 
   CTX.fillStyle = 'rgba(0,0,0,.45)';
   CTX.beginPath(); CTX.ellipse(gx, gy, r * 0.9, r * 0.9 * YS * 0.55, 0, 0, 6.283); CTX.fill();
@@ -2449,7 +2659,7 @@ function drawMonster(m) {
   const MON_IDX = { centaur:8, kobold:9, grunt:10, skeleton:11, doomguard:12, abyssal:13 };
   let drawn = false;
   if (imgReady('units')) {
-    const S = m.isBoss ? 2.9 : 1.35;
+    const S = m.isBoss ? 2.9 : (m.isElite ? 1.6 : 1.35);
     const sw = U_FRAME_W * S, sh = U_FRAME_H * S;
     const BOSS_IDX = { bossWolf:8, bossKobold:9, bossGrom:10, bossKel:11, bossMannoroth:12, bossArchimonde:13 };
     const idx = (MON_IDX[m.kind] !== undefined) ? MON_IDX[m.kind]
@@ -3128,13 +3338,49 @@ function updateHUD(dt) {
 /* ---------------- 任务进度 ---------------- */
 function onMonsterKilled(m) {
   const p = G.player;
-  if (!p || !p.quest) return;
-  if (p.quest.room !== G.world.roomId) return;
-  if (p.quest.have >= p.quest.need) return;
-  p.quest.have++;
-  if (p.quest.have === p.quest.need) {
-    toast('任务目标达成！回城找任务官领取');
-    logMsg('✔ 任务目标完成，回城领取奖励', 'level');
+  if (!p) return;
+
+  // ---- 技能熟练度 ----
+  gainSkillProf(p, DATA.SKILL_TIER.killProf * (m.isBoss ? 8 : (m.isElite ? 3 : 1)));
+
+  // ---- 材料掉落 ----
+  const rnd = Math.random();
+  if (m.isBoss) {
+    p.materials.stone = (p.materials.stone || 0) + 2 + Math.floor(Math.random() * 3);
+    if (Math.random() < 0.6) p.materials.skillT = (p.materials.skillT || 0) + 1;
+    if (Math.random() < 0.25) p.materials.breakT = (p.materials.breakT || 0) + 1;
+    if (Math.random() < 0.35) p.materials.protect = (p.materials.protect || 0) + 1;
+  } else if (m.isElite) {
+    if (rnd < 0.45) p.materials.stone = (p.materials.stone || 0) + 1;
+    if (rnd > 0.93) p.materials.skillT = (p.materials.skillT || 0) + 1;
+  } else if (rnd < 0.12) {
+    p.materials.stone = (p.materials.stone || 0) + 1;
+  }
+
+  // ---- BOSS 首杀戒指 ----
+  if (m.isBoss && m.kind && DATA.BOSS_RINGS[m.kind] && !(p.firstKills || {})[m.kind]) {
+    const ring = grantFirstKillRing(p, m.kind);
+    if (ring) {
+      toast(`🏆 首杀成就：获得【${ring.name}】`);
+      logMsg(`🏆 首杀 ${m.name} → ${ring.name}（${ring.effectDesc}）`, 'level');
+      saveGame();
+    }
+  }
+
+  // ---- 爬塔推进 ----
+  if (G.tower && G.tower.active) {
+    const w = G.world;
+    const left = w.monsters.filter(x => x.alive).length;
+    if (left === 0) setTimeout(clearTowerFloor, 400);
+  }
+
+  // ---- 悬赏任务 ----
+  if (p.quest && p.quest.room === G.world.roomId && p.quest.have < p.quest.need) {
+    p.quest.have++;
+    if (p.quest.have === p.quest.need) {
+      toast('任务目标达成！回城找任务官领取');
+      logMsg('✔ 任务目标完成，回城领取奖励', 'level');
+    }
   }
 }
 
@@ -3279,6 +3525,8 @@ function handleCommand(act) {
     case 'skill': toggleModal('skill', '技能', () => skillHtml()); break;
     case 'map': toggleModal('map', '传送 / 回城', () => townMapHtml()); break;
     case 'town': goTown(); break;
+    case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
+    case 'enhance': toggleModal('enhance', '铁匠 · 装备强化', enhanceHtml); break;
     case 'sellWorse': {
       const r = sellAllWorse(G.player);
       toast(r.n ? `已出售 ${r.n} 件低战力装备，+${fmt(r.gold)} 金` : '没有需要出售的装备');
@@ -3401,7 +3649,7 @@ function charHtml() {
     left += `<div class="eq-slot q-border-${it ? it.qKey : 'none'}" data-slot="${sk}" ${it ? `data-item="${it.id}"` : ''}>
       <span class="eq-lv">${it ? it.ilvl : '—'}</span>
       ${iconTag(sk, 44)}
-      <span class="eq-nm">${it ? it.name.slice(0, 5) : DATA.SLOTS[sk].name}</span>
+      <span class="eq-nm">${it ? (it.enh ? '+' + it.enh + ' ' : '') + it.name.slice(0, 5) : DATA.SLOTS[sk].name}</span>
     </div>`;
   }
   left += '</div></div>';
@@ -3481,11 +3729,25 @@ function skillHtml() {
   let html = '<div class="skill-section"><h4>主动技能</h4>';
   for (const k of actives) {
     const sp = DATA.SKILLS[k], lv = p.skills[k] || 0;
+    const pf = skillProfOf(p, k);
+    const pct = (pf.prof / DATA.SKILL_TIER.needProf * 100).toFixed(0);
+    const full = pf.prof >= DATA.SKILL_TIER.needProf;
+    const canBreak = full && pf.tier < DATA.SKILL_TIER.maxTier;
+    const dmgUp = Math.round((DATA.SKILL_TIER.tierDmg * (pf.tier - 1)) * 100);
+    const cdDown = Math.round((DATA.SKILL_TIER.tierCd * (pf.tier - 1)) * 100);
     html += `<div class="skill-row ${lv?'learned':''}">
       <div class="sk-ic">${keyOf(k)}</div>
       ${skillIconTag(k, 30)}
-      <div class="sk-main"><div class="sk-name">${sp.name}<small>Lv.${lv}</small></div>
-      <div class="sk-desc">${sp.desc}　冷却 ${sp.cd}s${sp.cost?'　法力 '+sp.cost:''}</div></div></div>`;
+      <div class="sk-main"><div class="sk-name">${sp.name}
+        <small>Lv.${lv}</small>
+        <small style="color:#ffd24a">${pf.tier} 层</small>
+        ${dmgUp||cdDown ? `<small style="color:#5fdc4a">+${dmgUp}%伤害 / -${cdDown}%CD</small>` : ''}</div>
+      <div class="sk-desc">${sp.desc}　冷却 ${sp.cd}s${sp.cost?'　法力 '+sp.cost:''}</div>
+      <div class="prof-bar"><i style="width:${pct}%;background:${full?'#ffd24a':'#5b3fa8'}"></i>
+        <span>${pf.prof.toFixed(0)} / ${DATA.SKILL_TIER.needProf}</span></div>
+      </div>
+      ${canBreak ? `<button class="sk-btn" data-break-skill="${k}">突破（需突破券×1）</button>` : ''}
+    </div>`;
   }
   html += '</div><div class="skill-section"><h4>被动技能（最多 3 个）</h4>';
   for (const k of passives) {
@@ -3608,9 +3870,13 @@ function exchangeHtml() {
 
 function smithHtml() {
   const p = G.player;
+  const enh = `<div class="npc-row" style="margin-bottom:10px"><div>
+    <div class="nr-name">装备强化</div>
+    <div class="nr-info">消耗金币 + 强化石提升装备，最高 +15</div></div>
+    <button data-act-enhance style="border-color:#d4af37;color:#ffd24a">打开</button></div>`;
   const items = p.bag.filter(it => it.type !== 'potion');
-  if (!items.length) return '<div style="color:#8f8570">背包里没有可出售的装备</div>';
-  let html = '<div class="npc-list">';
+  if (!items.length) return enh + '<div style="color:#8f8570">背包里没有可出售的装备</div>';
+  let html = enh + '<div class="npc-list">';
   items.forEach(it => {
     const q = DATA.QUALITY.find(x => x.key === it.qKey);
     const price = Math.round((20 + it.ilvl * 8) * Math.pow(2.2, DATA.QUALITY.indexOf(q)));
@@ -3631,6 +3897,99 @@ function settingsHtml() {
       <div class="nr-info">删除角色，不可恢复</div></div>
       <button data-act-reset style="border-color:#6b2b2b;color:#ff8a7a">重开</button></div>
   </div>`;
+}
+
+/* ---------------- 爬塔 ---------------- */
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+}
+function towerInit() {
+  if (!G.tower) G.tower = { active:false, floor:1, best:0, date:todayStr(), attempts:DATA.TOWER.dailyAttempts };
+  if (G.tower.date !== todayStr()) {
+    G.tower.date = todayStr();
+    G.tower.attempts = DATA.TOWER.dailyAttempts;
+  }
+}
+function towerHtml() {
+  towerInit();
+  const t = G.tower;
+  let html = `<div style="display:flex;gap:16px;font-size:12px;margin-bottom:10px">
+    <span style="color:#ffd24a">最高层：${t.best || 0} / ${DATA.TOWER.maxFloor}</span>
+    <span style="color:#7fd4ff">今日剩余次数：${t.attempts} / ${DATA.TOWER.dailyAttempts}</span></div>`;
+  html += '<div class="npc-list">';
+  const start = Math.max(1, Math.min(DATA.TOWER.maxFloor, (t.best || 0) + 1));
+  html += `<div class="npc-row"><div><div class="nr-name">进入第 ${start} 层</div>
+    <div class="nr-info">怪物生命 ×${DATA.TOWER.hpMul(start).toFixed(1)}　攻击 ×${DATA.TOWER.atkMul(start).toFixed(1)}</div></div>
+    <button data-tower-start="${start}" ${t.attempts > 0 ? '' : 'disabled'}>挑战</button></div>`;
+  html += `<div class="npc-row"><div><div class="nr-name">从第 1 层重来</div>
+    <div class="nr-info">重新挑战，消耗 1 次机会</div></div>
+    <button data-tower-start="1" ${t.attempts > 0 ? '' : 'disabled'}>重来</button></div>`;
+  html += '</div>';
+  html += '<div style="font-size:11px;color:#8f8570;margin-top:10px">每层奖励：金币 · 强化石 · 强化保护券(每5层) · 技能强化券(每3层) · 技能突破券(每10层)</div>';
+  return html;
+}
+function enterTower(floor, free) {
+  towerInit();
+  const t = G.tower;
+  if (!free) {
+    if (t.attempts <= 0) { toast('今日爬塔次数已用完'); return; }
+    t.attempts--;
+  }
+  t.active = true;
+  t.floor = floor || 1;
+  G.diff = 'normal';
+  closeModal();
+  enterRoom((t.floor - 1) % DATA.ROOMS.length);
+  toast(`爬塔 · 第 ${t.floor} 层`);
+}
+function clearTowerFloor() {
+  const t = G.tower;
+  if (!t || !t.active) return;
+  const p = G.player;
+  const r = DATA.TOWER.reward(t.floor);
+  p.gold += r.gold;
+  p.materials.stone = (p.materials.stone || 0) + r.stone;
+  if (r.protect) p.materials.protect = (p.materials.protect || 0) + r.protect;
+  if (r.skillT) p.materials.skillT = (p.materials.skillT || 0) + r.skillT;
+  if (r.breakT) p.materials.breakT = (p.materials.breakT || 0) + r.breakT;
+  t.best = Math.max(t.best || 0, t.floor);
+  toast(`✅ 第 ${t.floor} 层通过：+${fmt(r.gold)} 金 · 强化石×${r.stone}`);
+  saveGame();
+  if (t.floor >= DATA.TOWER.maxFloor) {
+    t.active = false;
+    toast('🎉 通关全部 20 层！');
+    logMsg('🎉 爬塔通关 20 层', 'level');
+    return;
+  }
+  t.floor++;
+  setTimeout(() => { if (t.active) enterTower(t.floor, true); }, 900);
+}
+
+/* ---------------- 装备强化 ---------------- */
+function enhanceHtml() {
+  const p = G.player;
+  const items = [];
+  for (const sk in p.equip) if (p.equip[sk]) items.push(p.equip[sk]);
+  p.bag.forEach(it => { if (it.type !== 'potion') items.push(it); });
+
+  let html = `<div style="display:flex;gap:14px;font-size:12px;margin-bottom:10px">
+    <span style="color:#ffd24a">金币 ${fmt(p.gold)}</span>
+    <span style="color:#9aa0a6">强化石 ×${p.materials.stone || 0}</span>
+    <span style="color:#4a9eff">保护券 ×${p.materials.protect || 0}</span></div><div class="npc-list">`;
+  if (!items.length) html += '<div style="color:#8f8570">没有可强化的装备</div>';
+  items.slice(0, 14).forEach(it => {
+    const lv = it.enh || 0;
+    const gold = DATA.ENHANCE.goldCost(lv), stone = DATA.ENHANCE.stoneCost(lv);
+    const rate = Math.round(DATA.ENHANCE.rate(lv) * 100);
+    const maxed = lv >= DATA.ENHANCE.max;
+    html += `<div class="npc-row"><div>
+      <div class="nr-name" style="color:${it.color}">+${lv} ${it.name}</div>
+      <div class="nr-info">${maxed ? '已满 +15' : `成功率 ${rate}%　需 ${fmt(gold)} 金 + ${stone} 强化石`}</div>
+      </div><button data-enh="${it.id}" ${maxed ? 'disabled' : ''}>${maxed ? '满级' : '强化'}</button></div>`;
+  });
+  html += '</div><div style="font-size:11px;color:#8f8570;margin-top:10px">+1~+5 必成；+6~+10 成功率 72%；+11 起 45% 且失败掉一级（可用保护券豁免）<br>每 +1 提升装备属性 6%，+15 共 +90%</div>';
+  return html;
 }
 
 /* ---------------- 任务官 ---------------- */
@@ -3805,6 +4164,23 @@ function bindModal() {
   });
 
   body.querySelectorAll('[data-act-town]').forEach(b => b.onclick = () => { closeModal(); goTown(); });
+  body.querySelectorAll('[data-act-enhance]').forEach(b => b.onclick = () => openModal('enhance', '铁匠 · 装备强化', enhanceHtml()));
+  body.querySelectorAll('[data-tower-start]').forEach(b => b.onclick = () => enterTower(+b.dataset.towerStart));
+  body.querySelectorAll('[data-enh]').forEach(b => b.onclick = () => {
+    const it = findItem(b.dataset.enh);
+    if (!it) return;
+    const res = enhanceItem(G.player, it, false);
+    toast(res.msg);
+    recalcStats(G.player);
+    saveGame();
+    openModal('enhance', '铁匠 · 装备强化', enhanceHtml());
+  });
+  body.querySelectorAll('[data-break-skill]').forEach(b => b.onclick = () => {
+    const k = b.dataset.breakSkill;
+    const r = breakthrough(G.player, k);
+    toast(r === 'ok' ? '突破成功！' : r === 'max' ? '已达最高层' : r === 'prof' ? '熟练度未满' : '缺少技能突破券');
+    openModal('skill', '技能', skillHtml());
+  });
   body.querySelectorAll('[data-bag-page]').forEach(b => b.onclick = () => {
     G.player.bagPage = +b.dataset.bagPage;
     openModal('bag', '背包 · 装备', bagHtml());
@@ -3845,8 +4221,12 @@ function showTooltip(it, x, y) {
       <div class="tt-desc">${it.hp ? '回复 ' + it.hp + ' 生命' : '回复 ' + it.mp + ' 法力'}</div>`;
   } else {
     const q = DATA.QUALITY.find(x => x.key === it.qKey);
-    const parts = [`<h4 style="color:${it.color}">${it.name}</h4>`,
+    const enhTxt = it.enh ? `<span style="color:#5fdc4a">+${it.enh}</span> ` : '';
+    const parts = [`<h4 style="color:${it.color}">${enhTxt}${it.name}</h4>`,
       `<div class="tt-sub">${q.name} · ${DATA.SLOTS[it.slot].name} · 物品等级 ${it.ilvl}</div>`];
+    if (it.effect && it.effectDesc) {
+      parts.push(`<div style="color:#ffd24a;font-size:12px;margin-top:3px">【特殊效果】${it.effectDesc}</div>`);
+    }
     if (it.setKey) {
       const set = DATA.SETS[it.setKey];
       parts.push(`<div style="color:${set.color};font-size:11px;margin-top:2px">【${set.name}】职业套装</div>`);
@@ -3946,6 +4326,7 @@ function initInput() {
       case 'c': handleCommand('char'); break;
       case 'k': handleCommand('skill'); break;
       case 'm': handleCommand('map'); break;
+      case 't': handleCommand('tower'); break;   // 爬塔
       case 'h': handleCommand('town'); break;   // H = 回城
       case 'e': interactNPC(); break;
       case 'escape':

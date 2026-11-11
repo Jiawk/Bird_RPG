@@ -11,6 +11,7 @@ const nextId = () => ENTITY_ID++;
 
 /* ---------------- 进入房间 ---------------- */
 function enterRoom(roomId) {
+  if (G.player) G.player.dead = false;
   const p = G.player;
   p.room = roomId;
   const isTown = roomId === TOWN;
@@ -77,19 +78,28 @@ function buildTown() {
 }
 
 /* ---------------- 生成怪物 ---------------- */
-function makeMonster(kindKey, x, y, isBoss, level, diff) {
+function makeMonster(kindKey, x, y, isBoss, level, diff, isElite) {
   const tpl = (isBoss ? DATA.BOSSES : DATA.MONSTERS)[kindKey];
-  const d = DATA.DIFFICULTY[diff];
-  const hp = Math.round(tpl.hp * d.hpMul);
-  const atk = Math.round(tpl.atk * d.atkMul);
+  const d = DATA.DIFFICULTY[diff] || DATA.DIFFICULTY.normal;
+  let hpMul = d.hpMul, atkMul = d.atkMul, expMul = d.expMul || 1;
+  // 爬塔倍率
+  if (G.tower && G.tower.active) {
+    hpMul *= DATA.TOWER.hpMul(G.tower.floor);
+    atkMul *= DATA.TOWER.atkMul(G.tower.floor);
+    expMul *= 1 + G.tower.floor * 0.15;
+  }
+  // 精英
+  if (isElite) { hpMul *= 2.6; atkMul *= 1.6; expMul *= 3; }
+  const hp = Math.round(tpl.hp * hpMul);
+  const atk = Math.round(tpl.atk * atkMul);
   return {
-    id: nextId(), kind: kindKey, name: tpl.name,
-    isBoss: !!isBoss, title: tpl.title || '',
-    x, y, r: tpl.r, color: tpl.color,
+    id: nextId(), kind: kindKey, name: (isElite ? '精英·' : '') + tpl.name,
+    isBoss: !!isBoss, isElite: !!isElite, title: tpl.title || '',
+    x, y, r: tpl.r * (isElite ? 1.25 : 1), color: tpl.color,
     hp, hpMax: hp, atk,
     spd: tpl.spd * 60,          // px/s
-    exp: Math.round(tpl.exp * d.expMul),
-    gold: tpl.gold,
+    exp: Math.round(tpl.exp * expMul),
+    gold: isElite ? [tpl.gold[0]*3, tpl.gold[1]*3] : tpl.gold,
     level,
     alive: true,
     attackCd: 0, attackSpeed: isBoss ? 1.4 : 1.1,
@@ -103,22 +113,38 @@ function makeMonster(kindKey, x, y, isBoss, level, diff) {
 }
 
 function spawnWave(room) {
+  if (G.tower && G.tower.active) return;   // 爬塔层不补怪
   const w = G.world;
-  const exist = w.monsters.filter(m => !m.isBoss && m.alive).length;
-  const need = room.count - exist;
-  for (let i = 0; i < need; i++) {
+  const normal = w.monsters.filter(m => !m.isBoss && !m.isElite && m.alive).length;
+  const elite  = w.monsters.filter(m => m.isElite && m.alive).length;
+  const needN = (room.count || 50) - normal;
+  const needE = (room.elite || 20) - elite;
+  for (let i = 0; i < needN; i++) {
     const pos = randomSpawnPos(w, true);
-    w.monsters.push(makeMonster(room.mons, pos.x, pos.y, false, room.lv, G.diff));
+    w.monsters.push(makeMonster(room.mons, pos.x, pos.y, false, room.lv, G.diff, false));
+  }
+  for (let i = 0; i < needE; i++) {
+    const pos = randomSpawnPos(w, true);
+    w.monsters.push(makeMonster(room.mons, pos.x, pos.y, false, room.lv, G.diff, true));
   }
 }
 
 function spawnBoss(room) {
   const w = G.world;
-  if (w.monsters.some(m => m.isBoss && m.alive)) return;
-  const pos = randomSpawnPos(w, false);
-  const boss = makeMonster(room.boss, pos.x, pos.y, true, room.lv + 3, G.diff);
-  w.monsters.push(boss);
-  w.bossAlive = true;
+  const alive = w.monsters.filter(m => m.isBoss && m.alive).length;
+  const want = room.bosses || 2;
+  for (let i = alive; i < want; i++) {
+    const pos = randomSpawnPos(w, false);
+    const b = makeMonster(room.boss, pos.x, pos.y, true, room.lv + 3, G.diff);
+    if (i > 0) {                       // 第二只做小 BOSS
+      b.hp = Math.round(b.hp * 0.6); b.hpMax = b.hp;
+      b.atk = Math.round(b.atk * 0.8);
+      b.name = '幼·' + b.name;
+      b.isMinorBoss = true;
+    }
+    w.monsters.push(b);
+    w.bossAlive = true;
+  }
 }
 
 function randomSpawnPos(w, awayFromPlayer) {
@@ -186,7 +212,7 @@ function updateMonsters(dt) {
     if (!m.alive) continue;
 
     const d = dist(m, p);
-    const aggroRange = m.isBoss ? 9999 : 420;
+    const aggroRange = m.isBoss ? 9999 : (m.isElite ? 360 : 280);
     if (!m.aggro && d < aggroRange) m.aggro = true;
 
     if (m.aggro) {

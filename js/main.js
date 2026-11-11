@@ -42,6 +42,7 @@ function initInput() {
       case 'c': handleCommand('char'); break;
       case 'k': handleCommand('skill'); break;
       case 'm': handleCommand('map'); break;
+      case 't': handleCommand('tower'); break;   // 爬塔
       case 'h': handleCommand('town'); break;   // H = 回城
       case 'e': interactNPC(); break;
       case 'escape':

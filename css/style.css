@@ -506,3 +506,10 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   pointer-events:none;
 }
 .eq-slot.locked{position:relative}
+
+/* 技能熟练度条 */
+.prof-bar{position:relative;height:9px;margin-top:4px;border-radius:4px;overflow:hidden;
+  background:#0d0a06;border:1px solid #3a3020}
+.prof-bar i{display:block;height:100%;transition:width .2s ease}
+.prof-bar span{position:absolute;inset:0;text-align:center;font-size:8px;line-height:9px;
+  color:#fff;text-shadow:0 1px 2px #000}

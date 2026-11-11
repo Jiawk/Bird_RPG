@@ -49,7 +49,8 @@ function createPlayer(raceKey, clsKey) {
     hp: 0, mp: 0,
     x: 0, y: 0, r: 18, dir: 0,
     room: TOWN, unlocked: [0],
-    materials: { iron:0, mithril:0, scale:0, shard:0 },
+    materials: { iron:0, mithril:0, scale:0, shard:0, stone:0, protect:0, skillT:0, breakT:0 },
+    skillProf: {}, firstKills: {},
     quest: null, questDone: 0,
     kills: 0, bossKills: 0,
     stats: {}
@@ -81,7 +82,8 @@ function recalcStats(p) {
                critDmg:0, armor:0, hp:0, dodge:0, lifesteal:0, hit:0, mp:0, all:0 };
   for (const s in p.equip) {
     const it = p.equip[s]; if (!it) continue;
-    for (const k in it.stats) eq[k] = (eq[k] || 0) + it.stats[k];
+    const st = itemStats(it);
+    for (const k in st) eq[k] = (eq[k] || 0) + st[k];
   }
 
   const baseAll = eq.all || 0;
@@ -234,7 +236,7 @@ function makeItem(slot, ilvl, forcedQuality, preferMagic) {
   return {
     id: 'i' + Math.random().toString(36).slice(2, 9),
     slot, qKey, qName: q.name, color: q.color,
-    name, ilvl, reqLv: Math.max(1, ilvl + q.lvl), stats
+    name, ilvl, reqLv: Math.max(1, ilvl + q.lvl), stats, enh: 0
   };
 }
 
@@ -297,6 +299,106 @@ function sellItem(p, item) {
   toast(`出售 ${item.name} +${price} 金`);
 }
 
+/* ---------------- 装备强化 ---------------- */
+function enhMul(it) { return DATA.ENHANCE.statMul(it.enh || 0); }
+
+/* 强化后的词条（不修改原数据） */
+function itemStats(it) {
+  const m = enhMul(it);
+  if (m === 1) return it.stats;
+  const out = {};
+  for (const k in it.stats) out[k] = it.stats[k] * m;
+  return out;
+}
+
+/* 强化一次，返回 {ok, msg} */
+function enhanceItem(p, it, useProtect) {
+  const lv = it.enh || 0;
+  if (lv >= DATA.ENHANCE.max) return { ok:false, msg:'已达到 +15 上限' };
+  const gold = DATA.ENHANCE.goldCost(lv);
+  const stone = DATA.ENHANCE.stoneCost(lv);
+  if (p.gold < gold) return { ok:false, msg:`金币不足（需 ${fmt(gold)}）` };
+  if ((p.materials.stone || 0) < stone) return { ok:false, msg:`强化石不足（需 ${stone}）` };
+  if (useProtect && (p.materials.protect || 0) < 1) return { ok:false, msg:'没有强化保护券' };
+
+  p.gold -= gold;
+  p.materials.stone -= stone;
+  if (useProtect) p.materials.protect -= 1;
+
+  const rate = DATA.ENHANCE.rate(lv);
+  if (Math.random() < rate) {
+    it.enh = lv + 1;
+    return { ok:true, msg:`强化成功 → +${it.enh}`, up:true };
+  }
+  // 失败：+11 起掉一级，保护券可免
+  if (!useProtect && lv >= 11) {
+    it.enh = Math.max(0, lv - DATA.ENHANCE.failDrop(lv));
+    return { ok:true, msg:`强化失败，降至 +${it.enh}`, down:true };
+  }
+  return { ok:true, msg:'强化失败，等级不变', down:true };
+}
+
+/* ---------------- 技能强化 ---------------- */
+function skillProfOf(p, key) {
+  if (!p.skillProf) p.skillProf = {};
+  if (!p.skillProf[key]) p.skillProf[key] = { tier:1, prof:0 };
+  return p.skillProf[key];
+}
+
+/* 杀怪加熟练度（该职业全部主动技能） */
+function gainSkillProf(p, amount) {
+  const cls = DATA.CLASSES[p.cls];
+  const keys = [cls.keymap.q, cls.keymap.w, cls.keymap.e, cls.keymap.r, cls.keymap.d];
+  for (const k of keys) {
+    const sp = skillProfOf(p, k);
+    if (sp.tier >= DATA.SKILL_TIER.maxTier && sp.prof >= DATA.SKILL_TIER.needProf) continue;
+    sp.prof = Math.min(DATA.SKILL_TIER.needProf, sp.prof + amount);
+  }
+}
+
+/* 用券加熟练度 */
+function useSkillTicket(p) {
+  const cls = DATA.CLASSES[p.cls];
+  const keys = [cls.keymap.q, cls.keymap.w, cls.keymap.e, cls.keymap.r, cls.keymap.d];
+  const target = keys.map(k => skillProfOf(p, k))
+    .find(x => x.tier < DATA.SKILL_TIER.maxTier && x.prof < DATA.SKILL_TIER.needProf);
+  if (!target) return false;
+  target.prof = Math.min(DATA.SKILL_TIER.needProf, target.prof + DATA.SKILL_TIER.ticketProf);
+  return true;
+}
+
+/* 突破：满级熟练 + 突破券 */
+function breakthrough(p, key) {
+  const sp = skillProfOf(p, key);
+  if (sp.tier >= DATA.SKILL_TIER.maxTier) return 'max';
+  if (sp.prof < DATA.SKILL_TIER.needProf) return 'prof';
+  if ((p.materials.breakT || 0) < 1) return 'ticket';
+  p.materials.breakT -= 1;
+  sp.tier += 1;
+  sp.prof = 0;
+  return 'ok';
+}
+
+/* ---------------- BOSS 首杀戒指 ---------------- */
+function grantFirstKillRing(p, bossKey) {
+  const def = DATA.BOSS_RINGS[bossKey];
+  if (!def) return null;
+  if (!p.firstKills) p.firstKills = {};
+  if (p.firstKills[bossKey]) return null;
+  p.firstKills[bossKey] = true;
+  const ring = {
+    id: 'ring_' + bossKey + '_' + Date.now(),
+    type: 'ring', slot: 'ring2', qKey: 'legendary', qName: '传说',
+    color: '#ff9a2e', name: def.name, ilvl: 20, reqLv: 1, enh: 0,
+    setKey: null, stats: {}, effect: def.effect, effectDesc: def.desc,
+    bound: true
+  };
+  if (!p.equip.ring2) p.equip.ring2 = ring;
+  else addToBag(p, ring);
+  recalcStats(p);
+  return ring;
+}
+
 /* ---------------- 职业套装 ---------------- */
 function setBonus(p) {
   const set = DATA.SETS[p.cls];
@@ -322,9 +424,10 @@ const PCT_AFFIX = ['as','crit','critDmg','dodge','lifesteal','hit'];
 function itemPower(it) {
   if (!it) return 0;
   const qi = DATA.QUALITY.findIndex(q => q.key === it.qKey);
-  let v = (qi + 1) * 30 + it.ilvl * 6;
+  const m = enhMul(it);
+  let v = ((qi + 1) * 30 + it.ilvl * 6) * m + (it.enh || 0) * 22;
   for (const k in it.stats) {
-    const s = it.stats[k];
+    const s = it.stats[k] * m;
     v += PCT_AFFIX.includes(k) ? s * 600 : s * 1.6;
   }
   return v;
@@ -464,6 +567,10 @@ function loadGame() {
   G.player.quest = G.player.quest || null;
   G.player.questDone = G.player.questDone || 0;
   G.player.bagPage = G.player.bagPage || 0;
+  G.player.skillProf = G.player.skillProf || {};
+  G.player.firstKills = G.player.firstKills || {};
+  if (!G.player.materials) G.player.materials = {};
+  ['stone','protect','skillT','breakT'].forEach(k => { G.player.materials[k] = G.player.materials[k] || 0; });
   (G.player.bag || []).forEach(it => { if (it.type === 'potion' && !it.count) it.count = 1; });
   G.player.bossKills = G.player.bossKills || 0;
   recalcStats(G.player);

@@ -197,13 +197,49 @@ function updateHUD(dt) {
 /* ---------------- 任务进度 ---------------- */
 function onMonsterKilled(m) {
   const p = G.player;
-  if (!p || !p.quest) return;
-  if (p.quest.room !== G.world.roomId) return;
-  if (p.quest.have >= p.quest.need) return;
-  p.quest.have++;
-  if (p.quest.have === p.quest.need) {
-    toast('任务目标达成！回城找任务官领取');
-    logMsg('✔ 任务目标完成，回城领取奖励', 'level');
+  if (!p) return;
+
+  // ---- 技能熟练度 ----
+  gainSkillProf(p, DATA.SKILL_TIER.killProf * (m.isBoss ? 8 : (m.isElite ? 3 : 1)));
+
+  // ---- 材料掉落 ----
+  const rnd = Math.random();
+  if (m.isBoss) {
+    p.materials.stone = (p.materials.stone || 0) + 2 + Math.floor(Math.random() * 3);
+    if (Math.random() < 0.6) p.materials.skillT = (p.materials.skillT || 0) + 1;
+    if (Math.random() < 0.25) p.materials.breakT = (p.materials.breakT || 0) + 1;
+    if (Math.random() < 0.35) p.materials.protect = (p.materials.protect || 0) + 1;
+  } else if (m.isElite) {
+    if (rnd < 0.45) p.materials.stone = (p.materials.stone || 0) + 1;
+    if (rnd > 0.93) p.materials.skillT = (p.materials.skillT || 0) + 1;
+  } else if (rnd < 0.12) {
+    p.materials.stone = (p.materials.stone || 0) + 1;
+  }
+
+  // ---- BOSS 首杀戒指 ----
+  if (m.isBoss && m.kind && DATA.BOSS_RINGS[m.kind] && !(p.firstKills || {})[m.kind]) {
+    const ring = grantFirstKillRing(p, m.kind);
+    if (ring) {
+      toast(`🏆 首杀成就：获得【${ring.name}】`);
+      logMsg(`🏆 首杀 ${m.name} → ${ring.name}（${ring.effectDesc}）`, 'level');
+      saveGame();
+    }
+  }
+
+  // ---- 爬塔推进 ----
+  if (G.tower && G.tower.active) {
+    const w = G.world;
+    const left = w.monsters.filter(x => x.alive).length;
+    if (left === 0) setTimeout(clearTowerFloor, 400);
+  }
+
+  // ---- 悬赏任务 ----
+  if (p.quest && p.quest.room === G.world.roomId && p.quest.have < p.quest.need) {
+    p.quest.have++;
+    if (p.quest.have === p.quest.need) {
+      toast('任务目标达成！回城找任务官领取');
+      logMsg('✔ 任务目标完成，回城领取奖励', 'level');
+    }
   }
 }
 
@@ -348,6 +384,8 @@ function handleCommand(act) {
     case 'skill': toggleModal('skill', '技能', () => skillHtml()); break;
     case 'map': toggleModal('map', '传送 / 回城', () => townMapHtml()); break;
     case 'town': goTown(); break;
+    case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
+    case 'enhance': toggleModal('enhance', '铁匠 · 装备强化', enhanceHtml); break;
     case 'sellWorse': {
       const r = sellAllWorse(G.player);
       toast(r.n ? `已出售 ${r.n} 件低战力装备，+${fmt(r.gold)} 金` : '没有需要出售的装备');
@@ -470,7 +508,7 @@ function charHtml() {
     left += `<div class="eq-slot q-border-${it ? it.qKey : 'none'}" data-slot="${sk}" ${it ? `data-item="${it.id}"` : ''}>
       <span class="eq-lv">${it ? it.ilvl : '—'}</span>
       ${iconTag(sk, 44)}
-      <span class="eq-nm">${it ? it.name.slice(0, 5) : DATA.SLOTS[sk].name}</span>
+      <span class="eq-nm">${it ? (it.enh ? '+' + it.enh + ' ' : '') + it.name.slice(0, 5) : DATA.SLOTS[sk].name}</span>
     </div>`;
   }
   left += '</div></div>';
@@ -550,11 +588,25 @@ function skillHtml() {
   let html = '<div class="skill-section"><h4>主动技能</h4>';
   for (const k of actives) {
     const sp = DATA.SKILLS[k], lv = p.skills[k] || 0;
+    const pf = skillProfOf(p, k);
+    const pct = (pf.prof / DATA.SKILL_TIER.needProf * 100).toFixed(0);
+    const full = pf.prof >= DATA.SKILL_TIER.needProf;
+    const canBreak = full && pf.tier < DATA.SKILL_TIER.maxTier;
+    const dmgUp = Math.round((DATA.SKILL_TIER.tierDmg * (pf.tier - 1)) * 100);
+    const cdDown = Math.round((DATA.SKILL_TIER.tierCd * (pf.tier - 1)) * 100);
     html += `<div class="skill-row ${lv?'learned':''}">
       <div class="sk-ic">${keyOf(k)}</div>
       ${skillIconTag(k, 30)}
-      <div class="sk-main"><div class="sk-name">${sp.name}<small>Lv.${lv}</small></div>
-      <div class="sk-desc">${sp.desc}　冷却 ${sp.cd}s${sp.cost?'　法力 '+sp.cost:''}</div></div></div>`;
+      <div class="sk-main"><div class="sk-name">${sp.name}
+        <small>Lv.${lv}</small>
+        <small style="color:#ffd24a">${pf.tier} 层</small>
+        ${dmgUp||cdDown ? `<small style="color:#5fdc4a">+${dmgUp}%伤害 / -${cdDown}%CD</small>` : ''}</div>
+      <div class="sk-desc">${sp.desc}　冷却 ${sp.cd}s${sp.cost?'　法力 '+sp.cost:''}</div>
+      <div class="prof-bar"><i style="width:${pct}%;background:${full?'#ffd24a':'#5b3fa8'}"></i>
+        <span>${pf.prof.toFixed(0)} / ${DATA.SKILL_TIER.needProf}</span></div>
+      </div>
+      ${canBreak ? `<button class="sk-btn" data-break-skill="${k}">突破（需突破券×1）</button>` : ''}
+    </div>`;
   }
   html += '</div><div class="skill-section"><h4>被动技能（最多 3 个）</h4>';
   for (const k of passives) {
@@ -677,9 +729,13 @@ function exchangeHtml() {
 
 function smithHtml() {
   const p = G.player;
+  const enh = `<div class="npc-row" style="margin-bottom:10px"><div>
+    <div class="nr-name">装备强化</div>
+    <div class="nr-info">消耗金币 + 强化石提升装备，最高 +15</div></div>
+    <button data-act-enhance style="border-color:#d4af37;color:#ffd24a">打开</button></div>`;
   const items = p.bag.filter(it => it.type !== 'potion');
-  if (!items.length) return '<div style="color:#8f8570">背包里没有可出售的装备</div>';
-  let html = '<div class="npc-list">';
+  if (!items.length) return enh + '<div style="color:#8f8570">背包里没有可出售的装备</div>';
+  let html = enh + '<div class="npc-list">';
   items.forEach(it => {
     const q = DATA.QUALITY.find(x => x.key === it.qKey);
     const price = Math.round((20 + it.ilvl * 8) * Math.pow(2.2, DATA.QUALITY.indexOf(q)));
@@ -700,6 +756,99 @@ function settingsHtml() {
       <div class="nr-info">删除角色，不可恢复</div></div>
       <button data-act-reset style="border-color:#6b2b2b;color:#ff8a7a">重开</button></div>
   </div>`;
+}
+
+/* ---------------- 爬塔 ---------------- */
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+}
+function towerInit() {
+  if (!G.tower) G.tower = { active:false, floor:1, best:0, date:todayStr(), attempts:DATA.TOWER.dailyAttempts };
+  if (G.tower.date !== todayStr()) {
+    G.tower.date = todayStr();
+    G.tower.attempts = DATA.TOWER.dailyAttempts;
+  }
+}
+function towerHtml() {
+  towerInit();
+  const t = G.tower;
+  let html = `<div style="display:flex;gap:16px;font-size:12px;margin-bottom:10px">
+    <span style="color:#ffd24a">最高层：${t.best || 0} / ${DATA.TOWER.maxFloor}</span>
+    <span style="color:#7fd4ff">今日剩余次数：${t.attempts} / ${DATA.TOWER.dailyAttempts}</span></div>`;
+  html += '<div class="npc-list">';
+  const start = Math.max(1, Math.min(DATA.TOWER.maxFloor, (t.best || 0) + 1));
+  html += `<div class="npc-row"><div><div class="nr-name">进入第 ${start} 层</div>
+    <div class="nr-info">怪物生命 ×${DATA.TOWER.hpMul(start).toFixed(1)}　攻击 ×${DATA.TOWER.atkMul(start).toFixed(1)}</div></div>
+    <button data-tower-start="${start}" ${t.attempts > 0 ? '' : 'disabled'}>挑战</button></div>`;
+  html += `<div class="npc-row"><div><div class="nr-name">从第 1 层重来</div>
+    <div class="nr-info">重新挑战，消耗 1 次机会</div></div>
+    <button data-tower-start="1" ${t.attempts > 0 ? '' : 'disabled'}>重来</button></div>`;
+  html += '</div>';
+  html += '<div style="font-size:11px;color:#8f8570;margin-top:10px">每层奖励：金币 · 强化石 · 强化保护券(每5层) · 技能强化券(每3层) · 技能突破券(每10层)</div>';
+  return html;
+}
+function enterTower(floor, free) {
+  towerInit();
+  const t = G.tower;
+  if (!free) {
+    if (t.attempts <= 0) { toast('今日爬塔次数已用完'); return; }
+    t.attempts--;
+  }
+  t.active = true;
+  t.floor = floor || 1;
+  G.diff = 'normal';
+  closeModal();
+  enterRoom((t.floor - 1) % DATA.ROOMS.length);
+  toast(`爬塔 · 第 ${t.floor} 层`);
+}
+function clearTowerFloor() {
+  const t = G.tower;
+  if (!t || !t.active) return;
+  const p = G.player;
+  const r = DATA.TOWER.reward(t.floor);
+  p.gold += r.gold;
+  p.materials.stone = (p.materials.stone || 0) + r.stone;
+  if (r.protect) p.materials.protect = (p.materials.protect || 0) + r.protect;
+  if (r.skillT) p.materials.skillT = (p.materials.skillT || 0) + r.skillT;
+  if (r.breakT) p.materials.breakT = (p.materials.breakT || 0) + r.breakT;
+  t.best = Math.max(t.best || 0, t.floor);
+  toast(`✅ 第 ${t.floor} 层通过：+${fmt(r.gold)} 金 · 强化石×${r.stone}`);
+  saveGame();
+  if (t.floor >= DATA.TOWER.maxFloor) {
+    t.active = false;
+    toast('🎉 通关全部 20 层！');
+    logMsg('🎉 爬塔通关 20 层', 'level');
+    return;
+  }
+  t.floor++;
+  setTimeout(() => { if (t.active) enterTower(t.floor, true); }, 900);
+}
+
+/* ---------------- 装备强化 ---------------- */
+function enhanceHtml() {
+  const p = G.player;
+  const items = [];
+  for (const sk in p.equip) if (p.equip[sk]) items.push(p.equip[sk]);
+  p.bag.forEach(it => { if (it.type !== 'potion') items.push(it); });
+
+  let html = `<div style="display:flex;gap:14px;font-size:12px;margin-bottom:10px">
+    <span style="color:#ffd24a">金币 ${fmt(p.gold)}</span>
+    <span style="color:#9aa0a6">强化石 ×${p.materials.stone || 0}</span>
+    <span style="color:#4a9eff">保护券 ×${p.materials.protect || 0}</span></div><div class="npc-list">`;
+  if (!items.length) html += '<div style="color:#8f8570">没有可强化的装备</div>';
+  items.slice(0, 14).forEach(it => {
+    const lv = it.enh || 0;
+    const gold = DATA.ENHANCE.goldCost(lv), stone = DATA.ENHANCE.stoneCost(lv);
+    const rate = Math.round(DATA.ENHANCE.rate(lv) * 100);
+    const maxed = lv >= DATA.ENHANCE.max;
+    html += `<div class="npc-row"><div>
+      <div class="nr-name" style="color:${it.color}">+${lv} ${it.name}</div>
+      <div class="nr-info">${maxed ? '已满 +15' : `成功率 ${rate}%　需 ${fmt(gold)} 金 + ${stone} 强化石`}</div>
+      </div><button data-enh="${it.id}" ${maxed ? 'disabled' : ''}>${maxed ? '满级' : '强化'}</button></div>`;
+  });
+  html += '</div><div style="font-size:11px;color:#8f8570;margin-top:10px">+1~+5 必成；+6~+10 成功率 72%；+11 起 45% 且失败掉一级（可用保护券豁免）<br>每 +1 提升装备属性 6%，+15 共 +90%</div>';
+  return html;
 }
 
 /* ---------------- 任务官 ---------------- */
@@ -874,6 +1023,23 @@ function bindModal() {
   });
 
   body.querySelectorAll('[data-act-town]').forEach(b => b.onclick = () => { closeModal(); goTown(); });
+  body.querySelectorAll('[data-act-enhance]').forEach(b => b.onclick = () => openModal('enhance', '铁匠 · 装备强化', enhanceHtml()));
+  body.querySelectorAll('[data-tower-start]').forEach(b => b.onclick = () => enterTower(+b.dataset.towerStart));
+  body.querySelectorAll('[data-enh]').forEach(b => b.onclick = () => {
+    const it = findItem(b.dataset.enh);
+    if (!it) return;
+    const res = enhanceItem(G.player, it, false);
+    toast(res.msg);
+    recalcStats(G.player);
+    saveGame();
+    openModal('enhance', '铁匠 · 装备强化', enhanceHtml());
+  });
+  body.querySelectorAll('[data-break-skill]').forEach(b => b.onclick = () => {
+    const k = b.dataset.breakSkill;
+    const r = breakthrough(G.player, k);
+    toast(r === 'ok' ? '突破成功！' : r === 'max' ? '已达最高层' : r === 'prof' ? '熟练度未满' : '缺少技能突破券');
+    openModal('skill', '技能', skillHtml());
+  });
   body.querySelectorAll('[data-bag-page]').forEach(b => b.onclick = () => {
     G.player.bagPage = +b.dataset.bagPage;
     openModal('bag', '背包 · 装备', bagHtml());
@@ -914,8 +1080,12 @@ function showTooltip(it, x, y) {
       <div class="tt-desc">${it.hp ? '回复 ' + it.hp + ' 生命' : '回复 ' + it.mp + ' 法力'}</div>`;
   } else {
     const q = DATA.QUALITY.find(x => x.key === it.qKey);
-    const parts = [`<h4 style="color:${it.color}">${it.name}</h4>`,
+    const enhTxt = it.enh ? `<span style="color:#5fdc4a">+${it.enh}</span> ` : '';
+    const parts = [`<h4 style="color:${it.color}">${enhTxt}${it.name}</h4>`,
       `<div class="tt-sub">${q.name} · ${DATA.SLOTS[it.slot].name} · 物品等级 ${it.ilvl}</div>`];
+    if (it.effect && it.effectDesc) {
+      parts.push(`<div style="color:#ffd24a;font-size:12px;margin-top:3px">【特殊效果】${it.effectDesc}</div>`);
+    }
     if (it.setKey) {
       const set = DATA.SETS[it.setKey];
       parts.push(`<div style="color:${set.color};font-size:11px;margin-top:2px">【${set.name}】职业套装</div>`);

@@ -413,10 +413,15 @@ function pickupDrop(d) {
     else if (r === 'up') { toast(`${DATA.SKILLS[d.skill].name} 升级！`); }
     else toast('技能已满级');
   } else if (d.type === 'attrbook') {
-    p.bonus[d.stat] = (p.bonus[d.stat] || 0) + 1;
-    recalcStats(p);
-    toast(`${DATA.BOOKS[d.stat].name} 使用：${d.stat.toUpperCase()} +1`);
-    logMsg(`永久属性提升：${d.stat.toUpperCase()} +1`, 'level');
+    const bk = DATA.BOOKS[d.stat];
+    const ok = addToBag(p, {
+      id: 'bk' + Math.random().toString(36).slice(2, 8),
+      type: 'book', stat: d.stat, name: bk.name, color: bk.color, count: 1
+    });
+    if (ok) {
+      floatText(d.x, d.y - 10, bk.name, bk.color, 13);
+      logMsg(`拾取 ${bk.name}（背包中点击使用）`, 'loot');
+    }
   } else if (d.type === 'potion') {
     addToBag(p, { ...d.potion, type: 'potion', count: 1 });
     floatText(d.x, d.y - 10, d.potion.name, '#9fe6b8', 13);

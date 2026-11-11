@@ -738,6 +738,10 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   font-size:10px;color:#b45cff;line-height:1.45}
 .cmp-eff span{overflow:hidden}
 
+/* 属性书格子 */
+.bag-cell.book{border-color:#5b4b7a;background:linear-gradient(180deg,#2a2038,#120c1c)}
+.bag-cell.book:hover{border-color:#b45cff;box-shadow:0 0 12px rgba(180,92,255,.35)}
+
 </style>
 </head>
 <body>
@@ -1627,6 +1631,12 @@ function addToBag(p, item) {
     if (ex) { ex.count = (ex.count || 1) + (item.count || 1); return true; }
     item.count = item.count || 1;
   }
+  // 属性书堆叠（同属性合成一本）
+  if (item.type === 'book') {
+    const ex = p.bag.find(x => x.type === 'book' && x.stat === item.stat);
+    if (ex) { ex.count = (ex.count || 1) + (item.count || 1); return true; }
+    item.count = item.count || 1;
+  }
   if (p.bag.length >= BAG_MAX) { toast('背包已满，已自动折现'); p.gold += 20; return false; }
   p.bag.push(item); return true;
 }
@@ -1702,6 +1712,19 @@ function migrateItemSlots(p) {
   }
   (p.bag || []).forEach(it => { if (it.type !== 'potion') { fix(it); normalizeSlot(it); } });
   p.bag = (p.bag || []).filter(it => it.type === 'potion' || valid(it.slot));
+}
+
+/* 使用一本属性书 */
+function useBook(p, stat, n) {
+  const i = p.bag.findIndex(x => x.type === 'book' && x.stat === stat);
+  if (i < 0) return 0;
+  const it = p.bag[i];
+  const take = Math.min(n || 1, it.count || 1);
+  p.bonus[stat] = (p.bonus[stat] || 0) + take;
+  it.count -= take;
+  if (it.count <= 0) p.bag.splice(i, 1);
+  recalcStats(p);
+  return take;
 }
 
 /* ---------------- 新手初始装备 ---------------- */
@@ -3050,10 +3073,15 @@ function pickupDrop(d) {
     else if (r === 'up') { toast(`${DATA.SKILLS[d.skill].name} 升级！`); }
     else toast('技能已满级');
   } else if (d.type === 'attrbook') {
-    p.bonus[d.stat] = (p.bonus[d.stat] || 0) + 1;
-    recalcStats(p);
-    toast(`${DATA.BOOKS[d.stat].name} 使用：${d.stat.toUpperCase()} +1`);
-    logMsg(`永久属性提升：${d.stat.toUpperCase()} +1`, 'level');
+    const bk = DATA.BOOKS[d.stat];
+    const ok = addToBag(p, {
+      id: 'bk' + Math.random().toString(36).slice(2, 8),
+      type: 'book', stat: d.stat, name: bk.name, color: bk.color, count: 1
+    });
+    if (ok) {
+      floatText(d.x, d.y - 10, bk.name, bk.color, 13);
+      logMsg(`拾取 ${bk.name}（背包中点击使用）`, 'loot');
+    }
   } else if (d.type === 'potion') {
     addToBag(p, { ...d.potion, type: 'potion', count: 1 });
     floatText(d.x, d.y - 10, d.potion.name, '#9fe6b8', 13);
@@ -4703,6 +4731,11 @@ function bagHtml() {
         <div class="ic" style="color:${it.color}">⚗</div>
         <div class="nm" style="color:${it.color}">${it.name}</div>
         <span class="stack">×${it.count || 1}</span></div>`;
+    } else if (it.type === 'book') {
+      html += `<div class="bag-cell book" data-book="${it.stat}">
+        <div class="ic" style="color:${it.color};font-family:var(--serif)">书</div>
+        <div class="nm" style="color:${it.color}">${it.name}</div>
+        <span class="stack">×${it.count || 1}</span></div>`;
     } else {
       const dCP = equipDeltaPower(p, it);
       const locked = it.reqLv > p.level;
@@ -5717,6 +5750,25 @@ function bindModal() {
     };
   });
 
+  body.querySelectorAll('[data-book]').forEach(el => el.onclick = () => {
+    const p = G.player;
+    const stat = el.dataset.book;
+    const n = useBook(p, stat, 1);
+    if (!n) return;
+    const nm = { str:'力量', agi:'敏捷', int:'智力', vit:'体质' }[stat] || stat;
+    toast(`${DATA.BOOKS[stat].name} 使用：${nm} +1（永久）`);
+    logMsg(`永久属性：${nm} +1`, 'level');
+    saveGame();
+    openModal('bag', '背包 · 装备', bagHtml());
+  });
+  body.querySelectorAll('[data-book]').forEach(el => {
+    const p = G.player;
+    const bk = p.bag.find(x => x.type === 'book' && x.stat === el.dataset.book);
+    if (!bk) return;
+    el.onmouseenter = e => showTooltip(bk, e.clientX, e.clientY);
+    el.onmousemove = e => moveTooltip(e.clientX, e.clientY);
+    el.onmouseleave = hideTooltip;
+  });
   body.querySelectorAll('[data-potion]').forEach(el => el.onclick = () => {
     const p = G.player;
     const po = p.bag.find(x => x.type === 'potion' && x.key === el.dataset.potion);
@@ -5840,7 +5892,13 @@ function showTooltip(it, x, y) {
   hideTooltip();
   TIP = document.createElement('div');
   TIP.className = 'tooltip';
-  if (it.type === 'potion') {
+  if (it.type === 'book') {
+    const nm = { str:'力量', agi:'敏捷', int:'智力', vit:'体质' }[it.stat] || it.stat;
+    TIP.innerHTML = `<h4 style="color:${it.color}">${it.name}</h4>
+      <div class="tt-sub">永久属性提升 · 持有 ${it.count || 1} 本</div>
+      <div class="tt-stat">点击使用：${nm} +1（永久生效）</div>
+      <div class="tt-desc">已累计使用后加成：力 +${G.player.bonus.str}　敏 +${G.player.bonus.agi}　智 +${G.player.bonus.int}　体 +${G.player.bonus.vit}</div>`;
+  } else if (it.type === 'potion') {
     TIP.innerHTML = `<h4 style="color:${it.color}">${it.name}</h4>
       <div class="tt-desc">${it.hp ? '回复 ' + it.hp + ' 生命' : '回复 ' + it.mp + ' 法力'}</div>`;
   } else {

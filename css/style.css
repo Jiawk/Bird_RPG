@@ -730,3 +730,7 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .cmp-eff{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px;
   font-size:10px;color:#b45cff;line-height:1.45}
 .cmp-eff span{overflow:hidden}
+
+/* 属性书格子 */
+.bag-cell.book{border-color:#5b4b7a;background:linear-gradient(180deg,#2a2038,#120c1c)}
+.bag-cell.book:hover{border-color:#b45cff;box-shadow:0 0 12px rgba(180,92,255,.35)}

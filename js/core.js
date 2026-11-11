@@ -318,6 +318,12 @@ function addToBag(p, item) {
     if (ex) { ex.count = (ex.count || 1) + (item.count || 1); return true; }
     item.count = item.count || 1;
   }
+  // 属性书堆叠（同属性合成一本）
+  if (item.type === 'book') {
+    const ex = p.bag.find(x => x.type === 'book' && x.stat === item.stat);
+    if (ex) { ex.count = (ex.count || 1) + (item.count || 1); return true; }
+    item.count = item.count || 1;
+  }
   if (p.bag.length >= BAG_MAX) { toast('背包已满，已自动折现'); p.gold += 20; return false; }
   p.bag.push(item); return true;
 }
@@ -393,6 +399,19 @@ function migrateItemSlots(p) {
   }
   (p.bag || []).forEach(it => { if (it.type !== 'potion') { fix(it); normalizeSlot(it); } });
   p.bag = (p.bag || []).filter(it => it.type === 'potion' || valid(it.slot));
+}
+
+/* 使用一本属性书 */
+function useBook(p, stat, n) {
+  const i = p.bag.findIndex(x => x.type === 'book' && x.stat === stat);
+  if (i < 0) return 0;
+  const it = p.bag[i];
+  const take = Math.min(n || 1, it.count || 1);
+  p.bonus[stat] = (p.bonus[stat] || 0) + take;
+  it.count -= take;
+  if (it.count <= 0) p.bag.splice(i, 1);
+  recalcStats(p);
+  return take;
 }
 
 /* ---------------- 新手初始装备 ---------------- */

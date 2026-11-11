@@ -615,6 +615,11 @@ function bagHtml() {
         <div class="ic" style="color:${it.color}">⚗</div>
         <div class="nm" style="color:${it.color}">${it.name}</div>
         <span class="stack">×${it.count || 1}</span></div>`;
+    } else if (it.type === 'book') {
+      html += `<div class="bag-cell book" data-book="${it.stat}">
+        <div class="ic" style="color:${it.color};font-family:var(--serif)">书</div>
+        <div class="nm" style="color:${it.color}">${it.name}</div>
+        <span class="stack">×${it.count || 1}</span></div>`;
     } else {
       const dCP = equipDeltaPower(p, it);
       const locked = it.reqLv > p.level;
@@ -1629,6 +1634,25 @@ function bindModal() {
     };
   });
 
+  body.querySelectorAll('[data-book]').forEach(el => el.onclick = () => {
+    const p = G.player;
+    const stat = el.dataset.book;
+    const n = useBook(p, stat, 1);
+    if (!n) return;
+    const nm = { str:'力量', agi:'敏捷', int:'智力', vit:'体质' }[stat] || stat;
+    toast(`${DATA.BOOKS[stat].name} 使用：${nm} +1（永久）`);
+    logMsg(`永久属性：${nm} +1`, 'level');
+    saveGame();
+    openModal('bag', '背包 · 装备', bagHtml());
+  });
+  body.querySelectorAll('[data-book]').forEach(el => {
+    const p = G.player;
+    const bk = p.bag.find(x => x.type === 'book' && x.stat === el.dataset.book);
+    if (!bk) return;
+    el.onmouseenter = e => showTooltip(bk, e.clientX, e.clientY);
+    el.onmousemove = e => moveTooltip(e.clientX, e.clientY);
+    el.onmouseleave = hideTooltip;
+  });
   body.querySelectorAll('[data-potion]').forEach(el => el.onclick = () => {
     const p = G.player;
     const po = p.bag.find(x => x.type === 'potion' && x.key === el.dataset.potion);
@@ -1752,7 +1776,13 @@ function showTooltip(it, x, y) {
   hideTooltip();
   TIP = document.createElement('div');
   TIP.className = 'tooltip';
-  if (it.type === 'potion') {
+  if (it.type === 'book') {
+    const nm = { str:'力量', agi:'敏捷', int:'智力', vit:'体质' }[it.stat] || it.stat;
+    TIP.innerHTML = `<h4 style="color:${it.color}">${it.name}</h4>
+      <div class="tt-sub">永久属性提升 · 持有 ${it.count || 1} 本</div>
+      <div class="tt-stat">点击使用：${nm} +1（永久生效）</div>
+      <div class="tt-desc">已累计使用后加成：力 +${G.player.bonus.str}　敏 +${G.player.bonus.agi}　智 +${G.player.bonus.int}　体 +${G.player.bonus.vit}</div>`;
+  } else if (it.type === 'potion') {
     TIP.innerHTML = `<h4 style="color:${it.color}">${it.name}</h4>
       <div class="tt-desc">${it.hp ? '回复 ' + it.hp + ' 生命' : '回复 ' + it.mp + ' 法力'}</div>`;
   } else {

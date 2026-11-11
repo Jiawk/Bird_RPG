@@ -1202,7 +1202,7 @@ function enhanceItemHtml(id) {
     ${iconTag(it.slot, 56)}
     <div>
       <div class="enh-name" style="color:${it.color}">+${lv} ${it.name}</div>
-      <div class="enh-sub">${DATA.QUALITY.find(q => q.key === it.qKey).name} · ${DATA.SLOTS[it.slot].name} · 物品等级 ${it.ilvl}
+      <div class="enh-sub">${DATA.QUALITY.find(q => q.key === it.qKey).name} · ${slotName(it.slot)} · 物品等级 ${it.ilvl}
         ${onBody ? '<span style="color:#5fdc4a">· 已穿戴</span>' : '<span style="color:#8f8570">· 在背包</span>'}</div>
     </div>
   </div>`;
@@ -1605,7 +1605,7 @@ function showTooltip(it, x, y) {
     const q = DATA.QUALITY.find(x => x.key === it.qKey);
     const enhTxt = it.enh ? `<span style="color:#5fdc4a">+${it.enh}</span> ` : '';
     const parts = [`<h4 style="color:${it.color}">${enhTxt}${it.name}</h4>`,
-      `<div class="tt-sub">${q.name} · ${DATA.SLOTS[it.slot].name} · 物品等级 ${it.ilvl}</div>`];
+      `<div class="tt-sub">${q.name} · ${slotName(it.slot)} · 物品等级 ${it.ilvl}</div>`];
     if (it.wtype && DATA.WEAPON_KINDS[it.wtype]) {
       const K = DATA.WEAPON_KINDS[it.wtype];
       const own = K.cls.includes(G.player.cls);

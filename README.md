@@ -550,3 +550,15 @@ python3 build.py     # 重新打包成单文件 dist/兽人永不为奴.html
   - 击杀 BOSS 时记录 `codexKillDay[boss] = 今天`
   - 按钮三态：`未击杀`（灰）/ `领取`（亮）/ `今日已领`（灰）
   - 领取时二次校验，防止绕过界面
+
+### v28 · 修复背包报错（旧存档槽位残留）
+- **报错**：`Cannot read properties of undefined (reading 'name')`，发生在背包与悬停提示
+- **根因**：特戒槽从 `ring2~ring5` 改成 6 个专属槽后，**旧存档里仍存着 `slot:'ring2'` 之类的装备**，
+  `DATA.SLOTS['ring2']` 已是 `undefined`，取 `.name` 抛错
+- **修复**
+  1. 新增 `migrateItemSlots()`：读档时把槽位已不存在的装备自动归位
+     - 有 `ringKey` 的特戒 → 迁移到对应的专属槽（经验之戒 → `ring_exp` 等）
+     - 普通戒指 → 退回 `ring` 槽
+     - 已穿戴的旧槽位装备 → 重新挂到合法槽位，槽位冲突则回背包
+  2. 新增 `slotName()` 安全取值，替换所有 `DATA.SLOTS[x].name`（现在全局 0 处裸引用）
+- 已验证：模拟旧存档（ring2/ring3/ring4 混合）读档后，背包与角色面板均正常渲染

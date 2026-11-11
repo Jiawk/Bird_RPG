@@ -335,6 +335,36 @@ function sellItem(p, item) {
   toast(`出售 ${item.name} +${price} 金`);
 }
 
+/* 安全取槽位名（旧存档可能残留已删除的槽位） */
+function slotName(sk) {
+  const d = DATA.SLOTS[sk];
+  return d ? d.name : '未知部位';
+}
+
+/* 迁移：把槽位已不存在的装备归位 */
+function migrateItemSlots(p) {
+  const valid = sk => !!DATA.SLOTS[sk];
+  const fix = it => {
+    if (!it) return it;
+    if (valid(it.slot)) return it;
+    if (it.ringKey && ringSlotOf(it.ringKey)) { it.slot = ringSlotOf(it.ringKey); return it; }
+    it.slot = 'ring';          // 普通戒指退回戒指槽
+    return it;
+  };
+  for (const sk of Object.keys(p.equip)) {
+    const it = p.equip[sk];
+    if (!it) continue;
+    if (!valid(sk)) {
+      delete p.equip[sk];
+      fix(it);
+      if (valid(it.slot) && !p.equip[it.slot]) p.equip[it.slot] = it;
+      else addToBag(p, it);
+    } else fix(it);
+  }
+  (p.bag || []).forEach(it => { if (it.type !== 'potion') fix(it); });
+  p.bag = (p.bag || []).filter(it => it.type === 'potion' || valid(it.slot));
+}
+
 /* ---------------- 新手初始装备 ---------------- */
 function giveStarterGear(p) {
   const magic = p.cls === 'mage';

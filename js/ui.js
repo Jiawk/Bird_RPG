@@ -39,6 +39,7 @@ function uiInit() {
       if (e.target.closest('[data-qt-accept-all]')) { acceptAllQuests(); QT_SIG = ''; return; }
     });
   }
+  bindSfxUI();
   bindTooltipDismiss();
 
   // 功能按钮图标（固定映射）
@@ -418,6 +419,7 @@ function openModal(key, title, html) {
   if (key === 'char') requestAnimationFrame(drawCharPortrait);
 }
 function closeModal() {
+  if (typeof Sfx !== 'undefined') Sfx.play('close');
   $('modal').classList.add('hidden');
   MODAL_KEY = null;
   hideTooltip();
@@ -1916,6 +1918,41 @@ function hideTooltip() {
 }
 
 /* 点击 / 触摸空白处关闭装备详情（触屏没有 mouseleave，必须显式处理） */
+/* 全局点击音 + 声音开关 */
+function bindSfxUI() {
+  if (window._sfxBound) return;
+  window._sfxBound = true;
+
+  // 任何按钮/格子/条目的点击都发一声
+  document.addEventListener('pointerdown', e => {
+    const t = e.target;
+    if (!t || !t.closest) return;
+    if (t.closest('#soundToggle')) return;
+    if (t.closest('button, .cc-btn, .bag-cell, .codex-btn, .eq-slot, .npc-row, .tab, .cc-tab')) {
+      Sfx.play('click');
+    }
+  }, true);
+
+  const btn = $('soundToggle');
+  if (btn) {
+    const sync = () => {
+      const on = Sfx.on && (G.soundOn !== false);
+      btn.textContent = on ? '🔊' : '🔇';
+      btn.classList.toggle('off', !on);
+    };
+    Sfx.setOn(G.soundOn !== false);
+    sync();
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      G.soundOn = !(G.soundOn !== false);
+      Sfx.setOn(G.soundOn);
+      sync();
+      if (G.soundOn) { Sfx.resume(); Sfx.play('open'); }
+      saveGame();
+    };
+  }
+}
+
 function bindTooltipDismiss() {
   if (window._ttDismissBound) return;
   window._ttDismissBound = true;

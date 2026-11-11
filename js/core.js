@@ -209,6 +209,7 @@ function gainExp(p, amount) {
     p.hp = p.stats.hpMax; p.mp = p.stats.mpMax;
     logMsg(`⚔ 升级！当前等级 ${p.level}`, 'level');
     toast(`升级到 ${p.level} 级`);
+    if (typeof Sfx !== 'undefined') { Sfx.play('lvlup'); if (p.level % 5 === 0) Sfx.speak('Power grows.'); }
   }
   return ups;
 }

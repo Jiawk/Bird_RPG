@@ -953,3 +953,29 @@ python3 build.py     # 重新打包成单文件 dist/兽人永不为奴.html
 - **删除右侧瞄准摇杆**：实测不可用（和左侧移动摇杆重复），只保留左下角移动摇杆
   - 移除 `#stickAim` 元素与 `mk($('stickAim'), Input.aimStick)` 绑定
 - 顺带清理了 4 条残留的 `#stickAim` CSS 规则（元素已删除，规则无用）
+
+### v62 · 音效系统 + 英文语音
+- **新增 `js/audio.js`（157 行）**：Web Audio 程序化合成，**零音频素材**，产物只增大 ~14KB
+- **声音开关**：左上角头像**下方**的圆形按钮（🔊 / 🔇），状态存进存档 `G.soundOn`
+- **11 种音效**
+  | 音效 | 触发 |
+  |---|---|
+  | click | 点击任意按钮 / 格子 / NPC 条目 |
+  | open / close | 弹窗打开 / 关闭 |
+  | cast | 释放技能（带 25% 概率触发英文台词） |
+  | hit | 命中怪物 / 玩家受伤（55ms 限流，连击不炸耳朵） |
+  | crit | 暴击 |
+  | kill | 小怪死亡 |
+  | boss | BOSS 死亡（低沉轰鸣） |
+  | death | 玩家阵亡（1 秒下沉音） |
+  | lvlup | 升级（四音上行琶音） |
+  | loot | 拾取掉落 |
+- **英文语音**（浏览器 `speechSynthesis`，无需录音）
+  - 按职业分台词：
+    - 剑圣：For honor! / Blade of the Horde! / Victory or death!
+    - 大法师：Burn! / By the arcane! / Feel the frost!
+    - 月之女祭司：By the moon! / Swift as wind! / Elune, guide me!
+    - 恶魔猎手：Darkness calls. / I am vengeance! / No escape.
+  - 阵亡："I have failed."
+  - 每 5 级："Power grows."
+  - 语音间隔 ≥2.2 秒，避免刷屏

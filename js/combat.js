@@ -16,6 +16,7 @@ function updateTimers(dt) {
 /* ---------------- 伤害 ---------------- */
 function damageMonster(m, amount, type, isDot) {
   if (!m.alive) return 0;
+  if (typeof Sfx !== 'undefined' && !isDot) Sfx.play('hit');
   const p = G.player;
   let dmg = amount;
   let crit = false;
@@ -44,6 +45,7 @@ function damageMonster(m, amount, type, isDot) {
 }
 
 function damagePlayer(amount, source) {
+  if (typeof Sfx !== 'undefined') Sfx.play('hit');
   if (G.debug && G.debug.invincible) return;   // 调试：无敌
   const p = G.player;
   if (p.stats.invis > 0) return;
@@ -61,6 +63,7 @@ function damagePlayer(amount, source) {
 function playerDie() {
   const p = G.player;
   if (p.dead) return;          // 防止一帧多次触发
+  if (typeof Sfx !== 'undefined') { Sfx.play('death'); Sfx.speak('I have failed.', { rate: 0.85, pitch: 0.8 }); }
 
   // 复活之戒
   if (consumeRevive(p)) {
@@ -171,6 +174,10 @@ function castSkillImpl(key) {
   // 施法特效（冷却中不触发）
   const _sp = DATA.SKILLS[key];
   if (_sp && (p.cd[key] || 0) <= 0) {
+    if (typeof Sfx !== 'undefined') {
+      Sfx.play('cast');
+      if (Math.random() < 0.25) Sfx.speak(voiceFor(p));
+    }
     const _col = (DATA.SKILL_COLOR && DATA.SKILL_COLOR[key]) || _sp.color || '#ffd24a';
     const _rad = _sp.radius ? _sp.radius * 42
                : (_sp.kind === 'proj' ? 42 : _sp.kind === 'blink' ? 90 : 110);
@@ -323,6 +330,7 @@ function triggerTrap(t, m) {
 function monsterDie(m) {
   if (!m.alive) return;
   m.alive = false;
+    if (typeof Sfx !== 'undefined') Sfx.play(m.isBoss ? 'boss' : 'kill');
   const p = G.player;
   burst(m.x, m.y, m.color, m.isBoss ? 30 : 10, m.isBoss ? 300 : 160);
   p.kills++;
@@ -389,6 +397,7 @@ function dropLoot(m) {
 }
 
 function pickupDrop(d) {
+  if (typeof Sfx !== 'undefined') Sfx.play('loot');
   const p = G.player;
   d.taken = true;
   if (d.type === 'gold') {

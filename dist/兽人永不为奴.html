@@ -857,6 +857,23 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   .qt-foot button{font-size:7.5px !important;letter-spacing:-.6px !important}
 }
 
+/* 声音开关（头像下方） */
+.sound-toggle{
+  position:absolute;left:12px;top:104px;z-index:26;
+  width:34px;height:34px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(180deg,rgba(58,47,28,.96),rgba(16,12,7,.98));
+  border:2px solid var(--bronze);color:#ffd24a;font-size:15px;
+  cursor:pointer;user-select:none;padding:0;line-height:1;
+  box-shadow:0 2px 10px rgba(0,0,0,.75);transition:all .15s}
+.sound-toggle:hover{border-color:var(--gold-lt);box-shadow:0 0 12px rgba(212,175,55,.55)}
+.sound-toggle.off{color:#6b6558;border-color:#3a3328;opacity:.8}
+
+@media (max-width:820px){ .sound-toggle{left:8px;top:120px;width:30px;height:30px;font-size:13px} }
+@media (max-width:520px){
+  .sound-toggle{position:fixed !important;left:8px !important;top:104px !important;width:28px !important;height:28px !important;font-size:12px !important}
+}
+
 </style>
 </head>
 <body>
@@ -888,6 +905,9 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
       <div class="bb-name" id="bossName"></div>
       <div class="bb-track"><div class="bb-fill" id="bossFill"></div></div>
     </div>
+
+    <!-- 左上角：声音开关（头像下方） -->
+    <button id="soundToggle" class="sound-toggle" title="音效开关">🔊</button>
 
     <!-- 左上角：头像 + 血蓝 -->
     <div class="hud-portrait">
@@ -1426,6 +1446,167 @@ DATA.expForLevel = (lv) => {
 
 </script>
 <script>
+/* ===== js/audio.js ===== */
+/* ============================================================
+   音效系统：Web Audio 程序化合成（零素材）+ 英文语音（TTS）
+   ============================================================ */
+const Sfx = {
+  ctx: null,
+  on: true,
+  vol: 0.50,
+  _voiceCd: 0,
+  _lastHit: 0,
+
+  /* ---------- 初始化 ---------- */
+  init() {
+    if (this.ctx) return this.ctx;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      this.ctx = new AC();
+    } catch (e) { this.ctx = null; }
+    return this.ctx;
+  },
+  resume() {
+    const c = this.init();
+    if (c && c.state === 'suspended') c.resume();
+  },
+  setOn(v) {
+    this.on = !!v;
+    if (!this.on && window.speechSynthesis) window.speechSynthesis.cancel();
+  },
+
+  /* ---------- 基础发声 ---------- */
+  _tone(o) {
+    const c = this.init(); if (!c || !this.on) return;
+    const t0 = c.currentTime + (o.delay || 0);
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = o.type || 'sine';
+    osc.frequency.setValueAtTime(o.freq, t0);
+    if (o.to) osc.frequency.exponentialRampToValueAtTime(Math.max(20, o.to), t0 + o.dur);
+    const peak = (o.gain === undefined ? 0.3 : o.gain) * this.vol;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), t0 + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + o.dur);
+    osc.connect(g); g.connect(c.destination);
+    osc.start(t0); osc.stop(t0 + o.dur + 0.02);
+  },
+
+  _noise(o) {
+    const c = this.init(); if (!c || !this.on) return;
+    const t0 = c.currentTime + (o.delay || 0);
+    const dur = o.dur || 0.08;
+    const len = Math.max(1, Math.floor(c.sampleRate * dur));
+    const buf = c.createBuffer(1, len, c.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    const src = c.createBufferSource(); src.buffer = buf;
+    const f = c.createBiquadFilter();
+    f.type = o.filter || 'bandpass';
+    f.frequency.value = o.freq || 1200;
+    f.Q.value = o.q || 1.2;
+    const g = c.createGain();
+    g.gain.setValueAtTime((o.gain === undefined ? 0.3 : o.gain) * this.vol, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    src.connect(f); f.connect(g); g.connect(c.destination);
+    src.start(t0);
+  },
+
+  /* ---------- 音效表 ---------- */
+  play(name) {
+    if (!this.on) return;
+    this.resume();
+    switch (name) {
+      case 'click':
+        this._tone({ freq: 880, to: 760, dur: 0.05, type: 'square', gain: 0.10 });
+        break;
+      case 'open':
+        this._tone({ freq: 520, dur: 0.09, type: 'triangle', gain: 0.16 });
+        this._tone({ freq: 780, dur: 0.11, type: 'triangle', gain: 0.13, delay: 0.06 });
+        break;
+      case 'close':
+        this._tone({ freq: 700, dur: 0.08, type: 'triangle', gain: 0.14 });
+        this._tone({ freq: 420, dur: 0.10, type: 'triangle', gain: 0.11, delay: 0.05 });
+        break;
+      case 'cast':
+        this._tone({ freq: 300, to: 980, dur: 0.16, type: 'sawtooth', gain: 0.11 });
+        this._noise({ dur: 0.14, freq: 2200, q: 0.9, gain: 0.10 });
+        break;
+      case 'hit': {
+        const now = Date.now();
+        if (now - this._lastHit < 55) return;      // 连击限流
+        this._lastHit = now;
+        this._noise({ dur: 0.07, freq: 900, q: 1.4, gain: 0.20 });
+        this._tone({ freq: 150, to: 80, dur: 0.07, type: 'sine', gain: 0.16 });
+        break;
+      }
+      case 'crit':
+        this._noise({ dur: 0.10, freq: 1600, q: 1.0, gain: 0.24 });
+        this._tone({ freq: 420, to: 180, dur: 0.10, type: 'square', gain: 0.12 });
+        break;
+      case 'kill':
+        this._noise({ dur: 0.18, freq: 500, q: 0.8, gain: 0.20 });
+        this._tone({ freq: 300, to: 70, dur: 0.22, type: 'sawtooth', gain: 0.14 });
+        break;
+      case 'death':
+        this._tone({ freq: 220, to: 38, dur: 1.0, type: 'sawtooth', gain: 0.22 });
+        this._tone({ freq: 110, to: 30, dur: 1.1, type: 'sine', gain: 0.18, delay: 0.05 });
+        this._noise({ dur: 0.5, freq: 300, q: 0.7, gain: 0.12 });
+        break;
+      case 'lvlup':
+        [523, 659, 784, 1046].forEach((f, i) =>
+          this._tone({ freq: f, dur: 0.18, type: 'triangle', gain: 0.18, delay: i * 0.09 }));
+        break;
+      case 'loot':
+        this._tone({ freq: 1180, dur: 0.09, type: 'sine', gain: 0.13 });
+        this._tone({ freq: 1560, dur: 0.10, type: 'sine', gain: 0.10, delay: 0.05 });
+        break;
+      case 'boss':
+        this._tone({ freq: 90, to: 55, dur: 0.7, type: 'sawtooth', gain: 0.20 });
+        this._noise({ dur: 0.6, freq: 180, q: 0.6, gain: 0.14 });
+        break;
+    }
+  },
+
+  /* ---------- 英文语音 ---------- */
+  speak(text, opt) {
+    if (!this.on || !text) return;
+    if (!('speechSynthesis' in window)) return;
+    const now = Date.now();
+    if (now - this._voiceCd < 2200) return;       // 语音别太密
+    this._voiceCd = now;
+    try {
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'en-US';
+      u.rate = (opt && opt.rate) || 0.95;
+      u.pitch = (opt && opt.pitch) || 0.95;
+      u.volume = Math.min(1, this.vol + 0.35);
+      const vs = window.speechSynthesis.getVoices() || [];
+      const en = vs.filter(v => /^en([-_]|$)/i.test(v.lang));
+      const pref = en.find(v => /male|david|alex|daniel|fred|google us/i.test(v.name)) || en[0];
+      if (pref) u.voice = pref;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(u);
+    } catch (e) { /* 忽略 */ }
+  }
+};
+
+/* 各职业的英文台词 */
+const VOICE_LINES = {
+  warrior:  ['For honor!', 'Blade of the Horde!', 'Victory or death!'],
+  mage:     ['Burn!', 'By the arcane!', 'Feel the frost!'],
+  archer:   ['By the moon!', 'Swift as wind!', 'Elune, guide me!'],
+  assassin: ['Darkness calls.', 'I am vengeance!', 'No escape.']
+};
+
+function voiceFor(p, pool) {
+  const lines = VOICE_LINES[p.cls] || ['For glory!'];
+  return (pool && pool.length) ? pool[Math.floor(Math.random() * pool.length)]
+                               : lines[Math.floor(Math.random() * lines.length)];
+}
+
+</script>
+<script>
 /* ===== js/core.js ===== */
 /* ============================================================
    核心：全局状态 / 随机 / 属性计算 / 装备生成 / 存档
@@ -1638,6 +1819,7 @@ function gainExp(p, amount) {
     p.hp = p.stats.hpMax; p.mp = p.stats.mpMax;
     logMsg(`⚔ 升级！当前等级 ${p.level}`, 'level');
     toast(`升级到 ${p.level} 级`);
+    if (typeof Sfx !== 'undefined') { Sfx.play('lvlup'); if (p.level % 5 === 0) Sfx.speak('Power grows.'); }
   }
   return ups;
 }
@@ -2792,6 +2974,7 @@ function updateTimers(dt) {
 /* ---------------- 伤害 ---------------- */
 function damageMonster(m, amount, type, isDot) {
   if (!m.alive) return 0;
+  if (typeof Sfx !== 'undefined' && !isDot) Sfx.play('hit');
   const p = G.player;
   let dmg = amount;
   let crit = false;
@@ -2820,6 +3003,7 @@ function damageMonster(m, amount, type, isDot) {
 }
 
 function damagePlayer(amount, source) {
+  if (typeof Sfx !== 'undefined') Sfx.play('hit');
   if (G.debug && G.debug.invincible) return;   // 调试：无敌
   const p = G.player;
   if (p.stats.invis > 0) return;
@@ -2837,6 +3021,7 @@ function damagePlayer(amount, source) {
 function playerDie() {
   const p = G.player;
   if (p.dead) return;          // 防止一帧多次触发
+  if (typeof Sfx !== 'undefined') { Sfx.play('death'); Sfx.speak('I have failed.', { rate: 0.85, pitch: 0.8 }); }
 
   // 复活之戒
   if (consumeRevive(p)) {
@@ -2947,6 +3132,10 @@ function castSkillImpl(key) {
   // 施法特效（冷却中不触发）
   const _sp = DATA.SKILLS[key];
   if (_sp && (p.cd[key] || 0) <= 0) {
+    if (typeof Sfx !== 'undefined') {
+      Sfx.play('cast');
+      if (Math.random() < 0.25) Sfx.speak(voiceFor(p));
+    }
     const _col = (DATA.SKILL_COLOR && DATA.SKILL_COLOR[key]) || _sp.color || '#ffd24a';
     const _rad = _sp.radius ? _sp.radius * 42
                : (_sp.kind === 'proj' ? 42 : _sp.kind === 'blink' ? 90 : 110);
@@ -3099,6 +3288,7 @@ function triggerTrap(t, m) {
 function monsterDie(m) {
   if (!m.alive) return;
   m.alive = false;
+    if (typeof Sfx !== 'undefined') Sfx.play(m.isBoss ? 'boss' : 'kill');
   const p = G.player;
   burst(m.x, m.y, m.color, m.isBoss ? 30 : 10, m.isBoss ? 300 : 160);
   p.kills++;
@@ -3165,6 +3355,7 @@ function dropLoot(m) {
 }
 
 function pickupDrop(d) {
+  if (typeof Sfx !== 'undefined') Sfx.play('loot');
   const p = G.player;
   d.taken = true;
   if (d.type === 'gold') {
@@ -4272,6 +4463,7 @@ function uiInit() {
       if (e.target.closest('[data-qt-accept-all]')) { acceptAllQuests(); QT_SIG = ''; return; }
     });
   }
+  bindSfxUI();
   bindTooltipDismiss();
 
   // 功能按钮图标（固定映射）
@@ -4651,6 +4843,7 @@ function openModal(key, title, html) {
   if (key === 'char') requestAnimationFrame(drawCharPortrait);
 }
 function closeModal() {
+  if (typeof Sfx !== 'undefined') Sfx.play('close');
   $('modal').classList.add('hidden');
   MODAL_KEY = null;
   hideTooltip();
@@ -6149,6 +6342,41 @@ function hideTooltip() {
 }
 
 /* 点击 / 触摸空白处关闭装备详情（触屏没有 mouseleave，必须显式处理） */
+/* 全局点击音 + 声音开关 */
+function bindSfxUI() {
+  if (window._sfxBound) return;
+  window._sfxBound = true;
+
+  // 任何按钮/格子/条目的点击都发一声
+  document.addEventListener('pointerdown', e => {
+    const t = e.target;
+    if (!t || !t.closest) return;
+    if (t.closest('#soundToggle')) return;
+    if (t.closest('button, .cc-btn, .bag-cell, .codex-btn, .eq-slot, .npc-row, .tab, .cc-tab')) {
+      Sfx.play('click');
+    }
+  }, true);
+
+  const btn = $('soundToggle');
+  if (btn) {
+    const sync = () => {
+      const on = Sfx.on && (G.soundOn !== false);
+      btn.textContent = on ? '🔊' : '🔇';
+      btn.classList.toggle('off', !on);
+    };
+    Sfx.setOn(G.soundOn !== false);
+    sync();
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      G.soundOn = !(G.soundOn !== false);
+      Sfx.setOn(G.soundOn);
+      sync();
+      if (G.soundOn) { Sfx.resume(); Sfx.play('open'); }
+      saveGame();
+    };
+  }
+}
+
 function bindTooltipDismiss() {
   if (window._ttDismissBound) return;
   window._ttDismissBound = true;

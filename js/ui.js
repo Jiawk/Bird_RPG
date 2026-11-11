@@ -39,6 +39,8 @@ function uiInit() {
       if (e.target.closest('[data-qt-accept-all]')) { acceptAllQuests(); QT_SIG = ''; return; }
     });
   }
+  bindTooltipDismiss();
+
   // 功能按钮图标（固定映射）
   const UICON = { autoAtk:0, autoSkill:1, potion:2, bag:3, char:4, skill:5, map:6 };
   document.querySelectorAll('.cc-btn .sk-ic.util').forEach(ic => {
@@ -1911,4 +1913,27 @@ function moveTooltip(x, y) {
 
 function hideTooltip() {
   if (TIP) { TIP.remove(); TIP = null; }
+}
+
+/* 点击 / 触摸空白处关闭装备详情（触屏没有 mouseleave，必须显式处理） */
+function bindTooltipDismiss() {
+  if (window._ttDismissBound) return;
+  window._ttDismissBound = true;
+
+  const TRIGGER = '.bag-cell, .eq-slot, [data-potion], [data-book], [data-item], .cc-btn, .codex-btn';
+
+  const close = (ev) => {
+    if (!TIP) return;
+    const t = ev.target;
+    if (!t || typeof t.closest !== 'function') { hideTooltip(); return; }
+    if (t.closest('#tooltip')) return;          // 点在提示框本身
+    if (t.closest(TRIGGER)) return;             // 点在能弹出提示的元素上
+    hideTooltip();
+  };
+
+  document.addEventListener('pointerdown', close, true);
+  document.addEventListener('touchstart', close, { capture: true, passive: true });
+  // 滚动 / 窗口变化时也关掉，避免提示框留在原位
+  window.addEventListener('scroll', hideTooltip, true);
+  window.addEventListener('resize', hideTooltip);
 }

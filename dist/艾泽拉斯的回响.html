@@ -3625,28 +3625,57 @@ function drawPortrait(p) {
   const W = PRT.width, H = PRT.height;
   PRX.clearRect(0, 0, W, H);
   const cls = DATA.CLASSES[p.cls], race = DATA.RACES[p.race];
+  const ci = ['warrior','mage','archer','assassin'].indexOf(p.cls);
+  const col = cls.color;
 
-  const g = PRX.createRadialGradient(W * 0.35, H * 0.3, 4, W / 2, H / 2, W * 0.72);
-  g.addColorStop(0, shade(race.color, -20));
-  g.addColorStop(1, '#0b0d0f');
+  // 背景：职业色径向渐变
+  const g = PRX.createRadialGradient(W * 0.42, H * 0.30, 4, W / 2, H * 0.62, W * 0.95);
+  g.addColorStop(0, shade(col, 34));
+  g.addColorStop(0.55, shade(col, -46));
+  g.addColorStop(1, '#07080a');
   PRX.fillStyle = g;
   PRX.fillRect(0, 0, W, H);
 
-  PRX.fillStyle = shade(cls.color, -30);
-  PRX.beginPath(); PRX.ellipse(W / 2, H * 0.96, W * 0.44, H * 0.38, 0, 0, 6.283); PRX.fill();
-  PRX.fillStyle = shade(race.color, 12);
-  PRX.beginPath(); PRX.arc(W / 2, H * 0.42, W * 0.245, 0, 6.283); PRX.fill();
-  PRX.lineWidth = 2; PRX.strokeStyle = '#1a1610'; PRX.stroke();
+  // 角色上半身（从 units 图集裁头肩）
+  if (imgReady('units') && ci >= 0) {
+    const sx = ci * 128, sy = 0;          // 第 0 帧、朝下
+    // 源图单帧 32x48，取 32x34 的头肩部分
+    const sw = 32, sh = 34;
+    const scale = Math.max(W / sw, H / sh) * 1.02;
+    const dw = sw * scale, dh = sh * scale;
+    PRX.imageSmoothingEnabled = false;
+    PRX.drawImage(IMG.units, sx, sy, sw, sh,
+                  (W - dw) / 2, (H - dh) * 0.62, dw, dh);
+  } else {
+    PRX.fillStyle = shade(race.color, 12);
+    PRX.beginPath(); PRX.arc(W / 2, H * 0.44, W * 0.26, 0, 6.283); PRX.fill();
+    PRX.font = '700 26px "KaiTi",serif';
+    PRX.textAlign = 'center';
+    PRX.fillStyle = 'rgba(255,230,168,.92)';
+    PRX.fillText(cls.name.charAt(0), W / 2, H * 0.56);
+  }
 
-  PRX.font = '700 24px "KaiTi",serif';
+  // 底部压暗，让名字/等级更清楚
+  const vg = PRX.createLinearGradient(0, H * 0.55, 0, H);
+  vg.addColorStop(0, 'rgba(0,0,0,0)');
+  vg.addColorStop(1, 'rgba(0,0,0,.72)');
+  PRX.fillStyle = vg;
+  PRX.fillRect(0, H * 0.55, W, H * 0.45);
+
+  // 职业名（底部）
+  PRX.font = '700 11px "KaiTi",serif';
   PRX.textAlign = 'center';
-  PRX.fillStyle = 'rgba(255,230,168,.92)';
-  PRX.fillText(cls.name.charAt(0), W / 2, H * 0.53);
+  PRX.lineWidth = 3; PRX.strokeStyle = 'rgba(0,0,0,.9)';
+  PRX.strokeText(cls.name, W / 2, H - 5);
+  PRX.fillStyle = '#ffe6a8';
+  PRX.fillText(cls.name, W / 2, H - 5);
 
-  PRX.strokeStyle = 'rgba(212,175,55,.4)';
-  PRX.lineWidth = 1;
-  PRX.strokeRect(2.5, 2.5, W - 5, H - 5);
+  // 职业色描边
+  PRX.strokeStyle = col;
+  PRX.lineWidth = 2;
+  PRX.strokeRect(1, 1, W - 2, H - 2);
 }
+
 
 </script>
 <script>

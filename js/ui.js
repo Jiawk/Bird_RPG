@@ -234,13 +234,14 @@ function onMonsterKilled(m) {
   }
 
   // ---- 悬赏任务 ----
-  if (p.quest && p.quest.room === G.world.roomId && p.quest.have < p.quest.need) {
-    p.quest.have++;
-    if (p.quest.have === p.quest.need) {
-      toast('任务目标达成！回城找任务官领取');
-      logMsg('✔ 任务目标完成，回城领取奖励', 'level');
+  (p.quests || []).forEach(q => {
+    if (q.room !== G.world.roomId || q.have >= q.need) return;
+    q.have++;
+    if (q.have === q.need) {
+      toast(`任务「${q.name}」目标达成！回城领取`);
+      logMsg(`✔ 「${q.name}」目标完成，回城领取奖励`, 'level');
     }
-  }
+  });
 }
 
 /* ---------------- Toast ---------------- */
@@ -384,6 +385,7 @@ function handleCommand(act) {
     case 'skill': toggleModal('skill', '技能', () => skillHtml()); break;
     case 'map': toggleModal('map', '传送 / 回城', () => townMapHtml()); break;
     case 'town': goTown(); break;
+    case 'quest': toggleModal('quest', '任务官 · 罗兰', questHtml); break;
     case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
     case 'enhance': toggleModal('enhance', '铁匠 · 装备强化', enhanceHtml); break;
     case 'sellWorse': {
@@ -945,50 +947,105 @@ function enhanceItemHtml(id) {
 /* ---------------- 任务官 ---------------- *//* ---------------- 任务官 ---------------- */
 function questHtml() {
   const p = G.player;
-  if (p.quest) {
-    const q = p.quest;
-    const done = q.have >= q.need;
-    return `<div class="npc-row"><div>
-      <div class="nr-name">${q.name}</div>
-      <div class="nr-info">在【${DATA.ROOMS[q.room].name}】击杀 ${q.need} 只怪　进度 ${q.have}/${q.need}</div>
-      <div class="nr-info" style="color:#ffd98a">奖励：${q.exp} 经验 · ${q.gold} 金 · ${DATA.MATERIALS[q.mat].name} ×${q.matN}</div>
-      </div>${done
-        ? '<button data-quest-claim style="border-color:#6b8a4a;color:#b9ffb0">领取奖励</button>'
-        : '<button disabled>进行中</button>'}</div>
-      <div style="margin-top:10px;font-size:11px;color:#8f8570">已完成委托：${p.questDone} 次</div>`;
+  const qs = p.quests || [];
+  let html = '';
+
+  // ---- 进行中 ----
+  html += `<div class="col-title" style="margin-bottom:8px">进行中（${qs.length}）</div>`;
+  if (!qs.length) {
+    html += '<div style="color:#6b6558;font-size:12px;padding:8px">还没有接取任务</div>';
+  } else {
+    html += '<div class="npc-list">';
+    qs.forEach(q => {
+      const done = q.have >= q.need;
+      const pct = Math.min(100, q.have / q.need * 100);
+      html += `<div class="npc-row"><div style="flex:1">
+        <div class="nr-name">${q.name}
+          ${done ? '<span style="color:#5fdc4a;font-size:11px">· 可领取</span>' : ''}</div>
+        <div class="nr-info">在【${DATA.ROOMS[q.room].name}】击杀 ${q.need} 只　进度 ${q.have}/${q.need}</div>
+        <div class="q-bar"><i style="width:${pct}%;background:${done?'#5fdc4a':'#c9a24a'}"></i></div>
+        <div class="nr-info" style="color:#ffd98a">${q.exp} 经验 · ${q.gold} 金 · ${DATA.MATERIALS[q.mat].name} ×${q.matN}</div>
+        </div>
+        ${done
+          ? `<button data-quest-claim="${q.id}" style="border-color:#6b8a4a;color:#b9ffb0">领取</button>`
+          : `<button data-quest-drop="${q.id}" style="border-color:#6b2b3b;color:#ff8a9a">放弃</button>`}
+      </div>`;
+    });
+    html += '</div>';
   }
-  let html = '<div style="font-size:12px;color:#8f8570;margin-bottom:8px">可接取的悬赏（需已解锁房间）</div><div class="npc-list">';
-  DATA.QUEST_POOL.forEach(q => {
+
+  // ---- 可接取 ----
+  const activeIds = qs.map(q => q.id);
+  const avail = DATA.QUEST_POOL.filter(q => !activeIds.includes(q.id));
+  html += `<div class="col-title" style="margin:14px 0 8px">可接取（${avail.length}）· 可全部接取</div>`;
+  html += `<div style="display:flex;gap:8px;margin-bottom:8px">
+    <button class="sm-btn" data-quest-accept-all>一键全部接取</button></div>`;
+  html += '<div class="npc-list">';
+  if (!avail.length) {
+    html += '<div style="color:#6b6558;font-size:12px;padding:8px">已接完所有悬赏</div>';
+  }
+  avail.forEach(q => {
     const unlocked = p.unlocked.includes(q.room);
     html += `<div class="npc-row"><div>
-      <div class="nr-name" style="${unlocked?'':'color:#5a5348'}">${q.name}</div>
+      <div class="nr-name" style="${unlocked ? '' : 'color:#5a5348'}">${q.name}</div>
       <div class="nr-info">${DATA.ROOMS[q.room].name} · 击杀 ${q.need} 只</div>
       <div class="nr-info" style="color:#ffd98a">${q.exp} 经验 · ${q.gold} 金 · ${DATA.MATERIALS[q.mat].name} ×${q.matN}</div>
-      </div><button data-quest-accept="${q.id}" ${unlocked?'':'disabled'}>${unlocked?'接取':'未解锁'}</button></div>`;
+      </div><button data-quest-accept="${q.id}" ${unlocked ? '' : 'disabled'}>${unlocked ? '接取' : '未解锁'}</button></div>`;
   });
-  return html + '</div>';
+  html += '</div>';
+  html += `<div style="margin-top:10px;font-size:11px;color:#8f8570">已完成委托：${p.questDone} 次　·　同房间的多个任务击杀会同时计数</div>`;
+  return html;
 }
 
 function acceptQuest(id) {
   const p = G.player;
+  if (!Array.isArray(p.quests)) p.quests = [];
   const q = DATA.QUEST_POOL.find(x => x.id === id);
   if (!q) return;
-  p.quest = { ...q, have: 0 };
+  if (p.quests.some(x => x.id === id)) { toast('已接取该任务'); return; }
+  if (!p.unlocked.includes(q.room)) { toast('该房间尚未解锁'); return; }
+  p.quests.push({ ...q, have: 0 });
   toast(`接取任务：${q.name}`);
   openModal('quest', '任务官 · 罗兰', questHtml());
 }
 
-function claimQuest() {
-  const p = G.player, q = p.quest;
-  if (!q || q.have < q.need) return;
+function acceptAllQuests() {
+  const p = G.player;
+  if (!Array.isArray(p.quests)) p.quests = [];
+  let n = 0;
+  DATA.QUEST_POOL.forEach(q => {
+    if (p.quests.some(x => x.id === q.id)) return;
+    if (!p.unlocked.includes(q.room)) return;
+    p.quests.push({ ...q, have: 0 });
+    n++;
+  });
+  toast(n ? `一键接取 ${n} 个任务` : '没有可接取的任务');
+  openModal('quest', '任务官 · 罗兰', questHtml());
+}
+
+function claimQuest(id) {
+  const p = G.player;
+  const i = (p.quests || []).findIndex(q => q.id === (id || ''));
+  if (i < 0) return;
+  const q = p.quests[i];
+  if (q.have < q.need) { toast('任务尚未完成'); return; }
   gainExp(p, q.exp);
   p.gold += q.gold;
   p.materials[q.mat] = (p.materials[q.mat] || 0) + q.matN;
   p.questDone++;
+  p.quests.splice(i, 1);
   toast(`任务完成：+${q.exp} 经验 +${q.gold} 金 +${DATA.MATERIALS[q.mat].name}×${q.matN}`);
   logMsg(`✔ 完成委托「${q.name}」`, 'level');
-  p.quest = null;
   saveGame();
+  openModal('quest', '任务官 · 罗兰', questHtml());
+}
+
+function dropQuest(id) {
+  const p = G.player;
+  const i = (p.quests || []).findIndex(q => q.id === id);
+  if (i < 0) return;
+  const q = p.quests.splice(i, 1)[0];
+  toast(`已放弃「${q.name}」`);
   openModal('quest', '任务官 · 罗兰', questHtml());
 }
 
@@ -1149,7 +1206,9 @@ function bindModal() {
     G.autoSell = cb.checked; toast(G.autoSell ? '自动出售：开' : '自动出售：关');
   });
   body.querySelectorAll('[data-quest-accept]').forEach(b => b.onclick = () => acceptQuest(b.dataset.questAccept));
-  body.querySelectorAll('[data-quest-claim]').forEach(b => b.onclick = () => claimQuest());
+  body.querySelectorAll('[data-quest-accept-all]').forEach(b => b.onclick = acceptAllQuests);
+  body.querySelectorAll('[data-quest-drop]').forEach(b => b.onclick = () => dropQuest(b.dataset.questDrop));
+  body.querySelectorAll('[data-quest-claim]').forEach(b => b.onclick = () => claimQuest(b.dataset.questClaim));
   body.querySelectorAll('[data-craft]').forEach(b => b.onclick = () => doCraft(+b.dataset.craft));
   body.querySelectorAll('[data-act-save]').forEach(b => b.onclick = () => { saveGame(); toast('已保存'); });
   body.querySelectorAll('[data-act-export]').forEach(b => b.onclick = exportSave);

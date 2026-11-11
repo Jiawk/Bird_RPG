@@ -51,7 +51,7 @@ function createPlayer(raceKey, clsKey) {
     room: TOWN, unlocked: [0],
     materials: { iron:0, mithril:0, scale:0, shard:0, stone:0, protect:0, skillT:0, breakT:0 },
     skillProf: {}, firstKills: {},
-    quest: null, questDone: 0,
+    quests: [], questDone: 0,
     kills: 0, bossKills: 0,
     stats: {}
   };
@@ -564,7 +564,12 @@ function loadGame() {
   }
   G.player.kills = G.player.kills || 0;
   G.player.materials = G.player.materials || { iron:0, mithril:0, scale:0, shard:0 };
-  G.player.quest = G.player.quest || null;
+  // 旧存档迁移：单个 quest → 数组
+  if (G.player.quest && !Array.isArray(G.player.quests)) {
+    G.player.quests = [G.player.quest];
+  }
+  G.player.quests = G.player.quests || [];
+  delete G.player.quest;
   G.player.questDone = G.player.questDone || 0;
   G.player.bagPage = G.player.bagPage || 0;
   G.player.skillProf = G.player.skillProf || {};

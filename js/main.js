@@ -309,6 +309,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const tipTest = /t$/.test(location.hash);
     const forgeTest = /[fg]$/.test(location.hash);
     const skillTest = /k$/.test(location.hash);
+    const questTest = /q$/.test(location.hash);
     const n = parseInt(location.hash.slice(4), 10);
     G.diff = 'normal';
     G.player = createPlayer('human', 'archer');
@@ -347,6 +348,16 @@ window.addEventListener('DOMContentLoaded', () => {
       const it = makeItem('chest', 12, 'epic', false); it.enh = 11; addToBag(G.player, it);
       if (location.hash.endsWith('g')) openModal('enhance','锻造台 · 强化', enhanceItemHtml(G.player.equip.weapon.id));
       else handleCommand('enhance');
+    }
+    if (questTest) {
+      G.player.unlocked = [0,1,2,3,4,5];
+      G.player.quests = [
+        { ...DATA.QUEST_POOL[0], have: 7 },
+        { ...DATA.QUEST_POOL[1], have: 15 },
+        { ...DATA.QUEST_POOL[2], have: 3 }
+      ];
+      G.player.questDone = 4;
+      handleCommand('quest');
     }
     if (skillTest) {
       G.player.materials.breakT = 0; G.player.materials.skillT = 4;

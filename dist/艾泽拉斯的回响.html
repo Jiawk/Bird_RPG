@@ -1675,6 +1675,18 @@ const nextId = () => ENTITY_ID++;
 /* ---------------- 进入房间 ---------------- */
 function enterRoom(roomId) {
   if (G.player) G.player.dead = false;
+
+  // 进战斗图自动开启「自动攻击 + 自动技能」
+  if (roomId !== TOWN && typeof AUTO !== 'undefined') {
+    const wasOff = !AUTO.atk || !AUTO.skill;
+    AUTO.atk = true;
+    AUTO.skill = true;
+    if (wasOff && typeof toast === 'function') toast('已自动开启 自动攻击(A) + 自动技能(S)');
+  }
+  // 爬塔层也自动开
+  if (G.tower && G.tower.active && typeof AUTO !== 'undefined') {
+    AUTO.atk = true; AUTO.skill = true;
+  }
   const p = G.player;
   p.room = roomId;
   const isTown = roomId === TOWN;

@@ -129,10 +129,16 @@ function castSkillKey(k) {
   if (key) castSkillImpl(key);
 }
 
-function spawnVfx(x, y, color, radius, kind) {
+const FX_OF = { melee:1, dash:1, proj:0, aoe:0, trap:2, buff:2, hit:2 };
+
+function spawnVfx(x, y, color, radius, kind, life) {
   const w = G.world; if (!w) return;
   if (!w.vfx) w.vfx = [];
-  w.vfx.push({ x, y, color, r: radius || 90, kind: kind || 'aoe', t: 0, life: 0.55 });
+  w.vfx.push({
+    x, y, color, r: radius || 90, kind: kind || 'aoe',
+    fx: FX_OF[kind] !== undefined ? FX_OF[kind] : 0,
+    t: 0, life: life || 0.55
+  });
 }
 
 function castSkillImpl(key) {

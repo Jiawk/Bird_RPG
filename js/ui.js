@@ -420,11 +420,13 @@ function bagHtml() {
         <span class="stack">×${it.count || 1}</span></div>`;
     } else {
       const dCP = equipDeltaPower(p, it);
-      html += `<div class="bag-cell" data-item="${it.id}">
+      const locked = it.reqLv > p.level;
+      html += `<div class="bag-cell${locked ? ' locked' : ''}" data-item="${it.id}">
         ${iconTag(it.slot, 30)}
         <div class="nm" style="color:${it.color}">${it.name}</div>
-        ${dCP > 0 ? '<span class="up">▲</span>' : ''}
-        <span class="cp-mini">${dCP > 0 ? '+' : ''}${dCP}</span></div>`;
+        ${!locked && dCP > 0 ? '<span class="up">▲</span>' : ''}
+        <span class="cp-mini">${dCP > 0 ? '+' : ''}${dCP}</span>
+        ${locked ? `<span class="lock-tag">需 Lv.${it.reqLv}</span>` : ''}</div>`;
     }
   }
   html += '</div>';
@@ -851,8 +853,9 @@ function bindModal() {
     el.onmousemove = e => moveTooltip(e.clientX, e.clientY);
     el.onmouseleave = hideTooltip;
     el.onclick = () => {
-      if (el.dataset.slot) { unequipItem(G.player, el.dataset.slot); openModal('bag','背包 · 装备', bagHtml()); }
-      else { equipItem(G.player, it); openModal('bag','背包 · 装备', bagHtml()); }
+      if (el.dataset.slot) { unequipItem(G.player, el.dataset.slot); openModal('bag','背包 · 装备', bagHtml()); return; }
+      if (it.reqLv > G.player.level) { toast(`等级不足：需要 Lv.${it.reqLv}（当前 ${G.player.level}）`); return; }
+      equipItem(G.player, it); openModal('bag','背包 · 装备', bagHtml());
     };
     el.oncontextmenu = e => {
       e.preventDefault();
@@ -921,7 +924,9 @@ function showTooltip(it, x, y) {
       const v = it.stats[k];
       parts.push(`<div class="tt-stat">+${PCT_KEYS.includes(k) ? (v*100).toFixed(1)+'%' : v} ${AFFIX_NAMES[k]||k}</div>`);
     }
-    if (it.reqLv > G.player.level) parts.push(`<div class="tt-req">需要等级 ${it.reqLv}</div>`);
+    if (it.reqLv > G.player.level) {
+      parts.push(`<div class="tt-req" style="font-size:12px;font-weight:700">⛔ 等级不足：需要 Lv.${it.reqLv}（当前 Lv.${G.player.level}）</div>`);
+    }
 
     // 与已装备逐条对比
     const cur = G.player.equip[it.slot];

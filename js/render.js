@@ -610,6 +610,20 @@ function drawVfx(w) {
     const R = e.r * (0.25 + k * 1.15);
 
     CTX.save();
+
+    // ---- 特效帧（贴图） ----
+    if (imgReady('fx')) {
+      const sc = e.kind === 'hit' ? (0.45 + k * 0.55) : (0.45 + k * 1.15);
+      const sz = FX_SIZE * sc;
+      CTX.globalAlpha = e.kind === 'hit' ? a : a * 0.95;
+      CTX.translate(gx, gy - 20);
+      if (e.fx !== 0) CTX.rotate(k * 0.9);
+      CTX.imageSmoothingEnabled = false;
+      CTX.drawImage(IMG.fx, e.fx * FX_SIZE, 0, FX_SIZE, FX_SIZE, -sz / 2, -sz / 2, sz, sz);
+      CTX.setTransform(DPR, 0, 0, DPR, 0, 0);
+      CTX.globalAlpha = 1;
+    }
+
     // 地面冲击环
     CTX.globalAlpha = a * 0.9;
     CTX.strokeStyle = e.color;

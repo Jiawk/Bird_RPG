@@ -319,7 +319,14 @@ window.addEventListener('DOMContentLoaded', () => {
       G.world.monsters.filter(m => !m.isBoss).slice(0, 5)
         .forEach(m => damageMonster(m, 999999, 'melee'));
     }
-    if (fxTest) { AUTO.atk = true; AUTO.skill = true; }
+    if (fxTest) {
+      AUTO.atk = true; AUTO.skill = true;
+      setInterval(() => {
+        const p = G.player; if (!p) return;
+        p.cd[p.keymap.q] = 0; p.mp = p.stats.mpMax;
+        castSkillKey('q');
+      }, 300);
+    }
     if (tipTest) setTimeout(() => showSkillTip('q', 1080, 380), 900);
     if (charTest) handleCommand('char');
     if (bagTest) {

@@ -16,11 +16,16 @@ const AUTO = { atk: false, skill: false };
 const EQUIP_IDX  = { helm:7, chest:8, legs:9, boots:10, neck:11, ring:12, trinket:13 };
 const WEAPON_IDX = { sword:0, axe:1, bow:2, crossbow:3, dagger:4, staff:5, orb:6 };
 const RELIC_IDX  = { relic_sword:14, relic_staff:15, relic_bow:16, relic_dagger:17 };
-const EQUIP_COUNT = 20;
+const RING_IDX = {
+  ring:20, ring_exp:21, ring_revive:22, ring_summon:23,
+  ring_cleave:24, ring_drop:25, ring_gather:26
+};
+const EQUIP_COUNT = 27;
 const POTION_IDX  = { hp:18, mp:19 };
 
 function iconIdxOf(slot, wtype, relicKey) {
   if (relicKey && RELIC_IDX[relicKey] !== undefined) return RELIC_IDX[relicKey];
+  if (RING_IDX[slot] !== undefined) return RING_IDX[slot];
   if (slot === 'weapon') return WEAPON_IDX[wtype] !== undefined ? WEAPON_IDX[wtype] : 0;
   return EQUIP_IDX[slot];
 }

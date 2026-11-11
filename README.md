@@ -1064,3 +1064,17 @@ python3 build.py     # 重新打包成单文件 dist/兽人永不为奴.html
   1. `buyRelic` 补上 `qKey:'relic'`
   2. tooltip / 强化详情两处品质查找都加了兜底：`it.qKey || it.quality`，再不行返回「普通」
   3. `migrateItemSlots` 增加旧存档修复：识别 `relicKey` 的装备自动补 `qKey`
+
+### v69 · 特戒图标
+- 取自 `道具&装备/装饰品`（11 张 Trinket 图标），追加到装备图集 **20~26 格**
+- 映射：
+  | 槽位 | 图集索引 |
+  |---|---|
+  | 普通戒指 `ring` | 20 |
+  | 经验之戒 `ring_exp` | 21 |
+  | 复活之戒 `ring_revive` | 22 |
+  | 召唤之戒 `ring_summon` | 23 |
+  | 切割之戒 `ring_cleave` | 24 |
+  | 爆率之戒 `ring_drop` | 25 |
+  | 聚合之戒 `ring_gather` | 26 |
+- `EQUIP_COUNT` 20 → **27**，角色面板的 6 个特戒孔位各有独立图标

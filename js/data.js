@@ -278,14 +278,18 @@ for (const cls in SET_NAMES) {
    14红宝 15蓝宝 16金宝 17绿宝 18银宝 19紫宝 20白宝 21黑宝
    22剑 23斧 */
 DATA.SKILL_ICON = {
-  whirlwind:22, shieldwall:18, battleShout:4, execute:11, charge:13,
-  critMastery:8, toughness:2,
-  fireball:0, frostNova:1, blizzard:20, arcaneTorrent:19, blink:13,
-  arcaneMastery:9, manaSurge:15,
-  multishot:13, pierceArrow:12, freezeTrap:1, rapidFire:6, backjump:13,
-  eagleEye:20, swiftness:6,
-  backstab:22, poisonBlade:3, fanOfKnives:23, vanish:5, shadowstep:21,
-  lethality:11, shadowDance:5
+  // 战士（剑圣）0-6
+  whirlwind:0, shieldwall:1, battleShout:2, execute:3, charge:4,
+  critMastery:5, toughness:6,
+  // 法师（大法师）7-13
+  fireball:7, frostNova:8, blizzard:9, arcaneTorrent:10, blink:11,
+  arcaneMastery:12, manaSurge:13,
+  // 猎人（月之女祭司）14-20
+  multishot:14, pierceArrow:15, freezeTrap:16, rapidFire:17, backjump:18,
+  eagleEye:19, swiftness:20,
+  // 盗贼（恶魔猎手）21-27
+  backstab:21, poisonBlade:22, fanOfKnives:23, vanish:24, shadowstep:25,
+  lethality:26, shadowDance:27
 };
 
 /* ---------------- 强化 ---------------- */

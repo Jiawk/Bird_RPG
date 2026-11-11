@@ -194,7 +194,7 @@ function updateHUD(dt) {
       ic.style.height = '38px';
       ic.style.display = 'block';
       ic.style.backgroundImage = `url(${ASSETS.skills})`;
-      ic.style.backgroundSize = '912px 38px';
+      ic.style.backgroundSize = `${SKILL_ICON_COUNT * 38}px 38px`;
       ic.style.backgroundPosition = `${-ii * 38}px 0`;
       ic.style.backgroundRepeat = 'no-repeat';
       ic.style.imageRendering = 'pixelated';
@@ -433,7 +433,7 @@ function skillIconTag(key, size) {
   if (i === undefined) return '';
   const sz = size || 24;
   return `<span class="sk-ic-tag" style="width:${sz}px;height:${sz}px;
-    background-image:url(${ASSETS.skills});background-size:${sz*24}px ${sz}px;
+    background-image:url(${ASSETS.skills});background-size:${sz*SKILL_ICON_COUNT}px ${sz}px;
     background-position:${-i*sz}px 0;background-repeat:no-repeat"></span>`;
 }
 

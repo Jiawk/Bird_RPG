@@ -657,6 +657,12 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 @media (max-width:1100px){#questTracker{width:190px;font-size:11px}}
 @media (max-width:820px){#questTracker{display:none}}
 
+/* 战力对比 */
+.cp-line{display:flex;justify-content:space-between;font-size:10px;color:#8f8570;margin-top:2px}
+.cp-line b{font-size:11px}
+.cp-bar{height:5px;border-radius:3px;background:#0d0a06;overflow:hidden;margin:5px 0 4px}
+.cp-bar i{display:block;height:100%;transition:width .2s ease}
+
 </style>
 </head>
 <body>
@@ -1143,6 +1149,11 @@ DATA.SPECIAL_RINGS = {
   revive: {name:'复活之戒', color:'#f7e26b', effect:{revive:1},
            desc:'死亡时原地复活（50% 生命），120 秒冷却'}
 };
+
+/* 每图「简单」难度的推荐战力（按各档装备实测值标定） */
+DATA.ROOM_CP = [2600, 4200, 7200, 9200, 12200, 16800];
+/* 难度对战力的要求倍率 */
+DATA.DIFF_CP_MUL = { normal: 1.00, hard: 1.55, hell: 2.35 };
 
 DATA.MAX_LEVEL = 30;
 DATA.expForLevel = (lv) => Math.floor(100 * Math.pow(lv, 1.5));
@@ -1726,6 +1737,22 @@ function sellAllWorse(p) {
     p.bag.splice(i, 1);
   }
   return { n, gold };
+}
+
+/* ---------------- 推荐战力 ---------------- */
+function requiredCP(room, diff) {
+  const base = DATA.ROOM_CP[room] || 3000;
+  const mul = DATA.DIFF_CP_MUL[diff] || 1;
+  return Math.round(base * mul);
+}
+
+/* 战力评估 */
+function cpVerdict(have, need) {
+  const r = need > 0 ? have / need : 2;
+  if (r >= 1.00) return { key:'ok',   color:'#5fdc4a', text:'战力充足', ratio:r };
+  if (r >= 0.80) return { key:'near', color:'#ffb347', text:'勉强能打', ratio:r };
+  if (r >= 0.55) return { key:'low',  color:'#ff8a5a', text:'战力偏低', ratio:r };
+  return           { key:'bad',  color:'#ff5a4a', text:'战力严重不足', ratio:r };
 }
 
 /* ---------------- 装备达成度 ---------------- */
@@ -4235,9 +4262,12 @@ function townMapHtml() {
   html += '<div style="font-size:12px;color:#8f8570;margin:10px 0 8px">选择房间，再选难度进入</div><div class="room-pick">';
   DATA.ROOMS.forEach((r, i) => {
     const unlocked = p.unlocked.includes(i);
+    const need = requiredCP(i, 'normal');
+    const v = cpVerdict(combatPower(p), need);
     html += `<div class="room-btn ${unlocked?'':'locked'}" data-pick-room="${i}">
       <div class="rb-name">${r.name}</div>
-      <div class="rb-sub">等级 ${r.lv}+　${unlocked?'已解锁':'未解锁'}</div></div>`;
+      <div class="rb-sub">等级 ${r.lv}+　${unlocked?'已解锁':'未解锁'}</div>
+      <div class="rb-sub" style="color:${unlocked?v.color:'#6b6558'}">推荐 ${fmt(need)}　你 ${fmt(combatPower(p))}</div></div>`;
   });
   html += '</div><div style="font-size:11px;color:#8f8570">当前装备达成：<b style="color:#ffd98a">' +
     gearTier(p).tierName + '</b>　建议：简单=绿装 / 困难=蓝装 / 地狱=紫装</div>';
@@ -4250,13 +4280,20 @@ function diffPickHtml(roomId) {
   let html = `<div style="font-family:var(--serif);font-size:16px;color:#ffd24a;margin-bottom:4px">${r.name}</div>
     <div style="font-size:11px;color:#8f8570;margin-bottom:12px">${r.desc}　推荐等级 ${r.lv}+</div>
     <div class="diff-pick">`;
+  const myCP = combatPower(p);
   DATA.DIFF_ORDER.forEach(k => {
     const d = DATA.DIFFICULTY[k];
-    const ready = diffReadiness(p, k);
-    html += `<div class="diff-card" data-pick-diff="${k}" data-room="${roomId}">
+    const need = requiredCP(roomId, k);
+    const v = cpVerdict(myCP, need);
+    const pct = Math.min(100, myCP / need * 100);
+    html += `<div class="diff-card" data-pick-diff="${k}" data-room="${roomId}"
+        style="border-color:${v.color}55">
       <div class="dc-name" style="color:${d.color}">${d.name}</div>
       <div class="dc-info">怪物生命 ×${d.hpMul}<br>攻击 ×${d.atkMul}<br>掉落 ×${d.dropMul}</div>
-      <div class="dc-req ${ready==='ok'?'ok':'low'}">${ready==='ok'?'✔ 装备够格':'⚠ 建议'+d.req}</div>
+      <div class="cp-line">推荐战力 <b style="color:${v.color}">${fmt(need)}</b></div>
+      <div class="cp-line">你的战力 <b style="color:${v.color}">${fmt(myCP)}</b></div>
+      <div class="cp-bar"><i style="width:${pct}%;background:${v.color}"></i></div>
+      <div class="dc-req" style="color:${v.color};background:${v.color}22">${v.text}</div>
     </div>`;
   });
   html += `</div><div style="font-size:11px;color:#8f8570">当前装备达成：<b style="color:#ffd98a">${gearTier(p).tierName}</b></div>`;
@@ -4421,6 +4458,7 @@ function warnHtml(room, diff) {
     <div style="font-size:13px;color:#b8ad93;margin-top:6px">你的等级 <b style="color:#fff">${p.level}</b>　本图推荐 <b style="color:#ff9a6a">${r.lv}+</b></div>
   </div>
   <div class="enh-line"><span>房间</span><b>${r.name}（${d.name}难度）</b></div>
+  <div class="enh-line"><span>推荐战力</span><b style="color:${cpVerdict(p.level?combatPower(p):0, requiredCP(room, diff)).color}">${fmt(requiredCP(room, diff))}　（你 ${fmt(combatPower(p))}）</b></div>
   <div class="enh-line"><span>BOSS</span><b>${boss.name} · 生命 ${fmt(estHp)}</b></div>
   <div class="enh-line"><span>你的输出</span><b>约 ${fmt(myDps)} DPS</b></div>
   <div class="enh-line"><span>预计击杀耗时</span><b class="${secs>90?'bad':secs>45?'warn':'ok'}">${secs} 秒</b></div>
@@ -5360,6 +5398,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const questTest = /q$/.test(location.hash);
     const setTest = /s$/.test(location.hash);
     const craftTest = /n$/.test(location.hash);
+    const mapTest = /m$/.test(location.hash);
     const n = parseInt(location.hash.slice(4), 10);
     G.diff = 'normal';
     G.player = createPlayer('human', 'archer');
@@ -5398,6 +5437,11 @@ window.addEventListener('DOMContentLoaded', () => {
       const it = makeItem('chest', 12, 'epic', false); it.enh = 11; addToBag(G.player, it);
       if (location.hash.endsWith('g')) openModal('enhance','锻造台 · 强化', enhanceItemHtml(G.player.equip.weapon.id));
       else handleCommand('enhance');
+    }
+    if (mapTest) {
+      G.player.unlocked = [0,1,2,3,4,5];
+      G.player.gold = 50000;
+      if (typeof openModal === 'function') openModal('map', '选择难度 · 兽人营地', diffPickHtml(2));
     }
     if (craftTest) {
       G.player.materials.iron = 10; G.player.materials.mithril = 6;

@@ -747,9 +747,12 @@ function townMapHtml() {
   html += '<div style="font-size:12px;color:#8f8570;margin:10px 0 8px">选择房间，再选难度进入</div><div class="room-pick">';
   DATA.ROOMS.forEach((r, i) => {
     const unlocked = p.unlocked.includes(i);
+    const need = requiredCP(i, 'normal');
+    const v = cpVerdict(combatPower(p), need);
     html += `<div class="room-btn ${unlocked?'':'locked'}" data-pick-room="${i}">
       <div class="rb-name">${r.name}</div>
-      <div class="rb-sub">等级 ${r.lv}+　${unlocked?'已解锁':'未解锁'}</div></div>`;
+      <div class="rb-sub">等级 ${r.lv}+　${unlocked?'已解锁':'未解锁'}</div>
+      <div class="rb-sub" style="color:${unlocked?v.color:'#6b6558'}">推荐 ${fmt(need)}　你 ${fmt(combatPower(p))}</div></div>`;
   });
   html += '</div><div style="font-size:11px;color:#8f8570">当前装备达成：<b style="color:#ffd98a">' +
     gearTier(p).tierName + '</b>　建议：简单=绿装 / 困难=蓝装 / 地狱=紫装</div>';
@@ -762,13 +765,20 @@ function diffPickHtml(roomId) {
   let html = `<div style="font-family:var(--serif);font-size:16px;color:#ffd24a;margin-bottom:4px">${r.name}</div>
     <div style="font-size:11px;color:#8f8570;margin-bottom:12px">${r.desc}　推荐等级 ${r.lv}+</div>
     <div class="diff-pick">`;
+  const myCP = combatPower(p);
   DATA.DIFF_ORDER.forEach(k => {
     const d = DATA.DIFFICULTY[k];
-    const ready = diffReadiness(p, k);
-    html += `<div class="diff-card" data-pick-diff="${k}" data-room="${roomId}">
+    const need = requiredCP(roomId, k);
+    const v = cpVerdict(myCP, need);
+    const pct = Math.min(100, myCP / need * 100);
+    html += `<div class="diff-card" data-pick-diff="${k}" data-room="${roomId}"
+        style="border-color:${v.color}55">
       <div class="dc-name" style="color:${d.color}">${d.name}</div>
       <div class="dc-info">怪物生命 ×${d.hpMul}<br>攻击 ×${d.atkMul}<br>掉落 ×${d.dropMul}</div>
-      <div class="dc-req ${ready==='ok'?'ok':'low'}">${ready==='ok'?'✔ 装备够格':'⚠ 建议'+d.req}</div>
+      <div class="cp-line">推荐战力 <b style="color:${v.color}">${fmt(need)}</b></div>
+      <div class="cp-line">你的战力 <b style="color:${v.color}">${fmt(myCP)}</b></div>
+      <div class="cp-bar"><i style="width:${pct}%;background:${v.color}"></i></div>
+      <div class="dc-req" style="color:${v.color};background:${v.color}22">${v.text}</div>
     </div>`;
   });
   html += `</div><div style="font-size:11px;color:#8f8570">当前装备达成：<b style="color:#ffd98a">${gearTier(p).tierName}</b></div>`;
@@ -933,6 +943,7 @@ function warnHtml(room, diff) {
     <div style="font-size:13px;color:#b8ad93;margin-top:6px">你的等级 <b style="color:#fff">${p.level}</b>　本图推荐 <b style="color:#ff9a6a">${r.lv}+</b></div>
   </div>
   <div class="enh-line"><span>房间</span><b>${r.name}（${d.name}难度）</b></div>
+  <div class="enh-line"><span>推荐战力</span><b style="color:${cpVerdict(p.level?combatPower(p):0, requiredCP(room, diff)).color}">${fmt(requiredCP(room, diff))}　（你 ${fmt(combatPower(p))}）</b></div>
   <div class="enh-line"><span>BOSS</span><b>${boss.name} · 生命 ${fmt(estHp)}</b></div>
   <div class="enh-line"><span>你的输出</span><b>约 ${fmt(myDps)} DPS</b></div>
   <div class="enh-line"><span>预计击杀耗时</span><b class="${secs>90?'bad':secs>45?'warn':'ok'}">${secs} 秒</b></div>

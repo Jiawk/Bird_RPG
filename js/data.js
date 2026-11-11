@@ -328,5 +328,10 @@ DATA.SPECIAL_RINGS = {
            desc:'死亡时原地复活（50% 生命），120 秒冷却'}
 };
 
+/* 每图「简单」难度的推荐战力（按各档装备实测值标定） */
+DATA.ROOM_CP = [2600, 4200, 7200, 9200, 12200, 16800];
+/* 难度对战力的要求倍率 */
+DATA.DIFF_CP_MUL = { normal: 1.00, hard: 1.55, hell: 2.35 };
+
 DATA.MAX_LEVEL = 30;
 DATA.expForLevel = (lv) => Math.floor(100 * Math.pow(lv, 1.5));

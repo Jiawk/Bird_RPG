@@ -649,3 +649,9 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .qt-actions button:disabled{opacity:.35;cursor:not-allowed}
 @media (max-width:1100px){#questTracker{width:190px;font-size:11px}}
 @media (max-width:820px){#questTracker{display:none}}
+
+/* 战力对比 */
+.cp-line{display:flex;justify-content:space-between;font-size:10px;color:#8f8570;margin-top:2px}
+.cp-line b{font-size:11px}
+.cp-bar{height:5px;border-radius:3px;background:#0d0a06;overflow:hidden;margin:5px 0 4px}
+.cp-bar i{display:block;height:100%;transition:width .2s ease}

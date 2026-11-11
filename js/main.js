@@ -318,6 +318,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const questTest = /q$/.test(location.hash);
     const setTest = /s$/.test(location.hash);
     const craftTest = /n$/.test(location.hash);
+    const mapTest = /m$/.test(location.hash);
     const n = parseInt(location.hash.slice(4), 10);
     G.diff = 'normal';
     G.player = createPlayer('human', 'archer');
@@ -356,6 +357,11 @@ window.addEventListener('DOMContentLoaded', () => {
       const it = makeItem('chest', 12, 'epic', false); it.enh = 11; addToBag(G.player, it);
       if (location.hash.endsWith('g')) openModal('enhance','锻造台 · 强化', enhanceItemHtml(G.player.equip.weapon.id));
       else handleCommand('enhance');
+    }
+    if (mapTest) {
+      G.player.unlocked = [0,1,2,3,4,5];
+      G.player.gold = 50000;
+      if (typeof openModal === 'function') openModal('map', '选择难度 · 兽人营地', diffPickHtml(2));
     }
     if (craftTest) {
       G.player.materials.iron = 10; G.player.materials.mithril = 6;

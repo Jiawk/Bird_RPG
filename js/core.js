@@ -576,6 +576,22 @@ function sellAllWorse(p) {
   return { n, gold };
 }
 
+/* ---------------- 推荐战力 ---------------- */
+function requiredCP(room, diff) {
+  const base = DATA.ROOM_CP[room] || 3000;
+  const mul = DATA.DIFF_CP_MUL[diff] || 1;
+  return Math.round(base * mul);
+}
+
+/* 战力评估 */
+function cpVerdict(have, need) {
+  const r = need > 0 ? have / need : 2;
+  if (r >= 1.00) return { key:'ok',   color:'#5fdc4a', text:'战力充足', ratio:r };
+  if (r >= 0.80) return { key:'near', color:'#ffb347', text:'勉强能打', ratio:r };
+  if (r >= 0.55) return { key:'low',  color:'#ff8a5a', text:'战力偏低', ratio:r };
+  return           { key:'bad',  color:'#ff5a4a', text:'战力严重不足', ratio:r };
+}
+
 /* ---------------- 装备达成度 ---------------- */
 /* 返回 { filled, minIdx, avgIdx, score, tierName } */
 function gearTier(p) {

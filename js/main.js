@@ -85,11 +85,6 @@ function initInput() {
     Input.isTouch = true;
     $('touch').classList.remove('hidden');
     setupSticks();
-    $('tBtnAtk').addEventListener('touchstart', e => { e.preventDefault(); Input.mouse.down = true; });
-    $('tBtnAtk').addEventListener('touchend', e => { e.preventDefault(); Input.mouse.down = false; });
-    ['q','w','e','r'].forEach((k, i) => {
-      $('tBtn' + (i + 1)).addEventListener('touchstart', e => { e.preventDefault(); castSkillKey(k); });
-    });
   }
 }
 

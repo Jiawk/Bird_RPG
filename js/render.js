@@ -339,9 +339,10 @@ function drawMonster(m) {
     const BOSS_IDX = { bossWolf:8, bossKobold:9, bossGrom:10, bossKel:11, bossMannoroth:12, bossArchimonde:13 };
     const idx = (MON_IDX[m.kind] !== undefined) ? MON_IDX[m.kind]
               : (BOSS_IDX[m.kind] !== undefined ? BOSS_IDX[m.kind] : 11);
-    const moving = m.aggro && m.stun <= 0 && m.frozen <= 0;
-    const faceAng = Math.atan2(G.player.y - m.y, G.player.x - m.x);
-    const row = dirRow(moving ? faceAng : (m._fd !== undefined ? m._fd : faceAng));
+    const moving = (m.aggro || m.wandering) && m.stun <= 0 && m.frozen <= 0;
+    const faceAng = m.faceAng !== undefined ? m.faceAng
+                    : Math.atan2(G.player.y - m.y, G.player.x - m.x);
+    const row = dirRow(faceAng);
     m._fd = row;
     const frame = walkFrame(G.time + m.phase, moving, 6);
     CTX.save();

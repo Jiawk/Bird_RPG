@@ -108,7 +108,13 @@ function makeMonster(kindKey, x, y, isBoss, level, diff, isElite) {
     aggro: false,
     hitFlash: 0,
     respawnAt: 0,
-    phase: Math.random() * Math.PI * 2
+    phase: Math.random() * Math.PI * 2,
+    // 游荡
+    homeX: x, homeY: y,
+    wanderX: x, wanderY: y,
+    wanderCd: 0.6 + Math.random() * 2.2,
+    wandering: false,
+    faceAng: Math.random() * Math.PI * 2
   };
 }
 
@@ -215,11 +221,36 @@ function updateMonsters(dt) {
     const aggroRange = m.isBoss ? 9999 : (m.isElite ? 360 : 280);
     if (!m.aggro && d < aggroRange) m.aggro = true;
 
+    // 未被激怒：在出生点附近小幅来回走
+    if (!m.aggro) {
+      m.wandering = false;
+      if (!m.isBoss) {
+        m.wanderCd -= dt;
+        if (m.wanderCd <= 0) {
+          m.wanderCd = 1.6 + Math.random() * 2.6;
+          const a = Math.random() * Math.PI * 2;
+          const rr = 26 + Math.random() * 46;
+          m.wanderX = m.homeX + Math.cos(a) * rr;
+          m.wanderY = m.homeY + Math.sin(a) * rr;
+        }
+        const dx = m.wanderX - m.x, dy = m.wanderY - m.y;
+        const dd = Math.hypot(dx, dy);
+        if (dd > 5 && m.root <= 0) {
+          const wspd = m.spd * 0.34;
+          m.x += (dx / dd) * wspd * dt;
+          m.y += (dy / dd) * wspd * dt;
+          m.faceAng = Math.atan2(dy, dx);
+          m.wandering = true;
+        }
+      }
+    }
+
     if (m.aggro) {
       const spd = m.spd * (m.root > 0 ? 0 : 1);
       if (m.root > 0) m.root -= dt;
       if (d > m.r + p.r + 4) {
         const ang = Math.atan2(p.y - m.y, p.x - m.x);
+        m.faceAng = ang;
         m.x += Math.cos(ang) * spd * dt;
         m.y += Math.sin(ang) * spd * dt;
       } else {

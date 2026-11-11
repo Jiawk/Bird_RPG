@@ -695,7 +695,16 @@ function drawNPC(n) {
     npcDrawn = true;
   }
   if (!npcDrawn) {
-    if (n.kind === 'craft') {
+    if (n.kind === 'save' && imgReady('stele')) {
+      const sz = 68;
+      const glow = CTX.createRadialGradient(gx, gy - 20, 4, gx, gy - 20, 52);
+      glow.addColorStop(0, 'rgba(127,212,255,.28)');
+      glow.addColorStop(1, 'rgba(127,212,255,0)');
+      CTX.fillStyle = glow;
+      CTX.beginPath(); CTX.arc(gx, gy - 20, 52, 0, 6.283); CTX.fill();
+      CTX.drawImage(IMG.stele, gx - sz / 2, gy - sz + 10, sz, sz);
+      npcDrawn = true;
+    } else if (n.kind === 'craft') {
       // 锻造台：铁砧 + 火光
       const fy = gy - 6;
       const glow = CTX.createRadialGradient(gx, fy, 2, gx, fy, 46);

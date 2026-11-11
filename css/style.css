@@ -609,3 +609,42 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   .char-panel-v2{grid-template-columns:86px 1fr 86px;gap:8px}
   .char-panel-v2 .char-right{grid-column:1 / -1}
 }
+
+/* ============================================================
+   右侧任务追踪
+   ============================================================ */
+#questTracker{position:absolute;right:10px;top:46%;transform:translateY(-50%);
+  width:236px;z-index:23;border-radius:3px;overflow:hidden;
+  background:linear-gradient(180deg,rgba(48,39,24,.94),rgba(12,9,5,.96));
+  border:1px solid var(--bronze);box-shadow:0 4px 18px rgba(0,0,0,.75)}
+.qt-head{display:flex;align-items:center;gap:6px;padding:6px 10px;cursor:pointer;
+  font-family:var(--serif);font-size:13px;color:var(--gold-lt);letter-spacing:.1em;
+  background:linear-gradient(180deg,rgba(212,175,55,.16),transparent);
+  border-bottom:1px solid rgba(212,175,55,.28);user-select:none}
+.qt-head:hover{background:linear-gradient(180deg,rgba(212,175,55,.26),transparent)}
+.qt-head b{color:#ffd24a;font-size:12px}
+.qt-head .qt-arr{margin-left:auto;font-size:10px;transition:transform .2s}
+#questTracker.collapsed .qt-arr{transform:rotate(-90deg)}
+#questTracker.collapsed .qt-body{display:none}
+.qt-body{padding:6px 8px 8px;max-height:46vh;overflow:auto}
+.qt-item{display:flex;align-items:center;gap:6px;padding:4px 2px;font-size:11.5px;
+  border-bottom:1px dotted rgba(184,173,147,.14)}
+.qt-item .qt-nm{flex:1;color:#c8bfa8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qt-item .qt-prog{font-size:10.5px;color:#8f8570;white-space:nowrap}
+.qt-item.done .qt-nm{color:#5fdc4a}
+.qt-item.done .qt-prog{color:#5fdc4a;font-weight:700}
+.qt-item button{padding:2px 8px;font-size:10px;border-radius:2px;cursor:pointer;
+  background:linear-gradient(180deg,#3a3020,#181209);border:1px solid var(--bronze);color:var(--bone)}
+.qt-item button.claim{border-color:#6b8a4a;color:#b9ffb0}
+.qt-item button:hover{border-color:var(--gold);color:var(--gold-lt)}
+.qt-bar{height:5px;border-radius:3px;background:#0d0a06;overflow:hidden;margin:4px 2px 6px}
+.qt-bar i{display:block;height:100%;background:linear-gradient(90deg,#c9a24a,#ffd24a)}
+.qt-empty{font-size:11px;color:#6b6558;text-align:center;padding:8px 0}
+.qt-actions{display:flex;gap:6px;margin-top:8px}
+.qt-actions button{flex:1;padding:5px 0;font-size:11px;border-radius:2px;cursor:pointer;
+  background:linear-gradient(180deg,#4a3d22,#1c1509);border:1px solid var(--gold);
+  color:var(--gold-lt);font-family:var(--serif);letter-spacing:.06em}
+.qt-actions button:hover{background:linear-gradient(180deg,#6b5520,#2a1e0c);color:#fff3c4}
+.qt-actions button:disabled{opacity:.35;cursor:not-allowed}
+@media (max-width:1100px){#questTracker{width:190px;font-size:11px}}
+@media (max-width:820px){#questTracker{display:none}}

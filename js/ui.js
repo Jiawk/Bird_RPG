@@ -24,6 +24,18 @@ function uiInit() {
   document.documentElement.style.setProperty('--icon-sheet', `url(${ASSETS.icons})`);
   document.documentElement.style.setProperty('--skill-sheet', `url(${ASSETS.skills})`);
   bindSkillTips();
+  // 任务追踪：事件委托（内容重建后依然可点）
+  const qt = $('questTracker');
+  if (qt) {
+    qt.addEventListener('click', e => {
+      const head = e.target.closest('.qt-head');
+      if (head) { G.qtCollapsed = !G.qtCollapsed; QT_SIG = ''; return; }
+      const claim = e.target.closest('[data-qt-claim]');
+      if (claim) { claimQuest(claim.dataset.qtClaim); QT_SIG = ''; return; }
+      if (e.target.closest('[data-qt-claim-all]')) { claimAllQuests(); return; }
+      if (e.target.closest('[data-qt-accept-all]')) { acceptAllQuests(); QT_SIG = ''; return; }
+    });
+  }
   document.querySelectorAll('.cc-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       if (btn.dataset.skill) castSkillKey(btn.dataset.skill);
@@ -182,6 +194,8 @@ function updateHUD(dt) {
     btn.classList.toggle('on', !!on);
   });
 
+  updateQuestTracker();
+
   // 消息
   $('msglog').innerHTML = G.msgLog.slice(-6).reverse()
     .map(m => `<div class="m ${m.type}">${m.text}</div>`).join('');
@@ -242,6 +256,80 @@ function onMonsterKilled(m) {
       logMsg(`✔ 「${q.name}」目标完成，回城领取奖励`, 'level');
     }
   });
+}
+
+/* ---------------- 右侧任务追踪 ---------------- */
+let QT_SIG = '';
+function updateQuestTracker() {
+  const el = $('questTracker');
+  if (!el) return;
+  const p = G.player;
+  if (!p || G.screen !== 'game') { el.classList.add('hidden'); return; }
+
+  const qs = p.quests || [];
+  const avail = DATA.QUEST_POOL.filter(q =>
+    !qs.some(x => x.id === q.id) && p.unlocked.includes(q.room));
+  if (!qs.length && !avail.length) { el.classList.add('hidden'); return; }
+  el.classList.remove('hidden');
+
+  const doneN = qs.filter(q => q.have >= q.need).length;
+  // 内容签名，避免每帧重建（重建会打断点击）
+  const sig = qs.map(q => q.id + ':' + q.have + '/' + q.need).join(',')
+    + '|' + doneN + '|' + avail.length + '|' + (G.qtCollapsed ? 1 : 0);
+  if (sig === QT_SIG) return;
+  QT_SIG = sig;
+
+  el.classList.toggle('collapsed', !!G.qtCollapsed);
+
+  let html = `<div class="qt-head">任务
+    <b>${qs.length}</b>
+    ${doneN ? `<span style="color:#5fdc4a;font-size:11px">· ${doneN} 可交</span>` : ''}
+    <span class="qt-arr">▾</span></div><div class="qt-body">`;
+
+  if (!qs.length) {
+    html += '<div class="qt-empty">没有进行中的任务</div>';
+  } else {
+    qs.forEach(q => {
+      const done = q.have >= q.need;
+      const pct = Math.min(100, q.have / q.need * 100);
+      html += `<div class="qt-item${done ? ' done' : ''}">
+        <span class="qt-nm">${q.name}</span>
+        <span class="qt-prog">${q.have}/${q.need}</span>
+        ${done ? `<button class="claim" data-qt-claim="${q.id}">领取</button>` : ''}
+      </div>
+      <div class="qt-bar"><i style="width:${pct}%;${done ? 'background:#5fdc4a' : ''}"></i></div>`;
+    });
+  }
+
+  html += '<div class="qt-actions">';
+  html += `<button data-qt-claim-all ${doneN ? '' : 'disabled'}>一键交任务${doneN ? ' ' + doneN : ''}</button>`;
+  html += `<button data-qt-accept-all ${avail.length ? '' : 'disabled'}>一键接任务${avail.length ? ' ' + avail.length : ''}</button>`;
+  html += '</div></div>';
+  el.innerHTML = html;
+}
+
+/* 一键领取所有已完成任务 */
+function claimAllQuests() {
+  const p = G.player;
+  const done = (p.quests || []).filter(q => q.have >= q.need);
+  if (!done.length) { toast('没有可领取的任务'); return; }
+  let exp = 0, gold = 0, n = 0;
+  const mats = {};
+  done.forEach(q => {
+    exp += q.exp; gold += q.gold;
+    mats[q.mat] = (mats[q.mat] || 0) + q.matN;
+    n++;
+  });
+  gainExp(p, exp);
+  p.gold += gold;
+  for (const k in mats) p.materials[k] = (p.materials[k] || 0) + mats[k];
+  p.quests = p.quests.filter(q => q.have < q.need);
+  p.questDone += n;
+  const matTxt = Object.keys(mats).map(k => `${DATA.MATERIALS[k].name}×${mats[k]}`).join(' ');
+  toast(`✅ 交付 ${n} 个任务：+${exp} 经验 +${fmt(gold)} 金 ${matTxt}`);
+  logMsg(`✔ 一键交付 ${n} 个委托`, 'level');
+  QT_SIG = '';
+  saveGame();
 }
 
 /* ---------------- Toast ---------------- */
@@ -1090,6 +1178,7 @@ function acceptQuest(id) {
   if (!p.unlocked.includes(q.room)) { toast('该房间尚未解锁'); return; }
   p.quests.push({ ...q, have: 0 });
   toast(`接取任务：${q.name}`);
+  QT_SIG = '';
   openModal('quest', '任务官 · 罗兰', questHtml());
 }
 
@@ -1104,6 +1193,7 @@ function acceptAllQuests() {
     n++;
   });
   toast(n ? `一键接取 ${n} 个任务` : '没有可接取的任务');
+  QT_SIG = '';
   openModal('quest', '任务官 · 罗兰', questHtml());
 }
 

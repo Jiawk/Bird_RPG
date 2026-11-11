@@ -497,6 +497,36 @@ const RING_COLORS = {
   critDmg:   {color:'#ff9a2e', name:'暴伤'},
   dropBonus: {color:'#3fd45a', name:'掉落'}
 };
+/* 特戒效果的中文描述表（杜绝英文 key 泄漏到界面） */
+const EFFECT_INFO = {
+  expBonus:  {name:'经验', pct:true,  desc: v => `经验获取 +${(v*100).toFixed(1)}%`},
+  goldBonus: {name:'金币', pct:true,  desc: v => `金币获取 +${(v*100).toFixed(1)}%`},
+  lifesteal: {name:'吸血', pct:true,  desc: v => `吸血 +${(v*100).toFixed(1)}%`},
+  cleave:    {name:'切割', pct:true,  desc: v => `攻击时 ${(v*100).toFixed(1)}% 概率削掉目标 5% 最大生命`},
+  critDmg:   {name:'暴伤', pct:true,  desc: v => `暴击伤害 +${(v*100).toFixed(1)}%`},
+  dropBonus: {name:'掉落', pct:true,  desc: v => `掉落品质 +${(v*100).toFixed(1)}%`},
+  revive:    {name:'复活', pct:false, desc: () => '死亡后原地复活，恢复 50% 生命（120 秒冷却）'},
+  summon:    {name:'召唤', pct:false, desc: () => '召唤灵兽协助战斗，自动攻击附近怪物'},
+  gather:    {name:'聚合', pct:false, desc: () => '按 X 键把全图怪物吸到身边（30 秒冷却）'}
+};
+
+/* 把一条效果翻成中文 */
+function effectText(k, v) {
+  const info = EFFECT_INFO[k];
+  if (!info) return '未知效果';
+  return info.desc(v === undefined ? 1 : v);
+}
+/* 只要效果名 */
+function effectName(k) {
+  const info = EFFECT_INFO[k];
+  return info ? info.name : '未知';
+}
+/* 该效果是否受强化影响（数值型才受） */
+function effectScales(k) {
+  const info = EFFECT_INFO[k];
+  return !!(info && info.pct);
+}
+
 function ringColor(it) {
   if (!it || !it.effect) return '#ff9a2e';
   const k = Object.keys(it.effect)[0];

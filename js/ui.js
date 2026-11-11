@@ -1215,10 +1215,15 @@ function enhanceItemHtml(id) {
   html += '<div class="enh-attrs">';
   if (it.effect) {
     for (const k in it.effect) {
-      const v0 = it.effect[k] * curMul, v1 = it.effect[k] * nextMul;
-      const nm = (typeof RING_COLORS !== 'undefined' && RING_COLORS[k]) ? RING_COLORS[k].name : k;
-      html += `<div class="enh-attr"><span>${nm}效果</span>
-        <b>${(v0 * 100).toFixed(1)}%</b><i>→</i><b class="up">${maxed ? '—' : (v1 * 100).toFixed(1) + '%'}</b></div>`;
+      const nm = effectName(k);
+      if (effectScales(k)) {
+        const v0 = it.effect[k] * curMul, v1 = it.effect[k] * nextMul;
+        html += `<div class="enh-attr"><span>${nm}</span>
+          <b>${(v0 * 100).toFixed(1)}%</b><i>→</i><b class="up">${maxed ? '—' : (v1 * 100).toFixed(1) + '%'}</b></div>`;
+      } else {
+        html += `<div class="enh-attr"><span>${nm}</span>
+          <b class="up" style="min-width:auto">${effectText(k)}</b></div>`;
+      }
     }
   }
   for (const k in it.stats) {
@@ -1623,12 +1628,8 @@ function showTooltip(it, x, y) {
     }
     if (it.effect) {
       const m = enhMul(it);
-      const lines = Object.keys(it.effect).map(k => {
-        const v = (it.effect[k] * m * 100).toFixed(1);
-        const nm = (typeof RING_COLORS !== 'undefined' && RING_COLORS[k]) ? RING_COLORS[k].name : k;
-        return `${nm} ${v}%`;
-      });
-      parts.push(`<div style="color:${it.color};font-size:12px;margin-top:3px;font-weight:700">【特戒】${lines.join('　')}</div>`);
+      const lines = Object.keys(it.effect).map(k => effectText(k, it.effect[k] * m));
+      parts.push(`<div style="color:${it.color};font-size:11.5px;margin-top:3px;line-height:1.6">${lines.join('<br>')}</div>`);
       if (it.enh) parts.push(`<div style="font-size:10px;color:#8f8570">强化 +${it.enh} 已加成到效果数值</div>`);
     }
     if (it.setKey) {

@@ -111,7 +111,7 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .hud-commands{position:absolute;right:10px;bottom:10px;z-index:24;padding:8px;border-radius:3px;
   background:linear-gradient(180deg,rgba(58,47,28,.94),rgba(16,12,7,.96));
   border:2px solid var(--bronze);box-shadow:0 4px 16px rgba(0,0,0,.8)}
-.cc-grid{display:grid;grid-template-columns:repeat(4,64px);grid-auto-rows:42px;gap:4px}
+.cc-grid{display:grid;grid-template-columns:repeat(4,64px);grid-auto-rows:56px;gap:4px}
 
 /* 命令卡按钮 */
 .cc-btn{position:relative;overflow:hidden;border-radius:2px;cursor:pointer;
@@ -469,3 +469,17 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .char-left .ic-sprite{width:44px !important;height:44px !important;
   background-size:352px 44px !important}
 .char-left .eq-nm{font-size:10px}
+
+/* 技能图标（图标式按钮，名字走 tooltip） */
+.cc-btn.skill{padding:0}
+.cc-btn.skill .sk-ic{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:40px;height:40px;display:block;background-repeat:no-repeat;
+  image-rendering:pixelated;pointer-events:none}
+.cc-btn.skill .nm{display:none}
+.cc-btn.skill .hk{font-size:10px;top:1px;left:4px}
+.cc-btn.skill .cd{font-size:16px}
+.sk-ic-tag{display:inline-block;width:24px;height:24px;flex:0 0 auto;vertical-align:middle;
+  background-image:var(--skill-sheet);background-size:576px 24px;
+  background-repeat:no-repeat;image-rendering:pixelated}
+.skill-row .sk-ic{background-image:var(--skill-sheet);background-size:624px 26px;
+  background-position:0 0;width:36px;height:36px;image-rendering:pixelated}

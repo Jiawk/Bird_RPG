@@ -22,6 +22,8 @@ function iconTag(slot, size) {
 
 function uiInit() {
   document.documentElement.style.setProperty('--icon-sheet', `url(${ASSETS.icons})`);
+  document.documentElement.style.setProperty('--skill-sheet', `url(${ASSETS.skills})`);
+  bindSkillTips();
   document.querySelectorAll('.cc-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       if (btn.dataset.skill) castSkillKey(btn.dataset.skill);
@@ -152,6 +154,23 @@ function updateHUD(dt) {
     const nm = btn.querySelector('.nm');
     const cdEl = btn.querySelector('.cd');
     nm.textContent = sp ? sp.name : '—';
+    const ic = btn.querySelector('.sk-ic');
+    if (ic && sp) {
+      const ii = DATA.SKILL_ICON[key] ?? 0;
+      // 全部内联，杜绝任何样式覆盖
+      ic.style.position = 'absolute';
+      ic.style.left = '50%';
+      ic.style.top = '50%';
+      ic.style.transform = 'translate(-50%,-50%)';
+      ic.style.width = '38px';
+      ic.style.height = '38px';
+      ic.style.display = 'block';
+      ic.style.backgroundImage = `url(${ASSETS.skills})`;
+      ic.style.backgroundSize = '912px 38px';
+      ic.style.backgroundPosition = `${-ii * 38}px 0`;
+      ic.style.backgroundRepeat = 'no-repeat';
+      ic.style.imageRendering = 'pixelated';
+    }
     const cd = p.cd && p.cd[key] ? p.cd[key] : 0;
     if (cd > 0) { cdEl.textContent = cd.toFixed(1); cdEl.classList.add('on'); }
     else cdEl.classList.remove('on');
@@ -244,6 +263,70 @@ function drawCharPortrait() {
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(IMG.units, ci * 128 + frame * U_FRAME_W, 0, U_FRAME_W, U_FRAME_H,
                 (cv.width - sw) / 2, cv.height - sh - 2, sw, sh);
+}
+
+/* 技能图标 tag */
+function skillIconTag(key, size) {
+  const i = DATA.SKILL_ICON[key];
+  if (i === undefined) return '';
+  const sz = size || 24;
+  return `<span class="sk-ic-tag" style="width:${sz}px;height:${sz}px;
+    background-image:url(${ASSETS.skills});background-size:${sz*24}px ${sz}px;
+    background-position:${-i*sz}px 0;background-repeat:no-repeat"></span>`;
+}
+
+/* 通用 tooltip 渲染 */
+function showTipHtml(html, x, y) {
+  hideTooltip();
+  TIP = document.createElement('div');
+  TIP.className = 'tooltip';
+  TIP.innerHTML = html;
+  document.body.appendChild(TIP);
+  moveTooltip(x, y);
+}
+
+/* 技能悬浮：说明 + 预计伤害 */
+function showSkillTip(k, x, y) {
+  const p = G.player;
+  if (!p) return;
+  const key = (k === 'd') ? p.dash : (p.keymap ? p.keymap[k] : null);
+  const sp = DATA.SKILLS[key];
+  if (!sp) return;
+
+  const lv = p.skills[key] || 1;
+  const mul = 1 + (lv - 1) * 0.2;
+  const isActive = sp.type !== 'passive';
+  const cd = p.cd && p.cd[key] ? p.cd[key] : 0;
+
+  let html = `<h4 style="color:${sp.color || '#ffd24a'}">${sp.name} <small style="color:#8f8570">Lv.${lv}</small></h4>`;
+  html += `<div class="tt-sub">${isActive ? '主动技能' : '被动技能'}${sp.kind ? ' · ' + kindName(sp.kind) : ''}</div>`;
+  if (isActive) {
+    html += `<div style="font-size:11px;color:#7fd4ff">冷却 ${sp.cd || 0}s　${sp.cost ? '法力 ' + sp.cost : '无消耗'}</div>`;
+    if (cd > 0) html += `<div style="font-size:11px;color:#ff8a7a">冷却中 ${cd.toFixed(1)}s</div>`;
+    if (sp.dmg) {
+      const dmg = Math.round(p.stats.power * (p.stats.skillMul || 1) * sp.dmg * mul);
+      html += `<div style="margin-top:4px;border-top:1px dotted rgba(184,173,147,.25);padding-top:4px">`;
+      html += `<div class="tt-up" style="font-size:13px;font-weight:700">预计伤害 ${fmt(dmg)}</div>`;
+      html += `<div style="font-size:11px;color:#8f8570">伤害系数 ${(sp.dmg * 100).toFixed(0)}% × 技能等级 ${(mul * 100).toFixed(0)}%</div>`;
+      if (sp.radius) html += `<div style="font-size:11px;color:#8f8570">作用范围 ${sp.radius}</div>`;
+      html += `</div>`;
+    }
+  }
+  html += `<div class="tt-desc">${sp.desc || ''}</div>`;
+  showTipHtml(html, x, y);
+}
+
+function kindName(k) {
+  return ({ aoe:'范围', melee:'近战', proj:'投射物', dash:'位移', blink:'闪现',
+            buff:'增益', trap:'陷阱' })[k] || k;
+}
+
+function bindSkillTips() {
+  document.querySelectorAll('.cc-btn.skill').forEach(btn => {
+    btn.addEventListener('mouseenter', e => showSkillTip(btn.dataset.skill, e.clientX, e.clientY));
+    btn.addEventListener('mousemove', e => moveTooltip(e.clientX, e.clientY));
+    btn.addEventListener('mouseleave', hideTooltip);
+  });
 }
 
 /* ---------------- 命令 ---------------- */
@@ -467,6 +550,7 @@ function skillHtml() {
     const sp = DATA.SKILLS[k], lv = p.skills[k] || 0;
     html += `<div class="skill-row ${lv?'learned':''}">
       <div class="sk-ic">${keyOf(k)}</div>
+      ${skillIconTag(k, 30)}
       <div class="sk-main"><div class="sk-name">${sp.name}<small>Lv.${lv}</small></div>
       <div class="sk-desc">${sp.desc}　冷却 ${sp.cd}s${sp.cost?'　法力 '+sp.cost:''}</div></div></div>`;
   }

@@ -303,6 +303,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const charTest = /c$/.test(location.hash);
     const bagTest = /b$/.test(location.hash);
     const fxTest = /e$/.test(location.hash);
+    const tipTest = /t$/.test(location.hash);
     const n = parseInt(location.hash.slice(4), 10);
     G.diff = 'normal';
     G.player = createPlayer('human', 'archer');
@@ -319,6 +320,7 @@ window.addEventListener('DOMContentLoaded', () => {
         .forEach(m => damageMonster(m, 999999, 'melee'));
     }
     if (fxTest) { AUTO.atk = true; AUTO.skill = true; }
+    if (tipTest) setTimeout(() => showSkillTip('q', 1080, 380), 900);
     if (charTest) handleCommand('char');
     if (bagTest) {
       // 塞点测试物品：药水堆叠 + 各种品质装备

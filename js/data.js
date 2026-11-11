@@ -226,5 +226,21 @@ DATA.SETS = {
     b6:{flat:40, skillDmg:0.20, desc:'敏捷 +40 · 技能伤害 +20%'}}
 };
 
+/* 技能 → 图标索引（skills.png 24 格）
+   0火 1水 2石 3叶 4星 5幽 6电 7爆
+   8星芒 9紫焰 10咒 11骷髅 12钩 13箭
+   14红宝 15蓝宝 16金宝 17绿宝 18银宝 19紫宝 20白宝 21黑宝
+   22剑 23斧 */
+DATA.SKILL_ICON = {
+  whirlwind:22, shieldwall:18, battleShout:4, execute:11, charge:13,
+  critMastery:8, toughness:2,
+  fireball:0, frostNova:1, blizzard:20, arcaneTorrent:19, blink:13,
+  arcaneMastery:9, manaSurge:15,
+  multishot:13, pierceArrow:12, freezeTrap:1, rapidFire:6, backjump:13,
+  eagleEye:20, swiftness:6,
+  backstab:22, poisonBlade:3, fanOfKnives:23, vanish:5, shadowstep:21,
+  lethality:11, shadowDance:5
+};
+
 DATA.MAX_LEVEL = 30;
 DATA.expForLevel = (lv) => Math.floor(100 * Math.pow(lv, 1.5));

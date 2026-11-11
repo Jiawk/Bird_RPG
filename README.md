@@ -1,7 +1,7 @@
 # Bird RPG · 艾泽拉斯的回响
 
 一个 **单文件网页 ARPG**（打怪 / 爆装 / 升级 / 套装），魔兽争霸3 风格，2.5D 俯视角。
-**双击 `dist/我的第一款游戏.html` 就能玩，无需安装、无需联网。**
+**双击 `dist/艾泽拉斯的回响.html` 就能玩，无需安装、无需联网。**
 
 ![screenshot](docs/screenshot.png)
 
@@ -12,15 +12,15 @@
 ```bash
 git clone git@github.com:Jiawk/Bird_RPG.git
 cd Bird_RPG
-open dist/我的第一款游戏.html      # macOS
-# 或者直接把 dist/我的第一款游戏.html 拖进浏览器
+open dist/艾泽拉斯的回响.html      # macOS
+# 或者直接把 dist/艾泽拉斯的回响.html 拖进浏览器
 ```
 
 想改代码：
 
 ```bash
 # 直接打开开发版（需本地起个静态服务器，或直接开 index.html）
-python3 build.py     # 重新打包成单文件 dist/我的第一款游戏.html
+python3 build.py     # 重新打包成单文件 dist/艾泽拉斯的回响.html
 ```
 
 ---
@@ -167,7 +167,7 @@ python3 build.py     # 重新打包成单文件 dist/我的第一款游戏.html
 
 ```
 .
-├── dist/我的第一款游戏.html   # 单文件产物
+├── dist/艾泽拉斯的回响.html   # 单文件产物
 ├── assets/                    # units/monsters/tiles/icons 图集
 ├── js/
 │   ├── assets.js   # 素材 base64
@@ -221,3 +221,9 @@ python3 build.py     # 重新打包成单文件 dist/我的第一款游戏.html
 ### 设计取舍
 - 装备图标为 16×16 像素画放大 2 倍（`image-rendering: pixelated`），保持像素风统一
 - 技能特效是**程序化绘制**（Canvas 圆弧 + 径向渐变），不依赖序列帧，因此任何技能都能立刻有特效
+
+### v8
+- **产物改名**：`dist/艾泽拉斯的回响.html` → **`dist/艾泽拉斯的回响.html`**
+- **技能图标**：从 `i43 素材 / 道具、技能 / 道具 (6).png` 与 `道具 (7).png` 切出 24 个 16×16 技能图标，命令卡改为**图标式按钮**（名字走 tooltip）
+- **技能悬浮提示**：显示技能等级、冷却、法力消耗、**预计伤害**、伤害系数、作用范围与描述
+- **素材整理**：`游戏素材/` 下所有 zip 已解压并删除（省 355MB）

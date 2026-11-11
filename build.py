@@ -3,7 +3,7 @@
 import io, os, re, sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(ROOT, 'dist', '我的第一款游戏.html')
+OUT = os.path.join(ROOT, 'dist', '艾泽拉斯的回响.html')
 
 html = io.open(os.path.join(ROOT, 'index.html'), encoding='utf-8').read()
 

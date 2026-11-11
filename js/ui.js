@@ -246,7 +246,7 @@ function updateHUD(dt) {
   const npc = nearestNPC();
   if (npc) {
     $('interactHint').classList.remove('hidden');
-    $('interactHint').innerHTML = `按 <b>E</b> 与 ${npc.name} 交互`;
+    $('interactHint').innerHTML = `按 <b>鼠标右键</b> 与 ${npc.name} 交互`;
   } else $('interactHint').classList.add('hidden');
 }
 

@@ -333,6 +333,20 @@ function sellItem(p, item) {
   toast(`出售 ${item.name} +${price} 金`);
 }
 
+/* ---------------- 新手初始装备 ---------------- */
+function giveStarterGear(p) {
+  const magic = p.cls === 'mage';
+  for (const sk in DATA.SLOTS) {
+    if (sk === 'ring2' || sk === 'ring3' || sk === 'ring4' || sk === 'ring5') continue;
+    if (p.equip[sk]) continue;
+    p.equip[sk] = makeItem(sk, 3, 'uncommon', magic);
+  }
+  recalcStats(p);
+  p.hp = p.stats.hpMax;
+  p.mp = p.stats.mpMax;
+  return p;
+}
+
 /* ---------------- 装备强化 ---------------- */
 function enhMul(it) { return DATA.ENHANCE.statMul(it.enh || 0); }
 

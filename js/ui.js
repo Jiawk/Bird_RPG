@@ -104,9 +104,11 @@ const fmtMod = v => (v > 0 ? '+' : '') + v;
 
 function confirmCreate() {
   G.player = createPlayer(SEL.race, SEL.cls);
+  giveStarterGear(G.player);
   G.diff = 'normal';
   startGame();
   logMsg(`${DATA.RACES[SEL.race].name} · ${DATA.CLASSES[SEL.cls].name} 踏上征程`, 'level');
+  toast(`获得新手装备一套 · 战力 ${combatPower(G.player)}`);
   openTownMap();   // 开局直接让玩家选第一个图 + 难度
 }
 

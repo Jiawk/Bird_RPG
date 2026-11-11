@@ -132,6 +132,30 @@ function drawGround(w) {
   CTX.fillStyle = bg;
   CTX.fillRect(0, 0, VW, VH);
 
+  // 主题背景图（水墨版）优先
+  if (imgReady('bg')) {
+    CTX.drawImage(IMG.bg, px(0), py(0), w.W, w.H * YS);
+    CTX.save();
+    CTX.beginPath(); CTX.rect(px(0), py(0), w.W, w.H * YS); CTX.clip();
+    CTX.globalCompositeOperation = 'multiply';
+    CTX.globalAlpha = 0.35;
+    CTX.fillStyle = tint;
+    CTX.fillRect(px(0), py(0), w.W, w.H * YS);
+    CTX.globalAlpha = 1;
+    CTX.globalCompositeOperation = 'source-over';
+    CTX.fillStyle = 'rgba(0,0,0,0.18)';
+    CTX.fillRect(px(0), py(0), w.W, w.H * YS);
+    CTX.restore();
+    // 边界外压黑
+    CTX.fillStyle = 'rgba(0,0,0,.72)';
+    const l0 = px(0), t0 = py(0), r0 = px(w.W), b0 = py(w.H);
+    if (l0 > 0) CTX.fillRect(0, 0, l0, VH);
+    if (r0 < VW) CTX.fillRect(r0, 0, VW - r0, VH);
+    if (t0 > 0) CTX.fillRect(0, 0, VW, t0);
+    if (b0 < VH) CTX.fillRect(0, b0, VW, VH - b0);
+    return;
+  }
+
   const T = TILE_PX;
   const hasTiles = imgReady('tiles');
   const salt = (w.isTown ? 99 : w.roomId) + 1;

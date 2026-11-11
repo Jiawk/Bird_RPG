@@ -1496,6 +1496,20 @@ function sellItem(p, item) {
   toast(`出售 ${item.name} +${price} 金`);
 }
 
+/* ---------------- 新手初始装备 ---------------- */
+function giveStarterGear(p) {
+  const magic = p.cls === 'mage';
+  for (const sk in DATA.SLOTS) {
+    if (sk === 'ring2' || sk === 'ring3' || sk === 'ring4' || sk === 'ring5') continue;
+    if (p.equip[sk]) continue;
+    p.equip[sk] = makeItem(sk, 3, 'uncommon', magic);
+  }
+  recalcStats(p);
+  p.hp = p.stats.hpMax;
+  p.mp = p.stats.mpMax;
+  return p;
+}
+
 /* ---------------- 装备强化 ---------------- */
 function enhMul(it) { return DATA.ENHANCE.statMul(it.enh || 0); }
 
@@ -2800,6 +2814,30 @@ function drawGround(w) {
   CTX.fillStyle = bg;
   CTX.fillRect(0, 0, VW, VH);
 
+  // 主题背景图（水墨版）优先
+  if (imgReady('bg')) {
+    CTX.drawImage(IMG.bg, px(0), py(0), w.W, w.H * YS);
+    CTX.save();
+    CTX.beginPath(); CTX.rect(px(0), py(0), w.W, w.H * YS); CTX.clip();
+    CTX.globalCompositeOperation = 'multiply';
+    CTX.globalAlpha = 0.35;
+    CTX.fillStyle = tint;
+    CTX.fillRect(px(0), py(0), w.W, w.H * YS);
+    CTX.globalAlpha = 1;
+    CTX.globalCompositeOperation = 'source-over';
+    CTX.fillStyle = 'rgba(0,0,0,0.18)';
+    CTX.fillRect(px(0), py(0), w.W, w.H * YS);
+    CTX.restore();
+    // 边界外压黑
+    CTX.fillStyle = 'rgba(0,0,0,.72)';
+    const l0 = px(0), t0 = py(0), r0 = px(w.W), b0 = py(w.H);
+    if (l0 > 0) CTX.fillRect(0, 0, l0, VH);
+    if (r0 < VW) CTX.fillRect(r0, 0, VW - r0, VH);
+    if (t0 > 0) CTX.fillRect(0, 0, VW, t0);
+    if (b0 < VH) CTX.fillRect(0, b0, VW, VH - b0);
+    return;
+  }
+
   const T = TILE_PX;
   const hasTiles = imgReady('tiles');
   const salt = (w.isTown ? 99 : w.roomId) + 1;
@@ -3619,9 +3657,11 @@ const fmtMod = v => (v > 0 ? '+' : '') + v;
 
 function confirmCreate() {
   G.player = createPlayer(SEL.race, SEL.cls);
+  giveStarterGear(G.player);
   G.diff = 'normal';
   startGame();
   logMsg(`${DATA.RACES[SEL.race].name} · ${DATA.CLASSES[SEL.cls].name} 踏上征程`, 'level');
+  toast(`获得新手装备一套 · 战力 ${combatPower(G.player)}`);
   openTownMap();   // 开局直接让玩家选第一个图 + 难度
 }
 
@@ -5405,6 +5445,7 @@ window.addEventListener('DOMContentLoaded', () => {
     G.player.unlocked = [0,1,2,3,4,5];
     G.player.level = 8;
     recalcStats(G.player);
+    if (!G.player.equip.weapon) giveStarterGear(G.player);
     G.player.hp = G.player.stats.hpMax;
     G.player.mp = G.player.stats.mpMax;
     startGame();

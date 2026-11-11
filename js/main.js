@@ -325,6 +325,7 @@ window.addEventListener('DOMContentLoaded', () => {
     G.player.unlocked = [0,1,2,3,4,5];
     G.player.level = 8;
     recalcStats(G.player);
+    if (!G.player.equip.weapon) giveStarterGear(G.player);
     G.player.hp = G.player.stats.hpMax;
     G.player.mp = G.player.stats.mpMax;
     startGame();

@@ -36,7 +36,7 @@ function uiInit() {
       if (e.target.closest('[data-qt-accept-all]')) { acceptAllQuests(); QT_SIG = ''; return; }
     });
   }
-  document.querySelectorAll('.cc-btn').forEach(btn => {
+  document.querySelectorAll('.cc-btn, .codex-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       if (btn.dataset.skill) castSkillKey(btn.dataset.skill);
       else if (btn.dataset.act) handleCommand(btn.dataset.act);
@@ -846,6 +846,7 @@ function interactNPC(target) {
     case 'save': saveGame() ? toast('进度已保存') : toast('保存失败'); break;
     case 'quest': toggleModal('quest', '任务官 · 罗兰', questHtml); break;
     case 'craft': toggleModal('craft', '锻造台', craftHtml); break;
+    case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
   }
 }
 

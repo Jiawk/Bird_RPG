@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>我的第一款游戏 · 艾泽拉斯的回响</title>
+<title>兽人永不为奴</title>
 <style>
 /* ============================================================
    魔兽争霸3 冰封王座 风格 UI V2
@@ -754,8 +754,8 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   <!-- ================= 标题 ================= -->
   <div id="screen-title" class="screen">
     <div class="title-box">
-      <div class="game-title">艾泽拉斯的回响</div>
-      <div class="game-sub">MY FIRST GAME · 打怪 · 爆装 · 成长</div>
+      <div class="game-title">兽人永不为奴</div>
+      <div class="game-sub">打怪 · 爆装 · 成长</div>
       <div class="title-btns">
         <button class="big-btn" id="btnContinue">继续游戏</button>
         <button class="big-btn primary" id="btnNew">新的征程</button>
@@ -3731,7 +3731,7 @@ function uiInit() {
       if (e.target.closest('[data-qt-accept-all]')) { acceptAllQuests(); QT_SIG = ''; return; }
     });
   }
-  document.querySelectorAll('.cc-btn').forEach(btn => {
+  document.querySelectorAll('.cc-btn, .codex-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       if (btn.dataset.skill) castSkillKey(btn.dataset.skill);
       else if (btn.dataset.act) handleCommand(btn.dataset.act);
@@ -4541,6 +4541,7 @@ function interactNPC(target) {
     case 'save': saveGame() ? toast('进度已保存') : toast('保存失败'); break;
     case 'quest': toggleModal('quest', '任务官 · 罗兰', questHtml); break;
     case 'craft': toggleModal('craft', '锻造台', craftHtml); break;
+    case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
   }
 }
 

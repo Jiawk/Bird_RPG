@@ -10,10 +10,12 @@ for a in sys.argv[1:]:
     if a.startswith('--theme='):
         THEME = a.split('=', 1)[1]
 
-OUT_NAME = '艾泽拉斯的回响.html' if THEME == 'classic' else '艾泽拉斯的回响·水墨版.html'
+TITLE = '兽人永不为奴' if THEME == 'classic' else '仙剑奇缘'
+OUT_NAME = TITLE + '.html'
 OUT = os.path.join(ROOT, 'dist', OUT_NAME)
 
 html = io.open(os.path.join(ROOT, 'index.html'), encoding='utf-8').read()
+html = html.replace('__GAME_TITLE__', TITLE)
 if THEME == 'wq':
     html = html.replace('<script src="js/assets.js"></script>',
                         '<script src="js/assets_wq.js"></script>')

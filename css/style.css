@@ -313,7 +313,6 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .stick i{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;
   border-radius:50%;background:rgba(212,175,55,.42);border:1px solid var(--gold)}
 #stickMove{left:16px;bottom:170px}
-#stickAim{right:16px;bottom:170px}
 
 @media (max-width:1000px){
   .portrait-frame{width:58px;height:58px}
@@ -334,7 +333,6 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   .cc-btn.skill .sk-ic{width:42px;height:42px}
   .cc-btn .sk-ic.util{width:32px;height:32px}
   #stickMove{left:14px;bottom:24px;width:132px;height:132px}
-  #stickAim{right:14px;bottom:200px;width:112px;height:112px}
   .topbar-right .res-box{padding:4px 9px;font-size:12px}
   .codex-btn{padding:5px 10px;font-size:11px}
 }
@@ -785,7 +783,6 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   .cc-btn .sk-ic.util{width:28px;height:28px}
 
   #stickMove{left:10px;bottom:16px;width:124px;height:124px}
-  #stickAim{right:10px;bottom:190px;width:104px;height:104px}
   .stick i{width:40px;height:40px;margin:-20px 0 0 -20px}
 
   .msglog{left:6px;bottom:160px;width:190px;max-height:90px;font-size:10px;padding:4px 6px}
@@ -824,7 +821,6 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   .hud-portrait{position:fixed !important;left:6px !important;top:6px !important}
   .msglog{position:fixed !important;left:6px !important;bottom:150px !important;width:180px !important}
   #stickMove{position:fixed !important;left:10px !important;bottom:14px !important}
-  #stickAim{position:fixed !important;right:10px !important;bottom:185px !important}
 }
 
 @media (max-width:520px){

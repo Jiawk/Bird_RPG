@@ -403,4 +403,11 @@ DATA.RACE_AVATAR  = { human:0, orc:1, undead:2, elf:3 };
 DATA.CLASS_AVATAR = { warrior:4, mage:5, archer:6, assassin:7 };
 
 DATA.MAX_LEVEL = 30;
-DATA.expForLevel = (lv) => Math.floor(100 * Math.pow(lv, 1.5));
+/* 经验曲线：1~25 级沿用原版 100×lv^1.5；26 级起每级 ×2.4（25 级之后非常慢） */
+DATA.EXP_TAIL_FROM = 26;
+DATA.EXP_TAIL_MUL = 2.4;
+DATA.expForLevel = (lv) => {
+  if (lv < DATA.EXP_TAIL_FROM) return Math.floor(100 * Math.pow(lv, 1.5));
+  const base = Math.floor(100 * Math.pow(DATA.EXP_TAIL_FROM - 1, 1.5));
+  return Math.round(base * Math.pow(DATA.EXP_TAIL_MUL, lv - (DATA.EXP_TAIL_FROM - 1)));
+};

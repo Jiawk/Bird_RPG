@@ -3962,6 +3962,7 @@ function handleCommand(act) {
     case 'map': toggleModal('map', '传送 / 回城', () => townMapHtml()); break;
     case 'town': goTown(); break;
     case 'quest': toggleModal('quest', '任务官 · 罗兰', questHtml); break;
+    case 'craft': toggleModal('craft', '锻造台', craftHtml); break;
     case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
     case 'enhance': toggleModal('enhance', '铁匠 · 装备强化', enhanceHtml); break;
     case 'sellWorse': {
@@ -4732,26 +4733,57 @@ function dropQuest(id) {
 /* ---------------- 锻造台 ---------------- */
 function craftHtml() {
   const p = G.player;
-  let mat = '<div style="display:flex;gap:14px;margin-bottom:12px;font-size:12px">';
-  for (const k in DATA.MATERIALS) {
-    const m = DATA.MATERIALS[k];
-    mat += `<span style="color:${m.color}">${m.icon} ${m.name} ×${p.materials[k]||0}</span>`;
-  }
-  mat += '</div>';
+  const CRAFT_MATS = ['iron', 'mithril', 'scale', 'shard'];
 
-  let html = mat + '<div class="npc-list">';
-  DATA.CRAFT.forEach((c, i) => {
-    const needTxt = Object.keys(c.need).map(k =>
-      `${DATA.MATERIALS[k].name}×${c.need[k]}`).join(' + ');
-    const okMat = Object.keys(c.need).every(k => (p.materials[k]||0) >= c.need[k]);
-    const okGold = p.gold >= c.gold;
-    const q = DATA.QUALITY.find(x => x.key === c.quality);
-    html += `<div class="npc-row"><div>
-      <div class="nr-name" style="color:${q.color}">${c.name}</div>
-      <div class="nr-info">${needTxt} + ${c.gold} 金</div>
-      </div><button data-craft="${i}" ${okMat&&okGold?'':'disabled'}>${okMat&&okGold?'锻造':'材料不足'}</button></div>`;
+  // ---- 强化入口（和铁匠一样） ----
+  let html = `<div class="npc-row" style="margin-bottom:12px;border-color:#8a6d3b">
+    <div><div class="nr-name" style="color:#ffd24a">⚒ 装备强化</div>
+    <div class="nr-info">消耗金币 + 强化石，把装备强化到最高 +15</div></div>
+    <button data-act-enhance style="border-color:#d4af37;color:#ffd24a">打开</button></div>`;
+
+  // ---- 合成说明 ----
+  html += `<div class="col-title" style="margin:8px 0 8px">材料合成装备</div>`;
+  html += `<div style="font-size:11.5px;color:#8f8570;line-height:1.7;margin-bottom:10px;
+    padding:8px 10px;background:rgba(60,48,28,.35);border-left:2px solid #8a6d3b;border-radius:2px">
+    用材料<b style="color:#ffd98a">直接打造</b>一件指定品质的装备（部位随机）。<br>
+    材料来自：<b style="color:#ffd98a">悬赏任务奖励</b> · <b style="color:#ffd98a">怪物 / BOSS 掉落</b>
+  </div>`;
+
+  // ---- 材料栏（只显示合成材料） ----
+  html += '<div style="display:flex;gap:16px;margin-bottom:10px;font-size:12px;flex-wrap:wrap">';
+  CRAFT_MATS.forEach(k => {
+    const m = DATA.MATERIALS[k];
+    const n = p.materials[k] || 0;
+    html += `<span style="color:${n > 0 ? m.color : '#5a5348'}">${m.name} ×${n}</span>`;
   });
-  return html + `</div><div style="margin-top:10px;font-size:11px;color:#8f8570">材料来源：任务奖励 · 怪物掉落</div>`;
+  html += `<span style="margin-left:auto;color:#ffd24a">金币 ${fmt(p.gold)}</span></div>`;
+
+  // ---- 配方 ----
+  html += '<div class="npc-list">';
+  DATA.CRAFT.forEach((c, i) => {
+    const q = DATA.QUALITY.find(x => x.key === c.quality);
+    const okMat = Object.keys(c.need).every(k => (p.materials[k] || 0) >= c.need[k]);
+    const okGold = p.gold >= c.gold;
+    const can = okMat && okGold;
+
+    let needTxt = Object.keys(c.need).map(k => {
+      const have = p.materials[k] || 0, need = c.need[k];
+      const ok = have >= need;
+      return `<span style="color:${ok ? '#7fd4a8' : '#ff8a7a'}">${DATA.MATERIALS[k].name} ${have}/${need}</span>`;
+    }).join(' + ');
+
+    html += `<div class="npc-row" style="align-items:flex-start">
+      <div style="flex:1">
+        <div class="nr-name" style="color:${q.color}">${c.name}</div>
+        <div class="nr-info" style="margin:3px 0">${needTxt}
+          <span style="color:${okGold ? '#ffd24a' : '#ff8a7a'}">+ ${c.gold} 金</span></div>
+        <div class="nr-info" style="color:#6b6558">产出：${q.name}品质随机部位（武器/头盔/胸甲/护腿/战靴/项链/戒指/饰品）</div>
+      </div>
+      <button data-craft="${i}" ${can ? '' : 'disabled'}>${can ? '锻造' : '材料不足'}</button>
+    </div>`;
+  });
+  html += '</div>';
+  return html;
 }
 
 function doCraft(i) {
@@ -5327,6 +5359,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const skillTest = /k$/.test(location.hash);
     const questTest = /q$/.test(location.hash);
     const setTest = /s$/.test(location.hash);
+    const craftTest = /n$/.test(location.hash);
     const n = parseInt(location.hash.slice(4), 10);
     G.diff = 'normal';
     G.player = createPlayer('human', 'archer');
@@ -5365,6 +5398,13 @@ window.addEventListener('DOMContentLoaded', () => {
       const it = makeItem('chest', 12, 'epic', false); it.enh = 11; addToBag(G.player, it);
       if (location.hash.endsWith('g')) openModal('enhance','锻造台 · 强化', enhanceItemHtml(G.player.equip.weapon.id));
       else handleCommand('enhance');
+    }
+    if (craftTest) {
+      G.player.materials.iron = 10; G.player.materials.mithril = 6;
+      G.player.materials.scale = 3; G.player.materials.shard = 1;
+      G.player.materials.stone = 25; G.player.materials.protect = 2;
+      G.player.gold = 20000;
+      handleCommand('craft');
     }
     if (setTest) {
       const cl = G.player.cls;

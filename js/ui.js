@@ -545,6 +545,7 @@ function usePotion() {
 /* ---------------- 背包 ---------------- */
 function bagHtml() {
   const p = G.player;
+  (p.bag || []).forEach(normalizeSlot);
   const page = clamp(p.bagPage || 0, 0, BAG_PAGES - 1);
   const start = page * BAG_PAGE_SIZE, end = start + BAG_PAGE_SIZE;
   const idx = DATA.QUALITY.findIndex(q => q.key === (p.equip.weapon?.qKey || ''));

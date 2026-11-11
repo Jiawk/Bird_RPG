@@ -282,6 +282,7 @@ const BAG_PAGES = 6;              // 6 页 = 144 格
 const BAG_MAX = BAG_PAGE_SIZE * BAG_PAGES;
 
 function equipItem(p, item) {
+  normalizeSlot(item);
   if (item.reqLv > p.level) { toast('等级不足，无法装备'); return false; }
   // 特戒槽只能放对应的特戒
   if (item.slot && item.slot.indexOf('ring_') === 0) {
@@ -337,6 +338,7 @@ function removeFromBag(p, item) {
 }
 
 function sellItem(p, item) {
+  normalizeSlot(item);
   if (item.ringKey) { toast('特戒无法分解或出售'); return; }
   const q = DATA.QUALITY.find(x => x.key === item.qKey);
   const idx = DATA.QUALITY.indexOf(q);
@@ -350,6 +352,19 @@ function sellItem(p, item) {
 function slotName(sk) {
   const d = DATA.SLOTS[sk];
   return d ? d.name : '未知部位';
+}
+
+/* 惰性修正：单个物品的非法槽位就地纠正 */
+function normalizeSlot(it) {
+  if (!it || it.type === 'potion') return it;
+  if (it.ringKey) {
+    const s = ringSlotOf(it.ringKey);
+    if (s && it.slot !== s) it.slot = s;
+    return it;
+  }
+  // 普通装备不允许占用特戒槽
+  if (!DATA.SLOTS[it.slot] || String(it.slot).indexOf('ring_') === 0) it.slot = 'ring';
+  return it;
 }
 
 /* 迁移：把槽位已不存在的装备归位 */
@@ -375,7 +390,7 @@ function migrateItemSlots(p) {
       else addToBag(p, it);
     } else fix(it);
   }
-  (p.bag || []).forEach(it => { if (it.type !== 'potion') fix(it); });
+  (p.bag || []).forEach(it => { if (it.type !== 'potion') { fix(it); normalizeSlot(it); } });
   p.bag = (p.bag || []).filter(it => it.type === 'potion' || valid(it.slot));
 }
 
@@ -622,6 +637,7 @@ function equipDeltaPower(p, item) {
 /* 该装备是否不如身上的（可以卖） */
 function isWorseThanEquipped(p, it) {
   if (!it || it.type === 'potion') return false;
+  normalizeSlot(it);
   if (it.ringKey) return false;            // 特戒永远保留
   const cur = p.equip[it.slot];
   if (!cur) return false;                 // 空槽位别卖
@@ -800,6 +816,7 @@ function loadGame() {
   ['stone','protect','skillT','breakT'].forEach(k => { G.player.materials[k] = G.player.materials[k] || 0; });
   (G.player.bag || []).forEach(it => { if (it.type === 'potion' && !it.count) it.count = 1; });
   G.player.bossKills = G.player.bossKills || 0;
+  migrateItemSlots(G.player);
   recalcStats(G.player);
   return true;
 }

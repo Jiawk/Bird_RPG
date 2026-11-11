@@ -813,6 +813,13 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   #stickAim{position:fixed !important;right:10px !important;bottom:185px !important}
 }
 
+/* 窄屏隐藏居中房间名（避免和血条面板/头像重叠），房间名仍会出现在进场提示与日志 */
+@media (max-width:520px){
+  .topbar-left{display:none !important}
+  #bossBar{top:52px !important;width:calc(100vw - 16px) !important;left:8px !important;transform:none !important}
+  .bb-name{font-size:12px}
+}
+
 </style>
 </head>
 <body>

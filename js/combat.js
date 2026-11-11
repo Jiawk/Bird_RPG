@@ -101,7 +101,9 @@ function playerAttack() {
       x: p.x + Math.cos(ang) * 22, y: p.y + Math.sin(ang) * 22,
       vx: Math.cos(ang) * 520, vy: Math.sin(ang) * 520,
       life: 0.9, dead: false, pierce: false, dmg: p.stats.power,
-      color: p.cls === 'mage' ? '#7fd4ff' : '#ffe08a',
+      color: p.stats.weaponFx === 'arrow' ? '#d8f0ff'
+           : (p.stats.weaponFx === 'spell' ? '#9f7fff' : '#ffe08a'),
+      shape: p.stats.weaponFx === 'arrow' ? 'arrow' : (p.stats.weaponFx === 'spell' ? 'orb' : 'bolt'),
       hitSet: new Set(), isSkill: false
     });
     if (!target) { /* 空放 */ }

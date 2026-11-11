@@ -599,6 +599,27 @@ function drawTrap(t) {
 
 function drawProjectile(pr) {
   const x = px(pr.x), y = py(pr.y) - 18;
+  const ang = Math.atan2(pr.vy, pr.vx);
+
+  if (pr.shape === 'arrow') {
+    // 箭矢：细长箭杆 + 箭头 + 拖尾
+    CTX.save();
+    CTX.translate(x, y);
+    CTX.rotate(ang);
+    const g = CTX.createLinearGradient(-30, 0, 12, 0);
+    g.addColorStop(0, 'rgba(216,240,255,0)');
+    g.addColorStop(1, pr.color);
+    CTX.strokeStyle = g; CTX.lineWidth = 2.5; CTX.lineCap = 'round';
+    CTX.beginPath(); CTX.moveTo(-28, 0); CTX.lineTo(8, 0); CTX.stroke();
+    CTX.fillStyle = '#fff';
+    CTX.beginPath(); CTX.moveTo(14, 0); CTX.lineTo(6, -4); CTX.lineTo(6, 4); CTX.closePath(); CTX.fill();
+    CTX.strokeStyle = 'rgba(255,255,255,.65)'; CTX.lineWidth = 1.5;
+    CTX.beginPath(); CTX.moveTo(-6, 0); CTX.lineTo(-12, -4); CTX.stroke();
+    CTX.beginPath(); CTX.moveTo(-6, 0); CTX.lineTo(-12, 4); CTX.stroke();
+    CTX.restore();
+    return;
+  }
+
   const glow = CTX.createRadialGradient(x, y, 0, x, y, 13);
   glow.addColorStop(0, pr.color);
   glow.addColorStop(1, 'rgba(0,0,0,0)');

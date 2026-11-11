@@ -631,6 +631,11 @@ function charHtml() {
   let stats = '<div class="cp-col char-right">';
   stats += '<div class="s-group"><div class="s-title">核心属性</div>';
   stats += row(st.isMagic ? '内功攻击' : '外功攻击', Math.round(st.power), 'hot');
+  const wp = p.equip.weapon;
+  const wk = wp && wp.wtype ? DATA.WEAPON_KINDS[wp.wtype] : null;
+  stats += row('本命武器',
+    wk ? `${wk.label}${wk.cls.includes(p.cls) ? ' +' + Math.round(wk.bonus * 100) + '%' : '（不匹配）'}`
+       : '未装备', wk && wk.cls.includes(p.cls) ? 'ok' : 'bad');
   stats += row('攻击速度', (st.as * 100).toFixed(0) + '%');
   stats += row('暴击率', (st.crit * 100).toFixed(1) + '%', 'hot');
   stats += row('暴击伤害', (st.critDmg * 100).toFixed(0) + '%');
@@ -1428,6 +1433,12 @@ function showTooltip(it, x, y) {
     const enhTxt = it.enh ? `<span style="color:#5fdc4a">+${it.enh}</span> ` : '';
     const parts = [`<h4 style="color:${it.color}">${enhTxt}${it.name}</h4>`,
       `<div class="tt-sub">${q.name} · ${DATA.SLOTS[it.slot].name} · 物品等级 ${it.ilvl}</div>`];
+    if (it.wtype && DATA.WEAPON_KINDS[it.wtype]) {
+      const K = DATA.WEAPON_KINDS[it.wtype];
+      const own = K.cls.includes(G.player.cls);
+      parts.push(`<div style="font-size:11px;margin-top:2px;color:${own ? '#5fdc4a' : '#8f8570'}">
+        ${K.label}类${own ? ` · 本命武器 攻击 +${Math.round(K.bonus * 100)}%` : ' · 非本命（无加成）'}</div>`);
+    }
     if (it.effect) {
       const m = enhMul(it);
       const lines = Object.keys(it.effect).map(k => {

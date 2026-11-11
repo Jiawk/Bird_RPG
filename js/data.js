@@ -127,6 +127,17 @@ DATA.AFFIXES = [
   {key:'all',name:'全属性',v:[1,4],scale:0.2}
 ];
 
+/* ---------------- 武器种类（与本命职业匹配有加成） ---------------- */
+DATA.WEAPON_KINDS = {
+  sword:   {label:'剑',   cls:['warrior'],  bonus:0.12, fx:'slash', names:['长剑','阔剑','骑士剑','军刀']},
+  axe:     {label:'斧',   cls:['warrior'],  bonus:0.12, fx:'slash', names:['战斧','巨斧','劈山斧']},
+  bow:     {label:'弓',   cls:['archer'],   bonus:0.12, fx:'arrow', names:['长弓','猎弓','复合弓','精灵弓']},
+  crossbow:{label:'弩',   cls:['archer'],   bonus:0.10, fx:'arrow', names:['手弩','重弩','连弩']},
+  dagger:  {label:'匕首', cls:['assassin'], bonus:0.12, fx:'stab',  names:['匕首','短刀','袖剑','毒匕']},
+  staff:   {label:'法杖', cls:['mage'],     bonus:0.12, fx:'spell', names:['法杖','秘法杖','星辉杖','冰晶杖']},
+  orb:     {label:'法球', cls:['mage'],     bonus:0.10, fx:'spell', names:['法球','奥术球','虚空球']}
+};
+
 DATA.ITEM_NAMES = {
   weapon:['长剑','战斧','法杖','猎弓','匕首','巨锤','符文剑'],
   helm:['头盔','兜帽','王冠','面甲'], chest:['胸甲','法袍','皮甲','链甲'],

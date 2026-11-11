@@ -94,6 +94,15 @@ function recalcStats(p) {
     vit: p.attrs.vit + p.bonus.vit + baseAll + eq.vit
   };
 
+  // 本命武器：武器种类与职业匹配 → 攻击加成 + 特效
+  let weaponBonus = 0, weaponFx = 'slash';
+  const wpn = p.equip.weapon;
+  if (wpn && wpn.wtype && DATA.WEAPON_KINDS[wpn.wtype]) {
+    const K = DATA.WEAPON_KINDS[wpn.wtype];
+    weaponFx = K.fx;
+    if (K.cls.includes(p.cls)) weaponBonus = K.bonus;
+  }
+
   // 特戒效果（强化会放大）
   const RFX = { expBonus:0, goldBonus:0, lifesteal:0, cleave:0, critDmg:0, dropBonus:0 };
   for (const sk of ['ring2','ring3','ring','trinket']) {
@@ -133,7 +142,8 @@ function recalcStats(p) {
       : cls.base.atk + (p.level - 1) * cls.growth.atk +
         (cls.primary === 'str' ? A.str : A.agi) * 2 + eq.atk)
     * (1 + (isMagic ? pas.spellPct : 0))
-    * (1 + pas.atkPct + bf.atkPct);
+    * (1 + pas.atkPct + bf.atkPct)
+    * (1 + weaponBonus);
 
   // 兽族狂暴
   let berserk = 0;
@@ -155,6 +165,7 @@ function recalcStats(p) {
     power: power * (1 + berserk),
     isMagic,
     skillMul: 1 + SB.skillDmg,
+    weaponBonus, weaponFx, wtype: wpn ? wpn.wtype : null,
     setBonus: SB,
     as: cls.base.as * (1 + A.agi / 500) * (1 + pas.asPct + bf.asPct),
     crit: clamp(0.05 + A.agi / 2000 + eq.crit + pas.crit + (bonus.crit || 0), 0, 0.6),
@@ -215,7 +226,16 @@ function makeItem(slot, ilvl, forcedQuality, preferMagic) {
     Object.fromEntries(DATA.QUALITY.map(q => [q.key, q.weight]))
   );
   const q = DATA.QUALITY.find(x => x.key === qKey);
-  const names = DATA.ITEM_NAMES[slot] || DATA.ITEM_NAMES.ring;   // ring2/ring3 无专属名字表
+  let wtype = null, names;
+  if (slot === 'weapon') {
+    const cls = G.player ? G.player.cls : 'warrior';
+    const own = Object.keys(DATA.WEAPON_KINDS).filter(k => DATA.WEAPON_KINDS[k].cls.includes(cls));
+    const all = Object.keys(DATA.WEAPON_KINDS);
+    wtype = (Math.random() < 0.88 && own.length) ? pick(own) : pick(all);
+    names = DATA.WEAPON_KINDS[wtype].names;
+  } else {
+    names = DATA.ITEM_NAMES[slot] || DATA.ITEM_NAMES.ring;
+  }
   const baseName = pick(names);
   const PREFIX = { common:'', uncommon:'精铁', rare:'秘银', epic:'符文', legendary:'龙鳞', mythic:'虚空' };
   const name = PREFIX[qKey] + baseName;
@@ -248,7 +268,8 @@ function makeItem(slot, ilvl, forcedQuality, preferMagic) {
   return {
     id: 'i' + Math.random().toString(36).slice(2, 9),
     slot, qKey, qName: q.name, color: q.color,
-    name, ilvl, reqLv: Math.max(1, ilvl + q.lvl), stats, enh: 0
+    name, ilvl, reqLv: Math.max(1, ilvl + q.lvl), stats, enh: 0,
+    ...(wtype ? { wtype } : {})
   };
 }
 

@@ -152,13 +152,14 @@ function castSkillKey(k) {
 
 const FX_OF = { melee:1, dash:1, proj:0, aoe:0, trap:2, buff:2, hit:2 };
 
-function spawnVfx(x, y, color, radius, kind, life) {
+function spawnVfx(x, y, color, radius, kind, life, skill) {
   const w = G.world; if (!w) return;
   if (!w.vfx) w.vfx = [];
   w.vfx.push({
-    x, y, color, r: radius || 90, kind: kind || 'aoe',
+    x, y, color, r: radius || 90, kind: kind || 'aoe', skill: skill || null,
     fx: FX_OF[kind] !== undefined ? FX_OF[kind] : 0,
-    t: 0, life: life || 0.55
+    t: 0, life: life || 0.55,
+    seed: Math.random() * 6.283
   });
 }
 
@@ -168,7 +169,11 @@ function castSkillImpl(key) {
   // 施法特效（冷却中不触发）
   const _sp = DATA.SKILLS[key];
   if (_sp && (p.cd[key] || 0) <= 0) {
-    spawnVfx(p.x, p.y, _sp.color || '#ffd24a', _sp.radius || 90, _sp.kind);
+    const _col = (DATA.SKILL_COLOR && DATA.SKILL_COLOR[key]) || _sp.color || '#ffd24a';
+    const _rad = _sp.radius ? _sp.radius * 42
+               : (_sp.kind === 'proj' ? 42 : _sp.kind === 'blink' ? 90 : 110);
+    spawnVfx(p.x, p.y, _col, _rad, _sp.kind,
+             _sp.kind === 'aoe' ? 0.95 : 0.6, key);
   }
   const sp = DATA.SKILLS[key];
   if (!sp || sp.type !== 'active') return;

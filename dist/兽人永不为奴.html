@@ -1263,6 +1263,18 @@ DATA.CODEX_LEVELS = [
 /* 普通装备可掉落的部位（特戒槽不参与随机掉落） */
 DATA.LOOT_SLOTS = ['weapon','helm','chest','legs','boots','neck','ring','trinket'];
 
+/* 技能特效配色 */
+DATA.SKILL_COLOR = {
+  fireball:'#ff6a2a', frostNova:'#6fd4ff', blizzard:'#bfe9ff',
+  arcaneTorrent:'#b45cff', blink:'#9f7fff',
+  whirlwind:'#ffb347', shieldwall:'#c9a24a', battleShout:'#ff8a3d',
+  execute:'#ff3b3b', charge:'#ffb347',
+  multishot:'#8fe36a', pierceArrow:'#b6ff8a', freezeTrap:'#6fd4ff',
+  rapidFire:'#ffe08a', backjump:'#8fe36a',
+  backstab:'#c06bff', poisonBlade:'#7fdc5a', fanOfKnives:'#c06bff',
+  vanish:'#9f7fff', shadowstep:'#9f7fff'
+};
+
 /* 魔兽头像图集索引（avatars.png 12 格） */
 DATA.RACE_AVATAR  = { human:0, orc:1, undead:2, elf:3 };
 DATA.CLASS_AVATAR = { warrior:4, mage:5, archer:6, assassin:7 };
@@ -2754,13 +2766,14 @@ function castSkillKey(k) {
 
 const FX_OF = { melee:1, dash:1, proj:0, aoe:0, trap:2, buff:2, hit:2 };
 
-function spawnVfx(x, y, color, radius, kind, life) {
+function spawnVfx(x, y, color, radius, kind, life, skill) {
   const w = G.world; if (!w) return;
   if (!w.vfx) w.vfx = [];
   w.vfx.push({
-    x, y, color, r: radius || 90, kind: kind || 'aoe',
+    x, y, color, r: radius || 90, kind: kind || 'aoe', skill: skill || null,
     fx: FX_OF[kind] !== undefined ? FX_OF[kind] : 0,
-    t: 0, life: life || 0.55
+    t: 0, life: life || 0.55,
+    seed: Math.random() * 6.283
   });
 }
 
@@ -2770,7 +2783,11 @@ function castSkillImpl(key) {
   // 施法特效（冷却中不触发）
   const _sp = DATA.SKILLS[key];
   if (_sp && (p.cd[key] || 0) <= 0) {
-    spawnVfx(p.x, p.y, _sp.color || '#ffd24a', _sp.radius || 90, _sp.kind);
+    const _col = (DATA.SKILL_COLOR && DATA.SKILL_COLOR[key]) || _sp.color || '#ffd24a';
+    const _rad = _sp.radius ? _sp.radius * 42
+               : (_sp.kind === 'proj' ? 42 : _sp.kind === 'blink' ? 90 : 110);
+    spawnVfx(p.x, p.y, _col, _rad, _sp.kind,
+             _sp.kind === 'aoe' ? 0.95 : 0.6, key);
   }
   const sp = DATA.SKILLS[key];
   if (!sp || sp.type !== 'active') return;
@@ -3730,6 +3747,22 @@ function drawProjectile(pr) {
 }
 
 /* ---------------- 技能特效 ---------------- */
+/* 技能 → 特效类型 */
+const SKILL_FX = {
+  fireball:'burst', frostNova:'ring', blizzard:'shards', arcaneTorrent:'pillar',
+  blink:'flash', whirlwind:'slash', shieldwall:'ring', battleShout:'pillar',
+  execute:'slash', charge:'slash', multishot:'burst', pierceArrow:'slash',
+  freezeTrap:'ring', rapidFire:'burst', backjump:'flash', backstab:'slash',
+  poisonBlade:'burst', fanOfKnives:'slash', vanish:'flash', shadowstep:'flash'
+};
+
+function fxKindOf(e) {
+  if (e.skill && SKILL_FX[e.skill]) return SKILL_FX[e.skill];
+  if (e.kind === 'hit') return 'hit';
+  return ({ melee:'slash', dash:'slash', proj:'burst', aoe:'ring',
+            trap:'ring', buff:'pillar' })[e.kind] || 'ring';
+}
+
 function drawVfx(w) {
   if (!w.vfx || !w.vfx.length) return;
   for (let i = w.vfx.length - 1; i >= 0; i--) {
@@ -3737,55 +3770,128 @@ function drawVfx(w) {
     e.t += 1 / 60;
     if (e.t >= e.life) { w.vfx.splice(i, 1); continue; }
     const k = e.t / e.life, a = 1 - k;
-    const gx = px(e.x), gy = py(e.y), x = gx, y = gy - 16;
-    const R = e.r * (0.25 + k * 1.15);
-
+    const gx = px(e.x), gy = py(e.y);
+    const type = fxKindOf(e);
     CTX.save();
 
-    // ---- 特效帧（贴图） ----
-    if (imgReady('fx')) {
-      const sc = e.kind === 'hit' ? (0.45 + k * 0.55) : (0.45 + k * 1.15);
-      const sz = FX_SIZE * sc;
-      CTX.globalAlpha = e.kind === 'hit' ? a : a * 0.95;
-      CTX.translate(gx, gy - 20);
-      if (e.fx !== 0) CTX.rotate(k * 0.9);
-      CTX.imageSmoothingEnabled = false;
-      CTX.drawImage(IMG.fx, e.fx * FX_SIZE, 0, FX_SIZE, FX_SIZE, -sz / 2, -sz / 2, sz, sz);
-      CTX.setTransform(DPR, 0, 0, DPR, 0, 0);
-      CTX.globalAlpha = 1;
+    if (type === 'hit') {
+      const R = 18 + k * 26;
+      const g = CTX.createRadialGradient(gx, gy - 18, 1, gx, gy - 18, R);
+      g.addColorStop(0, e.color); g.addColorStop(1, 'rgba(0,0,0,0)');
+      CTX.globalAlpha = a * 0.9; CTX.fillStyle = g;
+      CTX.beginPath(); CTX.arc(gx, gy - 18, R, 0, 6.283); CTX.fill();
+      CTX.globalAlpha = a; CTX.strokeStyle = '#fff'; CTX.lineWidth = 2;
+      CTX.beginPath(); CTX.arc(gx, gy - 18, R * 0.6, 0, 6.283); CTX.stroke();
+      CTX.restore(); continue;
     }
 
-    // 地面冲击环
-    CTX.globalAlpha = a * 0.9;
-    CTX.strokeStyle = e.color;
-    CTX.lineWidth = 3 + 4 * a;
-    CTX.beginPath(); CTX.ellipse(gx, gy, R, R * YS, 0, 0, 6.283); CTX.stroke();
-    // 内圈
-    CTX.globalAlpha = a * 0.4;
-    CTX.lineWidth = 1.5;
-    CTX.beginPath(); CTX.ellipse(gx, gy, R * 0.6, R * 0.6 * YS, 0, 0, 6.283); CTX.stroke();
-    // 光晕
-    const gr = CTX.createRadialGradient(x, y, 2, x, y, R * 0.95);
-    gr.addColorStop(0, e.color);
-    gr.addColorStop(1, 'rgba(0,0,0,0)');
-    CTX.globalAlpha = a * 0.38;
-    CTX.fillStyle = gr;
-    CTX.beginPath(); CTX.arc(x, y, R * 0.95, 0, 6.283); CTX.fill();
-    // 放射线
-    CTX.globalAlpha = a * 0.75;
-    CTX.strokeStyle = e.color;
-    CTX.lineWidth = 2;
-    for (let sp = 0; sp < 8; sp++) {
-      const ang = sp * Math.PI / 4 + k * 1.1;
-      CTX.beginPath();
-      CTX.moveTo(x + Math.cos(ang) * R * 0.35, y + Math.sin(ang) * R * 0.35 * YS);
-      CTX.lineTo(x + Math.cos(ang) * R * 1.0, y + Math.sin(ang) * R * 1.0 * YS);
-      CTX.stroke();
+    // ---- 通用地面光环 ----
+    if (type !== 'flash' && type !== 'pillar') {
+      const R = e.r * (0.3 + k * 1.0);
+      CTX.globalAlpha = a * 0.85; CTX.strokeStyle = e.color; CTX.lineWidth = 3 + 4 * a;
+      CTX.beginPath(); CTX.ellipse(gx, gy, R, R * YS, 0, 0, 6.283); CTX.stroke();
+      CTX.globalAlpha = a * 0.35; CTX.lineWidth = 1.5;
+      CTX.beginPath(); CTX.ellipse(gx, gy, R * 0.62, R * 0.62 * YS, 0, 0, 6.283); CTX.stroke();
     }
-    // 中心闪光
-    CTX.globalAlpha = a * a;
-    CTX.fillStyle = '#fff';
-    CTX.beginPath(); CTX.arc(x, y, 10 * (1 - k) + 3, 0, 6.283); CTX.fill();
+
+    if (type === 'shards') {
+      // 暴风雪：从天而降的冰锥
+      const n = 14;
+      for (let j = 0; j < n; j++) {
+        const ang = e.seed + j * 2.399;
+        const rr = e.r * (0.25 + (j % 5) / 5 * 0.75);
+        const sx = gx + Math.cos(ang) * rr;
+        const sy = gy + Math.sin(ang) * rr * YS;
+        const fall = ((k * 1.6 + j / n) % 1);
+        const h = 120 * (1 - fall);
+        CTX.globalAlpha = a * (0.5 + fall * 0.5);
+        CTX.strokeStyle = e.color; CTX.lineWidth = 3;
+        CTX.beginPath();
+        CTX.moveTo(sx, sy - h); CTX.lineTo(sx, sy - h + 22); CTX.stroke();
+        CTX.fillStyle = '#ffffff';
+        CTX.beginPath(); CTX.arc(sx, sy - h + 22, 2.5, 0, 6.283); CTX.fill();
+      }
+    } else if (type === 'pillar') {
+      // 光柱升起
+      const h = e.r * (0.6 + k * 2.2);
+      const wd = e.r * 0.42 * (1 - k * 0.35);
+      const g = CTX.createLinearGradient(gx, gy - h, gx, gy);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(0.45, e.color);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      CTX.globalAlpha = a * 0.75; CTX.fillStyle = g;
+      CTX.fillRect(gx - wd / 2, gy - h, wd, h);
+      CTX.globalAlpha = a; CTX.strokeStyle = '#fff'; CTX.lineWidth = 2;
+      CTX.beginPath(); CTX.ellipse(gx, gy, wd * 0.7, wd * 0.7 * YS, 0, 0, 6.283); CTX.stroke();
+      for (let j = 0; j < 10; j++) {
+        const ang = j * 0.628 + k * 2;
+        CTX.globalAlpha = a * 0.8;
+        CTX.fillStyle = e.color;
+        CTX.beginPath();
+        CTX.arc(gx + Math.cos(ang) * wd * 0.8, gy - h * (0.2 + (j % 4) * 0.2), 3, 0, 6.283);
+        CTX.fill();
+      }
+    } else if (type === 'slash') {
+      // 挥砍弧
+      const dir = (e.seed || 0);
+      const sweep = Math.PI * 1.5;
+      CTX.globalAlpha = a * 0.95; CTX.strokeStyle = e.color; CTX.lineWidth = 7;
+      CTX.beginPath();
+      CTX.arc(gx, gy - 22, e.r * (0.5 + k * 0.7), dir - sweep / 2, dir - sweep / 2 + sweep * Math.min(1, k * 2));
+      CTX.stroke();
+      CTX.globalAlpha = a * 0.5; CTX.strokeStyle = '#fff'; CTX.lineWidth = 2;
+      CTX.beginPath();
+      CTX.arc(gx, gy - 22, e.r * (0.5 + k * 0.7), dir - sweep / 2, dir - sweep / 2 + sweep * Math.min(1, k * 2));
+      CTX.stroke();
+    } else if (type === 'burst') {
+      // 爆裂粒子
+      for (let j = 0; j < 16; j++) {
+        const ang = e.seed + j * 0.392;
+        const d = e.r * k * (0.6 + (j % 3) * 0.25);
+        CTX.globalAlpha = a * 0.9; CTX.fillStyle = j % 3 === 0 ? '#fff' : e.color;
+        CTX.beginPath();
+        CTX.arc(gx + Math.cos(ang) * d, gy + Math.sin(ang) * d * YS - 18, 4 * a + 1, 0, 6.283);
+        CTX.fill();
+      }
+    } else if (type === 'flash') {
+      const R = e.r * (0.4 + k * 1.4);
+      const g = CTX.createRadialGradient(gx, gy - 20, 2, gx, gy - 20, R);
+      g.addColorStop(0, '#ffffff');
+      g.addColorStop(0.35, e.color);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      CTX.globalAlpha = a; CTX.fillStyle = g;
+      CTX.beginPath(); CTX.arc(gx, gy - 20, R, 0, 6.283); CTX.fill();
+      for (let j = 0; j < 8; j++) {
+        const ang = e.seed + j * 0.785;
+        CTX.globalAlpha = a * 0.9; CTX.strokeStyle = '#fff'; CTX.lineWidth = 2;
+        CTX.beginPath();
+        CTX.moveTo(gx + Math.cos(ang) * R * 0.3, gy - 20 + Math.sin(ang) * R * 0.3);
+        CTX.lineTo(gx + Math.cos(ang) * R, gy - 20 + Math.sin(ang) * R);
+        CTX.stroke();
+      }
+    } else {
+      // ring：默认（含贴图星爆 + 放射线）
+      if (imgReady('fx')) {
+        const sc = 0.45 + k * 1.05;
+        const sz = FX_SIZE * sc;
+        CTX.globalAlpha = a * 0.9;
+        CTX.save(); CTX.translate(gx, gy - 20); CTX.rotate(k * 0.9);
+        CTX.imageSmoothingEnabled = false;
+        CTX.drawImage(IMG.fx, e.fx * FX_SIZE, 0, FX_SIZE, FX_SIZE, -sz / 2, -sz / 2, sz, sz);
+        CTX.restore();
+      }
+      CTX.globalAlpha = a * 0.75; CTX.strokeStyle = e.color; CTX.lineWidth = 2;
+      for (let sp2 = 0; sp2 < 8; sp2++) {
+        const ang = sp2 * 0.785 + k * 1.1;
+        CTX.beginPath();
+        CTX.moveTo(gx + Math.cos(ang) * e.r * 0.35, gy + Math.sin(ang) * e.r * 0.35 * YS);
+        CTX.lineTo(gx + Math.cos(ang) * e.r * (0.35 + k), gy + Math.sin(ang) * e.r * (0.35 + k) * YS);
+        CTX.stroke();
+      }
+      CTX.globalAlpha = a * a; CTX.fillStyle = '#fff';
+      CTX.beginPath(); CTX.arc(gx, gy - 20, 10 * (1 - k) + 3, 0, 6.283); CTX.fill();
+    }
+
     CTX.restore();
   }
 }

@@ -386,6 +386,18 @@ DATA.CODEX_LEVELS = [
 /* 普通装备可掉落的部位（特戒槽不参与随机掉落） */
 DATA.LOOT_SLOTS = ['weapon','helm','chest','legs','boots','neck','ring','trinket'];
 
+/* 技能特效配色 */
+DATA.SKILL_COLOR = {
+  fireball:'#ff6a2a', frostNova:'#6fd4ff', blizzard:'#bfe9ff',
+  arcaneTorrent:'#b45cff', blink:'#9f7fff',
+  whirlwind:'#ffb347', shieldwall:'#c9a24a', battleShout:'#ff8a3d',
+  execute:'#ff3b3b', charge:'#ffb347',
+  multishot:'#8fe36a', pierceArrow:'#b6ff8a', freezeTrap:'#6fd4ff',
+  rapidFire:'#ffe08a', backjump:'#8fe36a',
+  backstab:'#c06bff', poisonBlade:'#7fdc5a', fanOfKnives:'#c06bff',
+  vanish:'#9f7fff', shadowstep:'#9f7fff'
+};
+
 /* 魔兽头像图集索引（avatars.png 12 格） */
 DATA.RACE_AVATAR  = { human:0, orc:1, undead:2, elf:3 };
 DATA.CLASS_AVATAR = { warrior:4, mage:5, archer:6, assassin:7 };

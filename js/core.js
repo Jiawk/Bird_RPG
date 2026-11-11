@@ -10,6 +10,7 @@ const G = {
   diff: 'normal',      // 本次进图的难度
   autoPickup: true,    // 全屏自动拾取
   autoSell: false,     // 自动出售低战力装备
+  debug: { noCd:false, invincible:false, infMp:false, speed:false },   // 调试开关
   player: null,
   world: null,
   time: 0,

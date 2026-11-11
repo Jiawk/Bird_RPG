@@ -1297,6 +1297,7 @@ const G = {
   diff: 'normal',      // 本次进图的难度
   autoPickup: true,    // 全屏自动拾取
   autoSell: false,     // 自动出售低战力装备
+  debug: { noCd:false, invincible:false, infMp:false, speed:false },   // 调试开关
   player: null,
   world: null,
   time: 0,
@@ -2658,6 +2659,7 @@ function damageMonster(m, amount, type, isDot) {
 }
 
 function damagePlayer(amount, source) {
+  if (G.debug && G.debug.invincible) return;   // 调试：无敌
   const p = G.player;
   if (p.stats.invis > 0) return;
   if (Math.random() < p.stats.dodge) {
@@ -2797,7 +2799,7 @@ function castSkillImpl(key) {
   if (cd > 0) { toast(`${sp.name} 冷却中 ${cd.toFixed(1)}s`); return; }
   if (p.mp < (sp.cost || 0)) { toast('法力不足'); return; }
   p.mp -= sp.cost || 0;
-  p.cd[key] = sp.cd;
+  p.cd[key] = (G.debug && G.debug.noCd) ? 1 : sp.cd;   // 调试：CD 固定 1 秒
   p.castAnim = 0.2;
 
   const w = G.world;
@@ -4592,6 +4594,7 @@ function handleCommand(act) {
     case 'craft': toggleModal('craft', '锻造台', craftHtml); break;
     case 'codexEquip': toggleModal('codexEquip', '装备图鉴', codexEquipHtml); break;
     case 'codexCollect': toggleModal('codexCollect', '收藏图鉴', codexCollectHtml); break;
+    case 'debug': toggleModal('debug', '调试面板 · N', debugHtml); break;
     case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
     case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
     case 'enhance': toggleModal('enhance', '铁匠 · 装备强化', enhanceHtml); break;
@@ -5005,6 +5008,48 @@ function settingsHtml() {
     <div class="npc-row"><div><div class="nr-name" style="color:#ff6b5a">重新开局</div>
       <div class="nr-info">删除角色，不可恢复</div></div>
       <button data-act-reset style="border-color:#6b2b2b;color:#ff8a7a">重开</button></div>
+  </div>`;
+}
+
+/* ---------------- 调试面板 ---------------- */
+function debugHtml() {
+  const d = G.debug || (G.debug = {});
+  const on = v => v ? 'style="border-color:#5fdc4a;color:#b9ffb0"' : '';
+  const tag = v => v ? '已开启' : '已关闭';
+  const w = G.world;
+  const cnt = w ? w.monsters.filter(m => m.alive).length : 0;
+
+  return `<div style="font-size:11.5px;color:#8f8570;margin-bottom:10px">
+    调试开关只影响当前会话，刷新页面即恢复。当前地图存活怪物：<b style="color:#ffd24a">${cnt}</b>
+  </div>
+  <div class="npc-list">
+    <div class="npc-row"><div>
+      <div class="nr-name" style="color:#4ad4ff">立即刷新怪物</div>
+      <div class="nr-info">补满小怪 + 精英 + BOSS（${w && w.isTown ? '城镇内无效' : '本图'}）</div></div>
+      <button data-dbg-spawn ${w && !w.isTown ? '' : 'disabled'}>刷新</button></div>
+
+    <div class="npc-row"><div>
+      <div class="nr-name" style="color:#ff6b5a">清空本图怪物</div>
+      <div class="nr-info">把当前地图所有怪物移除（含 BOSS）</div></div>
+      <button data-dbg-clear ${w && !w.isTown ? '' : 'disabled'}>清空</button></div>
+
+    <div class="npc-row"><div>
+      <div class="nr-name">技能 CD 固定 1 秒</div>
+      <div class="nr-info">当前：${tag(d.noCd)}</div></div>
+      <button data-dbg-toggle="noCd" ${d.noCd ? 'style="border-color:#5fdc4a;color:#b9ffb0"' : ''}>${d.noCd ? '关闭' : '开启'}</button></div>
+
+    <div class="npc-row"><div>
+      <div class="nr-name">无敌模式</div>
+      <div class="nr-info">当前：${tag(d.invincible)}</div></div>
+      <button data-dbg-toggle="invincible" ${d.invincible ? 'style="border-color:#5fdc4a;color:#b9ffb0"' : ''}>${d.invincible ? '关闭' : '开启'}</button></div>
+
+    <div class="npc-row"><div>
+      <div class="nr-name">无限蓝量</div>
+      <div class="nr-info">当前：${tag(d.infMp)}</div></div>
+      <button data-dbg-toggle="infMp" ${d.infMp ? 'style="border-color:#5fdc4a;color:#b9ffb0"' : ''}>${d.infMp ? '关闭' : '开启'}</button></div>
+  </div>
+  <div style="margin-top:10px;font-size:11px;color:#8f8570">
+    提示：配合 <b>A</b> 自动攻击 + <b>S</b> 自动技能，开无敌和无 CD 就能一直刷特效。
   </div>`;
 }
 
@@ -5653,6 +5698,26 @@ function bindModal() {
     openModal('bag','背包 · 装备', bagHtml());
   });
 
+  body.querySelectorAll('[data-dbg-toggle]').forEach(b => b.onclick = () => {
+    const k = b.dataset.dbgToggle;
+    G.debug[k] = !G.debug[k];
+    toast(`${k}: ${G.debug[k] ? '开' : '关'}`);
+    openModal('debug', '调试面板 · N', debugHtml());
+  });
+  body.querySelectorAll('[data-dbg-spawn]').forEach(b => b.onclick = () => {
+    if (!G.world || G.world.isTown) { toast('城镇里不能刷怪'); return; }
+    const room = DATA.ROOMS[G.world.roomId];
+    spawnWave(room); spawnBoss(room);
+    toast(`已刷新：${G.world.monsters.filter(m => m.alive).length} 只`);
+    openModal('debug', '调试面板 · N', debugHtml());
+  });
+  body.querySelectorAll('[data-dbg-clear]').forEach(b => b.onclick = () => {
+    if (!G.world) return;
+    G.world.monsters.forEach(m => { m.alive = false; });
+    G.world.monsters = [];
+    toast('已清空本图怪物');
+    openModal('debug', '调试面板 · N', debugHtml());
+  });
   body.querySelectorAll('[data-act-pick-char]').forEach(b => b.onclick = () => {
     openModal('chars', '选择角色', charListHtml());
   });
@@ -5885,6 +5950,7 @@ function initInput() {
       case 't': handleCommand('tower'); break;   // 爬塔
       case 'j': handleCommand('quest'); break;   // 任务面板
       case 'x': useGatherRing(); break;          // 聚合之戒
+      case 'n': handleCommand('debug'); break;   // 调试面板
       case 'h': handleCommand('town'); break;   // H = 回城
       case 'escape':
         if (!$('modal').classList.contains('hidden')) closeModal();
@@ -5981,7 +6047,8 @@ function updatePlayer(dt) {
   }
   if (p.stats.invis > 0) p.stats.invis = Math.max(0, p.stats.invis - dt);
 
-  p.mp = Math.min(p.stats.mpMax, p.mp + p.stats.mpMax * p.stats.mpRegen * dt);
+  if (G.debug && G.debug.infMp) p.mp = p.stats.mpMax;
+  else p.mp = Math.min(p.stats.mpMax, p.mp + p.stats.mpMax * p.stats.mpRegen * dt);
 
   // 移动：方向键 / 触屏摇杆 / 按住右键跟随鼠标
   let mx = 0, my = 0;

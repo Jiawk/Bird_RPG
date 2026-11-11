@@ -44,6 +44,7 @@ function damageMonster(m, amount, type, isDot) {
 }
 
 function damagePlayer(amount, source) {
+  if (G.debug && G.debug.invincible) return;   // 调试：无敌
   const p = G.player;
   if (p.stats.invis > 0) return;
   if (Math.random() < p.stats.dodge) {
@@ -183,7 +184,7 @@ function castSkillImpl(key) {
   if (cd > 0) { toast(`${sp.name} 冷却中 ${cd.toFixed(1)}s`); return; }
   if (p.mp < (sp.cost || 0)) { toast('法力不足'); return; }
   p.mp -= sp.cost || 0;
-  p.cd[key] = sp.cd;
+  p.cd[key] = (G.debug && G.debug.noCd) ? 1 : sp.cd;   // 调试：CD 固定 1 秒
   p.castAnim = 0.2;
 
   const w = G.world;

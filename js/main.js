@@ -45,6 +45,7 @@ function initInput() {
       case 't': handleCommand('tower'); break;   // 爬塔
       case 'j': handleCommand('quest'); break;   // 任务面板
       case 'x': useGatherRing(); break;          // 聚合之戒
+      case 'n': handleCommand('debug'); break;   // 调试面板
       case 'h': handleCommand('town'); break;   // H = 回城
       case 'escape':
         if (!$('modal').classList.contains('hidden')) closeModal();
@@ -141,7 +142,8 @@ function updatePlayer(dt) {
   }
   if (p.stats.invis > 0) p.stats.invis = Math.max(0, p.stats.invis - dt);
 
-  p.mp = Math.min(p.stats.mpMax, p.mp + p.stats.mpMax * p.stats.mpRegen * dt);
+  if (G.debug && G.debug.infMp) p.mp = p.stats.mpMax;
+  else p.mp = Math.min(p.stats.mpMax, p.mp + p.stats.mpMax * p.stats.mpRegen * dt);
 
   // 移动：方向键 / 触屏摇杆 / 按住右键跟随鼠标
   let mx = 0, my = 0;

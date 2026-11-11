@@ -94,6 +94,16 @@ function recalcStats(p) {
     vit: p.attrs.vit + p.bonus.vit + baseAll + eq.vit
   };
 
+  // 特戒效果（强化会放大）
+  const RFX = { expBonus:0, goldBonus:0, lifesteal:0, cleave:0, critDmg:0, dropBonus:0 };
+  for (const sk of ['ring2','ring3','ring','trinket']) {
+    const it = p.equip[sk];
+    if (it && it.effect) {
+      const m = enhMul(it);
+      for (const k in it.effect) RFX[k] = (RFX[k] || 0) + it.effect[k] * m;
+    }
+  }
+
   // 套装：主属性加成
   const SB = setBonus(p);
   if (SB.pct) A[SB.primary] = Math.round(A[SB.primary] * (1 + SB.pct));
@@ -148,14 +158,16 @@ function recalcStats(p) {
     setBonus: SB,
     as: cls.base.as * (1 + A.agi / 500) * (1 + pas.asPct + bf.asPct),
     crit: clamp(0.05 + A.agi / 2000 + eq.crit + pas.crit + (bonus.crit || 0), 0, 0.6),
-    critDmg: 1.5 + eq.critDmg + pas.critDmg,
+    critDmg: 1.5 + eq.critDmg + pas.critDmg + RFX.critDmg,
     dodge: clamp(A.agi / 3000 + eq.dodge, 0, 0.3),
     armor,
     dr: clamp(dr + bf.dr, 0, 0.85),
-    lifesteal: eq.lifesteal || 0,
+    lifesteal: (eq.lifesteal || 0) + RFX.lifesteal,
     mpRegen: (0.02 * (1 + (bonus.mpRegen || 0))),
-    goldBonus: bonus.goldBonus || 0,
-    expBonus: race.expBonus || 0,
+    goldBonus: (bonus.goldBonus || 0) + RFX.goldBonus,
+    expBonus: (race.expBonus || 0) + RFX.expBonus,
+    cleave: RFX.cleave,
+    dropBonus: RFX.dropBonus,
     killMana: pas.killMana || 0,
     killAs: pas.killAs || 0,
     invis: bf.invis
@@ -203,7 +215,7 @@ function makeItem(slot, ilvl, forcedQuality, preferMagic) {
     Object.fromEntries(DATA.QUALITY.map(q => [q.key, q.weight]))
   );
   const q = DATA.QUALITY.find(x => x.key === qKey);
-  const names = DATA.ITEM_NAMES[slot];
+  const names = DATA.ITEM_NAMES[slot] || DATA.ITEM_NAMES.ring;   // ring2/ring3 无专属名字表
   const baseName = pick(names);
   const PREFIX = { common:'', uncommon:'精铁', rare:'秘银', epic:'符文', legendary:'龙鳞', mythic:'虚空' };
   const name = PREFIX[qKey] + baseName;
@@ -379,6 +391,21 @@ function breakthrough(p, key) {
   return 'ok';
 }
 
+/* 特戒颜色（按效果区分） */
+const RING_COLORS = {
+  expBonus:  {color:'#b45cff', name:'经验'},
+  goldBonus: {color:'#ffd24a', name:'金币'},
+  lifesteal: {color:'#ff4a4a', name:'吸血'},
+  cleave:    {color:'#4ad4ff', name:'切割'},
+  critDmg:   {color:'#ff9a2e', name:'暴伤'},
+  dropBonus: {color:'#3fd45a', name:'掉落'}
+};
+function ringColor(it) {
+  if (!it || !it.effect) return '#ff9a2e';
+  const k = Object.keys(it.effect)[0];
+  return (RING_COLORS[k] || {}).color || '#ff9a2e';
+}
+
 /* ---------------- BOSS 首杀戒指 ---------------- */
 function grantFirstKillRing(p, bossKey) {
   const def = DATA.BOSS_RINGS[bossKey];
@@ -389,11 +416,13 @@ function grantFirstKillRing(p, bossKey) {
   const ring = {
     id: 'ring_' + bossKey + '_' + Date.now(),
     type: 'ring', slot: 'ring2', qKey: 'legendary', qName: '传说',
-    color: '#ff9a2e', name: def.name, ilvl: 20, reqLv: 1, enh: 0,
+    color: (RING_COLORS[Object.keys(def.effect)[0]] || {}).color || '#ff9a2e',
+    name: def.name, ilvl: 20, reqLv: 1, enh: 0,
     setKey: null, stats: {}, effect: def.effect, effectDesc: def.desc,
     bound: true
   };
   if (!p.equip.ring2) p.equip.ring2 = ring;
+  else if (!p.equip.ring3) p.equip.ring3 = ring;
   else addToBag(p, ring);
   recalcStats(p);
   return ring;

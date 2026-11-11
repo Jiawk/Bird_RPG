@@ -497,96 +497,91 @@ function charHtml() {
   const p = G.player;
   const race = DATA.RACES[p.race], cls = DATA.CLASSES[p.cls];
   const st = p.stats, A = st.A;
-  const cp = combatPower(p);
-  const gp = Math.round(gearPower(p));
+  const cp = combatPower(p), gp = Math.round(gearPower(p));
   const gt = gearTier(p);
 
-  // ---------- 左：装备栏 ----------
-  let left = '<div class="cp-col char-left">';
-  left += '<div class="col-title">装备</div><div class="eq-grid">';
-  for (const sk in DATA.SLOTS) {
+  const slotHtml = (sk, size) => {
     const it = p.equip[sk];
     const qi = it ? DATA.QUALITY.findIndex(q => q.key === it.qKey) : -1;
-    left += `<div class="eq-slot q-border-${it ? it.qKey : 'none'}" data-slot="${sk}" ${it ? `data-item="${it.id}"` : ''}>
+    return `<div class="eq-v ${it ? 'q-border-' + it.qKey : 'none'}" data-slot="${sk}" ${it ? `data-item="${it.id}"` : ''}>
       <span class="eq-lv">${it ? it.ilvl : '—'}</span>
-      ${iconTag(sk, 44)}
-      <span class="eq-nm">${it ? (it.enh ? '+' + it.enh + ' ' : '') + it.name.slice(0, 5) : DATA.SLOTS[sk].name}</span>
+      ${iconTag(sk, size || 34)}
+      <span class="eq-nm" style="${it ? 'color:' + it.color : ''}">${it ? (it.enh ? '+' + it.enh + ' ' : '') + it.name.slice(0, 5) : DATA.SLOTS[sk].name}</span>
     </div>`;
-  }
-  left += '</div></div>';
+  };
 
-  // ---------- 中：战力 + 主属性 ----------
-  let mid = '<div class="cp-col char-mid">';
-  mid += `<div class="char-portrait"><canvas id="charPortrait" width="140" height="170"></canvas>
+  // ---- 左：4 格 ----
+  let left = '<div class="cp-side"><div class="side-title">装备</div>';
+  ['weapon','helm','chest','legs'].forEach(sk => { left += slotHtml(sk); });
+  left += '</div>';
+
+  // ---- 右：4 格 ----
+  let right = '<div class="cp-side"><div class="side-title">装备</div>';
+  ['boots','neck','ring','trinket'].forEach(sk => { right += slotHtml(sk); });
+  right += '</div>';
+
+  // ---- 中：立绘 + 战力 + 特戒槽 ----
+  let mid = '<div class="cp-center">';
+  mid += `<div class="char-portrait"><canvas id="charPortrait" width="150" height="180"></canvas>
     <div class="char-name">${race.name} · ${cls.name}</div>
     <div class="char-lv">Lv.${p.level}</div></div>`;
   mid += `<div class="cp-block">
     <div class="cp-label">战斗力</div>
     <div class="cp-big">${fmt(cp)}</div>
     <div class="cp-sub">装备总评分 <b>${fmt(gp)}</b></div>
-    <div class="cp-sub">装备达成 <b style="color:${gt.filled===8?DATA.QUALITY[Math.max(0,gt.minIdx)].color:'#b8ad93'}">${gt.tierName}</b></div>
+    <div class="cp-sub">装备达成 <b style="color:${gt.filled>=8?DATA.QUALITY[Math.max(0,gt.minIdx)].color:'#b8ad93'}">${gt.tierName}</b></div>
   </div>`;
-  mid += '<div class="attr-list">';
-  const mainAttrs = [
-    ['力量', A.str], ['敏捷', A.agi], ['智力', A.int], ['体质', A.vit]
-  ];
-  mainAttrs.forEach(([n, v]) => {
-    mid += `<div class="attr-row"><span class="attr-ic">◆</span><span class="attr-n">${n}</span><b>${v}</b></div>`;
-  });
-  mid += '</div>';
-  mid += `<div class="xp-mini">经验 ${p.level>=DATA.MAX_LEVEL?'满级':p.exp+' / '+DATA.expForLevel(p.level)}</div>`;
-  mid += `<div class="xp-mini">金币 ${fmt(p.gold)}　击杀 ${p.kills}　BOSS ${p.bossKills}</div>`;
+  mid += `<div class="socket-row">
+    <div class="socket-label">特戒</div>
+    ${slotHtml('ring2', 40)}
+    ${slotHtml('ring3', 40)}
+  </div>`;
   mid += '</div>';
 
-  // ---------- 右：属性分组 ----------
-  const row = (n, v, cls2) => `<div class="s-row"><span>${n}</span><b class="${cls2||''}">${v}</b></div>`;
-  let right = '<div class="cp-col char-right">';
-  right += '<div class="s-group"><div class="s-title">核心属性</div>';
-  right += row(st.isMagic ? '内功攻击' : '外功攻击', Math.round(st.power), 'hot');
-  right += row('攻击速度', (st.as * 100).toFixed(0) + '%');
-  right += row('暴击率', (st.crit * 100).toFixed(1) + '%', 'hot');
-  right += row('暴击伤害', (st.critDmg * 100).toFixed(0) + '%');
-  right += row('命中', ((1 - (st.miss||0)) * 100).toFixed(1) + '%');
-  right += '</div>';
+  // ---- 属性列 ----
+  const row = (n, v, c2) => `<div class="s-row"><span>${n}</span><b class="${c2 || ''}">${v}</b></div>`;
+  let stats = '<div class="cp-col char-right">';
+  stats += '<div class="s-group"><div class="s-title">核心属性</div>';
+  stats += row(st.isMagic ? '内功攻击' : '外功攻击', Math.round(st.power), 'hot');
+  stats += row('攻击速度', (st.as * 100).toFixed(0) + '%');
+  stats += row('暴击率', (st.crit * 100).toFixed(1) + '%', 'hot');
+  stats += row('暴击伤害', (st.critDmg * 100).toFixed(0) + '%');
+  stats += row('吸血', (st.lifesteal * 100).toFixed(1) + '%');
+  stats += '</div>';
+  stats += '<div class="s-group"><div class="s-title">基础属性</div>';
+  stats += row('气血上限', st.hpMax);
+  stats += row('法力上限', st.mpMax);
+  stats += row('护甲', Math.round(st.armor));
+  stats += row('伤害减免', (st.dr * 100).toFixed(1) + '%');
+  stats += row('闪避率', (st.dodge * 100).toFixed(1) + '%');
+  stats += '</div>';
+  stats += '<div class="s-group"><div class="s-title">主属性</div>';
+  stats += row('力量', A.str); stats += row('敏捷', A.agi);
+  stats += row('智力', A.int); stats += row('体质', A.vit);
+  stats += '</div>';
 
-  right += '<div class="s-group"><div class="s-title">基础属性</div>';
-  right += row('气血上限', st.hpMax);
-  right += row('法力上限', st.mpMax);
-  right += row('护甲', Math.round(st.armor));
-  right += row('伤害减免', (st.dr * 100).toFixed(1) + '%');
-  right += row('闪避率', (st.dodge * 100).toFixed(1) + '%');
-  right += row('法力回复', (st.mpRegen * 100).toFixed(1) + '%/s');
-  right += '</div>';
-
-  // 套装（本职业 6 套）
+  // 套装
   const sets = DATA.SETS[p.cls];
   const activeKey = (st.setBonus && st.setBonus.key) || null;
-  right += '<div class="s-group"><div class="s-title">职业套装（6 套 · 仅地狱掉落）</div>';
+  stats += '<div class="s-group"><div class="s-title">职业套装（仅地狱掉落）</div>';
   sets.forEach(set => {
     const n = setCount(p, set.key);
-    const isActive = set.key === activeKey;
-    const done = n >= 6;
-    right += `<div class="set-line${isActive ? ' active' : ''}" data-set-info="${set.key}">
+    stats += `<div class="set-line${set.key === activeKey ? ' active' : ''}" data-set-info="${set.key}">
       <span class="set-dot" style="background:${n > 0 ? set.color : '#3a3020'}"></span>
       <span class="set-nm">${set.name}</span>
-      <span class="set-cnt" style="color:${done ? '#5fdc4a' : n > 0 ? '#ffd24a' : '#6b6558'}">${n}/6</span>
+      <span class="set-cnt" style="color:${n >= 6 ? '#5fdc4a' : n > 0 ? '#ffd24a' : '#6b6558'}">${n}/6</span>
     </div>`;
   });
-  if (activeKey) {
-    const act = sets.find(x => x.key === activeKey);
-    right += `<div class="set-active-tip">生效：${act.name}（4件 ${Math.round(act.b4.pct*100)}% 主属性${st.setBonus.count>=6?` · 6件 +${act.b6.flat} & 技能 +${Math.round(act.b6.skillDmg*100)}%`:''}）</div>`;
-  }
-  right += '</div>';
+  stats += '</div>';
 
-  right += '<div class="s-group"><div class="s-title">额外属性</div>';
-  right += row('吸血', (st.lifesteal * 100).toFixed(1) + '%');
-  right += row('技能等级合计', Object.values(p.skills).reduce((a,b)=>a+b,0));
-  right += row('永久属性书', `力${p.bonus.str} 敏${p.bonus.agi} 智${p.bonus.int} 体${p.bonus.vit}`);
-  right += row('已完成委托', p.questDone + ' 次');
-  right += '</div>';
-  right += '</div>';
+  stats += '<div class="s-group"><div class="s-title">额外</div>';
+  stats += row('技能等级合计', Object.values(p.skills).reduce((x, y) => x + y, 0));
+  stats += row('已完成委托', p.questDone + ' 次');
+  stats += row('首杀成就', Object.keys(p.firstKills || {}).length + ' / 6');
+  stats += '</div>';
+  stats += '</div>';
 
-  return `<div class="char-panel">${left}${mid}${right}</div>`;
+  return `<div class="char-panel-v2">${left}${mid}${right}${stats}</div>`;
 }
 
 function skillHtml() {
@@ -815,6 +810,42 @@ function setDetailHtml(key) {
   return html;
 }
 
+/* 进图确认 */
+function doEnterRoom(room, diff) {
+  G.diff = diff;
+  closeModal();
+  enterRoom(room);
+  toast(`进入 ${DATA.ROOMS[room].name}（${DATA.DIFFICULTY[diff].name}）`);
+}
+
+/* 等级警告 */
+function warnHtml(room, diff) {
+  const p = G.player, r = DATA.ROOMS[room], d = DATA.DIFFICULTY[diff];
+  const gap = r.lv - p.level;
+  const danger = gap >= 10 ? '极度危险' : gap >= 5 ? '危险' : '稍有挑战';
+  const dc = gap >= 10 ? '#ff3b3b' : gap >= 5 ? '#ff9a2e' : '#ffd24a';
+  const boss = DATA.BOSSES[r.boss];
+  const estHp = Math.round(boss.hp * d.hpMul);
+  const myDps = Math.round(p.stats.power * p.stats.as);
+  const secs = Math.round(estHp / Math.max(1, myDps));
+  const survive = Math.round(p.stats.hpMax / Math.max(1, boss.atk * d.atkMul * 1.4));
+
+  return `<div style="text-align:center;margin-bottom:14px">
+    <div style="font-family:var(--serif);font-size:22px;color:${dc};letter-spacing:.1em">${danger}</div>
+    <div style="font-size:13px;color:#b8ad93;margin-top:6px">你的等级 <b style="color:#fff">${p.level}</b>　本图推荐 <b style="color:#ff9a6a">${r.lv}+</b></div>
+  </div>
+  <div class="enh-line"><span>房间</span><b>${r.name}（${d.name}难度）</b></div>
+  <div class="enh-line"><span>BOSS</span><b>${boss.name} · 生命 ${fmt(estHp)}</b></div>
+  <div class="enh-line"><span>你的输出</span><b>约 ${fmt(myDps)} DPS</b></div>
+  <div class="enh-line"><span>预计击杀耗时</span><b class="${secs>90?'bad':secs>45?'warn':'ok'}">${secs} 秒</b></div>
+  <div class="enh-line"><span>可承受伤害</span><b class="${survive<secs?'bad':'ok'}">${survive} 秒</b></div>
+  ${survive < secs ? '<div style="text-align:center;color:#ff6b5a;font-size:12px;margin-top:10px">⚠ 按当前装备，你可能打不过这个 BOSS</div>' : ''}
+  <div class="enh-btns">
+    <button class="big-btn primary" data-enter-confirm="1" data-room="${room}" data-diff="${diff}">仍然进入</button>
+    <button class="big-btn" data-enter-cancel="1">返回</button>
+  </div>`;
+}
+
 /* ---------------- 爬塔 ---------------- */
 function todayStr() {
   const d = new Date();
@@ -957,6 +988,14 @@ function enhanceItemHtml(id) {
 
   // 属性变化
   html += '<div class="enh-attrs">';
+  if (it.effect) {
+    for (const k in it.effect) {
+      const v0 = it.effect[k] * curMul, v1 = it.effect[k] * nextMul;
+      const nm = (typeof RING_COLORS !== 'undefined' && RING_COLORS[k]) ? RING_COLORS[k].name : k;
+      html += `<div class="enh-attr"><span>${nm}效果</span>
+        <b>${(v0 * 100).toFixed(1)}%</b><i>→</i><b class="up">${maxed ? '—' : (v1 * 100).toFixed(1) + '%'}</b></div>`;
+    }
+  }
   for (const k in it.stats) {
     const v0 = it.stats[k] * curMul, v1 = it.stats[k] * nextMul;
     const pct = PCT_KEYS.includes(k);
@@ -1149,10 +1188,19 @@ function bindModal() {
   body.querySelectorAll('[data-pick-diff]').forEach(b => b.onclick = () => {
     const diff = b.dataset.pickDiff, room = +b.dataset.room;
     if (!G.player.unlocked.includes(room)) { toast('尚未解锁'); return; }
-    G.diff = diff;
-    closeModal();
-    enterRoom(room);
-    toast(`进入 ${DATA.ROOMS[room].name}（${DATA.DIFFICULTY[diff].name}）`);
+    const r = DATA.ROOMS[room], p = G.player;
+    // 等级不足 → 警告
+    if (p.level < r.lv) {
+      openModal('warn', '⚠ 等级警告', warnHtml(room, diff));
+      return;
+    }
+    doEnterRoom(room, diff);
+  });
+  body.querySelectorAll('[data-enter-confirm]').forEach(b => b.onclick = () => {
+    doEnterRoom(+b.dataset.room, b.dataset.diff);
+  });
+  body.querySelectorAll('[data-enter-cancel]').forEach(b => b.onclick = () => {
+    openModal('map', '传送 / 回城', townMapHtml());
   });
 
   body.querySelectorAll('[data-buy-potion]').forEach(b => b.onclick = () => {
@@ -1290,8 +1338,15 @@ function showTooltip(it, x, y) {
     const enhTxt = it.enh ? `<span style="color:#5fdc4a">+${it.enh}</span> ` : '';
     const parts = [`<h4 style="color:${it.color}">${enhTxt}${it.name}</h4>`,
       `<div class="tt-sub">${q.name} · ${DATA.SLOTS[it.slot].name} · 物品等级 ${it.ilvl}</div>`];
-    if (it.effect && it.effectDesc) {
-      parts.push(`<div style="color:#ffd24a;font-size:12px;margin-top:3px">【特殊效果】${it.effectDesc}</div>`);
+    if (it.effect) {
+      const m = enhMul(it);
+      const lines = Object.keys(it.effect).map(k => {
+        const v = (it.effect[k] * m * 100).toFixed(1);
+        const nm = (typeof RING_COLORS !== 'undefined' && RING_COLORS[k]) ? RING_COLORS[k].name : k;
+        return `${nm} ${v}%`;
+      });
+      parts.push(`<div style="color:${it.color};font-size:12px;margin-top:3px;font-weight:700">【特戒】${lines.join('　')}</div>`);
+      if (it.enh) parts.push(`<div style="font-size:10px;color:#8f8570">强化 +${it.enh} 已加成到效果数值</div>`);
     }
     if (it.setKey) {
       const set = (DATA.SETS[G.player.cls] || []).find(x => x.key === it.setKey);

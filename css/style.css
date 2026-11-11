@@ -577,3 +577,35 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   background:rgba(95,220,74,.10);border-radius:2px;line-height:1.5}
 .set-head{padding:10px 12px;margin-bottom:4px;border-left:3px solid var(--gold);
   background:linear-gradient(90deg,rgba(107,85,32,.35),transparent);border-radius:3px}
+
+/* ============================================================
+   角色面板 V2：装备分列左右 + 特戒槽在中间下方
+   ============================================================ */
+.char-panel-v2{display:grid;grid-template-columns:104px 1fr 104px 1fr;gap:12px;align-items:start}
+.cp-side{display:flex;flex-direction:column;gap:8px}
+.side-title{font-family:var(--serif);font-size:11px;color:var(--gold-lt);letter-spacing:.2em;
+  text-align:center;padding-bottom:4px;border-bottom:1px solid rgba(212,175,55,.25)}
+.eq-v{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:6px 3px 4px;border-radius:3px;cursor:pointer;
+  background:linear-gradient(160deg,#241d12,#0d0a06);border:2px solid #3a3020;
+  transition:all .12s}
+.eq-v:hover{border-color:var(--gold);transform:translateY(-1px);
+  box-shadow:0 0 12px rgba(212,175,55,.35)}
+.eq-v .eq-lv{position:absolute;top:0;left:3px;font-size:10px;color:#c9c2ad;font-weight:700;
+  text-shadow:0 1px 2px #000}
+.eq-v .eq-nm{font-size:9px;color:#8f8570;max-width:100%;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;text-align:center}
+
+.cp-center{display:flex;flex-direction:column;align-items:center;gap:9px}
+.socket-row{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:8px 6px;border-radius:3px;
+  background:linear-gradient(180deg,rgba(107,85,32,.28),rgba(0,0,0,.3));
+  border:1px solid rgba(212,175,55,.42)}
+.socket-label{font-family:var(--serif);font-size:11px;color:var(--gold-lt);letter-spacing:.16em;
+  writing-mode:vertical-rl;text-orientation:upright}
+.socket-row .eq-v{width:78px;flex:0 0 auto}
+
+@media (max-width:1100px){
+  .char-panel-v2{grid-template-columns:86px 1fr 86px;gap:8px}
+  .char-panel-v2 .char-right{grid-column:1 / -1}
+}

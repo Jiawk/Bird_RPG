@@ -43,6 +43,7 @@ function initInput() {
       case 'k': handleCommand('skill'); break;
       case 'm': handleCommand('map'); break;
       case 't': handleCommand('tower'); break;   // 爬塔
+      case 'j': handleCommand('quest'); break;   // 任务面板
       case 'h': handleCommand('town'); break;   // H = 回城
       case 'e': interactNPC(); break;
       case 'escape':
@@ -292,6 +293,11 @@ function loop(ts) {
 }
 
 /* ---------------- 启动 ---------------- */
+window.addEventListener('error', e => {
+  try { toast('JS错误: ' + (e.message || e.error)); } catch (_) {}
+  console.error(e.error || e.message);
+});
+
 window.addEventListener('DOMContentLoaded', () => {
   loadAssets();
   resizeCanvas();

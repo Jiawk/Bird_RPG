@@ -95,6 +95,7 @@ DATA.SLOTS = {
   chest:{name:'胸甲', icon:'🛡'},  legs:{name:'护腿', icon:'👖'},
   boots:{name:'战靴', icon:'🥾'},  neck:{name:'项链', icon:'📿'},
   ring:{name:'戒指', icon:'💍'},   ring2:{name:'印记', icon:'◎'},
+  ring3:{name:'副印记', icon:'◉'},
   trinket:{name:'饰品', icon:'🔮'}
 };
 

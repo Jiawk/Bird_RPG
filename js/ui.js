@@ -12,16 +12,27 @@ let SEL = { race: 'human', cls: 'warrior' };
 /* 自动战斗开关 */
 const AUTO = { atk: false, skill: false };
 
-/* 装备图标（精灵图，CSS background-position 切换） */
-function iconTag(slot, size) {
-  const i = SLOT_ICON_IDX[slot];
+/* 装备图标（魔兽图标图集，18 格） */
+const EQUIP_IDX  = { helm:7, chest:8, legs:9, boots:10, neck:11, ring:12, trinket:13 };
+const WEAPON_IDX = { sword:0, axe:1, bow:2, crossbow:3, dagger:4, staff:5, orb:6 };
+const RELIC_IDX  = { relic_sword:14, relic_staff:15, relic_bow:16, relic_dagger:17 };
+const EQUIP_COUNT = 18;
+
+function iconIdxOf(slot, wtype, relicKey) {
+  if (relicKey && RELIC_IDX[relicKey] !== undefined) return RELIC_IDX[relicKey];
+  if (slot === 'weapon') return WEAPON_IDX[wtype] !== undefined ? WEAPON_IDX[wtype] : 0;
+  return EQUIP_IDX[slot];
+}
+
+function iconTag(slot, size, wtype, relicKey) {
+  const i = iconIdxOf(slot, wtype, relicKey);
   if (i === undefined) return '';
-  const sz = size ? `style="width:${size}px;height:${size}px;background-size:${size*8}px ${size}px;background-position:${-i*size}px 0"` : '';
-  return `<span class="ic-sprite" data-i="${i}" ${sz}></span>`;
+  const sz = size || 32;
+  return `<span class="ic-sprite" data-i="${i}" style="width:${sz}px;height:${sz}px;background-size:${sz*EQUIP_COUNT}px ${sz}px;background-position:${-i*sz}px 0"></span>`;
 }
 
 function uiInit() {
-  document.documentElement.style.setProperty('--icon-sheet', `url(${ASSETS.icons})`);
+  document.documentElement.style.setProperty('--icon-sheet', `url(${ASSETS.equip || ASSETS.icons})`);
   document.documentElement.style.setProperty('--skill-sheet', `url(${ASSETS.skills})`);
   if (ASSETS.units) document.documentElement.style.setProperty('--units-sheet', `url(${ASSETS.units})`);
   if (ASSETS.classicons) document.documentElement.style.setProperty('--class-sheet', `url(${ASSETS.classicons})`);
@@ -628,7 +639,7 @@ function bagHtml() {
       const dCP = equipDeltaPower(p, it);
       const locked = it.reqLv > p.level;
       html += `<div class="bag-cell${locked ? ' locked' : ''}" data-item="${it.id}">
-        ${iconTag(it.slot, 30)}
+        ${iconTag(it.slot, 30, it.wtype, it.relicKey)}
         <div class="nm" style="color:${it.color}">${it.name}</div>
         ${!locked && dCP > 0 ? '<span class="up">▲</span>' : ''}
         <span class="cp-mini">${dCP > 0 ? '+' : ''}${dCP}</span>
@@ -1392,7 +1403,7 @@ function enhanceHtml() {
     html += '<div class="forge-grid">';
     bagItems.slice(0, 16).forEach(it => {
       html += `<div class="forge-slot" data-enh-pick="${it.id}">
-        ${iconTag(it.slot, 42)}
+        ${iconTag(it.slot, 42, it.wtype, it.relicKey)}
         <span class="fs-enh">+${it.enh || 0}</span>
         <span class="fs-nm" style="color:${it.color}">${it.name.slice(0, 6)}</span>
       </div>`;
@@ -1421,7 +1432,7 @@ function enhanceItemHtml(id) {
 
   let html = matBar(p);
   html += `<div class="enh-head">
-    ${iconTag(it.slot, 56)}
+    ${iconTag(it.slot, 56, it.wtype, it.relicKey)}
     <div>
       <div class="enh-name" style="color:${it.color}">+${lv} ${it.name}</div>
       <div class="enh-sub">${DATA.QUALITY.find(q => q.key === it.qKey).name} · ${slotName(it.slot)} · 物品等级 ${it.ilvl}

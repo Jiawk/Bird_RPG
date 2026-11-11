@@ -716,6 +716,28 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .cc-btn.toggle .sk-ic.util{opacity:.95}
 .cc-btn.toggle.on .sk-ic.util{filter:drop-shadow(0 0 6px rgba(255,210,74,.9))}
 
+/* ============================================================
+   装备对比：左右并排（魔兽风格）
+   ============================================================ */
+.cmp-grid{display:grid;grid-template-columns:1fr 46px 1fr;gap:0 4px;
+  margin-top:6px;padding-top:6px;border-top:1px solid rgba(212,175,55,.35);
+  font-size:11px;line-height:1.5}
+.cmp-h{font-size:9.5px;color:#8f8570;letter-spacing:.06em;text-align:center;
+  padding-bottom:2px;border-bottom:1px dotted rgba(184,173,147,.25);margin-bottom:3px}
+.cmp-nm{font-size:11px;font-weight:700;text-align:center;padding:1px 0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cmp-v{display:flex;justify-content:space-between;gap:3px;padding:1px 0}
+.cmp-v em{font-style:normal;color:#9a907a;font-size:10px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.cmp-v b{color:#e8e0cc;font-weight:600;font-size:11px;flex:0 0 auto}
+.cmp-d{text-align:center;font-size:10px;font-weight:700;color:#6b6558;
+  white-space:nowrap;align-self:center}
+.cmp-d.up{color:#5fdc4a}
+.cmp-d.down{color:#ff6b5a}
+.cmp-eff{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px;
+  font-size:10px;color:#b45cff;line-height:1.45}
+.cmp-eff span{overflow:hidden}
+
 </style>
 </head>
 <body>
@@ -5853,35 +5875,70 @@ function showTooltip(it, x, y) {
       parts.push(`<div class="tt-req" style="font-size:12px;font-weight:700">⛔ 等级不足：需要 Lv.${it.reqLv}（当前 Lv.${G.player.level}）</div>`);
     }
 
-    // 与已装备逐条对比
+    // ---- 左右并排对比（左：当前装备 / 右：候选装备 / 中间差值）----
     const cur = G.player.equip[it.slot];
     if (cur) {
-      // 先把「当前装备」完整列出来，方便直接对照
-      const curM = enhMul(cur);
-      const curLines = [];
-      for (const k in cur.stats) {
-        const v = cur.stats[k] * curM;
-        curLines.push(`+${PCT_KEYS.includes(k) ? (v*100).toFixed(1)+'%' : Math.round(v)} ${AFFIX_NAMES[k]||k}`);
-      }
-      if (cur.effect) for (const k in cur.effect) curLines.push(effectText(k, cur.effect[k] * curM));
-      parts.push(`<div style="margin-top:6px;border-top:1px solid rgba(212,175,55,.35);padding-top:5px">
-        <div style="font-size:10.5px;color:#8f8570;margin-bottom:2px">当前装备</div>
-        <div style="font-size:12px;color:${cur.color || '#c8c8c8'};font-weight:700">
-          ${cur.enh ? '+' + cur.enh + ' ' : ''}${cur.name}</div>
-        <div style="font-size:11px;color:#c8bfa8;line-height:1.55">${curLines.join('<br>') || '（无属性）'}</div>
-      </div>`);
-    }
-    if (cur) {
-      const keys = new Set([...Object.keys(it.stats), ...Object.keys(cur.stats)]);
-      const diffs = [];
+      const curM = enhMul(cur), newM = enhMul(it);
+      const keys = [];
+      const seen = new Set();
+      for (const k in cur.stats) if (!seen.has(k)) { seen.add(k); keys.push(k); }
+      for (const k in it.stats) if (!seen.has(k)) { seen.add(k); keys.push(k); }
+
+      const fmtV = (k, v) => PCT_KEYS.includes(k) ? (v * 100).toFixed(1) + '%' : Math.round(v);
+
+      let g = '<div class="cmp-grid">';
+      g += '<div class="cmp-h">当前装备</div><div class="cmp-h"></div><div class="cmp-h">候选装备</div>';
+      g += `<div class="cmp-nm" style="color:${cur.color || '#c8c8c8'}">${cur.enh ? '+' + cur.enh + ' ' : ''}${cur.name}</div>`;
+      g += '<div></div>';
+      g += `<div class="cmp-nm" style="color:${it.color}">${it.enh ? '+' + it.enh + ' ' : ''}${it.name}</div>`;
+
       keys.forEach(k => {
-        const d = (it.stats[k] || 0) - (cur.stats[k] || 0);
-        if (Math.abs(d) < 1e-9) return;
+        const v0 = (cur.stats[k] || 0) * curM;
+        const v1 = (it.stats[k] || 0) * newM;
+        const d = v1 - v0;
         const pct = PCT_KEYS.includes(k);
-        diffs.push(`<div class="${d>0?'tt-up':'tt-down'}">${d>0?'▲':'▼'} ${pct?(Math.abs(d)*100).toFixed(1)+'%':Math.abs(d)} ${AFFIX_NAMES[k]||k}</div>`);
+        g += `<div class="cmp-v">${cur.stats[k] !== undefined ? fmtV(k, v0) : '—'}</div>`;
+        if (Math.abs(d) < 1e-9) {
+          g += '<div class="cmp-d">—</div>';
+        } else {
+          const txt = pct ? (Math.abs(d) * 100).toFixed(1) + '%' : Math.abs(Math.round(d));
+          g += `<div class="cmp-d ${d > 0 ? 'up' : 'down'}">${d > 0 ? '▲' : '▼'}${txt}</div>`;
+        }
+        g += `<div class="cmp-v">${it.stats[k] !== undefined ? fmtV(k, v1) : '—'}</div>`;
       });
-      if (diffs.length) parts.push('<div style="margin-top:5px;border-top:1px dotted rgba(184,173,147,.25);padding-top:4px">' + diffs.join('') + '</div>');
+
+      // 属性名单独一行放不下，改用后缀提示
+      g = g.replace(/<div class="cmp-v">/g, '<div class="cmp-v"><i></i><span>');
+      g = g.replace(/<\/div>\s*(?=<div class="cmp-d"|<div class="cmp-nm")/g, '</span></div>');
+      // 简化：重新生成带属性名的版本
+      g = '<div class="cmp-grid">';
+      g += '<div class="cmp-h">当前装备</div><div class="cmp-h"></div><div class="cmp-h">候选装备</div>';
+      g += `<div class="cmp-nm" style="color:${cur.color || '#c8c8c8'}">${cur.enh ? '+' + cur.enh + ' ' : ''}${cur.name}</div><div></div>`;
+      g += `<div class="cmp-nm" style="color:${it.color}">${it.enh ? '+' + it.enh + ' ' : ''}${it.name}</div>`;
+      keys.forEach(k => {
+        const v0 = (cur.stats[k] || 0) * curM;
+        const v1 = (it.stats[k] || 0) * newM;
+        const d = v1 - v0;
+        const pct = PCT_KEYS.includes(k);
+        const nm = AFFIX_NAMES[k] || k;
+        g += `<div class="cmp-v"><em>${nm}</em><b>${cur.stats[k] !== undefined ? fmtV(k, v0) : '—'}</b></div>`;
+        if (Math.abs(d) < 1e-9) {
+          g += '<div class="cmp-d">—</div>';
+        } else {
+          const txt = pct ? (Math.abs(d) * 100).toFixed(1) + '%' : Math.abs(Math.round(d));
+          g += `<div class="cmp-d ${d > 0 ? 'up' : 'down'}">${d > 0 ? '▲' : '▼'}${txt}</div>`;
+        }
+        g += `<div class="cmp-v"><em>${nm}</em><b>${it.stats[k] !== undefined ? fmtV(k, v1) : '—'}</b></div>`;
+      });
+      g += '</div>';
+
+      if (cur.effect || it.effect) {
+        const efTxt = (o, m) => Object.keys(o.effect || {}).map(k => effectText(k, o.effect[k] * m)).join('；') || '—';
+        g += `<div class="cmp-eff"><span>${efTxt(cur, curM)}</span><span>${efTxt(it, newM)}</span></div>`;
+      }
+      parts.push(g);
     }
+
     const dCP = equipDeltaPower(G.player, it);
     if (dCP !== 0) {
       parts.push(`<div class="tt-cp ${dCP>0?'tt-up':'tt-down'}">战力 ${dCP>0?'+':''}${dCP} ${dCP>0?'▲ 更强':'▼ 更弱'}</div>`);

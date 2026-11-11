@@ -708,3 +708,25 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cc-btn.toggle .sk-ic.util{opacity:.95}
 .cc-btn.toggle.on .sk-ic.util{filter:drop-shadow(0 0 6px rgba(255,210,74,.9))}
+
+/* ============================================================
+   装备对比：左右并排（魔兽风格）
+   ============================================================ */
+.cmp-grid{display:grid;grid-template-columns:1fr 46px 1fr;gap:0 4px;
+  margin-top:6px;padding-top:6px;border-top:1px solid rgba(212,175,55,.35);
+  font-size:11px;line-height:1.5}
+.cmp-h{font-size:9.5px;color:#8f8570;letter-spacing:.06em;text-align:center;
+  padding-bottom:2px;border-bottom:1px dotted rgba(184,173,147,.25);margin-bottom:3px}
+.cmp-nm{font-size:11px;font-weight:700;text-align:center;padding:1px 0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cmp-v{display:flex;justify-content:space-between;gap:3px;padding:1px 0}
+.cmp-v em{font-style:normal;color:#9a907a;font-size:10px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.cmp-v b{color:#e8e0cc;font-weight:600;font-size:11px;flex:0 0 auto}
+.cmp-d{text-align:center;font-size:10px;font-weight:700;color:#6b6558;
+  white-space:nowrap;align-self:center}
+.cmp-d.up{color:#5fdc4a}
+.cmp-d.down{color:#ff6b5a}
+.cmp-eff{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px;
+  font-size:10px;color:#b45cff;line-height:1.45}
+.cmp-eff span{overflow:hidden}

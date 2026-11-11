@@ -276,16 +276,28 @@ function autoBattleTick(dt) {
     return;
   }
 
-  // Q → W → E → R 依次找可用的
-  for (const k of ['q', 'w', 'e', 'r']) {
+  // Q → W → E → R 轮转（避免高优先级技能把 R 饿死）
+  const ORDER = ['q', 'w', 'e', 'r'];
+  if (G.autoSkillIdx === undefined) G.autoSkillIdx = 0;
+
+  for (let n = 0; n < ORDER.length; n++) {
+    const idx = (G.autoSkillIdx + n) % ORDER.length;
+    const k = ORDER[idx];
     const key = p.keymap[k];
     const sp = DATA.SKILLS[key];
     if (!sp || (p.cd[key] || 0) > 0) continue;
     if (p.mp < (sp.cost || 0)) continue;
-    // 距离门槛：近战/AOE 要贴脸，投射物可以远
-    const need = (sp.kind === 'proj') ? 620 : (sp.kind === 'buff' ? 0 : 300);
-    if (need > 0 && d > need) continue;
+
+    // 距离门槛：按技能实际作用半径判断，够得着才放
+    let reach;
+    if (sp.kind === 'proj') reach = 620;
+    else if (sp.kind === 'buff') reach = 480;
+    else if (sp.kind === 'blink' || sp.kind === 'dash') reach = hpPct < 0.45 ? 9999 : -1;
+    else reach = (sp.radius ? sp.radius * 42 + 90 : 300);
+    if (reach < 0 || d > reach) continue;
+
     castSkillKey(k);
+    G.autoSkillIdx = (idx + 1) % ORDER.length;   // 下次从下一个技能开始找
     autoSkillCd = 0.35;
     return;
   }

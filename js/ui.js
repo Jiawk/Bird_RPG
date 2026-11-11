@@ -888,7 +888,7 @@ function interactNPC(target) {
   if (!n) return;
   switch (n.kind) {
     case 'teleport': openTownMap(); break;
-    case 'merchant': toggleModal('merchant', '商人 · 马斯克', merchantHtml); break;
+    case 'merchant': toggleModal('merchant', '商人 · 赵帅帅', merchantHtml); break;
     case 'exchange': toggleModal('exchange', '兑换员 · 李准', exchangeHtml); break;
     case 'blacksmith': toggleModal('smith', '铁匠 · 范在英', smithHtml); break;
     case 'save': saveGame() ? toast('进度已保存') : toast('保存失败'); break;
@@ -1598,7 +1598,7 @@ function bindModal() {
     p.gold -= po.price;
     p.bag.push({ ...po, type:'potion' });
     toast(`购买 ${po.name}`);
-    openModal('merchant', '商人 · 马斯克', merchantHtml());
+    openModal('merchant', '商人 · 赵帅帅', merchantHtml());
   });
 
   body.querySelectorAll('[data-buy-skill]').forEach(b => b.onclick = () => {

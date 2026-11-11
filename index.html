@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>我的第一款游戏 · 艾泽拉斯的回响</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <canvas id="view"></canvas>
+
+  <!-- ================= HUD ================= -->
+  <div id="hud" class="hidden">
+
+    <!-- 顶部中：房间 -->
+    <div class="topbar-left">
+      <span class="room-name" id="roomName">贫瘠之地</span>
+      <span class="room-sub" id="roomSub"></span>
+    </div>
+
+    <!-- 顶部右：资源 -->
+    <div class="topbar-right">
+      <div class="res-box"><i class="ic-gold">金</i><b id="goldVal">0</b></div>
+      <div class="res-box"><i class="ic-cp">战</i><b id="cpVal">0</b></div>
+      <div class="res-box"><i class="ic-gear">装</i><b id="gearVal">未集齐</b></div>
+      <div class="res-box"><i class="ic-diff">难</i><b id="diffVal">简单</b></div>
+    </div>
+
+    <!-- BOSS 血条 -->
+    <div id="bossBar" class="boss-bar hidden">
+      <div class="bb-name" id="bossName"></div>
+      <div class="bb-track"><div class="bb-fill" id="bossFill"></div></div>
+    </div>
+
+    <!-- 左上角：头像 + 血蓝 -->
+    <div class="hud-portrait">
+      <div class="portrait-frame">
+        <canvas id="portrait" width="80" height="80"></canvas>
+        <div class="p-level" id="pLevel">1</div>
+      </div>
+      <div class="hp-info">
+        <div class="p-name" id="pName">人族 · 战士</div>
+        <div class="bar hp"><i id="hpFill"></i><span id="hpText">0/0</span></div>
+        <div class="bar mp"><i id="mpFill"></i><span id="mpText">0/0</span></div>
+        <div class="bar xp"><i id="xpFill"></i><span id="xpText">0%</span></div>
+        <div class="p-stats" id="pStats"></div>
+      </div>
+    </div>
+
+    <!-- 左下角：小地图 -->
+    <div class="hud-minimap">
+      <div class="mm-frame"><canvas id="minimap" width="168" height="126"></canvas></div>
+      <div class="mm-label" id="mmLabel">城镇</div>
+    </div>
+
+    <!-- 右下角：命令卡 -->
+    <div class="hud-commands">
+      <div class="cc-grid" id="commandCard">
+        <button class="cc-btn skill" data-skill="q"><span class="hk">Q</span><span class="nm">—</span><span class="cd"></span></button>
+        <button class="cc-btn skill" data-skill="w"><span class="hk">W</span><span class="nm">—</span><span class="cd"></span></button>
+        <button class="cc-btn skill" data-skill="e"><span class="hk">E</span><span class="nm">—</span><span class="cd"></span></button>
+        <button class="cc-btn skill" data-skill="r"><span class="hk">R</span><span class="nm">—</span><span class="cd"></span></button>
+        <button class="cc-btn skill dash" data-skill="d"><span class="hk">D</span><span class="nm">—</span><span class="cd"></span></button>
+        <button class="cc-btn toggle" data-act="autoAtk"><span class="hk">A</span><span class="nm">自动攻击</span></button>
+        <button class="cc-btn toggle" data-act="autoSkill"><span class="hk">S</span><span class="nm">自动技能</span></button>
+        <button class="cc-btn" data-act="potion"><span class="hk">F</span><span class="nm">喝药</span></button>
+        <button class="cc-btn" data-act="bag"><span class="hk">B</span><span class="nm">背包</span></button>
+        <button class="cc-btn" data-act="char"><span class="hk">C</span><span class="nm">角色</span></button>
+        <button class="cc-btn" data-act="skill"><span class="hk">K</span><span class="nm">技能</span></button>
+        <button class="cc-btn" data-act="map"><span class="hk">M</span><span class="nm">传送/回城</span></button>
+      </div>
+    </div>
+
+    <div class="msglog" id="msglog"></div>
+    <div class="interact-hint hidden" id="interactHint"></div>
+  </div>
+
+  <!-- ================= 标题 ================= -->
+  <div id="screen-title" class="screen">
+    <div class="title-box">
+      <div class="game-title">艾泽拉斯的回响</div>
+      <div class="game-sub">MY FIRST GAME · 打怪 · 爆装 · 成长</div>
+      <div class="title-btns">
+        <button class="big-btn" id="btnContinue">继续游戏</button>
+        <button class="big-btn primary" id="btnNew">新的征程</button>
+        <button class="big-btn" id="btnImport">导入存档</button>
+      </div>
+      <div class="title-tip">WASD 移动 · 鼠标瞄准 · 左键攻击 · QWER 技能 · D 冲刺</div>
+    </div>
+  </div>
+
+  <!-- ================= 建角 ================= -->
+  <div id="screen-create" class="screen hidden">
+    <div class="create-wrap">
+      <h2 class="panel-title">选择你的种族</h2>
+      <div class="race-list" id="raceList"></div>
+      <h2 class="panel-title">选择你的职业</h2>
+      <div class="class-list" id="classList"></div>
+      <div class="create-actions">
+        <button class="big-btn" id="btnBackTitle">返回</button>
+        <button class="big-btn primary" id="btnStart">踏入战场</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal" class="modal hidden">
+    <div class="modal-frame">
+      <div class="modal-head">
+        <span id="modalTitle">背包</span>
+        <button class="close-btn" id="modalClose">✕</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <div id="touch" class="hidden">
+    <div class="stick" id="stickMove"><i></i></div>
+    <div class="stick" id="stickAim"><i></i></div>
+    <button class="touch-btn atk" id="tBtnAtk">⚔</button>
+    <button class="touch-btn s1" id="tBtn1">Q</button>
+    <button class="touch-btn s2" id="tBtn2">W</button>
+    <button class="touch-btn s3" id="tBtn3">E</button>
+    <button class="touch-btn s4" id="tBtn4">R</button>
+  </div>
+</div>
+
+<script src="js/assets.js"></script>
+<script src="js/data.js"></script>
+<script src="js/core.js"></script>
+<script src="js/world.js"></script>
+<script src="js/combat.js"></script>
+<script src="js/render.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

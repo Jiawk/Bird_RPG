@@ -1,0 +1,4 @@
+.DS_Store
+*.log
+游戏素材/
+node_modules/

@@ -168,6 +168,44 @@ function drawGround(w) {
     return;
   }
 
+  // 每张地图独立地面材质（128x128 平铺）
+  if (imgReady('grounds')) {
+    const gi = w.isTown ? 1 : w.roomId;           // 主城用岩石材质
+    if (!G._groundPat || G._groundPatIdx !== gi) {
+      const off = document.createElement('canvas');
+      off.width = off.height = 128;
+      off.getContext('2d').drawImage(IMG.grounds, gi * 128, 0, 128, 128, 0, 0, 128, 128);
+      G._groundPat = CTX.createPattern(off, 'repeat');
+      G._groundPatIdx = gi;
+    }
+    CTX.save();
+    CTX.translate(px(0), py(0));
+    CTX.scale(1, YS);
+    CTX.fillStyle = G._groundPat;
+    CTX.fillRect(0, 0, w.W, w.H);
+    CTX.restore();
+
+    // 氛围染色
+    CTX.save();
+    CTX.beginPath(); CTX.rect(px(0), py(0), w.W, w.H * YS); CTX.clip();
+    CTX.globalCompositeOperation = 'multiply';
+    CTX.globalAlpha = 0.30; CTX.fillStyle = tint;
+    CTX.fillRect(px(0), py(0), w.W, w.H * YS);
+    CTX.globalAlpha = 1; CTX.globalCompositeOperation = 'source-over';
+    CTX.fillStyle = 'rgba(0,0,0,0.16)';
+    CTX.fillRect(px(0), py(0), w.W, w.H * YS);
+    CTX.restore();
+
+    // 边界压黑
+    CTX.fillStyle = 'rgba(0,0,0,.72)';
+    const gl = px(0), gt = py(0), gr = px(w.W), gb = py(w.H);
+    if (gl > 0) CTX.fillRect(0, 0, gl, VH);
+    if (gr < VW) CTX.fillRect(gr, 0, VW - gr, VH);
+    if (gt > 0) CTX.fillRect(0, 0, VW, gt);
+    if (gb < VH) CTX.fillRect(0, gb, VW, VH - gb);
+    return;
+  }
+
   const T = TILE_PX;
   const hasTiles = imgReady('tiles');
   const salt = (w.isTown ? 99 : w.roomId) + 1;

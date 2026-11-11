@@ -536,6 +536,22 @@ function equipSpecialRing(p, ring) {
   return ring;
 }
 
+/* 把 6 枚特戒各发一枚到背包（已拥有则不重复发） */
+function grantAllRings(p) {
+  let n = 0;
+  Object.keys(DATA.SPECIAL_RINGS).forEach(k => {
+    const def = DATA.SPECIAL_RINGS[k];
+    const slot = ringSlotOf(k);
+    // 已装备 / 背包里已有同款 → 跳过
+    if (p.equip[slot]) return;
+    if ((p.bag || []).some(it => it.ringKey === k)) return;
+    const ring = makeRing(def, k);
+    addToBag(p, ring);
+    n++;
+  });
+  return n;
+}
+
 /* 复活消耗 */
 function consumeRevive(p) {
   const RFX = p.stats && p.stats.revive ? p.stats.revive : 0;

@@ -898,6 +898,9 @@ function smithHtml() {
 
 function settingsHtml() {
   return `<div class="npc-list">
+    <div class="npc-row"><div><div class="nr-name" style="color:#ffd24a">领取全套特戒</div>
+      <div class="nr-info">6 枚特戒各一枚，直接放进背包（已有则跳过）</div></div>
+      <button data-act-give-rings style="border-color:#d4af37;color:#ffd24a">领取</button></div>
     <div class="npc-row"><div><div class="nr-name">存档</div><div class="nr-info">手动保存</div></div>
       <button data-act-save>保存</button></div>
     <div class="npc-row"><div><div class="nr-name">导出存档</div><div class="nr-info">下载 json 备份</div></div>
@@ -1518,6 +1521,11 @@ function bindModal() {
     openModal('bag','背包 · 装备', bagHtml());
   });
 
+  body.querySelectorAll('[data-act-give-rings]').forEach(b => b.onclick = () => {
+    const n = grantAllRings(G.player);
+    toast(n ? `已发放 ${n} 枚特戒到背包` : '6 枚特戒都已在身上或背包里');
+    if (n) { logMsg(`🎁 发放 ${n} 枚特戒`, 'loot'); saveGame(); }
+  });
   body.querySelectorAll('[data-act-town]').forEach(b => b.onclick = () => { closeModal(); goTown(); });
   body.querySelectorAll('[data-act-enhance]').forEach(b => b.onclick = () => openModal('enhance', '铁匠 · 装备强化', enhanceHtml()));
   body.querySelectorAll('[data-tower-start]').forEach(b => b.onclick = () => enterTower(+b.dataset.towerStart));

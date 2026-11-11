@@ -1753,6 +1753,22 @@ function equipSpecialRing(p, ring) {
   return ring;
 }
 
+/* 把 6 枚特戒各发一枚到背包（已拥有则不重复发） */
+function grantAllRings(p) {
+  let n = 0;
+  Object.keys(DATA.SPECIAL_RINGS).forEach(k => {
+    const def = DATA.SPECIAL_RINGS[k];
+    const slot = ringSlotOf(k);
+    // 已装备 / 背包里已有同款 → 跳过
+    if (p.equip[slot]) return;
+    if ((p.bag || []).some(it => it.ringKey === k)) return;
+    const ring = makeRing(def, k);
+    addToBag(p, ring);
+    n++;
+  });
+  return n;
+}
+
 /* 复活消耗 */
 function consumeRevive(p) {
   const RFX = p.stats && p.stats.revive ? p.stats.revive : 0;
@@ -4688,6 +4704,9 @@ function smithHtml() {
 
 function settingsHtml() {
   return `<div class="npc-list">
+    <div class="npc-row"><div><div class="nr-name" style="color:#ffd24a">领取全套特戒</div>
+      <div class="nr-info">6 枚特戒各一枚，直接放进背包（已有则跳过）</div></div>
+      <button data-act-give-rings style="border-color:#d4af37;color:#ffd24a">领取</button></div>
     <div class="npc-row"><div><div class="nr-name">存档</div><div class="nr-info">手动保存</div></div>
       <button data-act-save>保存</button></div>
     <div class="npc-row"><div><div class="nr-name">导出存档</div><div class="nr-info">下载 json 备份</div></div>
@@ -5308,6 +5327,11 @@ function bindModal() {
     openModal('bag','背包 · 装备', bagHtml());
   });
 
+  body.querySelectorAll('[data-act-give-rings]').forEach(b => b.onclick = () => {
+    const n = grantAllRings(G.player);
+    toast(n ? `已发放 ${n} 枚特戒到背包` : '6 枚特戒都已在身上或背包里');
+    if (n) { logMsg(`🎁 发放 ${n} 枚特戒`, 'loot'); saveGame(); }
+  });
   body.querySelectorAll('[data-act-town]').forEach(b => b.onclick = () => { closeModal(); goTown(); });
   body.querySelectorAll('[data-act-enhance]').forEach(b => b.onclick = () => openModal('enhance', '铁匠 · 装备强化', enhanceHtml()));
   body.querySelectorAll('[data-tower-start]').forEach(b => b.onclick = () => enterTower(+b.dataset.towerStart));
@@ -5834,6 +5858,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const setTest = /s$/.test(location.hash);
     const craftTest = /n$/.test(location.hash);
     const mapTest = /m$/.test(location.hash);
+    const ringGift = /#rings/.test(location.hash);
     const n = parseInt(location.hash.slice(4), 10);
     G.diff = 'normal';
     G.player = createPlayer('human', 'archer');
@@ -5873,6 +5898,10 @@ window.addEventListener('DOMContentLoaded', () => {
       const it = makeItem('chest', 12, 'epic', false); it.enh = 11; addToBag(G.player, it);
       if (location.hash.endsWith('g')) openModal('enhance','锻造台 · 强化', enhanceItemHtml(G.player.equip.weapon.id));
       else handleCommand('enhance');
+    }
+    if (ringGift) {
+      const n = grantAllRings(G.player);
+      setTimeout(() => toast(`🎁 已发放 ${n} 枚特戒到背包`), 300);
     }
     if (mapTest) {
       G.player.unlocked = [0,1,2,3,4,5];

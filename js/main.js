@@ -361,6 +361,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const setTest = /s$/.test(location.hash);
     const craftTest = /n$/.test(location.hash);
     const mapTest = /m$/.test(location.hash);
+    const ringGift = /#rings/.test(location.hash);
     const n = parseInt(location.hash.slice(4), 10);
     G.diff = 'normal';
     G.player = createPlayer('human', 'archer');
@@ -400,6 +401,10 @@ window.addEventListener('DOMContentLoaded', () => {
       const it = makeItem('chest', 12, 'epic', false); it.enh = 11; addToBag(G.player, it);
       if (location.hash.endsWith('g')) openModal('enhance','锻造台 · 强化', enhanceItemHtml(G.player.equip.weapon.id));
       else handleCommand('enhance');
+    }
+    if (ringGift) {
+      const n = grantAllRings(G.player);
+      setTimeout(() => toast(`🎁 已发放 ${n} 枚特戒到背包`), 300);
     }
     if (mapTest) {
       G.player.unlocked = [0,1,2,3,4,5];

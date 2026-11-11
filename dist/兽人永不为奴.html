@@ -1676,12 +1676,12 @@ const Sfx = {
     this.resume();
     const t0 = c.currentTime;
     const g0 = (gain === undefined ? 0.7 : gain) * this.vol;
-    // 起始的金属噪音瞬态
-    this._noise({ dur: 0.045, freq: 3400 * pitch, q: 0.8, gain: g0 * 0.5, filter: 'highpass' });
-    // 非谐波泛音堆叠 → 金属感
-    const base = 1380 * pitch;
-    const ratios = [1, 2.76, 5.40, 8.93];
-    const amps   = [1, 0.55, 0.30, 0.16];
+    // 起始的金属噪音瞬态（压低高频，去掉"脆"感）
+    this._noise({ dur: 0.055, freq: 1500 * pitch, q: 0.7, gain: g0 * 0.38, filter: 'bandpass' });
+    // 非谐波泛音堆叠 → 金属感（基频下调，泛音比收敛，听感更厚重）
+    const base = 880 * pitch;
+    const ratios = [1, 2.35, 3.86, 5.62];
+    const amps   = [1, 0.50, 0.24, 0.11];
     ratios.forEach((r, i) => {
       this._tone({
         freq: base * r,
@@ -1691,7 +1691,8 @@ const Sfx = {
       });
     });
     // 低频冲击（砸在盔甲上的闷响）
-    this._tone({ freq: 160, to: 70, dur: 0.10, type: 'sine', gain: g0 * 0.20 });
+    this._tone({ freq: 150, to: 62, dur: 0.13, type: 'sine', gain: g0 * 0.30 });
+    this._noise({ dur: 0.06, freq: 520, q: 0.6, gain: g0 * 0.18, filter: 'lowpass' });
   },
 
   /* ---------- 音效表 ---------- */

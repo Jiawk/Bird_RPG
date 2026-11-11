@@ -802,21 +802,73 @@ function migrateLegacySave() {
 }
 migrateLegacySave();
 
+const MAX_CHARS = 4;          // 一个存档最多 4 个角色
+
+/* 把当前角色写回角色表 */
+function syncActiveChar() {
+  if (!Array.isArray(G.chars)) G.chars = [];
+  if (G.player) G.chars[G.active] = G.player;
+}
+
 function saveGame() {
   if (!G.player) return;
   try {
+    syncActiveChar();
     localStorage.setItem(SAVE_KEY, JSON.stringify({
-      v: 1, diff: G.diff, player: G.player, savedAt: Date.now()
+      v: 2, diff: G.diff, active: G.active, chars: G.chars, savedAt: Date.now()
     }));
     return true;
   } catch (e) { console.error(e); return false; }
 }
 
+/* 切换角色 */
+function switchChar(idx) {
+  if (!Array.isArray(G.chars) || !G.chars[idx]) return false;
+  if (idx === G.active) return false;
+  syncActiveChar();
+  G.active = idx;
+  G.player = G.chars[idx];
+  migrateItemSlots(G.player);
+  recalcStats(G.player);
+  return true;
+}
+
+/* 新增角色（返回新索引，满 4 个返回 -1） */
+function addChar(player) {
+  if (!Array.isArray(G.chars)) G.chars = [];
+  if (G.chars.length >= MAX_CHARS) return -1;
+  syncActiveChar();
+  G.chars.push(player);
+  G.active = G.chars.length - 1;
+  G.player = player;
+  return G.active;
+}
+
+/* 删除角色（至少保留 1 个） */
+function deleteChar(idx) {
+  if (!Array.isArray(G.chars) || G.chars.length <= 1) return false;
+  if (!G.chars[idx]) return false;
+  syncActiveChar();
+  G.chars.splice(idx, 1);
+  if (idx < G.active) G.active--;
+  else if (idx === G.active) G.active = Math.max(0, G.active - 1);
+  G.active = Math.min(G.active, G.chars.length - 1);
+  G.player = G.chars[G.active];
+  recalcStats(G.player);
+  return true;
+}
+
 function loadGameData(raw) {
   try {
     const d = typeof raw === 'string' ? JSON.parse(raw) : raw;
-    if (!d || !d.player) return null;
-    return d;
+    if (!d) return null;
+    // v1：单角色 → 包成角色表
+    if (d.player) return { v:2, diff: d.diff, active:0, chars:[d.player] };
+    // v2：多角色
+    if (Array.isArray(d.chars) && d.chars.length) {
+      return { v:2, diff: d.diff, active: Math.min(d.active || 0, d.chars.length - 1), chars: d.chars };
+    }
+    return null;
   } catch (e) { return null; }
 }
 
@@ -825,7 +877,9 @@ function loadGame() {
   const d = loadGameData(raw);
   if (!d) return false;
   G.diff = d.diff || 'normal';
-  G.player = d.player;
+  G.chars = d.chars || [];
+  G.active = Math.min(d.active || 0, Math.max(0, G.chars.length - 1));
+  G.player = G.chars[G.active];
   G.player.buffs = []; G.player.dots = []; G.player.cd = {};
   // 兼容：补齐缺失字段
   G.player.unlocked = G.player.unlocked || [0];

@@ -117,13 +117,28 @@ const statName = k => ({ str:'力量', agi:'敏捷', int:'智力', vit:'体质' 
 const fmtMod = v => (v > 0 ? '+' : '') + v;
 
 function confirmCreate() {
-  G.player = createPlayer(SEL.race, SEL.cls);
-  giveStarterGear(G.player);
+  const np = createPlayer(SEL.race, SEL.cls);
+  giveStarterGear(np);
   G.diff = 'normal';
+
+  if (G.creatingNew) {
+    // 新建角色：追加到角色表
+    const idx = addChar(np);
+    if (idx < 0) { toast(`角色已满（最多 ${MAX_CHARS} 个）`); return; }
+    G.creatingNew = false;
+    logMsg(`新角色：${DATA.RACES[SEL.race].name} · ${DATA.CLASSES[SEL.cls].name}`, 'level');
+  } else {
+    // 首次创建：初始化角色表
+    G.chars = [np];
+    G.active = 0;
+    G.player = np;
+    logMsg(`${DATA.RACES[SEL.race].name} · ${DATA.CLASSES[SEL.cls].name} 踏上征程`, 'level');
+  }
+
+  saveGame();
   startGame();
-  logMsg(`${DATA.RACES[SEL.race].name} · ${DATA.CLASSES[SEL.cls].name} 踏上征程`, 'level');
   toast(`获得新手装备一套 · 战力 ${combatPower(G.player)}`);
-  openTownMap();   // 开局直接让玩家选第一个图 + 难度
+  openTownMap();
 }
 
 /* ---------------- HUD ---------------- */
@@ -911,10 +926,15 @@ function smithHtml() {
 }
 
 function settingsHtml() {
+  const n = (G.chars || []).length;
   return `<div class="npc-list">
-    <div class="npc-row"><div><div class="nr-name" style="color:#ffd24a">领取全套特戒</div>
-      <div class="nr-info">6 枚特戒各一枚，直接放进背包（已有则跳过）</div></div>
-      <button data-act-give-rings style="border-color:#d4af37;color:#ffd24a">领取</button></div>
+    <div class="npc-row"><div><div class="nr-name" style="color:#ffd24a">选择角色</div>
+      <div class="nr-info">当前存档已有 ${n} / ${MAX_CHARS} 个角色</div></div>
+      <button data-act-pick-char style="border-color:#d4af37;color:#ffd24a">打开</button></div>
+    <div class="npc-row"><div><div class="nr-name">创建角色</div>
+      <div class="nr-info">${n >= MAX_CHARS ? '角色已满，需先删除一个' : '再建一个新角色，进度互相独立'}</div></div>
+      <button data-act-new-char ${n >= MAX_CHARS ? 'disabled' : ''}>新建</button></div>
+
     <div class="npc-row"><div><div class="nr-name">存档</div><div class="nr-info">手动保存</div></div>
       <button data-act-save>保存</button></div>
     <div class="npc-row"><div><div class="nr-name">导出存档</div><div class="nr-info">下载 json 备份</div></div>
@@ -923,6 +943,36 @@ function settingsHtml() {
       <div class="nr-info">删除角色，不可恢复</div></div>
       <button data-act-reset style="border-color:#6b2b2b;color:#ff8a7a">重开</button></div>
   </div>`;
+}
+
+/* ---------------- 角色列表 ---------------- */
+function charListHtml() {
+  const chars = G.chars || [];
+  let html = `<div style="font-size:11.5px;color:#8f8570;margin-bottom:10px">
+    一个存档最多 ${MAX_CHARS} 个角色，进度互相独立。</div><div class="npc-list">`;
+  for (let i = 0; i < MAX_CHARS; i++) {
+    const it = chars[i];
+    if (!it) {
+      html += `<div class="npc-row" style="opacity:.45"><div>
+        <div class="nr-name" style="color:#5a5348">空位 ${i + 1}</div>
+        <div class="nr-info">尚未创建角色</div></div>
+        <button disabled>空</button></div>`;
+      continue;
+    }
+    const act = i === G.active;
+    const cp = (() => { try { return combatPower(it); } catch (e) { return 0; } })();
+    html += `<div class="npc-row" style="${act ? 'border-color:#5fdc4a' : ''}">
+      <div style="flex:1">
+        <div class="nr-name" style="color:${act ? '#5fdc4a' : DATA.CLASSES[it.cls].color}">
+          ${DATA.RACES[it.race].name} · ${DATA.CLASSES[it.cls].name}
+          ${act ? '<span style="font-size:10px">· 当前</span>' : ''}</div>
+        <div class="nr-info">Lv.${it.level}　战力 ${fmt(cp)}　金币 ${fmt(it.gold)}</div>
+      </div>
+      <button data-switch-char="${i}" ${act ? 'disabled' : ''}>${act ? '游戏中' : '切换'}</button>
+      ${chars.length > 1 && !act ? `<button data-del-char="${i}" style="border-color:#6b2b3b;color:#ff8a9a">删除</button>` : ''}
+    </div>`;
+  }
+  return html + '</div>';
 }
 
 /* ---------------- 套装图鉴 ---------------- */
@@ -1540,10 +1590,31 @@ function bindModal() {
     openModal('bag','背包 · 装备', bagHtml());
   });
 
-  body.querySelectorAll('[data-act-give-rings]').forEach(b => b.onclick = () => {
-    const n = grantAllRings(G.player);
-    toast(n ? `已发放 ${n} 枚特戒到背包` : '6 枚特戒都已在身上或背包里');
-    if (n) { logMsg(`🎁 发放 ${n} 枚特戒`, 'loot'); saveGame(); }
+  body.querySelectorAll('[data-act-pick-char]').forEach(b => b.onclick = () => {
+    openModal('chars', '选择角色', charListHtml());
+  });
+  body.querySelectorAll('[data-act-new-char]').forEach(b => b.onclick = () => {
+    G.creatingNew = true;
+    closeModal();
+    SEL = { race: 'human', cls: 'warrior' };
+    buildCreateScreen();
+    showScreen('create');
+  });
+  body.querySelectorAll('[data-switch-char]').forEach(b => b.onclick = () => {
+    const i = +b.dataset.switchChar;
+    if (!switchChar(i)) { toast('已经在该角色上'); return; }
+    saveGame();
+    closeModal();
+    startGame();
+    toast(`切换到 ${DATA.RACES[G.player.race].name} · ${DATA.CLASSES[G.player.cls].name}`);
+  });
+  body.querySelectorAll('[data-del-char]').forEach(b => b.onclick = () => {
+    const i = +b.dataset.delChar;
+    if ((G.chars || []).length <= 1) { toast('至少要保留一个角色'); return; }
+    if (!confirm('确定删除该角色？不可恢复')) return;
+    deleteChar(i);
+    saveGame();
+    openModal('chars', '选择角色', charListHtml());
   });
   body.querySelectorAll('[data-act-town]').forEach(b => b.onclick = () => { closeModal(); goTown(); });
   body.querySelectorAll('[data-act-enhance]').forEach(b => b.onclick = () => openModal('enhance', '铁匠 · 装备强化', enhanceHtml()));

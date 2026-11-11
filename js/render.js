@@ -5,8 +5,6 @@
 
 const CV = document.getElementById('view');
 const CTX = CV.getContext('2d');
-const MMC = document.getElementById('minimap');
-const MMX = MMC.getContext('2d');
 const PRT = document.getElementById('portrait');
 const PRX = PRT.getContext('2d');
 
@@ -113,7 +111,6 @@ function render() {
   CTX.globalAlpha = 1;
 
   drawVignette();
-  drawMinimap(w, p);
   drawPortrait(p);
 }
 
@@ -819,38 +816,6 @@ function drawVignette() {
   g.addColorStop(1, 'rgba(0,0,0,.68)');
   CTX.fillStyle = g;
   CTX.fillRect(0, 0, VW, VH);
-}
-
-/* ---------------- 小地图 ---------------- */
-function drawMinimap(w, p) {
-  const W = MMC.width, H = MMC.height;
-  MMX.clearRect(0, 0, W, H);
-  MMX.fillStyle = '#0a0d0a';
-  MMX.fillRect(0, 0, W, H);
-
-  const k = Math.min(W / w.W, H / w.H);
-  const ox = (W - w.W * k) / 2, oy = (H - w.H * k) / 2;
-  const mx = x => ox + x * k, my = y => oy + y * k;
-
-  MMX.strokeStyle = '#4a3d28'; MMX.lineWidth = 1;
-  MMX.strokeRect(ox, oy, w.W * k, w.H * k);
-
-  for (const d of w.drops) {
-    MMX.fillStyle = d.color;
-    MMX.fillRect(mx(d.x) - 1, my(d.y) - 1, 2, 2);
-  }
-  for (const m of w.monsters) {
-    if (!m.alive) continue;
-    MMX.fillStyle = m.isBoss ? '#ff4a34' : '#c0554a';
-    MMX.beginPath(); MMX.arc(mx(m.x), my(m.y), m.isBoss ? 3.5 : 1.8, 0, 6.283); MMX.fill();
-  }
-  for (const n of w.npcs) {
-    MMX.fillStyle = '#ffd24a';
-    MMX.beginPath(); MMX.arc(mx(n.x), my(n.y), 2.6, 0, 6.283); MMX.fill();
-  }
-  MMX.fillStyle = '#7fd4ff';
-  MMX.beginPath(); MMX.arc(mx(p.x), my(p.y), 3.2, 0, 6.283); MMX.fill();
-  MMX.strokeStyle = '#fff'; MMX.lineWidth = 1; MMX.stroke();
 }
 
 /* ---------------- 头像 ---------------- */

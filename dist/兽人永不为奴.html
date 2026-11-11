@@ -104,15 +104,6 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   font-size:10px;color:#fff;text-shadow:0 1px 2px #000,0 0 4px #000}
 .bar.xp span{font-size:8px}
 
-/* 左下角：小地图 */
-.hud-minimap{position:absolute;left:10px;bottom:10px;z-index:24;padding:6px;border-radius:3px;
-  background:linear-gradient(180deg,rgba(58,47,28,.94),rgba(16,12,7,.96));
-  border:2px solid var(--bronze);box-shadow:0 4px 16px rgba(0,0,0,.8);
-  display:flex;flex-direction:column;align-items:center;gap:3px}
-.mm-frame{padding:3px;border-radius:2px;background:linear-gradient(160deg,#5a4626,#241b0d);
-  border:2px solid var(--bronze);box-shadow:inset 0 0 0 1px rgba(0,0,0,.7)}
-#minimap{display:block;border-radius:1px;background:#080b08}
-.mm-label{font-size:10px;color:var(--bone-dim);letter-spacing:.2em;font-family:var(--serif)}
 
 /* 右下角：命令卡 */
 .hud-commands{position:absolute;right:10px;bottom:10px;z-index:24;padding:8px;border-radius:3px;
@@ -761,12 +752,6 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
         <div class="bar xp"><i id="xpFill"></i><span id="xpText">0%</span></div>
         <div class="p-stats" id="pStats"></div>
       </div>
-    </div>
-
-    <!-- 左下角：小地图 -->
-    <div class="hud-minimap">
-      <div class="mm-frame"><canvas id="minimap" width="168" height="126"></canvas></div>
-      <div class="mm-label" id="mmLabel">城镇</div>
     </div>
 
     <!-- 右下角：命令卡 -->
@@ -3017,8 +3002,6 @@ function pickupDrop(d) {
 
 const CV = document.getElementById('view');
 const CTX = CV.getContext('2d');
-const MMC = document.getElementById('minimap');
-const MMX = MMC.getContext('2d');
 const PRT = document.getElementById('portrait');
 const PRX = PRT.getContext('2d');
 
@@ -3125,7 +3108,6 @@ function render() {
   CTX.globalAlpha = 1;
 
   drawVignette();
-  drawMinimap(w, p);
   drawPortrait(p);
 }
 
@@ -3833,38 +3815,6 @@ function drawVignette() {
   CTX.fillRect(0, 0, VW, VH);
 }
 
-/* ---------------- 小地图 ---------------- */
-function drawMinimap(w, p) {
-  const W = MMC.width, H = MMC.height;
-  MMX.clearRect(0, 0, W, H);
-  MMX.fillStyle = '#0a0d0a';
-  MMX.fillRect(0, 0, W, H);
-
-  const k = Math.min(W / w.W, H / w.H);
-  const ox = (W - w.W * k) / 2, oy = (H - w.H * k) / 2;
-  const mx = x => ox + x * k, my = y => oy + y * k;
-
-  MMX.strokeStyle = '#4a3d28'; MMX.lineWidth = 1;
-  MMX.strokeRect(ox, oy, w.W * k, w.H * k);
-
-  for (const d of w.drops) {
-    MMX.fillStyle = d.color;
-    MMX.fillRect(mx(d.x) - 1, my(d.y) - 1, 2, 2);
-  }
-  for (const m of w.monsters) {
-    if (!m.alive) continue;
-    MMX.fillStyle = m.isBoss ? '#ff4a34' : '#c0554a';
-    MMX.beginPath(); MMX.arc(mx(m.x), my(m.y), m.isBoss ? 3.5 : 1.8, 0, 6.283); MMX.fill();
-  }
-  for (const n of w.npcs) {
-    MMX.fillStyle = '#ffd24a';
-    MMX.beginPath(); MMX.arc(mx(n.x), my(n.y), 2.6, 0, 6.283); MMX.fill();
-  }
-  MMX.fillStyle = '#7fd4ff';
-  MMX.beginPath(); MMX.arc(mx(p.x), my(p.y), 3.2, 0, 6.283); MMX.fill();
-  MMX.strokeStyle = '#fff'; MMX.lineWidth = 1; MMX.stroke();
-}
-
 /* ---------------- 头像 ---------------- */
 function drawPortrait(p) {
   const W = PRT.width, H = PRT.height;
@@ -4108,7 +4058,6 @@ function updateHUD(dt) {
   $('roomName').textContent = isTown ? '暴风城 · 安全区' : DATA.ROOMS[w.roomId].name;
   $('roomSub').textContent = isTown ? '点击 NPC 或按 M 选择关卡'
     : `${DATA.DIFFICULTY[G.diff].name}难度 · ${DATA.ROOMS[w.roomId].desc}`;
-  $('mmLabel').textContent = isTown ? '城镇' : DATA.ROOMS[w.roomId].name;
 
   const boss = w.monsters.find(m => m.isBoss && m.alive);
   if (boss) {

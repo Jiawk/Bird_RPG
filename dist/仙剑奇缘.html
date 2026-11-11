@@ -699,6 +699,23 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   background:linear-gradient(180deg,transparent,rgba(0,0,0,.85));
   text-shadow:0 1px 3px #000}
 
+/* 魔兽头像 */
+.av-img{position:absolute;display:block;background-image:var(--avatar-sheet);
+  background-repeat:no-repeat;image-rendering:auto}
+
+/* 种族头像：固定 120x74，一格一张 */
+.race-portrait{position:relative;width:120px;height:74px;margin:0 auto 8px;overflow:hidden;
+  border-radius:2px;border:2px solid #4a3d28;background:#0b0d10}
+.race-portrait .av-img{left:0;top:0;width:120px;height:74px;
+  background-size:1440px 74px;
+  background-position:calc(var(--ai,0) * -120px) 0}
+
+/* 职业头像：固定 140x150，居中 */
+.cls-portrait .av-img.big{left:50%;transform:translateX(-50%);bottom:0;top:auto;
+  width:140px;height:150px;
+  background-size:1680px 150px;
+  background-position:calc(var(--ai,0) * -140px) 0}
+
 </style>
 </head>
 <body>
@@ -1248,6 +1265,10 @@ DATA.CODEX_LEVELS = [
 
 /* 普通装备可掉落的部位（特戒槽不参与随机掉落） */
 DATA.LOOT_SLOTS = ['weapon','helm','chest','legs','boots','neck','ring','trinket'];
+
+/* 魔兽头像图集索引（avatars.png 12 格） */
+DATA.RACE_AVATAR  = { human:0, orc:1, undead:2, elf:3 };
+DATA.CLASS_AVATAR = { warrior:4, mage:5, archer:6, assassin:7 };
 
 DATA.MAX_LEVEL = 30;
 DATA.expForLevel = (lv) => Math.floor(100 * Math.pow(lv, 1.5));
@@ -3819,10 +3840,9 @@ function drawPortrait(p) {
   const W = PRT.width, H = PRT.height;
   PRX.clearRect(0, 0, W, H);
   const cls = DATA.CLASSES[p.cls], race = DATA.RACES[p.race];
-  const ci = ['warrior','mage','archer','assassin'].indexOf(p.cls);
   const col = cls.color;
 
-  // 背景：职业色径向渐变
+  // 背景
   const g = PRX.createRadialGradient(W * 0.42, H * 0.30, 4, W / 2, H * 0.62, W * 0.95);
   g.addColorStop(0, shade(col, 34));
   g.addColorStop(0.55, shade(col, -46));
@@ -3830,45 +3850,48 @@ function drawPortrait(p) {
   PRX.fillStyle = g;
   PRX.fillRect(0, 0, W, H);
 
-  // 角色上半身（从 units 图集裁头肩）
-  if (imgReady('units') && ci >= 0) {
-    const sx = ci * 128, sy = 0;          // 第 0 帧、朝下
-    // 源图单帧 32x48，取 32x34 的头肩部分
-    const sw = 32, sh = 34;
-    const scale = Math.max(W / sw, H / sh) * 1.02;
-    const dw = sw * scale, dh = sh * scale;
+  const ri = DATA.RACE_AVATAR[p.race], ci = DATA.CLASS_AVATAR[p.cls];
+
+  if (imgReady('avatars') && ri !== undefined) {
+    // 种族头像铺满
+    PRX.imageSmoothingEnabled = true;
+    PRX.drawImage(IMG.avatars, ri * 64, 0, 64, 64, 0, 0, W, H);
+
+    // 右下角职业头像小徽章
+    if (ci !== undefined) {
+      const bs = 34, bx = W - bs - 2, by = H - bs - 2;
+      PRX.save();
+      PRX.beginPath(); PRX.arc(bx + bs / 2, by + bs / 2, bs / 2, 0, 6.283); PRX.clip();
+      PRX.drawImage(IMG.avatars, ci * 64, 0, 64, 64, bx, by, bs, bs);
+      PRX.restore();
+      PRX.strokeStyle = '#ffd24a'; PRX.lineWidth = 2;
+      PRX.beginPath(); PRX.arc(bx + bs / 2, by + bs / 2, bs / 2, 0, 6.283); PRX.stroke();
+    }
+  } else if (imgReady('units') && ['warrior','mage','archer','assassin'].indexOf(p.cls) >= 0) {
+    const k = ['warrior','mage','archer','assassin'].indexOf(p.cls);
+    const scale = Math.max(W / 32, H / 34) * 1.02;
     PRX.imageSmoothingEnabled = false;
-    PRX.drawImage(IMG.units, sx, sy, sw, sh,
-                  (W - dw) / 2, (H - dh) * 0.62, dw, dh);
-  } else {
-    PRX.fillStyle = shade(race.color, 12);
-    PRX.beginPath(); PRX.arc(W / 2, H * 0.44, W * 0.26, 0, 6.283); PRX.fill();
-    PRX.font = '700 26px "KaiTi",serif';
-    PRX.textAlign = 'center';
-    PRX.fillStyle = 'rgba(255,230,168,.92)';
-    PRX.fillText(cls.name.charAt(0), W / 2, H * 0.56);
+    PRX.drawImage(IMG.units, k * 128, 0, 32, 34, (W - 32 * scale) / 2, (H - 34 * scale) * 0.62, 32 * scale, 34 * scale);
   }
 
-  // 底部压暗，让名字/等级更清楚
-  const vg = PRX.createLinearGradient(0, H * 0.55, 0, H);
+  // 底部压暗 + 名字
+  const vg = PRX.createLinearGradient(0, H * 0.5, 0, H);
   vg.addColorStop(0, 'rgba(0,0,0,0)');
-  vg.addColorStop(1, 'rgba(0,0,0,.72)');
+  vg.addColorStop(1, 'rgba(0,0,0,.78)');
   PRX.fillStyle = vg;
-  PRX.fillRect(0, H * 0.55, W, H * 0.45);
+  PRX.fillRect(0, H * 0.5, W, H * 0.5);
 
-  // 职业名（底部）
   PRX.font = '700 11px "KaiTi",serif';
   PRX.textAlign = 'center';
   PRX.lineWidth = 3; PRX.strokeStyle = 'rgba(0,0,0,.9)';
-  PRX.strokeText(cls.name, W / 2, H - 5);
+  PRX.strokeText(race.name, W / 2, H - 5);
   PRX.fillStyle = '#ffe6a8';
-  PRX.fillText(cls.name, W / 2, H - 5);
+  PRX.fillText(race.name, W / 2, H - 5);
 
-  // 职业色描边
-  PRX.strokeStyle = col;
-  PRX.lineWidth = 2;
+  PRX.strokeStyle = col; PRX.lineWidth = 2;
   PRX.strokeRect(1, 1, W - 2, H - 2);
 }
+
 
 
 </script>
@@ -3901,6 +3924,7 @@ function uiInit() {
   document.documentElement.style.setProperty('--skill-sheet', `url(${ASSETS.skills})`);
   if (ASSETS.units) document.documentElement.style.setProperty('--units-sheet', `url(${ASSETS.units})`);
   if (ASSETS.classicons) document.documentElement.style.setProperty('--class-sheet', `url(${ASSETS.classicons})`);
+  if (ASSETS.avatars) document.documentElement.style.setProperty('--avatar-sheet', `url(${ASSETS.avatars})`);
   bindSkillTips();
   // 任务追踪：事件委托（内容重建后依然可点）
   const qt = $('questTracker');
@@ -3953,7 +3977,11 @@ function buildCreateScreen() {
     const r = DATA.RACES[k];
     const el = document.createElement('div');
     el.className = 'card' + (k === SEL.race ? ' sel' : '');
-    el.innerHTML = `<h3 style="color:${r.color}">${r.name}</h3>
+    const rai = DATA.RACE_AVATAR[k] !== undefined ? DATA.RACE_AVATAR[k] : 0;
+    el.innerHTML = `<div class="race-portrait" style="--ai:${rai}">
+        <span class="av-img"></span>
+      </div>
+      <h3 style="color:${r.color}">${r.name}</h3>
       <p>${r.desc}</p>
       <div><span class="tag">力 ${fmtMod(r.mod.str)}</span><span class="tag">敏 ${fmtMod(r.mod.agi)}</span>
       <span class="tag">智 ${fmtMod(r.mod.int)}</span><span class="tag">体 ${fmtMod(r.mod.vit)}</span></div>
@@ -3969,8 +3997,8 @@ function buildCreateScreen() {
     const km = c.keymap;
     const ci = Object.keys(DATA.CLASSES).indexOf(k);
     el.innerHTML = `
-      <div class="cls-portrait">
-        <span class="cls-sprite" style="background-position:${-ci * 384}px 0"></span>
+      <div class="cls-portrait" style="--ai:${DATA.CLASS_AVATAR[k] !== undefined ? DATA.CLASS_AVATAR[k] : 0}">
+        <span class="av-img big"></span>
         <span class="cls-badge" style="background-position:${-ci * 64}px 0"></span>
         <span class="cls-name-plate">${c.name}</span>
       </div>

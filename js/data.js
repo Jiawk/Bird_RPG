@@ -382,5 +382,9 @@ DATA.CODEX_LEVELS = [
 /* 普通装备可掉落的部位（特戒槽不参与随机掉落） */
 DATA.LOOT_SLOTS = ['weapon','helm','chest','legs','boots','neck','ring','trinket'];
 
+/* 魔兽头像图集索引（avatars.png 12 格） */
+DATA.RACE_AVATAR  = { human:0, orc:1, undead:2, elf:3 };
+DATA.CLASS_AVATAR = { warrior:4, mage:5, archer:6, assassin:7 };
+
 DATA.MAX_LEVEL = 30;
 DATA.expForLevel = (lv) => Math.floor(100 * Math.pow(lv, 1.5));

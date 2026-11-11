@@ -25,6 +25,7 @@ function uiInit() {
   document.documentElement.style.setProperty('--skill-sheet', `url(${ASSETS.skills})`);
   if (ASSETS.units) document.documentElement.style.setProperty('--units-sheet', `url(${ASSETS.units})`);
   if (ASSETS.classicons) document.documentElement.style.setProperty('--class-sheet', `url(${ASSETS.classicons})`);
+  if (ASSETS.avatars) document.documentElement.style.setProperty('--avatar-sheet', `url(${ASSETS.avatars})`);
   bindSkillTips();
   // 任务追踪：事件委托（内容重建后依然可点）
   const qt = $('questTracker');
@@ -77,7 +78,11 @@ function buildCreateScreen() {
     const r = DATA.RACES[k];
     const el = document.createElement('div');
     el.className = 'card' + (k === SEL.race ? ' sel' : '');
-    el.innerHTML = `<h3 style="color:${r.color}">${r.name}</h3>
+    const rai = DATA.RACE_AVATAR[k] !== undefined ? DATA.RACE_AVATAR[k] : 0;
+    el.innerHTML = `<div class="race-portrait" style="--ai:${rai}">
+        <span class="av-img"></span>
+      </div>
+      <h3 style="color:${r.color}">${r.name}</h3>
       <p>${r.desc}</p>
       <div><span class="tag">力 ${fmtMod(r.mod.str)}</span><span class="tag">敏 ${fmtMod(r.mod.agi)}</span>
       <span class="tag">智 ${fmtMod(r.mod.int)}</span><span class="tag">体 ${fmtMod(r.mod.vit)}</span></div>
@@ -93,8 +98,8 @@ function buildCreateScreen() {
     const km = c.keymap;
     const ci = Object.keys(DATA.CLASSES).indexOf(k);
     el.innerHTML = `
-      <div class="cls-portrait">
-        <span class="cls-sprite" style="background-position:${-ci * 384}px 0"></span>
+      <div class="cls-portrait" style="--ai:${DATA.CLASS_AVATAR[k] !== undefined ? DATA.CLASS_AVATAR[k] : 0}">
+        <span class="av-img big"></span>
         <span class="cls-badge" style="background-position:${-ci * 64}px 0"></span>
         <span class="cls-name-plate">${c.name}</span>
       </div>

@@ -691,3 +691,20 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   font-family:var(--serif);font-size:13px;color:#ffe6a8;letter-spacing:.18em;
   background:linear-gradient(180deg,transparent,rgba(0,0,0,.85));
   text-shadow:0 1px 3px #000}
+
+/* 魔兽头像 */
+.av-img{position:absolute;display:block;background-image:var(--avatar-sheet);
+  background-repeat:no-repeat;image-rendering:auto}
+
+/* 种族头像：固定 120x74，一格一张 */
+.race-portrait{position:relative;width:120px;height:74px;margin:0 auto 8px;overflow:hidden;
+  border-radius:2px;border:2px solid #4a3d28;background:#0b0d10}
+.race-portrait .av-img{left:0;top:0;width:120px;height:74px;
+  background-size:1440px 74px;
+  background-position:calc(var(--ai,0) * -120px) 0}
+
+/* 职业头像：固定 140x150，居中 */
+.cls-portrait .av-img.big{left:50%;transform:translateX(-50%);bottom:0;top:auto;
+  width:140px;height:150px;
+  background-size:1680px 150px;
+  background-position:calc(var(--ai,0) * -140px) 0}

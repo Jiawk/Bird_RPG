@@ -767,7 +767,7 @@ function drawVfx(w) {
 
     if (type === 'shards') {
       // 暴风雪：从天而降的冰锥
-      const n = 14;
+      const n = 22;
       for (let j = 0; j < n; j++) {
         const ang = e.seed + j * 2.399;
         const rr = e.r * (0.25 + (j % 5) / 5 * 0.75);

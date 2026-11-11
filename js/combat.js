@@ -173,7 +173,16 @@ function castSkillImpl(key) {
     const _col = (DATA.SKILL_COLOR && DATA.SKILL_COLOR[key]) || _sp.color || '#ffd24a';
     const _rad = _sp.radius ? _sp.radius * 42
                : (_sp.kind === 'proj' ? 42 : _sp.kind === 'blink' ? 90 : 110);
-    spawnVfx(p.x, p.y, _col, _rad, _sp.kind,
+
+    // 落点：多段地面 AOE（暴风雪）指向最近敌人，其余以自身为中心
+    let _tx = p.x, _ty = p.y;
+    if (_sp.kind === 'aoe' && (_sp.hits || 1) > 1) {
+      const t0 = nearestMonster(560);
+      if (t0) { _tx = t0.x; _ty = t0.y; }
+    }
+    p._castX = _tx; p._castY = _ty;
+
+    spawnVfx(_tx, _ty, _col, _rad, _sp.kind,
              _sp.kind === 'aoe' ? 0.95 : 0.6, key);
   }
   const sp = DATA.SKILLS[key];
@@ -193,12 +202,15 @@ function castSkillImpl(key) {
   switch (sp.kind) {
     case 'aoe': {
       const hits = sp.hits || 1;
+      const ax = (p._castX !== undefined) ? p._castX : p.x;
+      const ay = (p._castY !== undefined) ? p._castY : p.y;
+      const acol = (DATA.SKILL_COLOR && DATA.SKILL_COLOR[key]) || '#ffb347';
       for (let h = 0; h < hits; h++) {
         schedule(h * 0.28, () => {
-          burst(p.x, p.y, '#ffb347', 14, 220);
+          burst(ax, ay, acol, 14, 220);
           for (const m of w.monsters) {
             if (!m.alive) continue;
-            if (dist(p, m) <= sp.radius * 32 + m.r) {
+            if (Math.hypot(m.x - ax, m.y - ay) <= sp.radius * 42 + m.r) {
               damageMonster(m, p.stats.power * (p.stats.skillMul || 1) * sp.dmg * mul, 'skill');
               if (sp.freeze) m.frozen = Math.max(m.frozen, sp.freeze);
               if (sp.root) m.root = Math.max(m.root, sp.root);

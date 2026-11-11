@@ -39,6 +39,18 @@ function uiInit() {
       if (e.target.closest('[data-qt-accept-all]')) { acceptAllQuests(); QT_SIG = ''; return; }
     });
   }
+  // 功能按钮图标（固定映射）
+  const UICON = { autoAtk:0, autoSkill:1, potion:2, bag:3, char:4, skill:5, map:6 };
+  document.querySelectorAll('.cc-btn .sk-ic.util').forEach(ic => {
+    const act = ic.parentElement.dataset.act;
+    const i = UICON[act];
+    if (i === undefined) return;
+    ic.style.backgroundImage = `url(${ASSETS.uicons})`;
+    ic.style.backgroundSize = '280px 40px';
+    ic.style.backgroundPosition = `${-i * 40}px 0`;
+    ic.style.backgroundRepeat = 'no-repeat';
+  });
+
   document.querySelectorAll('.cc-btn, .codex-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       if (btn.dataset.skill) castSkillKey(btn.dataset.skill);

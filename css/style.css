@@ -699,3 +699,12 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   width:140px;height:150px;
   background-size:1680px 150px;
   background-position:calc(var(--ai,0) * -140px) 0}
+
+/* 功能按钮图标（A/S/F/B/C/K/M） */
+.cc-btn .sk-ic.util{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:28px;height:28px;display:block;background-repeat:no-repeat;
+  pointer-events:none;border-radius:3px}
+.cc-btn:not(.skill) .nm{position:relative;padding-top:22px;font-size:9px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc-btn.toggle .sk-ic.util{opacity:.95}
+.cc-btn.toggle.on .sk-ic.util{filter:drop-shadow(0 0 6px rgba(255,210,74,.9))}

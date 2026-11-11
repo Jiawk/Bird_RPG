@@ -707,6 +707,15 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   background-size:1680px 150px;
   background-position:calc(var(--ai,0) * -140px) 0}
 
+/* 功能按钮图标（A/S/F/B/C/K/M） */
+.cc-btn .sk-ic.util{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:28px;height:28px;display:block;background-repeat:no-repeat;
+  pointer-events:none;border-radius:3px}
+.cc-btn:not(.skill) .nm{position:relative;padding-top:22px;font-size:9px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc-btn.toggle .sk-ic.util{opacity:.95}
+.cc-btn.toggle.on .sk-ic.util{filter:drop-shadow(0 0 6px rgba(255,210,74,.9))}
+
 </style>
 </head>
 <body>
@@ -762,13 +771,13 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
         <button class="cc-btn skill" data-skill="e"><span class="hk">E</span><span class="sk-ic"></span><span class="nm">—</span><span class="cd"></span></button>
         <button class="cc-btn skill" data-skill="r"><span class="hk">R</span><span class="sk-ic"></span><span class="nm">—</span><span class="cd"></span></button>
         <button class="cc-btn skill dash" data-skill="d"><span class="hk">D</span><span class="sk-ic"></span><span class="nm">—</span><span class="cd"></span></button>
-        <button class="cc-btn toggle" data-act="autoAtk"><span class="hk">A</span><span class="nm">自动攻击</span></button>
-        <button class="cc-btn toggle" data-act="autoSkill"><span class="hk">S</span><span class="nm">自动技能</span></button>
-        <button class="cc-btn" data-act="potion"><span class="hk">F</span><span class="nm">喝药</span></button>
-        <button class="cc-btn" data-act="bag"><span class="hk">B</span><span class="nm">背包</span></button>
-        <button class="cc-btn" data-act="char"><span class="hk">C</span><span class="nm">角色</span></button>
-        <button class="cc-btn" data-act="skill"><span class="hk">K</span><span class="nm">技能</span></button>
-        <button class="cc-btn" data-act="map"><span class="hk">M</span><span class="nm">传送/回城</span></button>
+        <button class="cc-btn toggle" data-act="autoAtk"><span class="hk">A</span><span class="sk-ic util"></span><span class="nm">自动攻击</span></button>
+        <button class="cc-btn toggle" data-act="autoSkill"><span class="hk">S</span><span class="sk-ic util"></span><span class="nm">自动技能</span></button>
+        <button class="cc-btn" data-act="potion"><span class="hk">F</span><span class="sk-ic util"></span><span class="nm">喝药</span></button>
+        <button class="cc-btn" data-act="bag"><span class="hk">B</span><span class="sk-ic util"></span><span class="nm">背包</span></button>
+        <button class="cc-btn" data-act="char"><span class="hk">C</span><span class="sk-ic util"></span><span class="nm">角色</span></button>
+        <button class="cc-btn" data-act="skill"><span class="hk">K</span><span class="sk-ic util"></span><span class="nm">技能</span></button>
+        <button class="cc-btn" data-act="map"><span class="hk">M</span><span class="sk-ic util"></span><span class="nm">传送/回城</span></button>
       </div>
     </div>
 
@@ -3946,6 +3955,18 @@ function uiInit() {
       if (e.target.closest('[data-qt-accept-all]')) { acceptAllQuests(); QT_SIG = ''; return; }
     });
   }
+  // 功能按钮图标（固定映射）
+  const UICON = { autoAtk:0, autoSkill:1, potion:2, bag:3, char:4, skill:5, map:6 };
+  document.querySelectorAll('.cc-btn .sk-ic.util').forEach(ic => {
+    const act = ic.parentElement.dataset.act;
+    const i = UICON[act];
+    if (i === undefined) return;
+    ic.style.backgroundImage = `url(${ASSETS.uicons})`;
+    ic.style.backgroundSize = '280px 40px';
+    ic.style.backgroundPosition = `${-i * 40}px 0`;
+    ic.style.backgroundRepeat = 'no-repeat';
+  });
+
   document.querySelectorAll('.cc-btn, .codex-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       if (btn.dataset.skill) castSkillKey(btn.dataset.skill);

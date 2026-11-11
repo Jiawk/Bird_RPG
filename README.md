@@ -692,3 +692,19 @@ python3 build.py     # 重新打包成单文件 dist/兽人永不为奴.html
 - 删掉左下角的小地图面板（对实际游玩没有帮助）
 - 同时移除相关代码：`drawMinimap()` / `MMC` / `MMX` 画布引用 / `mmLabel` 更新 / CSS 样式
 - 左下角空间空出来，消息日志往上收了收
+
+### v40 · 功能按钮补图标
+命令卡的 7 个功能按钮补上魔兽图标（原来只有文字）：
+
+| 键 | 功能 | 图标素材 |
+|---|---|---|
+| A | 自动攻击 | `INV_Sword_102` |
+| S | 自动技能 | `Ability_Mage_ArcaneBarrage` |
+| F | 喝药 | `INV_Potion_148` |
+| B | 背包 | `INV_Misc_Bag_EnchantedRunecloth` |
+| C | 角色 | `Achievement_Character_Human_Male` |
+| K | 技能 | `INV_Misc_Book_07` |
+| M | 传送 | `Spell_Arcane_TeleportOrgrimmar` |
+
+- 图标 28px 居中，文字挪到下方
+- A / S 开启时图标带金色光晕

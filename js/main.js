@@ -117,7 +117,6 @@ function setupSticks() {
     el.addEventListener('touchcancel', end, { passive: false });
   };
   mk($('stickMove'), Input.moveStick);
-  mk($('stickAim'), Input.aimStick);
 }
 
 /* ---------------- 玩家 ---------------- */

@@ -367,8 +367,8 @@ function updateQuestTracker() {
   }
 
   html += '<div class="qt-actions">';
-  html += `<button data-qt-claim-all ${doneN ? '' : 'disabled'}>一键交任务${doneN ? ' ' + doneN : ''}</button>`;
-  html += `<button data-qt-accept-all ${avail.length ? '' : 'disabled'}>一键接任务${avail.length ? ' ' + avail.length : ''}</button>`;
+  html += `<button data-qt-claim-all ${doneN ? '' : 'disabled'}>交任务${doneN ? ' ' + doneN : ''}</button>`;
+  html += `<button data-qt-accept-all ${avail.length ? '' : 'disabled'}>接任务${avail.length ? ' ' + avail.length : ''}</button>`;
   html += '</div></div>';
   el.innerHTML = html;
 }

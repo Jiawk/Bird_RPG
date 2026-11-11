@@ -1013,7 +1013,8 @@ function smithHtml() {
   if (!items.length) return enh + '<div style="color:#8f8570">背包里没有可出售的装备</div>';
   let html = enh + '<div class="npc-list">';
   items.forEach(it => {
-    const q = DATA.QUALITY.find(x => x.key === it.qKey);
+    const q = DATA.QUALITY.find(x => x.key === (it.qKey || it.quality))
+              || { name:'普通', color:'#c8c8c8', key:'common' };
     const price = Math.round((20 + it.ilvl * 8) * Math.pow(2.2, DATA.QUALITY.indexOf(q)));
     html += `<div class="npc-row"><div><div class="nr-name" style="color:${it.color}">${it.name}</div>
       <div class="nr-info">物品等级 ${it.ilvl}　售价 ${price} 金</div></div>
@@ -1056,7 +1057,7 @@ function buyRelic(key) {
   p.gold -= w.price;
   const item = {
     id: 'rl' + Math.random().toString(36).slice(2, 8),
-    slot: 'weapon', type: 'equip', quality: 'relic',
+    slot: 'weapon', type: 'equip', quality: 'relic', qKey: 'relic',
     name: w.name, color: w.color, ilvl: w.reqLv, reqLv: w.reqLv,
     wtype: w.wtype, relicKey: w.key, relicPct: w.relicPct,
     stats: Object.assign({}, w.stats), enh: 0, locked: true
@@ -1438,7 +1439,7 @@ function enhanceItemHtml(id) {
     ${iconTag(it.slot, 56, it.wtype, it.relicKey)}
     <div>
       <div class="enh-name" style="color:${it.color}">+${lv} ${it.name}</div>
-      <div class="enh-sub">${DATA.QUALITY.find(q => q.key === it.qKey).name} · ${slotName(it.slot)} · 物品等级 ${it.ilvl}
+      <div class="enh-sub">${(DATA.QUALITY.find(q => q.key === (it.qKey || it.quality)) || {name:'普通'}).name} · ${slotName(it.slot)} · 物品等级 ${it.ilvl}
         ${onBody ? '<span style="color:#5fdc4a">· 已穿戴</span>' : '<span style="color:#8f8570">· 在背包</span>'}</div>
     </div>
   </div>`;
@@ -1912,7 +1913,8 @@ function showTooltip(it, x, y) {
     TIP.innerHTML = `<h4 style="color:${it.color}">${it.name}</h4>
       <div class="tt-desc">${it.hp ? '回复 ' + it.hp + ' 生命' : '回复 ' + it.mp + ' 法力'}</div>`;
   } else {
-    const q = DATA.QUALITY.find(x => x.key === it.qKey);
+    const q = DATA.QUALITY.find(x => x.key === (it.qKey || it.quality))
+              || { name:'普通', color:'#c8c8c8', key:'common' };
     const enhTxt = it.enh ? `<span style="color:#5fdc4a">+${it.enh}</span> ` : '';
     const parts = [`<h4 style="color:${it.color}">${enhTxt}${it.name}</h4>`,
       `<div class="tt-sub">${q.name} · ${slotName(it.slot)} · 物品等级 ${it.ilvl}</div>`];

@@ -1055,3 +1055,12 @@ python3 build.py     # 重新打包成单文件 dist/兽人永不为奴.html
   2. 图集扩展到 **20 格**：新增 18/19 = 红药 / 蓝药图标（取自 `道具&装备/药剂`）
   3. 商店药水格子改用图标，不再用「⚗」文字
   4. 背包里的药水同步换成图标
+
+### v68 · 修复圣物悬停报错
+- **现象**：角色面板里鼠标悬停圣物武器 → `Cannot read properties of undefined (reading 'name')`
+- **根因**：`buyRelic()` 创建圣物时只写了 `quality:'relic'`，**漏了 `qKey:'relic'`**
+  而 tooltip 读的是 `it.qKey` → `DATA.QUALITY.find(...)` 返回 `undefined` → `q.name` 报错
+- **修复**
+  1. `buyRelic` 补上 `qKey:'relic'`
+  2. tooltip / 强化详情两处品质查找都加了兜底：`it.qKey || it.quality`，再不行返回「普通」
+  3. `migrateItemSlots` 增加旧存档修复：识别 `relicKey` 的装备自动补 `qKey`

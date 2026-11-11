@@ -379,6 +379,10 @@ function normalizeSlot(it) {
 
 /* 迁移：把槽位已不存在的装备归位 */
 function migrateItemSlots(p) {
+  // 圣物补齐 qKey（旧存档里可能只有 quality）
+  const fixQ = x => { if (x && x.relicKey && !x.qKey) x.qKey = 'relic'; };
+  if (p.equip) for (const k in p.equip) fixQ(p.equip[k]);
+  if (p.bag) p.bag.forEach(fixQ);
   const valid = sk => !!DATA.SLOTS[sk];
   const isRingSlot = sk => DATA.RING_SLOTS.some(r => r.slot === sk);
   const fix = it => {

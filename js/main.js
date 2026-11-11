@@ -74,6 +74,8 @@ function initInput() {
     if (e.button === 0) Input.mouse.down = false;
     if (e.button === 2) Input.mouse.right = false;   // 松开不停，继续走
   });
+  // 全局禁用右键菜单（Mac 双指点按也不会弹出来）
+  document.addEventListener('contextmenu', e => e.preventDefault());
   CV.addEventListener('contextmenu', e => e.preventDefault());
   window.addEventListener('resize', resizeCanvas);
 
@@ -305,6 +307,8 @@ window.addEventListener('DOMContentLoaded', () => {
     const bagTest = /b$/.test(location.hash);
     const fxTest = /e$/.test(location.hash);
     const tipTest = /t$/.test(location.hash);
+    const forgeTest = /[fg]$/.test(location.hash);
+    const skillTest = /k$/.test(location.hash);
     const n = parseInt(location.hash.slice(4), 10);
     G.diff = 'normal';
     G.player = createPlayer('human', 'archer');
@@ -330,6 +334,26 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     if (tipTest) setTimeout(() => showSkillTip('q', 1080, 380), 900);
     if (charTest) handleCommand('char');
+    if (forgeTest) {
+      // 给几件装备 + 材料，方便看锻造台
+      for (const sk in DATA.SLOTS) {
+        if (sk === 'ring2') continue;
+        G.player.equip[sk] = makeItem(sk, 10, 'rare', false);
+      }
+      G.player.equip.weapon.enh = 7;
+      G.player.materials.stone = 40; G.player.materials.protect = 3;
+      G.player.gold = 50000;
+      recalcStats(G.player);
+      const it = makeItem('chest', 12, 'epic', false); it.enh = 11; addToBag(G.player, it);
+      if (location.hash.endsWith('g')) openModal('enhance','锻造台 · 强化', enhanceItemHtml(G.player.equip.weapon.id));
+      else handleCommand('enhance');
+    }
+    if (skillTest) {
+      G.player.materials.breakT = 0; G.player.materials.skillT = 4;
+      const cls = DATA.CLASSES[G.player.cls];
+      [cls.keymap.q, cls.keymap.w].forEach(k => { skillProfOf(G.player, k).prof = 100; });
+      handleCommand('skill');
+    }
     if (bagTest) {
       // 塞点测试物品：药水堆叠 + 各种品质装备
       const po = DATA.POTIONS[0];

@@ -21,6 +21,7 @@ function imgReady(k) { return IMG[k] && IMG[k].complete && IMG[k].naturalWidth >
 
 const U_FRAME_W = 32, U_FRAME_H = 48;
 const ICON_SIZE = 32;
-const SLOT_ICON_IDX = { weapon:0, helm:1, chest:2, legs:3, boots:4, neck:5, ring:6, ring2:6, ring3:6, ring4:6, ring5:6, trinket:7 };
+const SLOT_ICON_IDX = { weapon:0, helm:1, chest:2, legs:3, boots:4, neck:5, ring:6, trinket:7,
+  ring_exp:6, ring_revive:6, ring_summon:6, ring_cleave:6, ring_drop:6, ring_gather:6 };
 const SKILL_ICON_COUNT = 24;
 const FX_SIZE = 48;

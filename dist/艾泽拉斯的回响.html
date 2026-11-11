@@ -663,6 +663,18 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .cp-bar{height:5px;border-radius:3px;background:#0d0a06;overflow:hidden;margin:5px 0 4px}
 .cp-bar i{display:block;height:100%;transition:width .2s ease}
 
+.codex-btn{padding:4px 10px;font-size:11px;border-radius:2px;cursor:pointer;font-family:var(--serif);
+  background:linear-gradient(180deg,#3a3020,#14100a);border:1px solid var(--bronze);
+  color:var(--bone);letter-spacing:.06em}
+.codex-btn:hover{border-color:var(--gold);color:var(--gold-lt)}
+.cx-row{display:flex;align-items:center;gap:8px;padding:5px 8px;font-size:12px;
+  border-bottom:1px dotted rgba(184,173,147,.14)}
+.cx-row .cx-nm{flex:1;color:#c8bfa8}
+.cx-row .cx-cnt{font-weight:700;font-size:11px}
+.cx-bar{height:7px;border-radius:4px;background:#0d0a06;overflow:hidden;margin:4px 0}
+.cx-bar i{display:block;height:100%}
+.cx-lv{font-family:var(--serif);font-size:13px;color:#ffd24a}
+
 </style>
 </head>
 <body>
@@ -685,6 +697,8 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
       <div class="res-box"><i class="ic-cp">战</i><b id="cpVal">0</b></div>
       <div class="res-box"><i class="ic-gear">装</i><b id="gearVal">未集齐</b></div>
       <div class="res-box"><i class="ic-diff">难</i><b id="diffVal">简单</b></div>
+      <button class="codex-btn" data-act="codexEquip">装备图鉴</button>
+      <button class="codex-btn" data-act="codexCollect">收藏图鉴</button>
     </div>
 
     <!-- BOSS 血条 -->
@@ -813,7 +827,8 @@ function imgReady(k) { return IMG[k] && IMG[k].complete && IMG[k].naturalWidth >
 
 const U_FRAME_W = 32, U_FRAME_H = 48;
 const ICON_SIZE = 32;
-const SLOT_ICON_IDX = { weapon:0, helm:1, chest:2, legs:3, boots:4, neck:5, ring:6, ring2:6, ring3:6, ring4:6, ring5:6, trinket:7 };
+const SLOT_ICON_IDX = { weapon:0, helm:1, chest:2, legs:3, boots:4, neck:5, ring:6, trinket:7,
+  ring_exp:6, ring_revive:6, ring_summon:6, ring_cleave:6, ring_drop:6, ring_gather:6 };
 const SKILL_ICON_COUNT = 24;
 const FX_SIZE = 48;
 
@@ -916,11 +931,14 @@ DATA.SLOTS = {
   weapon:{name:'武器', icon:'⚔'}, helm:{name:'头盔', icon:'⛑'},
   chest:{name:'胸甲', icon:'🛡'},  legs:{name:'护腿', icon:'👖'},
   boots:{name:'战靴', icon:'🥾'},  neck:{name:'项链', icon:'📿'},
-  ring:{name:'戒指', icon:'💍'},   ring2:{name:'印记', icon:'◎'},
-  ring3:{name:'副印记', icon:'◉'},
-  ring4:{name:'印记III', icon:'◈'},
-  ring5:{name:'印记IV', icon:'❖'},
-  trinket:{name:'饰品', icon:'🔮'}
+  ring:{name:'戒指', icon:'💍'},
+  trinket:{name:'饰品', icon:'🔮'},
+  ring_exp:{name:'经验之戒', icon:'◎'},
+  ring_revive:{name:'复活之戒', icon:'✦'},
+  ring_summon:{name:'召唤之戒', icon:'❖'},
+  ring_cleave:{name:'切割之戒', icon:'◆'},
+  ring_drop:{name:'爆率之戒', icon:'◇'},
+  ring_gather:{name:'聚合之戒', icon:'❂'}
 };
 
 /* 品质：白→绿→蓝→紫→橙→红（数值拉开，让"集齐某档"有质变） */
@@ -1136,24 +1154,51 @@ DATA.MATS2 = {
 
 /* ---------------- BOSS 首杀戒指 ---------------- */
 DATA.BOSS_RINGS = {
-  bossWolf:      {name:'可汗之戒', effect:{expBonus:0.15},  desc:'经验获取 +15%'},
-  bossKobold:    {name:'矿脉之戒', effect:{goldBonus:0.30}, desc:'金币获取 +30%'},
-  bossGrom:      {name:'战歌之戒', effect:{lifesteal:0.05}, desc:'吸血 +5%'},
-  bossKel:       {name:'亡灵之戒', effect:{cleave:0.05},    desc:'5% 概率斩掉目标 5% 最大生命'},
-  bossMannoroth: {name:'燃烧之戒', effect:{critDmg:0.35},   desc:'暴击伤害 +35%'},
-  bossArchimonde:{name:'深渊之戒', effect:{dropBonus:0.35}, desc:'掉落品质 +35%'}
+  bossWolf:      {ring:'exp',    name:'经验之戒'},
+  bossKobold:    {ring:'drop',   name:'爆率之戒'},
+  bossGrom:      {ring:'cleave', name:'切割之戒'},
+  bossKel:       {ring:'revive', name:'复活之戒'},
+  bossMannoroth: {ring:'summon', name:'召唤之戒'},
+  bossArchimonde:{ring:'gather', name:'聚合之戒'}
 };
 
-/* 特殊功能戒指（非首杀） */
+/* ---------------- 7 枚固定特戒（每个槽位只认自己的戒指） ---------------- */
+DATA.RING_SLOTS = [
+  {slot:'ring_exp',    ring:'exp',    name:'经验之戒', color:'#b45cff', desc:'经验获取 +25%'},
+  {slot:'ring_revive', ring:'revive', name:'复活之戒', color:'#f7e26b', desc:'死亡后原地复活（120 秒冷却）'},
+  {slot:'ring_summon', ring:'summon', name:'召唤之戒', color:'#4ad4ff', desc:'召唤灵兽协战，替你扛伤害'},
+  {slot:'ring_cleave', ring:'cleave', name:'切割之戒', color:'#ff5a4a', desc:'8% 概率削减目标 5% 最大生命'},
+  {slot:'ring_drop',   ring:'drop',   name:'爆率之戒', color:'#3fd45a', desc:'掉落品质 +35%'},
+  {slot:'ring_gather', ring:'gather', name:'聚合之戒', color:'#ffd24a', desc:'按 X 把全图怪物吸到身边（30s CD）'}
+];
+
 DATA.SPECIAL_RINGS = {
-  revive: {name:'复活之戒', color:'#f7e26b', effect:{revive:1},
-           desc:'死亡时原地复活（50% 生命），120 秒冷却'}
+  exp:    {name:'经验之戒', color:'#b45cff', effect:{expBonus:0.25}},
+  revive: {name:'复活之戒', color:'#f7e26b', effect:{revive:1}},
+  summon: {name:'召唤之戒', color:'#4ad4ff', effect:{summon:1}},
+  cleave: {name:'切割之戒', color:'#ff5a4a', effect:{cleave:0.08}},
+  drop:   {name:'爆率之戒', color:'#3fd45a', effect:{dropBonus:0.35}},
+  gather: {name:'聚合之戒', color:'#ffd24a', effect:{gather:1}}
 };
 
 /* 每图「简单」难度的推荐战力（按各档装备实测值标定） */
 DATA.ROOM_CP = [2600, 4200, 7200, 9200, 12200, 16800];
 /* 难度对战力的要求倍率 */
 DATA.DIFF_CP_MUL = { normal: 1.00, hard: 1.55, hell: 2.35 };
+
+/* ---------------- 收藏图鉴（每个 BOSS 一条线，10 级） ---------------- */
+DATA.CODEX_LEVELS = [
+  {lv:1,  kills:3,    dmg:0.02, drop:0.02, exp:0.02},
+  {lv:2,  kills:6,    dmg:0.04, drop:0.04, exp:0.04},
+  {lv:3,  kills:12,   dmg:0.07, drop:0.06, exp:0.07},
+  {lv:4,  kills:20,   dmg:0.10, drop:0.09, exp:0.10},
+  {lv:5,  kills:35,   dmg:0.14, drop:0.12, exp:0.14},
+  {lv:6,  kills:55,   dmg:0.18, drop:0.16, exp:0.18},
+  {lv:7,  kills:80,   dmg:0.23, drop:0.20, exp:0.23},
+  {lv:8,  kills:120,  dmg:0.28, drop:0.25, exp:0.28},
+  {lv:9,  kills:180,  dmg:0.34, drop:0.30, exp:0.34},
+  {lv:10, kills:260,  dmg:0.42, drop:0.38, exp:0.42}
+];
 
 DATA.MAX_LEVEL = 30;
 DATA.expForLevel = (lv) => Math.floor(100 * Math.pow(lv, 1.5));
@@ -1213,7 +1258,7 @@ function createPlayer(raceKey, clsKey) {
     x: 0, y: 0, r: 18, dir: 0,
     room: TOWN, unlocked: [0],
     materials: { iron:0, mithril:0, scale:0, shard:0, stone:0, protect:0, skillT:0, breakT:0 },
-    skillProf: {}, firstKills: {},
+    skillProf: {}, firstKills: {}, codex: {}, ringDropAt: {},
     quests: [], questDone: 0,
     kills: 0, bossKills: 0,
     stats: {}
@@ -1267,8 +1312,8 @@ function recalcStats(p) {
   }
 
   // 特戒效果（强化会放大）
-  const RFX = { expBonus:0, goldBonus:0, lifesteal:0, cleave:0, critDmg:0, dropBonus:0, revive:0 };
-  for (const sk of ['ring2','ring3','ring4','ring5','ring','trinket']) {
+  const RFX = { expBonus:0, goldBonus:0, lifesteal:0, cleave:0, critDmg:0, dropBonus:0, revive:0, summon:0, gather:0 };
+  for (const sk of DATA.RING_SLOTS.map(x => x.slot).concat(['ring','trinket'])) {
     const it = p.equip[sk];
     if (it && it.effect) {
       const m = enhMul(it);
@@ -1343,6 +1388,8 @@ function recalcStats(p) {
     cleave: RFX.cleave,
     dropBonus: RFX.dropBonus,
     revive: RFX.revive,
+    summonRing: RFX.summon,
+    gatherRing: RFX.gather,
     killMana: pas.killMana || 0,
     killAs: pas.killAs || 0,
     invis: bf.invis
@@ -1500,7 +1547,7 @@ function sellItem(p, item) {
 function giveStarterGear(p) {
   const magic = p.cls === 'mage';
   for (const sk in DATA.SLOTS) {
-    if (sk === 'ring2' || sk === 'ring3' || sk === 'ring4' || sk === 'ring5') continue;
+    if (DATA.RING_SLOTS.some(r => r.slot === sk)) continue;
     if (p.equip[sk]) continue;
     p.equip[sk] = makeItem(sk, 3, 'uncommon', magic);
   }
@@ -1606,21 +1653,32 @@ function ringColor(it) {
 }
 
 /* 通用：按定义造一枚特戒 */
+function ringSlotOf(ringKey) {
+  const d = DATA.RING_SLOTS.find(x => x.ring === ringKey);
+  return d ? d.slot : null;
+}
+
 function makeRing(def, idSuffix) {
   const k = Object.keys(def.effect)[0];
+  const ringKey = idSuffix;
   return {
     id: 'ring_' + (idSuffix || k) + '_' + Date.now() + Math.floor(Math.random() * 1000),
-    type: 'ring', slot: 'ring2', qKey: 'legendary', qName: '传说',
+    type: 'ring', qKey: 'legendary', qName: '传说',
     color: (RING_COLORS[k] || {}).color || def.color || '#ff9a2e',
     name: def.name, ilvl: 20, reqLv: 1, enh: 0,
+    ringKey, slot: ringSlotOf(ringKey) || 'ring_exp',
     setKey: null, stats: {}, effect: def.effect, effectDesc: def.desc || '', bound: true
   };
 }
 
 /* 放进第一个空的特戒槽，满了就进背包 */
 function equipSpecialRing(p, ring) {
-  for (const sk of ['ring2','ring3','ring4','ring5']) {
-    if (!p.equip[sk]) { ring.slot = sk; p.equip[sk] = ring; recalcStats(p); return ring; }
+  const slot = ringSlotOf(ring.ringKey);
+  if (slot) {
+    ring.slot = slot;
+    p.equip[slot] = ring;          // 同槽已被占则替换（旧的回背包）
+    recalcStats(p);
+    return ring;
   }
   addToBag(p, ring);
   recalcStats(p);
@@ -1644,14 +1702,8 @@ function grantFirstKillRing(p, bossKey) {
   if (!p.firstKills) p.firstKills = {};
   if (p.firstKills[bossKey]) return null;
   p.firstKills[bossKey] = true;
-  const ring = {
-    id: 'ring_' + bossKey + '_' + Date.now(),
-    type: 'ring', slot: 'ring2', qKey: 'legendary', qName: '传说',
-    color: (RING_COLORS[Object.keys(def.effect)[0]] || {}).color || '#ff9a2e',
-    name: def.name, ilvl: 20, reqLv: 1, enh: 0,
-    setKey: null, stats: {}, effect: def.effect, effectDesc: def.desc,
-    bound: true
-  };
+  const ringDef = DATA.SPECIAL_RINGS[def.ring];
+  const ring = makeRing(ringDef, def.ring);
   equipSpecialRing(p, ring);
   return ring;
 }
@@ -1751,6 +1803,27 @@ function sellAllWorse(p) {
     p.bag.splice(i, 1);
   }
   return { n, gold };
+}
+
+/* ---------------- 收藏图鉴 ---------------- */
+function codexKills(p, bossKey) { return (p.codex && p.codex[bossKey]) || 0; }
+function codexLevel(kills) {
+  let lv = 0;
+  for (const L of DATA.CODEX_LEVELS) if (kills >= L.kills) lv = L.lv;
+  return lv;
+}
+function codexBonus(p, roomId) {
+  const bossKey = DATA.ROOMS[roomId] && DATA.ROOMS[roomId].boss;
+  if (!bossKey) return { dmg:0, drop:0, exp:0, lv:0 };
+  const lv = codexLevel(codexKills(p, bossKey));
+  if (!lv) return { dmg:0, drop:0, exp:0, lv:0 };
+  const L = DATA.CODEX_LEVELS[lv - 1];
+  return { dmg:L.dmg, drop:L.drop, exp:L.exp, lv };
+}
+/* 当前地图图鉴加成（战斗里用） */
+function currentCodex(p) {
+  if (!G.world || G.world.isTown) return { dmg:0, drop:0, exp:0, lv:0 };
+  return codexBonus(p, G.world.roomId);
 }
 
 /* ---------------- 推荐战力 ---------------- */
@@ -1862,6 +1935,17 @@ function loadGame() {
   G.player.bagPage = G.player.bagPage || 0;
   G.player.skillProf = G.player.skillProf || {};
   G.player.firstKills = G.player.firstKills || {};
+  G.player.codex = G.player.codex || {};
+  G.player.ringDropAt = G.player.ringDropAt || {};
+  // 迁移：旧 ring2~ring5 → 新专属槽
+  ['ring2','ring3','ring4','ring5'].forEach(old => {
+    const it = G.player.equip[old];
+    if (it && it.ringKey) {
+      delete G.player.equip[old];
+      const slot = ringSlotOf(it.ringKey);
+      if (slot && !G.player.equip[slot]) G.player.equip[slot] = it;
+    } else if (it) delete G.player.equip[old];
+  });
   if (!G.player.materials) G.player.materials = {};
   ['stone','protect','skillT','breakT'].forEach(k => { G.player.materials[k] = G.player.materials[k] || 0; });
   (G.player.bag || []).forEach(it => { if (it.type === 'potion' && !it.count) it.count = 1; });
@@ -1992,7 +2076,8 @@ function buildTown() {
     { id: nextId(), kind: 'blacksmith',name:'铁匠 · 格罗姆',   ...P(0.38, 0.58), r: 24, color: '#d06a3a' },
     { id: nextId(), kind: 'save',     name: '存档石碑',        ...P(0.62, 0.58), r: 24, color: '#9fe6b8' },
     { id: nextId(), kind: 'quest',    name: '任务官 · 罗兰',    ...P(0.50, 0.42), r: 24, color: '#ff9a6b' },
-    { id: nextId(), kind: 'craft',    name: '锻造台',          ...P(0.72, 0.60), r: 24, color: '#c9a24a' }
+    { id: nextId(), kind: 'craft',    name: '锻造台',          ...P(0.72, 0.60), r: 24, color: '#c9a24a' },
+    { id: nextId(), kind: 'tower',    name: '试炼之塔 · 入口',  ...P(0.30, 0.62), r: 26, color: '#b45cff' }
   ];
 }
 
@@ -2754,6 +2839,20 @@ function render() {
   list.sort((a, b) => a.y - b.y);
   for (const it of list) it.f();
 
+  // 召唤灵兽
+  if (G.pet) {
+    const pxp = px(G.pet.x), pyp = py(G.pet.y) - 16 + Math.sin(G.pet.phase * 3) * 4;
+    const g = CTX.createRadialGradient(pxp, pyp, 1, pxp, pyp, 22);
+    g.addColorStop(0, 'rgba(74,212,255,.9)');
+    g.addColorStop(1, 'rgba(74,212,255,0)');
+    CTX.fillStyle = g;
+    CTX.beginPath(); CTX.arc(pxp, pyp, 22, 0, 6.283); CTX.fill();
+    CTX.fillStyle = '#e8fbff';
+    CTX.beginPath(); CTX.arc(pxp, pyp, 7, 0, 6.283); CTX.fill();
+    CTX.strokeStyle = '#4ad4ff'; CTX.lineWidth = 2;
+    CTX.beginPath(); CTX.arc(pxp, pyp, 11, 0, 6.283); CTX.stroke();
+  }
+
   // 技能特效
   drawVfx(w);
 
@@ -2815,8 +2914,9 @@ function drawGround(w) {
   CTX.fillRect(0, 0, VW, VH);
 
   // 主题背景图（水墨版）优先
-  if (imgReady('bg')) {
-    CTX.drawImage(IMG.bg, px(0), py(0), w.W, w.H * YS);
+  const bgImg = IMG.bgs ? IMG.bgs[(w.isTown ? 0 : (w.roomId + 1)) % IMG.bgs.length] : null;
+  if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
+    CTX.drawImage(bgImg, px(0), py(0), w.W, w.H * YS);
     CTX.save();
     CTX.beginPath(); CTX.rect(px(0), py(0), w.W, w.H * YS); CTX.clip();
     CTX.globalCompositeOperation = 'multiply';
@@ -3411,7 +3511,7 @@ function drawNPC(n) {
   CTX.fillStyle = lg;
   CTX.fillRect(gx - 18, y - 80, 36, 80);
 
-  const NPC_IDX = { teleport:4, merchant:5, exchange:6, blacksmith:7, quest:0 };
+  const NPC_IDX = { teleport:4, merchant:5, exchange:6, blacksmith:7, quest:0, tower:2 };
   let npcDrawn = false;
   if (imgReady('units') && NPC_IDX[n.kind] !== undefined) {
     const S = 1.4, sw = U_FRAME_W*S, sh = U_FRAME_H*S;
@@ -3785,6 +3885,25 @@ function onMonsterKilled(m) {
     p.materials.stone = (p.materials.stone || 0) + 1;
   }
 
+  // ---- 收藏图鉴：累计 BOSS 击杀 ----
+  if (m.isBoss && m.kind) {
+    if (!p.codex) p.codex = {};
+    p.codex[m.kind] = (p.codex[m.kind] || 0) + 1;
+  }
+
+  // ---- BOSS 掉特戒（难度越高爆率越高，仍是最低档）----
+  if (m.isBoss) {
+    const mul = G.diff === 'hell' ? 3 : G.diff === 'hard' ? 2 : 1;
+    if (Math.random() < 0.02 * mul) {
+      const keys = Object.keys(DATA.SPECIAL_RINGS);
+      const k = keys[Math.floor(Math.random() * keys.length)];
+      const ring = makeRing(DATA.SPECIAL_RINGS[k], k);
+      equipSpecialRing(p, ring);
+      toast(`💍 BOSS 掉落【${ring.name}】`);
+      logMsg(`💍 掉落 ${ring.name}`, 'loot');
+    }
+  }
+
   // ---- BOSS 首杀戒指 ----
   if (m.isBoss && m.kind && DATA.BOSS_RINGS[m.kind] && !(p.firstKills || {})[m.kind]) {
     const ring = grantFirstKillRing(p, m.kind);
@@ -4030,6 +4149,9 @@ function handleCommand(act) {
     case 'town': goTown(); break;
     case 'quest': toggleModal('quest', '任务官 · 罗兰', questHtml); break;
     case 'craft': toggleModal('craft', '锻造台', craftHtml); break;
+    case 'codexEquip': toggleModal('codexEquip', '装备图鉴', codexEquipHtml); break;
+    case 'codexCollect': toggleModal('codexCollect', '收藏图鉴', codexCollectHtml); break;
+    case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
     case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
     case 'enhance': toggleModal('enhance', '铁匠 · 装备强化', enhanceHtml); break;
     case 'sellWorse': {
@@ -4510,6 +4632,83 @@ function warnHtml(room, diff) {
   </div>`;
 }
 
+/* ---------------- 装备图鉴 ---------------- */
+function codexEquipHtml() {
+  const p = G.player;
+  const sets = DATA.SETS[p.cls] || [];
+  const owned = sets.filter(st => setCount(p, st.key) >= 6).length;
+
+  let html = `<div class="col-title" style="margin-bottom:8px">职业套装 ${owned}/${sets.length} 套已集齐</div>`;
+  html += '<div class="npc-list">';
+  sets.forEach(st => {
+    const n = setCount(p, st.key);
+    html += `<div class="cx-row">
+      <span class="set-dot" style="background:${n ? st.color : '#3a3020'}"></span>
+      <span class="cx-nm">${st.name}</span>
+      <span style="font-size:10px;color:#8f8570">${DATA.ROOMS[st.room].name}</span>
+      <span class="cx-cnt" style="color:${n >= 6 ? '#5fdc4a' : n ? '#ffd24a' : '#6b6558'}">${n}/6</span>
+    </div>`;
+  });
+  html += '</div>';
+
+  html += `<div class="col-title" style="margin:14px 0 8px">特戒</div>`;
+  html += '<div class="npc-list">';
+  DATA.RING_SLOTS.forEach(rs => {
+    const got = !!(p.firstKills && Object.keys(DATA.BOSS_RINGS).some(k => DATA.BOSS_RINGS[k].ring === rs.ring && p.firstKills[k]))
+      || !!(p.equip[rs.slot]);
+    const bossKey = Object.keys(DATA.BOSS_RINGS).find(k => DATA.BOSS_RINGS[k].ring === rs.ring);
+    html += `<div class="cx-row">
+      <span class="set-dot" style="background:${got ? rs.color : '#3a3020'}"></span>
+      <span class="cx-nm" style="color:${got ? rs.color : '#6b6558'}">${rs.name}</span>
+      <span style="font-size:10px;color:#8f8570">${bossKey ? DATA.BOSSES[bossKey].name : '—'}</span>
+      <span class="cx-cnt" style="color:${got ? '#5fdc4a' : '#6b6558'}">${got ? '已获得' : '未获得'}</span>
+    </div>`;
+  });
+  html += '</div>';
+  html += `<div style="margin-top:10px;font-size:11px;color:#8f8570">套装仅「地狱」难度掉落（7%）；特戒由 BOSS 掉落或首杀获得</div>`;
+  return html;
+}
+
+/* ---------------- 收藏图鉴 ---------------- */
+function codexCollectHtml() {
+  const p = G.player;
+  const today = todayStr();
+  let html = '<div style="font-size:11.5px;color:#8f8570;margin-bottom:10px">击杀 BOSS 累计次数可提升图鉴等级（共 10 级），等级越高该地图的伤害 / 爆率 / 经验加成越多。</div>';
+
+  Object.keys(DATA.BOSS_RINGS).forEach((bk, i) => {
+    const room = DATA.ROOMS.find(r => r.boss === bk);
+    const kills = codexKills(p, bk);
+    const lv = codexLevel(kills);
+    const next = DATA.CODEX_LEVELS[lv] || null;
+    const cur = lv ? DATA.CODEX_LEVELS[lv - 1] : { dmg:0, drop:0, exp:0 };
+    const pct = next ? Math.min(100, kills / next.kills * 100) : 100;
+    const claimed = p.codexDaily && p.codexDaily[bk] === today;
+
+    html += `<div style="margin-bottom:10px;padding:8px 10px;border-radius:3px;
+      background:rgba(60,48,28,.32);border-left:2px solid ${room ? room.accent : '#8a6d3b'}">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="cx-lv">${DATA.BOSSES[bk].name}</span>
+        <span style="font-size:11px;color:#8f8570;flex:1">${room ? room.name : ''}</span>
+        <span style="font-family:var(--serif);color:#ffd24a">Lv.${lv} / 10</span>
+      </div>
+      <div class="cx-bar"><i style="width:${pct}%;background:${room ? room.accent : '#d4af37'}"></i></div>
+      <div style="font-size:11px;color:#b8ad93;display:flex;justify-content:space-between">
+        <span>击杀 ${kills}${next ? ` / ${next.kills}` : ''}</span>
+        <span style="color:#5fdc4a">伤害 +${Math.round(cur.dmg*100)}% · 爆率 +${Math.round(cur.drop*100)}% · 经验 +${Math.round(cur.exp*100)}%</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+        <span style="font-size:10.5px;color:#8f8570">每日首杀奖励：强化石×3 + 技能强化券×1</span>
+        <button data-codex-claim="${bk}" ${claimed ? 'disabled' : ''}
+          style="margin-left:auto;padding:3px 12px;font-size:11px;border-radius:2px;cursor:pointer;
+          font-family:var(--serif);background:linear-gradient(180deg,#3a3020,#181209);
+          border:1px solid ${claimed ? '#3a3020' : 'var(--gold)'};color:${claimed ? '#5a5348' : '#ffd24a'}">
+          ${claimed ? '今日已领' : '领取'}</button>
+      </div>
+    </div>`;
+  });
+  return html;
+}
+
 /* ---------------- 爬塔 ---------------- */
 function todayStr() {
   const d = new Date();
@@ -4975,6 +5174,19 @@ function bindModal() {
   body.querySelectorAll('[data-set-info]').forEach(b => b.onclick = () => {
     openModal('setinfo', '套装图鉴', setDetailHtml(b.dataset.setInfo));
   });
+  body.querySelectorAll('[data-codex-claim]').forEach(b => b.onclick = () => {
+    const bk = b.dataset.codexClaim;
+    const p = G.player;
+    if (!p.codexDaily) p.codexDaily = {};
+    const today = todayStr();
+    if (p.codexDaily[bk] === today) { toast('今日已领取'); return; }
+    p.codexDaily[bk] = today;
+    p.materials.stone = (p.materials.stone || 0) + 3;
+    p.materials.skillT = (p.materials.skillT || 0) + 1;
+    toast('领取成功：强化石×3 · 技能强化券×1');
+    QT_SIG = '';
+    openModal('codexCollect', '收藏图鉴', codexCollectHtml());
+  });
   body.querySelectorAll('[data-enh-pick]').forEach(b => b.onclick = () => {
     openModal('enhance', '锻造台 · 强化', enhanceItemHtml(b.dataset.enhPick));
   });
@@ -5164,6 +5376,7 @@ function initInput() {
       case 'm': handleCommand('map'); break;
       case 't': handleCommand('tower'); break;   // 爬塔
       case 'j': handleCommand('quest'); break;   // 任务面板
+      case 'x': useGatherRing(); break;          // 聚合之戒
       case 'h': handleCommand('town'); break;   // H = 回城
       case 'e': interactNPC(); break;
       case 'escape':
@@ -5307,6 +5520,47 @@ function updatePlayer(dt) {
   autoBattleTick(dt);
 }
 
+/* ---------------- 聚合之戒 ---------------- */
+function useGatherRing() {
+  const p = G.player, w = G.world;
+  if (!p || !p.stats) return;
+  if (!p.stats.gatherRing) { toast('需要装备「聚合之戒」'); return; }
+  const now = Date.now();
+  if (p.gatherCd && now < p.gatherCd) { toast(`聚合冷却中 ${Math.ceil((p.gatherCd - now) / 1000)}s`); return; }
+  if (!w || w.isTown) { toast('城镇里没有怪物'); return; }
+  p.gatherCd = now + 30000;
+  let n = 0;
+  w.monsters.forEach(m => {
+    if (!m.alive || m.isBoss) return;
+    const a = Math.random() * 6.283, d = 48 + Math.random() * 46;
+    m.x = p.x + Math.cos(a) * d;
+    m.y = p.y + Math.sin(a) * d;
+    n++;
+  });
+  spawnVfx(p.x, p.y, '#ffd24a', 220, 'aoe', 0.9);
+  toast(`聚合之戒：吸来 ${n} 只怪物`);
+}
+
+/* ---------------- 召唤灵兽 ---------------- */
+function updatePet(dt) {
+  const p = G.player, w = G.world;
+  if (!p || !p.stats || !p.stats.summonRing || !w || w.isTown) { G.pet = null; return; }
+  if (!G.pet) G.pet = { x: p.x, y: p.y, atkCd: 0, phase: 0 };
+  const pet = G.pet;
+  pet.phase += dt;
+  const dx = p.x - pet.x, dy = p.y - pet.y, d = Math.hypot(dx, dy);
+  if (d > 70) { pet.x += dx / d * 200 * dt; pet.y += dy / d * 200 * dt; }
+  pet.atkCd -= dt;
+  if (pet.atkCd <= 0) {
+    const t = nearestMonster(280);
+    if (t) {
+      pet.atkCd = 1.1;
+      damageMonster(t, p.stats.power * 0.45, 'pet');
+      spawnVfx(t.x, t.y, '#4ad4ff', 40, 'hit', 0.28);
+    }
+  }
+}
+
 /* ---------------- 自动战斗 ---------------- */
 function autoBattleTick(dt) {
   const p = G.player, w = G.world;
@@ -5401,6 +5655,7 @@ function loop(ts) {
     G.time += dt;
     updatePlayer(dt);
     updateWorld(dt);
+    updatePet(dt);
     updateTimers(dt);
     updateCamera();
     updateHUD(dt);
@@ -5468,7 +5723,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (forgeTest) {
       // 给几件装备 + 材料，方便看锻造台
       for (const sk in DATA.SLOTS) {
-        if (sk === 'ring2') continue;
+        if (DATA.RING_SLOTS.some(r => r.slot === sk)) continue;
         G.player.equip[sk] = makeItem(sk, 10, 'rare', false);
       }
       G.player.equip.weapon.enh = 7;

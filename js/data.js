@@ -94,11 +94,14 @@ DATA.SLOTS = {
   weapon:{name:'武器', icon:'⚔'}, helm:{name:'头盔', icon:'⛑'},
   chest:{name:'胸甲', icon:'🛡'},  legs:{name:'护腿', icon:'👖'},
   boots:{name:'战靴', icon:'🥾'},  neck:{name:'项链', icon:'📿'},
-  ring:{name:'戒指', icon:'💍'},   ring2:{name:'印记', icon:'◎'},
-  ring3:{name:'副印记', icon:'◉'},
-  ring4:{name:'印记III', icon:'◈'},
-  ring5:{name:'印记IV', icon:'❖'},
-  trinket:{name:'饰品', icon:'🔮'}
+  ring:{name:'戒指', icon:'💍'},
+  trinket:{name:'饰品', icon:'🔮'},
+  ring_exp:{name:'经验之戒', icon:'◎'},
+  ring_revive:{name:'复活之戒', icon:'✦'},
+  ring_summon:{name:'召唤之戒', icon:'❖'},
+  ring_cleave:{name:'切割之戒', icon:'◆'},
+  ring_drop:{name:'爆率之戒', icon:'◇'},
+  ring_gather:{name:'聚合之戒', icon:'❂'}
 };
 
 /* 品质：白→绿→蓝→紫→橙→红（数值拉开，让"集齐某档"有质变） */
@@ -314,24 +317,51 @@ DATA.MATS2 = {
 
 /* ---------------- BOSS 首杀戒指 ---------------- */
 DATA.BOSS_RINGS = {
-  bossWolf:      {name:'可汗之戒', effect:{expBonus:0.15},  desc:'经验获取 +15%'},
-  bossKobold:    {name:'矿脉之戒', effect:{goldBonus:0.30}, desc:'金币获取 +30%'},
-  bossGrom:      {name:'战歌之戒', effect:{lifesteal:0.05}, desc:'吸血 +5%'},
-  bossKel:       {name:'亡灵之戒', effect:{cleave:0.05},    desc:'5% 概率斩掉目标 5% 最大生命'},
-  bossMannoroth: {name:'燃烧之戒', effect:{critDmg:0.35},   desc:'暴击伤害 +35%'},
-  bossArchimonde:{name:'深渊之戒', effect:{dropBonus:0.35}, desc:'掉落品质 +35%'}
+  bossWolf:      {ring:'exp',    name:'经验之戒'},
+  bossKobold:    {ring:'drop',   name:'爆率之戒'},
+  bossGrom:      {ring:'cleave', name:'切割之戒'},
+  bossKel:       {ring:'revive', name:'复活之戒'},
+  bossMannoroth: {ring:'summon', name:'召唤之戒'},
+  bossArchimonde:{ring:'gather', name:'聚合之戒'}
 };
 
-/* 特殊功能戒指（非首杀） */
+/* ---------------- 7 枚固定特戒（每个槽位只认自己的戒指） ---------------- */
+DATA.RING_SLOTS = [
+  {slot:'ring_exp',    ring:'exp',    name:'经验之戒', color:'#b45cff', desc:'经验获取 +25%'},
+  {slot:'ring_revive', ring:'revive', name:'复活之戒', color:'#f7e26b', desc:'死亡后原地复活（120 秒冷却）'},
+  {slot:'ring_summon', ring:'summon', name:'召唤之戒', color:'#4ad4ff', desc:'召唤灵兽协战，替你扛伤害'},
+  {slot:'ring_cleave', ring:'cleave', name:'切割之戒', color:'#ff5a4a', desc:'8% 概率削减目标 5% 最大生命'},
+  {slot:'ring_drop',   ring:'drop',   name:'爆率之戒', color:'#3fd45a', desc:'掉落品质 +35%'},
+  {slot:'ring_gather', ring:'gather', name:'聚合之戒', color:'#ffd24a', desc:'按 X 把全图怪物吸到身边（30s CD）'}
+];
+
 DATA.SPECIAL_RINGS = {
-  revive: {name:'复活之戒', color:'#f7e26b', effect:{revive:1},
-           desc:'死亡时原地复活（50% 生命），120 秒冷却'}
+  exp:    {name:'经验之戒', color:'#b45cff', effect:{expBonus:0.25}},
+  revive: {name:'复活之戒', color:'#f7e26b', effect:{revive:1}},
+  summon: {name:'召唤之戒', color:'#4ad4ff', effect:{summon:1}},
+  cleave: {name:'切割之戒', color:'#ff5a4a', effect:{cleave:0.08}},
+  drop:   {name:'爆率之戒', color:'#3fd45a', effect:{dropBonus:0.35}},
+  gather: {name:'聚合之戒', color:'#ffd24a', effect:{gather:1}}
 };
 
 /* 每图「简单」难度的推荐战力（按各档装备实测值标定） */
 DATA.ROOM_CP = [2600, 4200, 7200, 9200, 12200, 16800];
 /* 难度对战力的要求倍率 */
 DATA.DIFF_CP_MUL = { normal: 1.00, hard: 1.55, hell: 2.35 };
+
+/* ---------------- 收藏图鉴（每个 BOSS 一条线，10 级） ---------------- */
+DATA.CODEX_LEVELS = [
+  {lv:1,  kills:3,    dmg:0.02, drop:0.02, exp:0.02},
+  {lv:2,  kills:6,    dmg:0.04, drop:0.04, exp:0.04},
+  {lv:3,  kills:12,   dmg:0.07, drop:0.06, exp:0.07},
+  {lv:4,  kills:20,   dmg:0.10, drop:0.09, exp:0.10},
+  {lv:5,  kills:35,   dmg:0.14, drop:0.12, exp:0.14},
+  {lv:6,  kills:55,   dmg:0.18, drop:0.16, exp:0.18},
+  {lv:7,  kills:80,   dmg:0.23, drop:0.20, exp:0.23},
+  {lv:8,  kills:120,  dmg:0.28, drop:0.25, exp:0.28},
+  {lv:9,  kills:180,  dmg:0.34, drop:0.30, exp:0.34},
+  {lv:10, kills:260,  dmg:0.42, drop:0.38, exp:0.42}
+];
 
 DATA.MAX_LEVEL = 30;
 DATA.expForLevel = (lv) => Math.floor(100 * Math.pow(lv, 1.5));

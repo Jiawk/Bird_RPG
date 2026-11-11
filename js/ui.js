@@ -232,6 +232,25 @@ function onMonsterKilled(m) {
     p.materials.stone = (p.materials.stone || 0) + 1;
   }
 
+  // ---- 收藏图鉴：累计 BOSS 击杀 ----
+  if (m.isBoss && m.kind) {
+    if (!p.codex) p.codex = {};
+    p.codex[m.kind] = (p.codex[m.kind] || 0) + 1;
+  }
+
+  // ---- BOSS 掉特戒（难度越高爆率越高，仍是最低档）----
+  if (m.isBoss) {
+    const mul = G.diff === 'hell' ? 3 : G.diff === 'hard' ? 2 : 1;
+    if (Math.random() < 0.02 * mul) {
+      const keys = Object.keys(DATA.SPECIAL_RINGS);
+      const k = keys[Math.floor(Math.random() * keys.length)];
+      const ring = makeRing(DATA.SPECIAL_RINGS[k], k);
+      equipSpecialRing(p, ring);
+      toast(`💍 BOSS 掉落【${ring.name}】`);
+      logMsg(`💍 掉落 ${ring.name}`, 'loot');
+    }
+  }
+
   // ---- BOSS 首杀戒指 ----
   if (m.isBoss && m.kind && DATA.BOSS_RINGS[m.kind] && !(p.firstKills || {})[m.kind]) {
     const ring = grantFirstKillRing(p, m.kind);
@@ -477,6 +496,9 @@ function handleCommand(act) {
     case 'town': goTown(); break;
     case 'quest': toggleModal('quest', '任务官 · 罗兰', questHtml); break;
     case 'craft': toggleModal('craft', '锻造台', craftHtml); break;
+    case 'codexEquip': toggleModal('codexEquip', '装备图鉴', codexEquipHtml); break;
+    case 'codexCollect': toggleModal('codexCollect', '收藏图鉴', codexCollectHtml); break;
+    case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
     case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
     case 'enhance': toggleModal('enhance', '铁匠 · 装备强化', enhanceHtml); break;
     case 'sellWorse': {
@@ -957,6 +979,83 @@ function warnHtml(room, diff) {
   </div>`;
 }
 
+/* ---------------- 装备图鉴 ---------------- */
+function codexEquipHtml() {
+  const p = G.player;
+  const sets = DATA.SETS[p.cls] || [];
+  const owned = sets.filter(st => setCount(p, st.key) >= 6).length;
+
+  let html = `<div class="col-title" style="margin-bottom:8px">职业套装 ${owned}/${sets.length} 套已集齐</div>`;
+  html += '<div class="npc-list">';
+  sets.forEach(st => {
+    const n = setCount(p, st.key);
+    html += `<div class="cx-row">
+      <span class="set-dot" style="background:${n ? st.color : '#3a3020'}"></span>
+      <span class="cx-nm">${st.name}</span>
+      <span style="font-size:10px;color:#8f8570">${DATA.ROOMS[st.room].name}</span>
+      <span class="cx-cnt" style="color:${n >= 6 ? '#5fdc4a' : n ? '#ffd24a' : '#6b6558'}">${n}/6</span>
+    </div>`;
+  });
+  html += '</div>';
+
+  html += `<div class="col-title" style="margin:14px 0 8px">特戒</div>`;
+  html += '<div class="npc-list">';
+  DATA.RING_SLOTS.forEach(rs => {
+    const got = !!(p.firstKills && Object.keys(DATA.BOSS_RINGS).some(k => DATA.BOSS_RINGS[k].ring === rs.ring && p.firstKills[k]))
+      || !!(p.equip[rs.slot]);
+    const bossKey = Object.keys(DATA.BOSS_RINGS).find(k => DATA.BOSS_RINGS[k].ring === rs.ring);
+    html += `<div class="cx-row">
+      <span class="set-dot" style="background:${got ? rs.color : '#3a3020'}"></span>
+      <span class="cx-nm" style="color:${got ? rs.color : '#6b6558'}">${rs.name}</span>
+      <span style="font-size:10px;color:#8f8570">${bossKey ? DATA.BOSSES[bossKey].name : '—'}</span>
+      <span class="cx-cnt" style="color:${got ? '#5fdc4a' : '#6b6558'}">${got ? '已获得' : '未获得'}</span>
+    </div>`;
+  });
+  html += '</div>';
+  html += `<div style="margin-top:10px;font-size:11px;color:#8f8570">套装仅「地狱」难度掉落（7%）；特戒由 BOSS 掉落或首杀获得</div>`;
+  return html;
+}
+
+/* ---------------- 收藏图鉴 ---------------- */
+function codexCollectHtml() {
+  const p = G.player;
+  const today = todayStr();
+  let html = '<div style="font-size:11.5px;color:#8f8570;margin-bottom:10px">击杀 BOSS 累计次数可提升图鉴等级（共 10 级），等级越高该地图的伤害 / 爆率 / 经验加成越多。</div>';
+
+  Object.keys(DATA.BOSS_RINGS).forEach((bk, i) => {
+    const room = DATA.ROOMS.find(r => r.boss === bk);
+    const kills = codexKills(p, bk);
+    const lv = codexLevel(kills);
+    const next = DATA.CODEX_LEVELS[lv] || null;
+    const cur = lv ? DATA.CODEX_LEVELS[lv - 1] : { dmg:0, drop:0, exp:0 };
+    const pct = next ? Math.min(100, kills / next.kills * 100) : 100;
+    const claimed = p.codexDaily && p.codexDaily[bk] === today;
+
+    html += `<div style="margin-bottom:10px;padding:8px 10px;border-radius:3px;
+      background:rgba(60,48,28,.32);border-left:2px solid ${room ? room.accent : '#8a6d3b'}">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="cx-lv">${DATA.BOSSES[bk].name}</span>
+        <span style="font-size:11px;color:#8f8570;flex:1">${room ? room.name : ''}</span>
+        <span style="font-family:var(--serif);color:#ffd24a">Lv.${lv} / 10</span>
+      </div>
+      <div class="cx-bar"><i style="width:${pct}%;background:${room ? room.accent : '#d4af37'}"></i></div>
+      <div style="font-size:11px;color:#b8ad93;display:flex;justify-content:space-between">
+        <span>击杀 ${kills}${next ? ` / ${next.kills}` : ''}</span>
+        <span style="color:#5fdc4a">伤害 +${Math.round(cur.dmg*100)}% · 爆率 +${Math.round(cur.drop*100)}% · 经验 +${Math.round(cur.exp*100)}%</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+        <span style="font-size:10.5px;color:#8f8570">每日首杀奖励：强化石×3 + 技能强化券×1</span>
+        <button data-codex-claim="${bk}" ${claimed ? 'disabled' : ''}
+          style="margin-left:auto;padding:3px 12px;font-size:11px;border-radius:2px;cursor:pointer;
+          font-family:var(--serif);background:linear-gradient(180deg,#3a3020,#181209);
+          border:1px solid ${claimed ? '#3a3020' : 'var(--gold)'};color:${claimed ? '#5a5348' : '#ffd24a'}">
+          ${claimed ? '今日已领' : '领取'}</button>
+      </div>
+    </div>`;
+  });
+  return html;
+}
+
 /* ---------------- 爬塔 ---------------- */
 function todayStr() {
   const d = new Date();
@@ -1421,6 +1520,19 @@ function bindModal() {
   body.querySelectorAll('[data-tower-start]').forEach(b => b.onclick = () => enterTower(+b.dataset.towerStart));
   body.querySelectorAll('[data-set-info]').forEach(b => b.onclick = () => {
     openModal('setinfo', '套装图鉴', setDetailHtml(b.dataset.setInfo));
+  });
+  body.querySelectorAll('[data-codex-claim]').forEach(b => b.onclick = () => {
+    const bk = b.dataset.codexClaim;
+    const p = G.player;
+    if (!p.codexDaily) p.codexDaily = {};
+    const today = todayStr();
+    if (p.codexDaily[bk] === today) { toast('今日已领取'); return; }
+    p.codexDaily[bk] = today;
+    p.materials.stone = (p.materials.stone || 0) + 3;
+    p.materials.skillT = (p.materials.skillT || 0) + 1;
+    toast('领取成功：强化石×3 · 技能强化券×1');
+    QT_SIG = '';
+    openModal('codexCollect', '收藏图鉴', codexCollectHtml());
   });
   body.querySelectorAll('[data-enh-pick]').forEach(b => b.onclick = () => {
     openModal('enhance', '锻造台 · 强化', enhanceItemHtml(b.dataset.enhPick));

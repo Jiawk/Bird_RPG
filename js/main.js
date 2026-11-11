@@ -44,6 +44,7 @@ function initInput() {
       case 'm': handleCommand('map'); break;
       case 't': handleCommand('tower'); break;   // 爬塔
       case 'j': handleCommand('quest'); break;   // 任务面板
+      case 'x': useGatherRing(); break;          // 聚合之戒
       case 'h': handleCommand('town'); break;   // H = 回城
       case 'e': interactNPC(); break;
       case 'escape':
@@ -187,6 +188,47 @@ function updatePlayer(dt) {
   autoBattleTick(dt);
 }
 
+/* ---------------- 聚合之戒 ---------------- */
+function useGatherRing() {
+  const p = G.player, w = G.world;
+  if (!p || !p.stats) return;
+  if (!p.stats.gatherRing) { toast('需要装备「聚合之戒」'); return; }
+  const now = Date.now();
+  if (p.gatherCd && now < p.gatherCd) { toast(`聚合冷却中 ${Math.ceil((p.gatherCd - now) / 1000)}s`); return; }
+  if (!w || w.isTown) { toast('城镇里没有怪物'); return; }
+  p.gatherCd = now + 30000;
+  let n = 0;
+  w.monsters.forEach(m => {
+    if (!m.alive || m.isBoss) return;
+    const a = Math.random() * 6.283, d = 48 + Math.random() * 46;
+    m.x = p.x + Math.cos(a) * d;
+    m.y = p.y + Math.sin(a) * d;
+    n++;
+  });
+  spawnVfx(p.x, p.y, '#ffd24a', 220, 'aoe', 0.9);
+  toast(`聚合之戒：吸来 ${n} 只怪物`);
+}
+
+/* ---------------- 召唤灵兽 ---------------- */
+function updatePet(dt) {
+  const p = G.player, w = G.world;
+  if (!p || !p.stats || !p.stats.summonRing || !w || w.isTown) { G.pet = null; return; }
+  if (!G.pet) G.pet = { x: p.x, y: p.y, atkCd: 0, phase: 0 };
+  const pet = G.pet;
+  pet.phase += dt;
+  const dx = p.x - pet.x, dy = p.y - pet.y, d = Math.hypot(dx, dy);
+  if (d > 70) { pet.x += dx / d * 200 * dt; pet.y += dy / d * 200 * dt; }
+  pet.atkCd -= dt;
+  if (pet.atkCd <= 0) {
+    const t = nearestMonster(280);
+    if (t) {
+      pet.atkCd = 1.1;
+      damageMonster(t, p.stats.power * 0.45, 'pet');
+      spawnVfx(t.x, t.y, '#4ad4ff', 40, 'hit', 0.28);
+    }
+  }
+}
+
 /* ---------------- 自动战斗 ---------------- */
 function autoBattleTick(dt) {
   const p = G.player, w = G.world;
@@ -281,6 +323,7 @@ function loop(ts) {
     G.time += dt;
     updatePlayer(dt);
     updateWorld(dt);
+    updatePet(dt);
     updateTimers(dt);
     updateCamera();
     updateHUD(dt);
@@ -348,7 +391,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (forgeTest) {
       // 给几件装备 + 材料，方便看锻造台
       for (const sk in DATA.SLOTS) {
-        if (sk === 'ring2') continue;
+        if (DATA.RING_SLOTS.some(r => r.slot === sk)) continue;
         G.player.equip[sk] = makeItem(sk, 10, 'rare', false);
       }
       G.player.equip.weapon.enh = 7;

@@ -72,6 +72,20 @@ function render() {
   list.sort((a, b) => a.y - b.y);
   for (const it of list) it.f();
 
+  // 召唤灵兽
+  if (G.pet) {
+    const pxp = px(G.pet.x), pyp = py(G.pet.y) - 16 + Math.sin(G.pet.phase * 3) * 4;
+    const g = CTX.createRadialGradient(pxp, pyp, 1, pxp, pyp, 22);
+    g.addColorStop(0, 'rgba(74,212,255,.9)');
+    g.addColorStop(1, 'rgba(74,212,255,0)');
+    CTX.fillStyle = g;
+    CTX.beginPath(); CTX.arc(pxp, pyp, 22, 0, 6.283); CTX.fill();
+    CTX.fillStyle = '#e8fbff';
+    CTX.beginPath(); CTX.arc(pxp, pyp, 7, 0, 6.283); CTX.fill();
+    CTX.strokeStyle = '#4ad4ff'; CTX.lineWidth = 2;
+    CTX.beginPath(); CTX.arc(pxp, pyp, 11, 0, 6.283); CTX.stroke();
+  }
+
   // 技能特效
   drawVfx(w);
 
@@ -133,8 +147,9 @@ function drawGround(w) {
   CTX.fillRect(0, 0, VW, VH);
 
   // 主题背景图（水墨版）优先
-  if (imgReady('bg')) {
-    CTX.drawImage(IMG.bg, px(0), py(0), w.W, w.H * YS);
+  const bgImg = IMG.bgs ? IMG.bgs[(w.isTown ? 0 : (w.roomId + 1)) % IMG.bgs.length] : null;
+  if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
+    CTX.drawImage(bgImg, px(0), py(0), w.W, w.H * YS);
     CTX.save();
     CTX.beginPath(); CTX.rect(px(0), py(0), w.W, w.H * YS); CTX.clip();
     CTX.globalCompositeOperation = 'multiply';
@@ -729,7 +744,7 @@ function drawNPC(n) {
   CTX.fillStyle = lg;
   CTX.fillRect(gx - 18, y - 80, 36, 80);
 
-  const NPC_IDX = { teleport:4, merchant:5, exchange:6, blacksmith:7, quest:0 };
+  const NPC_IDX = { teleport:4, merchant:5, exchange:6, blacksmith:7, quest:0, tower:2 };
   let npcDrawn = false;
   if (imgReady('units') && NPC_IDX[n.kind] !== undefined) {
     const S = 1.4, sw = U_FRAME_W*S, sh = U_FRAME_H*S;

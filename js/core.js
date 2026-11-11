@@ -50,7 +50,7 @@ function createPlayer(raceKey, clsKey) {
     x: 0, y: 0, r: 18, dir: 0,
     room: TOWN, unlocked: [0],
     materials: { iron:0, mithril:0, scale:0, shard:0, stone:0, protect:0, skillT:0, breakT:0 },
-    skillProf: {}, firstKills: {},
+    skillProf: {}, firstKills: {}, codex: {}, ringDropAt: {},
     quests: [], questDone: 0,
     kills: 0, bossKills: 0,
     stats: {}
@@ -104,8 +104,8 @@ function recalcStats(p) {
   }
 
   // 特戒效果（强化会放大）
-  const RFX = { expBonus:0, goldBonus:0, lifesteal:0, cleave:0, critDmg:0, dropBonus:0, revive:0 };
-  for (const sk of ['ring2','ring3','ring4','ring5','ring','trinket']) {
+  const RFX = { expBonus:0, goldBonus:0, lifesteal:0, cleave:0, critDmg:0, dropBonus:0, revive:0, summon:0, gather:0 };
+  for (const sk of DATA.RING_SLOTS.map(x => x.slot).concat(['ring','trinket'])) {
     const it = p.equip[sk];
     if (it && it.effect) {
       const m = enhMul(it);
@@ -180,6 +180,8 @@ function recalcStats(p) {
     cleave: RFX.cleave,
     dropBonus: RFX.dropBonus,
     revive: RFX.revive,
+    summonRing: RFX.summon,
+    gatherRing: RFX.gather,
     killMana: pas.killMana || 0,
     killAs: pas.killAs || 0,
     invis: bf.invis
@@ -337,7 +339,7 @@ function sellItem(p, item) {
 function giveStarterGear(p) {
   const magic = p.cls === 'mage';
   for (const sk in DATA.SLOTS) {
-    if (sk === 'ring2' || sk === 'ring3' || sk === 'ring4' || sk === 'ring5') continue;
+    if (DATA.RING_SLOTS.some(r => r.slot === sk)) continue;
     if (p.equip[sk]) continue;
     p.equip[sk] = makeItem(sk, 3, 'uncommon', magic);
   }
@@ -443,21 +445,32 @@ function ringColor(it) {
 }
 
 /* 通用：按定义造一枚特戒 */
+function ringSlotOf(ringKey) {
+  const d = DATA.RING_SLOTS.find(x => x.ring === ringKey);
+  return d ? d.slot : null;
+}
+
 function makeRing(def, idSuffix) {
   const k = Object.keys(def.effect)[0];
+  const ringKey = idSuffix;
   return {
     id: 'ring_' + (idSuffix || k) + '_' + Date.now() + Math.floor(Math.random() * 1000),
-    type: 'ring', slot: 'ring2', qKey: 'legendary', qName: '传说',
+    type: 'ring', qKey: 'legendary', qName: '传说',
     color: (RING_COLORS[k] || {}).color || def.color || '#ff9a2e',
     name: def.name, ilvl: 20, reqLv: 1, enh: 0,
+    ringKey, slot: ringSlotOf(ringKey) || 'ring_exp',
     setKey: null, stats: {}, effect: def.effect, effectDesc: def.desc || '', bound: true
   };
 }
 
 /* 放进第一个空的特戒槽，满了就进背包 */
 function equipSpecialRing(p, ring) {
-  for (const sk of ['ring2','ring3','ring4','ring5']) {
-    if (!p.equip[sk]) { ring.slot = sk; p.equip[sk] = ring; recalcStats(p); return ring; }
+  const slot = ringSlotOf(ring.ringKey);
+  if (slot) {
+    ring.slot = slot;
+    p.equip[slot] = ring;          // 同槽已被占则替换（旧的回背包）
+    recalcStats(p);
+    return ring;
   }
   addToBag(p, ring);
   recalcStats(p);
@@ -481,14 +494,8 @@ function grantFirstKillRing(p, bossKey) {
   if (!p.firstKills) p.firstKills = {};
   if (p.firstKills[bossKey]) return null;
   p.firstKills[bossKey] = true;
-  const ring = {
-    id: 'ring_' + bossKey + '_' + Date.now(),
-    type: 'ring', slot: 'ring2', qKey: 'legendary', qName: '传说',
-    color: (RING_COLORS[Object.keys(def.effect)[0]] || {}).color || '#ff9a2e',
-    name: def.name, ilvl: 20, reqLv: 1, enh: 0,
-    setKey: null, stats: {}, effect: def.effect, effectDesc: def.desc,
-    bound: true
-  };
+  const ringDef = DATA.SPECIAL_RINGS[def.ring];
+  const ring = makeRing(ringDef, def.ring);
   equipSpecialRing(p, ring);
   return ring;
 }
@@ -588,6 +595,27 @@ function sellAllWorse(p) {
     p.bag.splice(i, 1);
   }
   return { n, gold };
+}
+
+/* ---------------- 收藏图鉴 ---------------- */
+function codexKills(p, bossKey) { return (p.codex && p.codex[bossKey]) || 0; }
+function codexLevel(kills) {
+  let lv = 0;
+  for (const L of DATA.CODEX_LEVELS) if (kills >= L.kills) lv = L.lv;
+  return lv;
+}
+function codexBonus(p, roomId) {
+  const bossKey = DATA.ROOMS[roomId] && DATA.ROOMS[roomId].boss;
+  if (!bossKey) return { dmg:0, drop:0, exp:0, lv:0 };
+  const lv = codexLevel(codexKills(p, bossKey));
+  if (!lv) return { dmg:0, drop:0, exp:0, lv:0 };
+  const L = DATA.CODEX_LEVELS[lv - 1];
+  return { dmg:L.dmg, drop:L.drop, exp:L.exp, lv };
+}
+/* 当前地图图鉴加成（战斗里用） */
+function currentCodex(p) {
+  if (!G.world || G.world.isTown) return { dmg:0, drop:0, exp:0, lv:0 };
+  return codexBonus(p, G.world.roomId);
 }
 
 /* ---------------- 推荐战力 ---------------- */
@@ -699,6 +727,17 @@ function loadGame() {
   G.player.bagPage = G.player.bagPage || 0;
   G.player.skillProf = G.player.skillProf || {};
   G.player.firstKills = G.player.firstKills || {};
+  G.player.codex = G.player.codex || {};
+  G.player.ringDropAt = G.player.ringDropAt || {};
+  // 迁移：旧 ring2~ring5 → 新专属槽
+  ['ring2','ring3','ring4','ring5'].forEach(old => {
+    const it = G.player.equip[old];
+    if (it && it.ringKey) {
+      delete G.player.equip[old];
+      const slot = ringSlotOf(it.ringKey);
+      if (slot && !G.player.equip[slot]) G.player.equip[slot] = it;
+    } else if (it) delete G.player.equip[old];
+  });
   if (!G.player.materials) G.player.materials = {};
   ['stone','protect','skillT','breakT'].forEach(k => { G.player.materials[k] = G.player.materials[k] || 0; });
   (G.player.bag || []).forEach(it => { if (it.type === 'potion' && !it.count) it.count = 1; });

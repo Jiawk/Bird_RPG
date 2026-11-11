@@ -371,28 +371,6 @@ function drawMonster(m) {
 
   let drawn = false;
 
-  // 魔兽图标怪物（优先）
-  if (imgReady('monsters')) {
-    const KIDX = { centaur:0, kobold:1, grunt:2, skeleton:3, doomguard:4, abyssal:5 };
-    const ki = KIDX[m.kind] !== undefined ? KIDX[m.kind] : 3;
-    const sz = m.isBoss ? 132 : (m.isElite ? 78 : 58);
-    CTX.save();
-    CTX.imageSmoothingEnabled = true;
-    if (m.isBoss) {
-      const aura = CTX.createRadialGradient(gx, gy - sz * 0.35, 8, gx, gy - sz * 0.35, sz * 0.85);
-      aura.addColorStop(0, 'rgba(255,70,50,.35)');
-      aura.addColorStop(1, 'rgba(255,70,50,0)');
-      CTX.fillStyle = aura;
-      CTX.beginPath(); CTX.arc(gx, gy - sz * 0.35, sz * 0.85, 0, 6.283); CTX.fill();
-    }
-    CTX.globalAlpha = m.hitFlash > 0 ? 0.85 : 1;
-    CTX.drawImage(IMG.monsters, ki * 80, 0, 80, 80,
-                  gx - sz / 2, gy - sz + sz * 0.16, sz, sz);
-    CTX.restore();
-    drawn = true;
-  }
-
-  // 行走图精灵（units 图集，无魔兽图标时兜底）
   const MON_IDX = { centaur:8, kobold:9, grunt:10, skeleton:11, doomguard:12, abyssal:13 };
   if (!drawn && imgReady('units')) {
     const S = m.isBoss ? 2.9 : (m.isElite ? 1.6 : 1.35);

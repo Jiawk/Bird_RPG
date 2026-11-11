@@ -89,9 +89,10 @@ function playerDie() {
 function playerAttack() {
   const p = G.player;
   if (!p || p.attackCd > 0) return;
-  const atkSpeed = p.stats.as;
+  const fast = G.debug && G.debug.fastAtk;
+  const atkSpeed = p.stats.as * (fast ? 6 : 1);      // 调试：攻速 ×6
   p.attackCd = 1 / atkSpeed;
-  p.attackAnim = 0.18;
+  p.attackAnim = fast ? 0.06 : 0.18;
 
   const w = G.world;
   const range = p.cls === 'warrior' || p.cls === 'assassin' ? 78 : 420;

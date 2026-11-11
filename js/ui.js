@@ -980,6 +980,11 @@ function debugHtml() {
       <button data-dbg-toggle="fastSpawn" ${d.fastSpawn ? 'style="border-color:#5fdc4a;color:#b9ffb0"' : ''}>${d.fastSpawn ? '关闭' : '开启'}</button></div>
 
     <div class="npc-row"><div>
+      <div class="nr-name" style="color:#ffb347">攻速加强（平A ×6 速度）</div>
+      <div class="nr-info">开启后普通攻击冷却缩短到 1/6，箭雨一样快　当前：${tag(d.fastAtk)}</div></div>
+      <button data-dbg-toggle="fastAtk" ${d.fastAtk ? 'style="border-color:#5fdc4a;color:#b9ffb0"' : ''}>${d.fastAtk ? '关闭' : '开启'}</button></div>
+
+    <div class="npc-row"><div>
       <div class="nr-name">技能 CD 固定 1 秒</div>
       <div class="nr-info">当前：${tag(d.noCd)}</div></div>
       <button data-dbg-toggle="noCd" ${d.noCd ? 'style="border-color:#5fdc4a;color:#b9ffb0"' : ''}>${d.noCd ? '关闭' : '开启'}</button></div>

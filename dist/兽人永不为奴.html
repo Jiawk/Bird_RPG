@@ -1323,7 +1323,7 @@ const G = {
   diff: 'normal',      // 本次进图的难度
   autoPickup: true,    // 全屏自动拾取
   autoSell: false,     // 自动出售低战力装备
-  debug: { noCd:false, invincible:false, infMp:false, speed:false },   // 调试开关
+  debug: { noCd:false, invincible:false, infMp:false, fastSpawn:false, fastAtk:false },   // 调试开关
   player: null,
   world: null,
   time: 0,
@@ -2749,9 +2749,10 @@ function playerDie() {
 function playerAttack() {
   const p = G.player;
   if (!p || p.attackCd > 0) return;
-  const atkSpeed = p.stats.as;
+  const fast = G.debug && G.debug.fastAtk;
+  const atkSpeed = p.stats.as * (fast ? 6 : 1);      // 调试：攻速 ×6
   p.attackCd = 1 / atkSpeed;
-  p.attackAnim = 0.18;
+  p.attackAnim = fast ? 0.06 : 0.18;
 
   const w = G.world;
   const range = p.cls === 'warrior' || p.cls === 'assassin' ? 78 : 420;
@@ -5094,6 +5095,11 @@ function debugHtml() {
       <div class="nr-name" style="color:#4ad4ff">快速刷怪（间隔 1 秒）</div>
       <div class="nr-info">开启后小怪每 1 秒补满一次（默认 15 秒）　当前：${tag(d.fastSpawn)}</div></div>
       <button data-dbg-toggle="fastSpawn" ${d.fastSpawn ? 'style="border-color:#5fdc4a;color:#b9ffb0"' : ''}>${d.fastSpawn ? '关闭' : '开启'}</button></div>
+
+    <div class="npc-row"><div>
+      <div class="nr-name" style="color:#ffb347">攻速加强（平A ×6 速度）</div>
+      <div class="nr-info">开启后普通攻击冷却缩短到 1/6，箭雨一样快　当前：${tag(d.fastAtk)}</div></div>
+      <button data-dbg-toggle="fastAtk" ${d.fastAtk ? 'style="border-color:#5fdc4a;color:#b9ffb0"' : ''}>${d.fastAtk ? '关闭' : '开启'}</button></div>
 
     <div class="npc-row"><div>
       <div class="nr-name">技能 CD 固定 1 秒</div>

@@ -72,6 +72,9 @@ function render() {
   list.sort((a, b) => a.y - b.y);
   for (const it of list) it.f();
 
+  // 技能特效
+  drawVfx(w);
+
   // 飞行物画在最上层
   for (const pr of w.projectiles) drawProjectile(pr);
 
@@ -593,6 +596,53 @@ function drawProjectile(pr) {
   CTX.beginPath(); CTX.arc(x, y, 13, 0, 6.283); CTX.fill();
   CTX.fillStyle = '#fff';
   CTX.beginPath(); CTX.arc(x, y, 3, 0, 6.283); CTX.fill();
+}
+
+/* ---------------- 技能特效 ---------------- */
+function drawVfx(w) {
+  if (!w.vfx || !w.vfx.length) return;
+  for (let i = w.vfx.length - 1; i >= 0; i--) {
+    const e = w.vfx[i];
+    e.t += 1 / 60;
+    if (e.t >= e.life) { w.vfx.splice(i, 1); continue; }
+    const k = e.t / e.life, a = 1 - k;
+    const gx = px(e.x), gy = py(e.y), x = gx, y = gy - 16;
+    const R = e.r * (0.25 + k * 1.15);
+
+    CTX.save();
+    // 地面冲击环
+    CTX.globalAlpha = a * 0.9;
+    CTX.strokeStyle = e.color;
+    CTX.lineWidth = 3 + 4 * a;
+    CTX.beginPath(); CTX.ellipse(gx, gy, R, R * YS, 0, 0, 6.283); CTX.stroke();
+    // 内圈
+    CTX.globalAlpha = a * 0.4;
+    CTX.lineWidth = 1.5;
+    CTX.beginPath(); CTX.ellipse(gx, gy, R * 0.6, R * 0.6 * YS, 0, 0, 6.283); CTX.stroke();
+    // 光晕
+    const gr = CTX.createRadialGradient(x, y, 2, x, y, R * 0.95);
+    gr.addColorStop(0, e.color);
+    gr.addColorStop(1, 'rgba(0,0,0,0)');
+    CTX.globalAlpha = a * 0.38;
+    CTX.fillStyle = gr;
+    CTX.beginPath(); CTX.arc(x, y, R * 0.95, 0, 6.283); CTX.fill();
+    // 放射线
+    CTX.globalAlpha = a * 0.75;
+    CTX.strokeStyle = e.color;
+    CTX.lineWidth = 2;
+    for (let sp = 0; sp < 8; sp++) {
+      const ang = sp * Math.PI / 4 + k * 1.1;
+      CTX.beginPath();
+      CTX.moveTo(x + Math.cos(ang) * R * 0.35, y + Math.sin(ang) * R * 0.35 * YS);
+      CTX.lineTo(x + Math.cos(ang) * R * 1.0, y + Math.sin(ang) * R * 1.0 * YS);
+      CTX.stroke();
+    }
+    // 中心闪光
+    CTX.globalAlpha = a * a;
+    CTX.fillStyle = '#fff';
+    CTX.beginPath(); CTX.arc(x, y, 10 * (1 - k) + 3, 0, 6.283); CTX.fill();
+    CTX.restore();
+  }
 }
 
 /* ---------------- NPC ---------------- */

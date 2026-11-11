@@ -129,9 +129,20 @@ function castSkillKey(k) {
   if (key) castSkillImpl(key);
 }
 
+function spawnVfx(x, y, color, radius, kind) {
+  const w = G.world; if (!w) return;
+  if (!w.vfx) w.vfx = [];
+  w.vfx.push({ x, y, color, r: radius || 90, kind: kind || 'aoe', t: 0, life: 0.55 });
+}
+
 function castSkillImpl(key) {
   const p = G.player;
   if (!key) return;
+  // 施法特效（冷却中不触发）
+  const _sp = DATA.SKILLS[key];
+  if (_sp && (p.cd[key] || 0) <= 0) {
+    spawnVfx(p.x, p.y, _sp.color || '#ffd24a', _sp.radius || 90, _sp.kind);
+  }
   const sp = DATA.SKILLS[key];
   if (!sp || sp.type !== 'active') return;
   const lv = p.skills[key] || 1;

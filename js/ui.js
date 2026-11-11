@@ -384,7 +384,7 @@ function charHtml() {
     const qi = it ? DATA.QUALITY.findIndex(q => q.key === it.qKey) : -1;
     left += `<div class="eq-slot q-border-${it ? it.qKey : 'none'}" data-slot="${sk}" ${it ? `data-item="${it.id}"` : ''}>
       <span class="eq-lv">${it ? it.ilvl : '—'}</span>
-      ${iconTag(sk, 26)}
+      ${iconTag(sk, 44)}
       <span class="eq-nm">${it ? it.name.slice(0, 5) : DATA.SLOTS[sk].name}</span>
     </div>`;
   }

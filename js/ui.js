@@ -1419,7 +1419,7 @@ function doCraft(i) {
   if (p.gold < c.gold) { toast('金币不足'); return; }
   Object.keys(c.need).forEach(k => { p.materials[k] -= c.need[k]; });
   p.gold -= c.gold;
-  const slot = pick(Object.keys(DATA.SLOTS));
+  const slot = pick(DATA.LOOT_SLOTS);
   const lvl = Math.max(6, Math.min(28, p.level + 4));
   const it = makeItem(slot, lvl, c.quality, p.stats.isMagic);
   if (!addToBag(p, it)) { p.gold += 30; }

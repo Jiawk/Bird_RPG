@@ -338,7 +338,7 @@ function dropLoot(m) {
   // 装备
   const eqChance = (m.isBoss ? 1 : 0.35) * dropMul;
   if (Math.random() < eqChance) {
-    const slot = pick(Object.keys(DATA.SLOTS));
+    const slot = pick(DATA.LOOT_SLOTS);
     const q = m.isBoss
       ? rollQuality(DATA.BOSS_WEIGHTS)
       : rollQuality(Object.fromEntries(DATA.QUALITY.map(x => [x.key, x.weight])));

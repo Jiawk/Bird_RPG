@@ -283,6 +283,16 @@ const BAG_MAX = BAG_PAGE_SIZE * BAG_PAGES;
 
 function equipItem(p, item) {
   if (item.reqLv > p.level) { toast('等级不足，无法装备'); return false; }
+  // 特戒槽只能放对应的特戒
+  if (item.slot && item.slot.indexOf('ring_') === 0) {
+    if (!item.ringKey || ringSlotOf(item.ringKey) !== item.slot) {
+      toast('这枚戒指不能放进该特戒槽'); return false;
+    }
+  }
+  // 特戒不能塞进普通槽
+  if (item.ringKey && (!item.slot || item.slot.indexOf('ring_') !== 0)) {
+    item.slot = ringSlotOf(item.ringKey);   // 自动归位
+  }
   const old = p.equip[item.slot] || null;
   p.equip[item.slot] = item;
   removeFromBag(p, item);
@@ -327,6 +337,7 @@ function removeFromBag(p, item) {
 }
 
 function sellItem(p, item) {
+  if (item.ringKey) { toast('特戒无法分解或出售'); return; }
   const q = DATA.QUALITY.find(x => x.key === item.qKey);
   const idx = DATA.QUALITY.indexOf(q);
   const price = Math.round((20 + item.ilvl * 8) * Math.pow(2.2, idx));
@@ -344,11 +355,14 @@ function slotName(sk) {
 /* 迁移：把槽位已不存在的装备归位 */
 function migrateItemSlots(p) {
   const valid = sk => !!DATA.SLOTS[sk];
+  const isRingSlot = sk => DATA.RING_SLOTS.some(r => r.slot === sk);
   const fix = it => {
     if (!it) return it;
-    if (valid(it.slot)) return it;
+    // 特戒 → 归到自己的专属槽
     if (it.ringKey && ringSlotOf(it.ringKey)) { it.slot = ringSlotOf(it.ringKey); return it; }
-    it.slot = 'ring';          // 普通戒指退回戒指槽
+    // 普通装备却占着特戒槽 → 退回普通戒指槽
+    if (isRingSlot(it.slot)) { it.slot = 'ring'; return it; }
+    if (!valid(it.slot)) it.slot = 'ring';
     return it;
   };
   for (const sk of Object.keys(p.equip)) {
@@ -608,6 +622,7 @@ function equipDeltaPower(p, item) {
 /* 该装备是否不如身上的（可以卖） */
 function isWorseThanEquipped(p, it) {
   if (!it || it.type === 'potion') return false;
+  if (it.ringKey) return false;            // 特戒永远保留
   const cur = p.equip[it.slot];
   if (!cur) return false;                 // 空槽位别卖
   return equipDeltaPower(p, it) <= 0;
@@ -667,7 +682,7 @@ function cpVerdict(have, need) {
 /* ---------------- 装备达成度 ---------------- */
 /* 返回 { filled, minIdx, avgIdx, score, tierName } */
 function gearTier(p) {
-  const slots = Object.keys(DATA.SLOTS);
+  const slots = DATA.LOOT_SLOTS;
   let filled = 0, minIdx = 99, sum = 0, score = 0;
   for (const sl of slots) {
     const it = p.equip[sl];
@@ -690,7 +705,7 @@ function gearTier(p) {
 /* 难度是否"装备够格"：返回 'ok' | 'low' | 'high' */
 function diffReadiness(p, diffKey) {
   const gt = gearTier(p);
-  if (gt.filled < Object.keys(DATA.SLOTS).length) return 'low';
+  if (gt.filled < DATA.LOOT_SLOTS.length) return 'low';
   const g = gt.minIdx;
   if (diffKey === 'normal') return g >= 1 ? 'ok' : 'low';
   if (diffKey === 'hard')   return g >= 2 ? 'ok' : 'low';

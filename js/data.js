@@ -363,5 +363,8 @@ DATA.CODEX_LEVELS = [
   {lv:10, kills:260,  dmg:0.42, drop:0.38, exp:0.42}
 ];
 
+/* 普通装备可掉落的部位（特戒槽不参与随机掉落） */
+DATA.LOOT_SLOTS = ['weapon','helm','chest','legs','boots','neck','ring','trinket'];
+
 DATA.MAX_LEVEL = 30;
 DATA.expForLevel = (lv) => Math.floor(100 * Math.pow(lv, 1.5));

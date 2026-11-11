@@ -558,14 +558,24 @@ function charHtml() {
   right += row('法力回复', (st.mpRegen * 100).toFixed(1) + '%/s');
   right += '</div>';
 
-  // 套装
-  const SB = st.setBonus || {count:0};
-  const SET = DATA.SETS[p.cls];
-  right += `<div class="s-group"><div class="s-title">职业套装 · ${SET.name}</div>`;
-  right += `<div class="set-bar"><i style="width:${(SB.count/SET.slots.length*100).toFixed(0)}%;background:${SET.color}"></i></div>`;
-  right += `<div class="set-count">已集齐 <b style="color:${SB.count>=4?'#5fdc4a':'#e8e0cc'}">${SB.count}</b> / ${SET.slots.length} 件</div>`;
-  right += `<div class="s-row"><span style="color:${SB.count>=4?'#5fdc4a':'#6b6558'}">4 件：${SET.b4.desc}</span><b style="color:${SB.count>=4?'#5fdc4a':'#6b6558'}">${SB.count>=4?'生效':'未激活'}</b></div>`;
-  right += `<div class="s-row"><span style="color:${SB.count>=6?'#ffd24a':'#6b6558'}">6 件：${SET.b6.desc}</span><b style="color:${SB.count>=6?'#ffd24a':'#6b6558'}">${SB.count>=6?'生效':'未激活'}</b></div>`;
+  // 套装（本职业 6 套）
+  const sets = DATA.SETS[p.cls];
+  const activeKey = (st.setBonus && st.setBonus.key) || null;
+  right += '<div class="s-group"><div class="s-title">职业套装（6 套 · 仅地狱掉落）</div>';
+  sets.forEach(set => {
+    const n = setCount(p, set.key);
+    const isActive = set.key === activeKey;
+    const done = n >= 6;
+    right += `<div class="set-line${isActive ? ' active' : ''}" data-set-info="${set.key}">
+      <span class="set-dot" style="background:${n > 0 ? set.color : '#3a3020'}"></span>
+      <span class="set-nm">${set.name}</span>
+      <span class="set-cnt" style="color:${done ? '#5fdc4a' : n > 0 ? '#ffd24a' : '#6b6558'}">${n}/6</span>
+    </div>`;
+  });
+  if (activeKey) {
+    const act = sets.find(x => x.key === activeKey);
+    right += `<div class="set-active-tip">生效：${act.name}（4件 ${Math.round(act.b4.pct*100)}% 主属性${st.setBonus.count>=6?` · 6件 +${act.b6.flat} & 技能 +${Math.round(act.b6.skillDmg*100)}%`:''}）</div>`;
+  }
   right += '</div>';
 
   right += '<div class="s-group"><div class="s-title">额外属性</div>';
@@ -768,6 +778,41 @@ function settingsHtml() {
       <div class="nr-info">删除角色，不可恢复</div></div>
       <button data-act-reset style="border-color:#6b2b2b;color:#ff8a7a">重开</button></div>
   </div>`;
+}
+
+/* ---------------- 套装图鉴 ---------------- */
+function setDetailHtml(key) {
+  const p = G.player;
+  const set = (DATA.SETS[p.cls] || []).find(x => x.key === key);
+  if (!set) return '<div>套装不存在</div>';
+  const n = setCount(p, set.key);
+
+  let html = `<div class="set-head" style="border-left-color:${set.color}">
+    <div class="enh-name" style="color:${set.color}">${set.name}</div>
+    <div class="enh-sub">职业套装 · ${DATA.CLASSES[p.cls].name}专属 · 已集齐 ${n}/6</div>
+    <div class="enh-sub" style="color:#ff9a6a">掉落来源：${DATA.ROOMS[set.room].name} · <b>仅地狱难度</b> · 7% 概率</div>
+  </div>`;
+
+  html += '<div class="col-title" style="margin:10px 0 8px">套装部件</div><div class="eq-grid" style="grid-template-columns:repeat(3,1fr)">';
+  DATA.SET_SLOTS.forEach(sl => {
+    const it = p.equip[sl];
+    const mine = it && it.setKey === set.key;
+    const anyInSlot = p.bag.find(x => x.type !== 'potion' && x.setKey === set.key && x.slot === sl);
+    html += `<div class="eq-slot ${mine ? 'q-border-rare' : ''}" style="cursor:default;opacity:${mine || anyInSlot ? 1 : .45}">
+      <span class="eq-lv">${DATA.SLOTS[sl].name}</span>
+      ${iconTag(sl, 34)}
+      <span class="eq-nm" style="${mine ? 'color:#5fdc4a' : anyInSlot ? 'color:#ffd24a' : ''}">
+        ${mine ? '已穿戴' : anyInSlot ? '在背包' : '未获得'}</span>
+    </div>`;
+  });
+  html += '</div>';
+
+  html += '<div class="col-title" style="margin:14px 0 8px">套装效果</div>';
+  html += `<div class="enh-line"><span>4 件</span><b class="${n>=4?'ok':''}">主属性（${statName(set.primary)}）+${Math.round(set.b4.pct*100)}%　${n>=4?'✅ 已生效':'未激活'}</b></div>`;
+  html += `<div class="enh-line"><span>6 件</span><b class="${n>=6?'ok':''}">${statName(set.primary)} +${set.b6.flat} · 技能伤害 +${Math.round(set.b6.skillDmg*100)}%　${n>=6?'✅ 已生效':'未激活'}</b></div>`;
+  html += `<div style="margin-top:12px;font-size:11px;color:#8f8570">
+    高图套装更强：第 1 图 4件+10%，第 6 图 4件+35%。同一时间只有集齐件数最多的那套生效。</div>`;
+  return html;
 }
 
 /* ---------------- 爬塔 ---------------- */
@@ -1173,6 +1218,9 @@ function bindModal() {
   body.querySelectorAll('[data-act-town]').forEach(b => b.onclick = () => { closeModal(); goTown(); });
   body.querySelectorAll('[data-act-enhance]').forEach(b => b.onclick = () => openModal('enhance', '铁匠 · 装备强化', enhanceHtml()));
   body.querySelectorAll('[data-tower-start]').forEach(b => b.onclick = () => enterTower(+b.dataset.towerStart));
+  body.querySelectorAll('[data-set-info]').forEach(b => b.onclick = () => {
+    openModal('setinfo', '套装图鉴', setDetailHtml(b.dataset.setInfo));
+  });
   body.querySelectorAll('[data-enh-pick]').forEach(b => b.onclick = () => {
     openModal('enhance', '锻造台 · 强化', enhanceItemHtml(b.dataset.enhPick));
   });
@@ -1246,8 +1294,11 @@ function showTooltip(it, x, y) {
       parts.push(`<div style="color:#ffd24a;font-size:12px;margin-top:3px">【特殊效果】${it.effectDesc}</div>`);
     }
     if (it.setKey) {
-      const set = DATA.SETS[it.setKey];
-      parts.push(`<div style="color:${set.color};font-size:11px;margin-top:2px">【${set.name}】职业套装</div>`);
+      const set = (DATA.SETS[G.player.cls] || []).find(x => x.key === it.setKey);
+      if (set) {
+        const n = setCount(G.player, set.key);
+        parts.push(`<div style="color:${set.color};font-size:11px;margin-top:2px">【${set.name}】职业套装（${n}/6）</div>`);
+      }
     }
     for (const k in it.stats) {
       const v = it.stats[k];

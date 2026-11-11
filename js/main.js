@@ -310,6 +310,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const forgeTest = /[fg]$/.test(location.hash);
     const skillTest = /k$/.test(location.hash);
     const questTest = /q$/.test(location.hash);
+    const setTest = /s$/.test(location.hash);
     const n = parseInt(location.hash.slice(4), 10);
     G.diff = 'normal';
     G.player = createPlayer('human', 'archer');
@@ -348,6 +349,19 @@ window.addEventListener('DOMContentLoaded', () => {
       const it = makeItem('chest', 12, 'epic', false); it.enh = 11; addToBag(G.player, it);
       if (location.hash.endsWith('g')) openModal('enhance','锻造台 · 强化', enhanceItemHtml(G.player.equip.weapon.id));
       else handleCommand('enhance');
+    }
+    if (setTest) {
+      const cl = G.player.cls;
+      const key = cl + '_2';
+      // 给两件该套装件看看效果
+      ['weapon','helm'].forEach(sl => {
+        const it = makeItem(sl, 20, 'epic', false);
+        it.setKey = key; it.setName = DATA.SETS[cl][2].name;
+        it.name = DATA.SETS[cl][2].name + '·' + DATA.SLOTS[sl].name;
+        G.player.equip[sl] = it;
+      });
+      recalcStats(G.player);
+      openModal('setinfo', '套装图鉴', setDetailHtml(key));
     }
     if (questTest) {
       G.player.unlocked = [0,1,2,3,4,5];

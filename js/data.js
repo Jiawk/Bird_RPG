@@ -214,22 +214,30 @@ DATA.QUEST_POOL = [
   {id:'q6', name:'深渊终战', room:5, need:25, exp:8000, gold:4200, mat:'shard',   matN:1}
 ];
 
-/* ---------------- 职业专属套装 ---------------- */
+/* ---------------- 职业专属套装（每图一套，共 6×4 = 24 套） ---------------- */
 const SET_SLOTS = ['weapon','helm','chest','legs','boots','neck'];
-DATA.SETS = {
-  warrior:{name:'破军', color:'#c0392b', primary:'str', slots:SET_SLOTS,
-    b4:{pct:0.20, desc:'主属性（力量）+20%'},
-    b6:{flat:40, skillDmg:0.20, desc:'力量 +40 · 技能伤害 +20%'}},
-  mage:{name:'霜语', color:'#4a9eff', primary:'int', slots:SET_SLOTS,
-    b4:{pct:0.20, desc:'主属性（智力）+20%'},
-    b6:{flat:40, skillDmg:0.20, desc:'智力 +40 · 技能伤害 +20%'}},
-  archer:{name:'风行', color:'#3fd45a', primary:'agi', slots:SET_SLOTS,
-    b4:{pct:0.20, desc:'主属性（敏捷）+20%'},
-    b6:{flat:40, skillDmg:0.20, desc:'敏捷 +40 · 技能伤害 +20%'}},
-  assassin:{name:'影杀', color:'#b45cff', primary:'agi', slots:SET_SLOTS,
-    b4:{pct:0.20, desc:'主属性（敏捷）+20%'},
-    b6:{flat:40, skillDmg:0.20, desc:'敏捷 +40 · 技能伤害 +20%'}}
+DATA.SET_SLOTS = SET_SLOTS;
+
+const SET_NAMES = {
+  warrior:  ['荒野破军', '矿脉破军', '战歌破军', '亡灵破军', '燃烧破军', '深渊破军'],
+  mage:     ['荒野霜语', '矿脉霜语', '战歌霜语', '亡灵霜语', '燃烧霜语', '深渊霜语'],
+  archer:   ['荒野风行', '矿脉风行', '战歌风行', '亡灵风行', '燃烧风行', '深渊风行'],
+  assassin: ['荒野影杀', '矿脉影杀', '战歌影杀', '亡灵影杀', '燃烧影杀', '深渊影杀']
 };
+
+DATA.SETS = {};
+for (const cls in SET_NAMES) {
+  DATA.SETS[cls] = SET_NAMES[cls].map((name, room) => ({
+    key: cls + '_' + room,
+    cls, room, name,
+    color: DATA.ROOMS[room].accent,
+    primary: DATA.CLASSES[cls].primary,
+    slots: SET_SLOTS,
+    total: 6,
+    b4: { pct: 0.10 + room * 0.05 },                       // 4 件：主属性 +10%~+35%
+    b6: { flat: 15 + room * 10, skillDmg: 0.08 + room * 0.05 } // 6 件：主属性 +15~+65，技能 +8%~+33%
+  }));
+}
 
 /* 技能 → 图标索引（skills.png 24 格）
    0火 1水 2石 3叶 4星 5幽 6电 7爆

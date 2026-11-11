@@ -401,20 +401,35 @@ function grantFirstKillRing(p, bossKey) {
 
 /* ---------------- 职业套装 ---------------- */
 function setBonus(p) {
-  const set = DATA.SETS[p.cls];
-  if (!set) return { count:0, pct:0, flat:0, skillDmg:0 };
-  let n = 0;
-  for (const sl of set.slots) {
+  const sets = DATA.SETS[p.cls];
+  if (!sets) return { count: 0, pct: 0, flat: 0, skillDmg: 0, all: {} };
+  const counts = {};
+  for (const sl of DATA.SET_SLOTS) {
     const it = p.equip[sl];
-    if (it && it.setKey === p.cls) n++;
+    if (it && it.setKey) counts[it.setKey] = (counts[it.setKey] || 0) + 1;
   }
+  let best = null, bestN = 0;
+  for (const k in counts) {
+    if (counts[k] > bestN) { bestN = counts[k]; best = sets.find(x => x.key === k); }
+  }
+  if (!best) return { count: 0, pct: 0, flat: 0, skillDmg: 0, all: counts };
   return {
-    count: n, name: set.name, color: set.color, primary: set.primary,
-    total: set.slots.length,
-    pct: n >= 4 ? set.b4.pct : 0,
-    flat: n >= 6 ? set.b6.flat : 0,
-    skillDmg: n >= 6 ? set.b6.skillDmg : 0
+    count: bestN, key: best.key, name: best.name, color: best.color,
+    primary: best.primary, total: 6, all: counts,
+    pct: bestN >= 4 ? best.b4.pct : 0,
+    flat: bestN >= 6 ? best.b6.flat : 0,
+    skillDmg: bestN >= 6 ? best.b6.skillDmg : 0
   };
+}
+
+/* 某套装的件数 */
+function setCount(p, key) {
+  let n = 0;
+  for (const sl of DATA.SET_SLOTS) {
+    const it = p.equip[sl];
+    if (it && it.setKey === key) n++;
+  }
+  return n;
 }
 
 /* ---------------- 战力值 ---------------- */

@@ -541,3 +541,12 @@ python3 build.py     # 重新打包成单文件 dist/兽人永不为奴.html
 - **修复两个点击无响应的 bug**
   1. **装备图鉴 / 收藏图鉴点不动**：`uiInit` 只给 `.cc-btn` 绑了点击事件，新加的 `.codex-btn` 没绑 —— 改成 `.cc-btn, .codex-btn` 一起绑
   2. **试炼之塔入口点不动**：`handleCommand` 里有 `case 'tower'`，但 `interactNPC`（右键 NPC 走的分支）里漏了 —— 已补上
+
+### v27 · 修复 C 面板崩溃 + 收藏图鉴领取条件
+- **修复按 C 崩溃**（`Cannot read properties of undefined (reading 'name')`）
+  - 原因：特戒槽从 `ring2~ring5` 改成 6 个专属槽后，`charHtml` 里仍残留 4 处 `slotHtml('ring2'...)`，而 `ring2` 已不在 `DATA.SLOTS` 中，取 `.name` 直接抛错
+  - 改为遍历 `DATA.RING_SLOTS` 渲染 6 个槽
+- **收藏图鉴按天领取**：原来打开就能领，现在必须**当天击杀过对应 BOSS** 才能领
+  - 击杀 BOSS 时记录 `codexKillDay[boss] = 今天`
+  - 按钮三态：`未击杀`（灰）/ `领取`（亮）/ `今日已领`（灰）
+  - 领取时二次校验，防止绕过界面

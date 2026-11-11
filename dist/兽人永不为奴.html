@@ -3927,10 +3927,12 @@ function onMonsterKilled(m) {
     p.materials.stone = (p.materials.stone || 0) + 1;
   }
 
-  // ---- 收藏图鉴：累计 BOSS 击杀 ----
+  // ---- 收藏图鉴：累计 BOSS 击杀 + 记录当天击杀 ----
   if (m.isBoss && m.kind) {
     if (!p.codex) p.codex = {};
     p.codex[m.kind] = (p.codex[m.kind] || 0) + 1;
+    if (!p.codexKillDay) p.codexKillDay = {};
+    p.codexKillDay[m.kind] = todayStr();
   }
 
   // ---- BOSS 掉特戒（难度越高爆率越高，仍是最低档）----
@@ -4342,10 +4344,7 @@ function charHtml() {
   mid += `<div class="socket-row">
     <div class="socket-label">特戒</div>
     <div class="socket-grid">
-      ${slotHtml('ring2', 34)}
-      ${slotHtml('ring3', 34)}
-      ${slotHtml('ring4', 34)}
-      ${slotHtml('ring5', 34)}
+      ${DATA.RING_SLOTS.map(r => slotHtml(r.slot, 32)).join('')}
     </div>
   </div>`;
   mid += '</div>';
@@ -4726,6 +4725,8 @@ function codexCollectHtml() {
     const cur = lv ? DATA.CODEX_LEVELS[lv - 1] : { dmg:0, drop:0, exp:0 };
     const pct = next ? Math.min(100, kills / next.kills * 100) : 100;
     const claimed = p.codexDaily && p.codexDaily[bk] === today;
+    const killedToday = p.codexKillDay && p.codexKillDay[bk] === today;
+    const canClaim = killedToday && !claimed;
 
     html += `<div style="margin-bottom:10px;padding:8px 10px;border-radius:3px;
       background:rgba(60,48,28,.32);border-left:2px solid ${room ? room.accent : '#8a6d3b'}">
@@ -4740,12 +4741,12 @@ function codexCollectHtml() {
         <span style="color:#5fdc4a">伤害 +${Math.round(cur.dmg*100)}% · 爆率 +${Math.round(cur.drop*100)}% · 经验 +${Math.round(cur.exp*100)}%</span>
       </div>
       <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
-        <span style="font-size:10.5px;color:#8f8570">每日首杀奖励：强化石×3 + 技能强化券×1</span>
-        <button data-codex-claim="${bk}" ${claimed ? 'disabled' : ''}
+        <span style="font-size:10.5px;color:${killedToday ? '#5fdc4a' : '#8f8570'}">每日首杀奖励：强化石×3 + 技能强化券×1${killedToday ? '（今日已击杀）' : '（需今日击杀该 BOSS）'}</span>
+        <button data-codex-claim="${bk}" ${canClaim ? '' : 'disabled'}
           style="margin-left:auto;padding:3px 12px;font-size:11px;border-radius:2px;cursor:pointer;
           font-family:var(--serif);background:linear-gradient(180deg,#3a3020,#181209);
           border:1px solid ${claimed ? '#3a3020' : 'var(--gold)'};color:${claimed ? '#5a5348' : '#ffd24a'}">
-          ${claimed ? '今日已领' : '领取'}</button>
+          ${claimed ? '今日已领' : killedToday ? '领取' : '未击杀'}</button>
       </div>
     </div>`;
   });
@@ -5223,6 +5224,7 @@ function bindModal() {
     if (!p.codexDaily) p.codexDaily = {};
     const today = todayStr();
     if (p.codexDaily[bk] === today) { toast('今日已领取'); return; }
+    if (!p.codexKillDay || p.codexKillDay[bk] !== today) { toast('需要今天先击杀一次该 BOSS'); return; }
     p.codexDaily[bk] = today;
     p.materials.stone = (p.materials.stone || 0) + 3;
     p.materials.skillT = (p.materials.skillT || 0) + 1;

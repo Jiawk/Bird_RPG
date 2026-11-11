@@ -675,6 +675,20 @@ function drawProjectile(pr) {
   const x = px(pr.x), y = py(pr.y) - 18;
   const ang = Math.atan2(pr.vy, pr.vx);
 
+  if (imgReady('proj')) {
+    const idx = pr.shape === 'arrow' ? 0 : (pr.shape === 'blade' ? 2 : 1);
+    const glowCol = idx === 0 ? 'rgba(255,240,200,.45)'
+                  : idx === 2 ? 'rgba(180,110,255,.5)' : 'rgba(120,190,255,.55)';
+    const g = CTX.createRadialGradient(x, y, 1, x, y, 22);
+    g.addColorStop(0, glowCol); g.addColorStop(1, 'rgba(0,0,0,0)');
+    CTX.fillStyle = g; CTX.beginPath(); CTX.arc(x, y, 22, 0, 6.283); CTX.fill();
+    CTX.save(); CTX.translate(x, y); CTX.rotate(ang);
+    CTX.imageSmoothingEnabled = false;
+    const sz = idx === 0 ? 40 : 34;
+    CTX.drawImage(IMG.proj, idx * 64, 0, 64, 64, -sz/2, -sz/2, sz, sz);
+    CTX.restore(); return;
+  }
+
   if (pr.shape === 'arrow') {
     // 箭矢：细长箭杆 + 箭头 + 拖尾
     CTX.save();

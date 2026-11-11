@@ -116,7 +116,10 @@ function playerAttack() {
       life: 0.9, dead: false, pierce: false, dmg: p.stats.power,
       color: p.stats.weaponFx === 'arrow' ? '#d8f0ff'
            : (p.stats.weaponFx === 'spell' ? '#9f7fff' : '#ffe08a'),
-      shape: p.stats.weaponFx === 'arrow' ? 'arrow' : (p.stats.weaponFx === 'spell' ? 'orb' : 'bolt'),
+      shape: (p.cls === 'archer') ? 'arrow'
+           : (p.stats.weaponFx === 'arrow' ? 'arrow'
+           : (p.stats.weaponFx === 'spell' ? 'orb'
+           : (p.stats.weaponFx === 'stab' ? 'blade' : 'bolt'))),
       hitSet: new Set(), isSkill: false
     });
     if (!target) { /* 空放 */ }

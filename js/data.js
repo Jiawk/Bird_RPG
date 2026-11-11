@@ -96,6 +96,8 @@ DATA.SLOTS = {
   boots:{name:'战靴', icon:'🥾'},  neck:{name:'项链', icon:'📿'},
   ring:{name:'戒指', icon:'💍'},   ring2:{name:'印记', icon:'◎'},
   ring3:{name:'副印记', icon:'◉'},
+  ring4:{name:'印记III', icon:'◈'},
+  ring5:{name:'印记IV', icon:'❖'},
   trinket:{name:'饰品', icon:'🔮'}
 };
 
@@ -318,6 +320,12 @@ DATA.BOSS_RINGS = {
   bossKel:       {name:'亡灵之戒', effect:{cleave:0.05},    desc:'5% 概率斩掉目标 5% 最大生命'},
   bossMannoroth: {name:'燃烧之戒', effect:{critDmg:0.35},   desc:'暴击伤害 +35%'},
   bossArchimonde:{name:'深渊之戒', effect:{dropBonus:0.35}, desc:'掉落品质 +35%'}
+};
+
+/* 特殊功能戒指（非首杀） */
+DATA.SPECIAL_RINGS = {
+  revive: {name:'复活之戒', color:'#f7e26b', effect:{revive:1},
+           desc:'死亡时原地复活（50% 生命），120 秒冷却'}
 };
 
 DATA.MAX_LEVEL = 30;

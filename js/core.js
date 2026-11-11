@@ -104,8 +104,8 @@ function recalcStats(p) {
   }
 
   // 特戒效果（强化会放大）
-  const RFX = { expBonus:0, goldBonus:0, lifesteal:0, cleave:0, critDmg:0, dropBonus:0 };
-  for (const sk of ['ring2','ring3','ring','trinket']) {
+  const RFX = { expBonus:0, goldBonus:0, lifesteal:0, cleave:0, critDmg:0, dropBonus:0, revive:0 };
+  for (const sk of ['ring2','ring3','ring4','ring5','ring','trinket']) {
     const it = p.equip[sk];
     if (it && it.effect) {
       const m = enhMul(it);
@@ -179,6 +179,7 @@ function recalcStats(p) {
     expBonus: (race.expBonus || 0) + RFX.expBonus,
     cleave: RFX.cleave,
     dropBonus: RFX.dropBonus,
+    revive: RFX.revive,
     killMana: pas.killMana || 0,
     killAs: pas.killAs || 0,
     invis: bf.invis
@@ -427,6 +428,38 @@ function ringColor(it) {
   return (RING_COLORS[k] || {}).color || '#ff9a2e';
 }
 
+/* 通用：按定义造一枚特戒 */
+function makeRing(def, idSuffix) {
+  const k = Object.keys(def.effect)[0];
+  return {
+    id: 'ring_' + (idSuffix || k) + '_' + Date.now() + Math.floor(Math.random() * 1000),
+    type: 'ring', slot: 'ring2', qKey: 'legendary', qName: '传说',
+    color: (RING_COLORS[k] || {}).color || def.color || '#ff9a2e',
+    name: def.name, ilvl: 20, reqLv: 1, enh: 0,
+    setKey: null, stats: {}, effect: def.effect, effectDesc: def.desc || '', bound: true
+  };
+}
+
+/* 放进第一个空的特戒槽，满了就进背包 */
+function equipSpecialRing(p, ring) {
+  for (const sk of ['ring2','ring3','ring4','ring5']) {
+    if (!p.equip[sk]) { ring.slot = sk; p.equip[sk] = ring; recalcStats(p); return ring; }
+  }
+  addToBag(p, ring);
+  recalcStats(p);
+  return ring;
+}
+
+/* 复活消耗 */
+function consumeRevive(p) {
+  const RFX = p.stats && p.stats.revive ? p.stats.revive : 0;
+  if (!RFX) return false;
+  const now = Date.now();
+  if (p.reviveCd && now < p.reviveCd) return false;
+  p.reviveCd = now + 120000;
+  return true;
+}
+
 /* ---------------- BOSS 首杀戒指 ---------------- */
 function grantFirstKillRing(p, bossKey) {
   const def = DATA.BOSS_RINGS[bossKey];
@@ -442,10 +475,7 @@ function grantFirstKillRing(p, bossKey) {
     setKey: null, stats: {}, effect: def.effect, effectDesc: def.desc,
     bound: true
   };
-  if (!p.equip.ring2) p.equip.ring2 = ring;
-  else if (!p.equip.ring3) p.equip.ring3 = ring;
-  else addToBag(p, ring);
-  recalcStats(p);
+  equipSpecialRing(p, ring);
   return ring;
 }
 

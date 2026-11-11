@@ -60,6 +60,19 @@ function damagePlayer(amount, source) {
 function playerDie() {
   const p = G.player;
   if (p.dead) return;          // 防止一帧多次触发
+
+  // 复活之戒
+  if (consumeRevive(p)) {
+    p.hp = Math.round(p.stats.hpMax * 0.5);
+    p.mp = Math.round(p.stats.mpMax * 0.5);
+    p.stats.invis = 3;
+    floatText(p.x, p.y - 40, '复活！', '#f7e26b', 22);
+    toast('✨ 复活之戒生效：原地复活（50% 生命）');
+    logMsg('✨ 复活之戒触发', 'level');
+    spawnVfx(p.x, p.y, '#f7e26b', 140, 'aoe', 0.8);
+    return;
+  }
+
   p.dead = true;
   if (G.tower && G.tower.active) { G.tower.active = false; G.tower.floor = 1; }
   p.hp = 0;

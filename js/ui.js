@@ -621,8 +621,12 @@ function charHtml() {
   </div>`;
   mid += `<div class="socket-row">
     <div class="socket-label">特戒</div>
-    ${slotHtml('ring2', 40)}
-    ${slotHtml('ring3', 40)}
+    <div class="socket-grid">
+      ${slotHtml('ring2', 34)}
+      ${slotHtml('ring3', 34)}
+      ${slotHtml('ring4', 34)}
+      ${slotHtml('ring5', 34)}
+    </div>
   </div>`;
   mid += '</div>';
 
@@ -1000,6 +1004,15 @@ function clearTowerFloor() {
     t.active = false;
     toast('🎉 通关全部 20 层！');
     logMsg('🎉 爬塔通关 20 层', 'level');
+    const p2 = G.player;
+    if (!p2.reviveRingGot) {
+      p2.reviveRingGot = true;
+      const ring = makeRing(DATA.SPECIAL_RINGS.revive, 'revive');
+      equipSpecialRing(p2, ring);
+      toast('🎁 获得【复活之戒】！');
+      logMsg('🎁 通关奖励：复活之戒（死亡时原地复活）', 'level');
+    }
+    saveGame();
     return;
   }
   t.floor++;

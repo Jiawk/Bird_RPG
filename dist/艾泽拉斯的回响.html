@@ -610,7 +610,8 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   border:1px solid rgba(212,175,55,.42)}
 .socket-label{font-family:var(--serif);font-size:11px;color:var(--gold-lt);letter-spacing:.16em;
   writing-mode:vertical-rl;text-orientation:upright}
-.socket-row .eq-v{width:78px;flex:0 0 auto}
+.socket-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;flex:1}
+.socket-grid .eq-v{width:100%}
 
 @media (max-width:1100px){
   .char-panel-v2{grid-template-columns:86px 1fr 86px;gap:8px}
@@ -806,7 +807,7 @@ function imgReady(k) { return IMG[k] && IMG[k].complete && IMG[k].naturalWidth >
 
 const U_FRAME_W = 32, U_FRAME_H = 48;
 const ICON_SIZE = 32;
-const SLOT_ICON_IDX = { weapon:0, helm:1, chest:2, legs:3, boots:4, neck:5, ring:6, ring2:6, ring3:6, trinket:7 };
+const SLOT_ICON_IDX = { weapon:0, helm:1, chest:2, legs:3, boots:4, neck:5, ring:6, ring2:6, ring3:6, ring4:6, ring5:6, trinket:7 };
 const SKILL_ICON_COUNT = 24;
 const FX_SIZE = 48;
 
@@ -911,6 +912,8 @@ DATA.SLOTS = {
   boots:{name:'战靴', icon:'🥾'},  neck:{name:'项链', icon:'📿'},
   ring:{name:'戒指', icon:'💍'},   ring2:{name:'印记', icon:'◎'},
   ring3:{name:'副印记', icon:'◉'},
+  ring4:{name:'印记III', icon:'◈'},
+  ring5:{name:'印记IV', icon:'❖'},
   trinket:{name:'饰品', icon:'🔮'}
 };
 
@@ -1135,6 +1138,12 @@ DATA.BOSS_RINGS = {
   bossArchimonde:{name:'深渊之戒', effect:{dropBonus:0.35}, desc:'掉落品质 +35%'}
 };
 
+/* 特殊功能戒指（非首杀） */
+DATA.SPECIAL_RINGS = {
+  revive: {name:'复活之戒', color:'#f7e26b', effect:{revive:1},
+           desc:'死亡时原地复活（50% 生命），120 秒冷却'}
+};
+
 DATA.MAX_LEVEL = 30;
 DATA.expForLevel = (lv) => Math.floor(100 * Math.pow(lv, 1.5));
 
@@ -1247,8 +1256,8 @@ function recalcStats(p) {
   }
 
   // 特戒效果（强化会放大）
-  const RFX = { expBonus:0, goldBonus:0, lifesteal:0, cleave:0, critDmg:0, dropBonus:0 };
-  for (const sk of ['ring2','ring3','ring','trinket']) {
+  const RFX = { expBonus:0, goldBonus:0, lifesteal:0, cleave:0, critDmg:0, dropBonus:0, revive:0 };
+  for (const sk of ['ring2','ring3','ring4','ring5','ring','trinket']) {
     const it = p.equip[sk];
     if (it && it.effect) {
       const m = enhMul(it);
@@ -1322,6 +1331,7 @@ function recalcStats(p) {
     expBonus: (race.expBonus || 0) + RFX.expBonus,
     cleave: RFX.cleave,
     dropBonus: RFX.dropBonus,
+    revive: RFX.revive,
     killMana: pas.killMana || 0,
     killAs: pas.killAs || 0,
     invis: bf.invis
@@ -1570,6 +1580,38 @@ function ringColor(it) {
   return (RING_COLORS[k] || {}).color || '#ff9a2e';
 }
 
+/* 通用：按定义造一枚特戒 */
+function makeRing(def, idSuffix) {
+  const k = Object.keys(def.effect)[0];
+  return {
+    id: 'ring_' + (idSuffix || k) + '_' + Date.now() + Math.floor(Math.random() * 1000),
+    type: 'ring', slot: 'ring2', qKey: 'legendary', qName: '传说',
+    color: (RING_COLORS[k] || {}).color || def.color || '#ff9a2e',
+    name: def.name, ilvl: 20, reqLv: 1, enh: 0,
+    setKey: null, stats: {}, effect: def.effect, effectDesc: def.desc || '', bound: true
+  };
+}
+
+/* 放进第一个空的特戒槽，满了就进背包 */
+function equipSpecialRing(p, ring) {
+  for (const sk of ['ring2','ring3','ring4','ring5']) {
+    if (!p.equip[sk]) { ring.slot = sk; p.equip[sk] = ring; recalcStats(p); return ring; }
+  }
+  addToBag(p, ring);
+  recalcStats(p);
+  return ring;
+}
+
+/* 复活消耗 */
+function consumeRevive(p) {
+  const RFX = p.stats && p.stats.revive ? p.stats.revive : 0;
+  if (!RFX) return false;
+  const now = Date.now();
+  if (p.reviveCd && now < p.reviveCd) return false;
+  p.reviveCd = now + 120000;
+  return true;
+}
+
 /* ---------------- BOSS 首杀戒指 ---------------- */
 function grantFirstKillRing(p, bossKey) {
   const def = DATA.BOSS_RINGS[bossKey];
@@ -1585,10 +1627,7 @@ function grantFirstKillRing(p, bossKey) {
     setKey: null, stats: {}, effect: def.effect, effectDesc: def.desc,
     bound: true
   };
-  if (!p.equip.ring2) p.equip.ring2 = ring;
-  else if (!p.equip.ring3) p.equip.ring3 = ring;
-  else addToBag(p, ring);
-  recalcStats(p);
+  equipSpecialRing(p, ring);
   return ring;
 }
 
@@ -2255,6 +2294,19 @@ function damagePlayer(amount, source) {
 function playerDie() {
   const p = G.player;
   if (p.dead) return;          // 防止一帧多次触发
+
+  // 复活之戒
+  if (consumeRevive(p)) {
+    p.hp = Math.round(p.stats.hpMax * 0.5);
+    p.mp = Math.round(p.stats.mpMax * 0.5);
+    p.stats.invis = 3;
+    floatText(p.x, p.y - 40, '复活！', '#f7e26b', 22);
+    toast('✨ 复活之戒生效：原地复活（50% 生命）');
+    logMsg('✨ 复活之戒触发', 'level');
+    spawnVfx(p.x, p.y, '#f7e26b', 140, 'aoe', 0.8);
+    return;
+  }
+
   p.dead = true;
   if (G.tower && G.tower.active) { G.tower.active = false; G.tower.floor = 1; }
   p.hp = 0;
@@ -4057,8 +4109,12 @@ function charHtml() {
   </div>`;
   mid += `<div class="socket-row">
     <div class="socket-label">特戒</div>
-    ${slotHtml('ring2', 40)}
-    ${slotHtml('ring3', 40)}
+    <div class="socket-grid">
+      ${slotHtml('ring2', 34)}
+      ${slotHtml('ring3', 34)}
+      ${slotHtml('ring4', 34)}
+      ${slotHtml('ring5', 34)}
+    </div>
   </div>`;
   mid += '</div>';
 
@@ -4436,6 +4492,15 @@ function clearTowerFloor() {
     t.active = false;
     toast('🎉 通关全部 20 层！');
     logMsg('🎉 爬塔通关 20 层', 'level');
+    const p2 = G.player;
+    if (!p2.reviveRingGot) {
+      p2.reviveRingGot = true;
+      const ring = makeRing(DATA.SPECIAL_RINGS.revive, 'revive');
+      equipSpecialRing(p2, ring);
+      toast('🎁 获得【复活之戒】！');
+      logMsg('🎁 通关奖励：复活之戒（死亡时原地复活）', 'level');
+    }
+    saveGame();
     return;
   }
   t.floor++;

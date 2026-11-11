@@ -802,6 +802,7 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   </div>
 </div>
 
+<script>window.__THEME="wq";</script>
 <script>
 /* ===== js/assets_wq.js ===== */
 /* 水墨武侠版素材 */
@@ -1893,7 +1894,20 @@ function learnSkill(p, key) {
 function skillLevel(p, key) { return p.skills[key] || 0; }
 
 /* ---------------- 存档 ---------------- */
-const SAVE_KEY = 'wow_like_save_v1';
+const THEME = (typeof window !== 'undefined' && window.__THEME) || 'classic';
+const SAVE_KEY = 'wow_like_save_v1_' + THEME;
+const LEGACY_KEY = 'wow_like_save_v1';
+
+/* 老存档迁移：经典版首次运行把旧 key 的内容搬过来 */
+function migrateLegacySave() {
+  try {
+    if (THEME !== 'classic') return;
+    if (localStorage.getItem(SAVE_KEY)) return;
+    const old = localStorage.getItem(LEGACY_KEY);
+    if (old) localStorage.setItem(SAVE_KEY, old);
+  } catch (_) {}
+}
+migrateLegacySave();
 
 function saveGame() {
   if (!G.player) return;
@@ -5436,7 +5450,6 @@ function initInput() {
       case 'j': handleCommand('quest'); break;   // 任务面板
       case 'x': useGatherRing(); break;          // 聚合之戒
       case 'h': handleCommand('town'); break;   // H = 回城
-      case 'e': interactNPC(); break;
       case 'escape':
         if (!$('modal').classList.contains('hidden')) closeModal();
         else handleCommand('settings');

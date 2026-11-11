@@ -680,7 +680,20 @@ function learnSkill(p, key) {
 function skillLevel(p, key) { return p.skills[key] || 0; }
 
 /* ---------------- 存档 ---------------- */
-const SAVE_KEY = 'wow_like_save_v1';
+const THEME = (typeof window !== 'undefined' && window.__THEME) || 'classic';
+const SAVE_KEY = 'wow_like_save_v1_' + THEME;
+const LEGACY_KEY = 'wow_like_save_v1';
+
+/* 老存档迁移：经典版首次运行把旧 key 的内容搬过来 */
+function migrateLegacySave() {
+  try {
+    if (THEME !== 'classic') return;
+    if (localStorage.getItem(SAVE_KEY)) return;
+    const old = localStorage.getItem(LEGACY_KEY);
+    if (old) localStorage.setItem(SAVE_KEY, old);
+  } catch (_) {}
+}
+migrateLegacySave();
 
 function saveGame() {
   if (!G.player) return;

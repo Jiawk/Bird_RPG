@@ -46,7 +46,6 @@ function initInput() {
       case 'j': handleCommand('quest'); break;   // 任务面板
       case 'x': useGatherRing(); break;          // 聚合之戒
       case 'h': handleCommand('town'); break;   // H = 回城
-      case 'e': interactNPC(); break;
       case 'escape':
         if (!$('modal').classList.contains('hidden')) closeModal();
         else handleCommand('settings');

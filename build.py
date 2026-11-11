@@ -17,6 +17,8 @@ html = io.open(os.path.join(ROOT, 'index.html'), encoding='utf-8').read()
 if THEME == 'wq':
     html = html.replace('<script src="js/assets.js"></script>',
                         '<script src="js/assets_wq.js"></script>')
+    html = html.replace('<script src="js/assets_wq.js"></script>',
+                        '<script>window.__THEME="wq";</script>\n<script src="js/assets_wq.js"></script>')
     html = html.replace('<script src="js/world.js"></script>',
                         '<script src="js/theme_wq.js"></script>\n<script src="js/world.js"></script>')
 

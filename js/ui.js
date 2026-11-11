@@ -536,7 +536,7 @@ function handleCommand(act) {
     case 'skill': toggleModal('skill', '技能', () => skillHtml()); break;
     case 'map': toggleModal('map', '传送 / 回城', () => townMapHtml()); break;
     case 'town': goTown(); break;
-    case 'quest': toggleModal('quest', '任务官 · 罗兰', questHtml); break;
+    case 'quest': toggleModal('quest', '任务官 · 黄仁勋', questHtml); break;
     case 'craft': toggleModal('craft', '锻造台', craftHtml); break;
     case 'codexEquip': toggleModal('codexEquip', '装备图鉴', codexEquipHtml); break;
     case 'codexCollect': toggleModal('codexCollect', '收藏图鉴', codexCollectHtml); break;
@@ -881,10 +881,10 @@ function interactNPC(target) {
   switch (n.kind) {
     case 'teleport': openTownMap(); break;
     case 'merchant': toggleModal('merchant', '商人 · 地精', merchantHtml); break;
-    case 'exchange': toggleModal('exchange', '兑换员 · 凯恩', exchangeHtml); break;
-    case 'blacksmith': toggleModal('smith', '铁匠 · 格罗姆', smithHtml); break;
+    case 'exchange': toggleModal('exchange', '兑换员 · 李准', exchangeHtml); break;
+    case 'blacksmith': toggleModal('smith', '铁匠 · 范在英', smithHtml); break;
     case 'save': saveGame() ? toast('进度已保存') : toast('保存失败'); break;
-    case 'quest': toggleModal('quest', '任务官 · 罗兰', questHtml); break;
+    case 'quest': toggleModal('quest', '任务官 · 黄仁勋', questHtml); break;
     case 'craft': toggleModal('craft', '锻造台', craftHtml); break;
     case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
   }
@@ -1396,7 +1396,7 @@ function acceptQuest(id) {
   p.quests.push({ ...q, have: 0 });
   toast(`接取任务：${q.name}`);
   QT_SIG = '';
-  openModal('quest', '任务官 · 罗兰', questHtml());
+  openModal('quest', '任务官 · 黄仁勋', questHtml());
 }
 
 function acceptAllQuests() {
@@ -1411,7 +1411,7 @@ function acceptAllQuests() {
   });
   toast(n ? `一键接取 ${n} 个任务` : '没有可接取的任务');
   QT_SIG = '';
-  openModal('quest', '任务官 · 罗兰', questHtml());
+  openModal('quest', '任务官 · 黄仁勋', questHtml());
 }
 
 function claimQuest(id) {
@@ -1428,7 +1428,7 @@ function claimQuest(id) {
   toast(`任务完成：+${q.exp} 经验 +${q.gold} 金 +${DATA.MATERIALS[q.mat].name}×${q.matN}`);
   logMsg(`✔ 完成委托「${q.name}」`, 'level');
   saveGame();
-  openModal('quest', '任务官 · 罗兰', questHtml());
+  openModal('quest', '任务官 · 黄仁勋', questHtml());
 }
 
 function dropQuest(id) {
@@ -1437,7 +1437,7 @@ function dropQuest(id) {
   if (i < 0) return;
   const q = p.quests.splice(i, 1)[0];
   toast(`已放弃「${q.name}」`);
-  openModal('quest', '任务官 · 罗兰', questHtml());
+  openModal('quest', '任务官 · 黄仁勋', questHtml());
 }
 
 /* ---------------- 锻造台 ---------------- */
@@ -1558,12 +1558,12 @@ function bindModal() {
     p.gold -= price;
     const r = learnSkill(p, k);
     toast(r === 'new' ? `学会 ${DATA.SKILLS[k].name}` : `${DATA.SKILLS[k].name} 升级`);
-    openModal('exchange', '兑换员 · 凯恩', exchangeHtml());
+    openModal('exchange', '兑换员 · 李准', exchangeHtml());
   });
 
   body.querySelectorAll('[data-sell]').forEach(b => b.onclick = () => {
     const it = G.player.bag.find(x => x.id === b.dataset.sell);
-    if (it) { sellItem(G.player, it); openModal('smith', '铁匠 · 格罗姆', smithHtml()); }
+    if (it) { sellItem(G.player, it); openModal('smith', '铁匠 · 范在英', smithHtml()); }
   });
 
   body.querySelectorAll('[data-equip-passive]').forEach(b => b.onclick = () => {

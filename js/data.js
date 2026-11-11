@@ -7,41 +7,57 @@ const DATA = {};
 
 /* ---------------- 种族 ---------------- */
 DATA.RACES = {
-  human: { key:'human', name:'人族', desc:'均衡之民，适应力强', color:'#d8c27a',
-    mod:{str:2,agi:2,int:2,vit:2}, extra:{all:2}, talent:'适应力：全属性额外 +2，经验获取 +10%', expBonus:0.10 },
-  elf: { key:'elf', name:'精灵', desc:'月下之影，法术与精准', color:'#9fe6b8',
-    mod:{str:-2,agi:5,int:5,vit:-2}, extra:{crit:0.05,mpRegen:0.20}, talent:'夜视：暴击率 +5%，法力回复 +20%' },
-  orc: { key:'orc', name:'兽族', desc:'战歌之子，越强越强', color:'#b06a3c',
-    mod:{str:6,agi:1,int:-3,vit:4}, extra:{berserk:0.25}, talent:'狂暴：生命低于 30% 时攻击力 +25%' },
-  dwarf: { key:'dwarf', name:'矮人', desc:'山岩之躯，坚不可摧', color:'#b08a55',
-    mod:{str:4,agi:-2,int:1,vit:6}, extra:{dr:0.08,goldBonus:0.15}, talent:'抗性：受到伤害 -8%，获得金币 +15%' }
+  human: {
+    key:'human', name:'人类', color:'#3c6db0',
+    desc:'联盟的中坚力量，攻守均衡，适应力强',
+    mod:{str:2, agi:1, int:1, vit:2},
+    talent:'外交：金币获取 +15%', extra:{goldBonus:0.15}
+  },
+  orc: {
+    key:'orc', name:'兽人', color:'#8b2f22',
+    desc:'崇尚荣耀的战士民族，越战越勇',
+    mod:{str:3, agi:1, int:-1, vit:2},
+    talent:'狂暴：生命低于 30% 时攻击 +30%', extra:{berserk:0.30}
+  },
+  undead: {
+    key:'undead', name:'亡灵', color:'#5a7a5a',
+    desc:'被遗忘者的复仇军团，肉身早已腐朽',
+    mod:{str:1, agi:1, int:2, vit:0},
+    talent:'亡者之躯：受到伤害减免 8%', extra:{dr:0.08}
+  },
+  elf: {
+    key:'elf', name:'暗夜精灵', color:'#6b4fa0',
+    desc:'月光下的古老守护者，敏捷而致命',
+    mod:{str:0, agi:3, int:1, vit:0},
+    talent:'影遁：闪避 +8%，经验 +10%', extra:{dodge:0.08}, expBonus:0.10
+  }
 };
 
 /* ---------------- 职业（每职业 5 主动 + 2 被动 = 7） ---------------- */
 DATA.CLASSES = {
-  warrior: { key:'warrior', name:'战士', primary:'str', weapon:'剑', color:'#c0392b',
-    desc:'近战坦克，抗打耐操',
+  warrior: { key:'warrior', name:'剑圣', primary:'str', weapon:'剑', color:'#c0392b',
+    desc:'挥刀成风、以力破巧的近战英雄',
     base:{hp:200, mp:40, atk:14, spell:0, as:1.00, armor:8},
     growth:{hp:24, mp:3, atk:2.4, spell:0, armor:1.6},
     skills:['whirlwind','shieldwall','battleShout','execute','charge','critMastery','toughness'],
     keymap:{ q:'whirlwind', w:'shieldwall', e:'battleShout', r:'execute', d:'charge' } },
 
-  mage: { key:'mage', name:'法师', primary:'int', weapon:'法杖', color:'#5b8dd6',
-    desc:'远程爆发，脆皮高伤',
+  mage: { key:'mage', name:'大法师', primary:'int', weapon:'法杖', color:'#5b8dd6',
+    desc:'掌控奥术与冰霜的施法者',
     base:{hp:120, mp:140, atk:6, spell:16, as:0.90, armor:3},
     growth:{hp:13, mp:16, atk:1.0, spell:2.8, armor:0.7},
     skills:['fireball','frostNova','blizzard','arcaneTorrent','blink','arcaneMastery','manaSurge'],
     keymap:{ q:'fireball', w:'frostNova', e:'blizzard', r:'arcaneTorrent', d:'blink' } },
 
-  archer: { key:'archer', name:'弓箭手', primary:'agi', weapon:'弓', color:'#4f9d63',
-    desc:'远程持续，机动灵活',
+  archer: { key:'archer', name:'月之女祭司', primary:'agi', weapon:'弓', color:'#4f9d63',
+    desc:'月神庇佑的远程猎手',
     base:{hp:150, mp:70, atk:12, spell:0, as:1.15, armor:5},
     growth:{hp:17, mp:6, atk:2.0, spell:0, armor:1.1},
     skills:['multishot','pierceArrow','freezeTrap','rapidFire','backjump','eagleEye','swiftness'],
     keymap:{ q:'multishot', w:'pierceArrow', e:'freezeTrap', r:'rapidFire', d:'backjump' } },
 
-  assassin: { key:'assassin', name:'刺客', primary:'agi', weapon:'匕首', color:'#8e44ad',
-    desc:'近战爆发，暴击收割',
+  assassin: { key:'assassin', name:'恶魔猎手', primary:'agi', weapon:'匕首', color:'#8e44ad',
+    desc:'追逐恶魔之力、以命换命的刺客',
     base:{hp:135, mp:60, atk:16, spell:0, as:1.30, armor:4},
     growth:{hp:15, mp:5, atk:2.6, spell:0, armor:0.9},
     skills:['backstab','poisonBlade','fanOfKnives','vanish','shadowstep','lethality','shadowDance'],

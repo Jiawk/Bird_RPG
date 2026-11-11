@@ -667,3 +667,27 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .cx-bar{height:7px;border-radius:4px;background:#0d0a06;overflow:hidden;margin:4px 0}
 .cx-bar i{display:block;height:100%}
 .cx-lv{font-family:var(--serif);font-size:13px;color:#ffd24a}
+
+/* ============================================================
+   选人页：角色头像 + 头像框
+   ============================================================ */
+.cls-portrait{position:relative;display:flex;align-items:flex-end;justify-content:center;
+  height:150px;margin:-4px -6px 10px;border-radius:3px;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 75%,rgba(212,175,55,.22),rgba(0,0,0,.6) 72%);
+  border:2px solid var(--bronze);box-shadow:inset 0 0 18px rgba(0,0,0,.7)}
+.cls-portrait::after{
+  content:"";position:absolute;inset:3px;border:1px solid rgba(255,220,150,.22);
+  border-radius:2px;pointer-events:none}
+.cls-sprite{position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
+  width:96px;height:144px;display:block;
+  background-image:var(--units-sheet);background-size:5376px 576px;
+  background-repeat:no-repeat;image-rendering:pixelated;
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,.8))}
+.cls-badge{position:absolute;top:6px;left:6px;width:40px;height:40px;display:block;
+  background-image:var(--class-sheet);background-size:256px 64px;
+  background-repeat:no-repeat;border-radius:50%;
+  border:2px solid rgba(212,175,55,.7);box-shadow:0 2px 8px rgba(0,0,0,.7)}
+.cls-name-plate{position:absolute;left:0;right:0;bottom:0;padding:3px 0;text-align:center;
+  font-family:var(--serif);font-size:13px;color:#ffe6a8;letter-spacing:.18em;
+  background:linear-gradient(180deg,transparent,rgba(0,0,0,.85));
+  text-shadow:0 1px 3px #000}

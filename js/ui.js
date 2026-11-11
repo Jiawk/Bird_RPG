@@ -23,6 +23,8 @@ function iconTag(slot, size) {
 function uiInit() {
   document.documentElement.style.setProperty('--icon-sheet', `url(${ASSETS.icons})`);
   document.documentElement.style.setProperty('--skill-sheet', `url(${ASSETS.skills})`);
+  if (ASSETS.units) document.documentElement.style.setProperty('--units-sheet', `url(${ASSETS.units})`);
+  if (ASSETS.classicons) document.documentElement.style.setProperty('--class-sheet', `url(${ASSETS.classicons})`);
   bindSkillTips();
   // 任务追踪：事件委托（内容重建后依然可点）
   const qt = $('questTracker');
@@ -89,7 +91,14 @@ function buildCreateScreen() {
     const el = document.createElement('div');
     el.className = 'card' + (k === SEL.cls ? ' sel' : '');
     const km = c.keymap;
-    el.innerHTML = `<h3 style="color:${c.color}">${c.name}</h3>
+    const ci = Object.keys(DATA.CLASSES).indexOf(k);
+    el.innerHTML = `
+      <div class="cls-portrait">
+        <span class="cls-sprite" style="background-position:${-ci * 384}px 0"></span>
+        <span class="cls-badge" style="background-position:${-ci * 64}px 0"></span>
+        <span class="cls-name-plate">${c.name}</span>
+      </div>
+      <h3 style="color:${c.color}">${c.name}</h3>
       <p>${c.desc}</p>
       <div><span class="tag">主属性 ${statName(c.primary)}</span><span class="tag">${c.weapon}</span></div>
       <p style="margin-top:6px;color:#8f8570">Q ${DATA.SKILLS[km.q].name} · W ${DATA.SKILLS[km.w].name}</p>

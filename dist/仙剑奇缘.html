@@ -675,6 +675,30 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .cx-bar i{display:block;height:100%}
 .cx-lv{font-family:var(--serif);font-size:13px;color:#ffd24a}
 
+/* ============================================================
+   选人页：角色头像 + 头像框
+   ============================================================ */
+.cls-portrait{position:relative;display:flex;align-items:flex-end;justify-content:center;
+  height:150px;margin:-4px -6px 10px;border-radius:3px;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 75%,rgba(212,175,55,.22),rgba(0,0,0,.6) 72%);
+  border:2px solid var(--bronze);box-shadow:inset 0 0 18px rgba(0,0,0,.7)}
+.cls-portrait::after{
+  content:"";position:absolute;inset:3px;border:1px solid rgba(255,220,150,.22);
+  border-radius:2px;pointer-events:none}
+.cls-sprite{position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
+  width:96px;height:144px;display:block;
+  background-image:var(--units-sheet);background-size:5376px 576px;
+  background-repeat:no-repeat;image-rendering:pixelated;
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,.8))}
+.cls-badge{position:absolute;top:6px;left:6px;width:40px;height:40px;display:block;
+  background-image:var(--class-sheet);background-size:256px 64px;
+  background-repeat:no-repeat;border-radius:50%;
+  border:2px solid rgba(212,175,55,.7);box-shadow:0 2px 8px rgba(0,0,0,.7)}
+.cls-name-plate{position:absolute;left:0;right:0;bottom:0;padding:3px 0;text-align:center;
+  font-family:var(--serif);font-size:13px;color:#ffe6a8;letter-spacing:.18em;
+  background:linear-gradient(180deg,transparent,rgba(0,0,0,.85));
+  text-shadow:0 1px 3px #000}
+
 </style>
 </head>
 <body>
@@ -850,41 +874,57 @@ const DATA = {};
 
 /* ---------------- 种族 ---------------- */
 DATA.RACES = {
-  human: { key:'human', name:'人族', desc:'均衡之民，适应力强', color:'#d8c27a',
-    mod:{str:2,agi:2,int:2,vit:2}, extra:{all:2}, talent:'适应力：全属性额外 +2，经验获取 +10%', expBonus:0.10 },
-  elf: { key:'elf', name:'精灵', desc:'月下之影，法术与精准', color:'#9fe6b8',
-    mod:{str:-2,agi:5,int:5,vit:-2}, extra:{crit:0.05,mpRegen:0.20}, talent:'夜视：暴击率 +5%，法力回复 +20%' },
-  orc: { key:'orc', name:'兽族', desc:'战歌之子，越强越强', color:'#b06a3c',
-    mod:{str:6,agi:1,int:-3,vit:4}, extra:{berserk:0.25}, talent:'狂暴：生命低于 30% 时攻击力 +25%' },
-  dwarf: { key:'dwarf', name:'矮人', desc:'山岩之躯，坚不可摧', color:'#b08a55',
-    mod:{str:4,agi:-2,int:1,vit:6}, extra:{dr:0.08,goldBonus:0.15}, talent:'抗性：受到伤害 -8%，获得金币 +15%' }
+  human: {
+    key:'human', name:'人类', color:'#3c6db0',
+    desc:'联盟的中坚力量，攻守均衡，适应力强',
+    mod:{str:2, agi:1, int:1, vit:2},
+    talent:'外交：金币获取 +15%', extra:{goldBonus:0.15}
+  },
+  orc: {
+    key:'orc', name:'兽人', color:'#8b2f22',
+    desc:'崇尚荣耀的战士民族，越战越勇',
+    mod:{str:3, agi:1, int:-1, vit:2},
+    talent:'狂暴：生命低于 30% 时攻击 +30%', extra:{berserk:0.30}
+  },
+  undead: {
+    key:'undead', name:'亡灵', color:'#5a7a5a',
+    desc:'被遗忘者的复仇军团，肉身早已腐朽',
+    mod:{str:1, agi:1, int:2, vit:0},
+    talent:'亡者之躯：受到伤害减免 8%', extra:{dr:0.08}
+  },
+  elf: {
+    key:'elf', name:'暗夜精灵', color:'#6b4fa0',
+    desc:'月光下的古老守护者，敏捷而致命',
+    mod:{str:0, agi:3, int:1, vit:0},
+    talent:'影遁：闪避 +8%，经验 +10%', extra:{dodge:0.08}, expBonus:0.10
+  }
 };
 
 /* ---------------- 职业（每职业 5 主动 + 2 被动 = 7） ---------------- */
 DATA.CLASSES = {
-  warrior: { key:'warrior', name:'战士', primary:'str', weapon:'剑', color:'#c0392b',
-    desc:'近战坦克，抗打耐操',
+  warrior: { key:'warrior', name:'剑圣', primary:'str', weapon:'剑', color:'#c0392b',
+    desc:'挥刀成风、以力破巧的近战英雄',
     base:{hp:200, mp:40, atk:14, spell:0, as:1.00, armor:8},
     growth:{hp:24, mp:3, atk:2.4, spell:0, armor:1.6},
     skills:['whirlwind','shieldwall','battleShout','execute','charge','critMastery','toughness'],
     keymap:{ q:'whirlwind', w:'shieldwall', e:'battleShout', r:'execute', d:'charge' } },
 
-  mage: { key:'mage', name:'法师', primary:'int', weapon:'法杖', color:'#5b8dd6',
-    desc:'远程爆发，脆皮高伤',
+  mage: { key:'mage', name:'大法师', primary:'int', weapon:'法杖', color:'#5b8dd6',
+    desc:'掌控奥术与冰霜的施法者',
     base:{hp:120, mp:140, atk:6, spell:16, as:0.90, armor:3},
     growth:{hp:13, mp:16, atk:1.0, spell:2.8, armor:0.7},
     skills:['fireball','frostNova','blizzard','arcaneTorrent','blink','arcaneMastery','manaSurge'],
     keymap:{ q:'fireball', w:'frostNova', e:'blizzard', r:'arcaneTorrent', d:'blink' } },
 
-  archer: { key:'archer', name:'弓箭手', primary:'agi', weapon:'弓', color:'#4f9d63',
-    desc:'远程持续，机动灵活',
+  archer: { key:'archer', name:'月之女祭司', primary:'agi', weapon:'弓', color:'#4f9d63',
+    desc:'月神庇佑的远程猎手',
     base:{hp:150, mp:70, atk:12, spell:0, as:1.15, armor:5},
     growth:{hp:17, mp:6, atk:2.0, spell:0, armor:1.1},
     skills:['multishot','pierceArrow','freezeTrap','rapidFire','backjump','eagleEye','swiftness'],
     keymap:{ q:'multishot', w:'pierceArrow', e:'freezeTrap', r:'rapidFire', d:'backjump' } },
 
-  assassin: { key:'assassin', name:'刺客', primary:'agi', weapon:'匕首', color:'#8e44ad',
-    desc:'近战爆发，暴击收割',
+  assassin: { key:'assassin', name:'恶魔猎手', primary:'agi', weapon:'匕首', color:'#8e44ad',
+    desc:'追逐恶魔之力、以命换命的刺客',
     base:{hp:135, mp:60, atk:16, spell:0, as:1.30, armor:4},
     growth:{hp:15, mp:5, atk:2.6, spell:0, armor:0.9},
     skills:['backstab','poisonBlade','fanOfKnives','vanish','shadowstep','lethality','shadowDance'],
@@ -3290,10 +3330,32 @@ function drawMonster(m) {
   CTX.fillStyle = 'rgba(0,0,0,.45)';
   CTX.beginPath(); CTX.ellipse(gx, gy, r * 0.9, r * 0.9 * YS * 0.55, 0, 0, 6.283); CTX.fill();
 
-  // 行走图精灵（units 图集）
-  const MON_IDX = { centaur:8, kobold:9, grunt:10, skeleton:11, doomguard:12, abyssal:13 };
   let drawn = false;
-  if (imgReady('units')) {
+
+  // 魔兽图标怪物（优先）
+  if (imgReady('monsters')) {
+    const KIDX = { centaur:0, kobold:1, grunt:2, skeleton:3, doomguard:4, abyssal:5 };
+    const ki = KIDX[m.kind] !== undefined ? KIDX[m.kind] : 3;
+    const sz = m.isBoss ? 132 : (m.isElite ? 78 : 58);
+    CTX.save();
+    CTX.imageSmoothingEnabled = true;
+    if (m.isBoss) {
+      const aura = CTX.createRadialGradient(gx, gy - sz * 0.35, 8, gx, gy - sz * 0.35, sz * 0.85);
+      aura.addColorStop(0, 'rgba(255,70,50,.35)');
+      aura.addColorStop(1, 'rgba(255,70,50,0)');
+      CTX.fillStyle = aura;
+      CTX.beginPath(); CTX.arc(gx, gy - sz * 0.35, sz * 0.85, 0, 6.283); CTX.fill();
+    }
+    CTX.globalAlpha = m.hitFlash > 0 ? 0.85 : 1;
+    CTX.drawImage(IMG.monsters, ki * 80, 0, 80, 80,
+                  gx - sz / 2, gy - sz + sz * 0.16, sz, sz);
+    CTX.restore();
+    drawn = true;
+  }
+
+  // 行走图精灵（units 图集，无魔兽图标时兜底）
+  const MON_IDX = { centaur:8, kobold:9, grunt:10, skeleton:11, doomguard:12, abyssal:13 };
+  if (!drawn && imgReady('units')) {
     const S = m.isBoss ? 2.9 : (m.isElite ? 1.6 : 1.35);
     const sw = U_FRAME_W * S, sh = U_FRAME_H * S;
     const BOSS_IDX = { bossWolf:8, bossKobold:9, bossGrom:10, bossKel:11, bossMannoroth:12, bossArchimonde:13 };
@@ -3859,6 +3921,8 @@ function iconTag(slot, size) {
 function uiInit() {
   document.documentElement.style.setProperty('--icon-sheet', `url(${ASSETS.icons})`);
   document.documentElement.style.setProperty('--skill-sheet', `url(${ASSETS.skills})`);
+  if (ASSETS.units) document.documentElement.style.setProperty('--units-sheet', `url(${ASSETS.units})`);
+  if (ASSETS.classicons) document.documentElement.style.setProperty('--class-sheet', `url(${ASSETS.classicons})`);
   bindSkillTips();
   // 任务追踪：事件委托（内容重建后依然可点）
   const qt = $('questTracker');
@@ -3925,7 +3989,14 @@ function buildCreateScreen() {
     const el = document.createElement('div');
     el.className = 'card' + (k === SEL.cls ? ' sel' : '');
     const km = c.keymap;
-    el.innerHTML = `<h3 style="color:${c.color}">${c.name}</h3>
+    const ci = Object.keys(DATA.CLASSES).indexOf(k);
+    el.innerHTML = `
+      <div class="cls-portrait">
+        <span class="cls-sprite" style="background-position:${-ci * 384}px 0"></span>
+        <span class="cls-badge" style="background-position:${-ci * 64}px 0"></span>
+        <span class="cls-name-plate">${c.name}</span>
+      </div>
+      <h3 style="color:${c.color}">${c.name}</h3>
       <p>${c.desc}</p>
       <div><span class="tag">主属性 ${statName(c.primary)}</span><span class="tag">${c.weapon}</span></div>
       <p style="margin-top:6px;color:#8f8570">Q ${DATA.SKILLS[km.q].name} · W ${DATA.SKILLS[km.w].name}</p>

@@ -194,7 +194,7 @@ function updateWorld(dt) {
     const room = DATA.ROOMS[w.roomId];
     w.spawnTimer -= dt;
     if (w.spawnTimer <= 0) {
-      w.spawnTimer = RESPAWN_NORMAL;
+      w.spawnTimer = (G.debug && G.debug.fastSpawn) ? 1 : RESPAWN_NORMAL;   // 调试：1 秒刷怪
       const alive = w.monsters.filter(m => !m.isBoss && m.alive).length;
       if (alive < room.count) spawnWave(room);
     }

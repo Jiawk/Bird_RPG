@@ -970,14 +970,9 @@ function debugHtml() {
   </div>
   <div class="npc-list">
     <div class="npc-row"><div>
-      <div class="nr-name" style="color:#4ad4ff">立即刷新怪物</div>
-      <div class="nr-info">补满小怪 + 精英 + BOSS（${w && w.isTown ? '城镇内无效' : '本图'}）</div></div>
-      <button data-dbg-spawn ${w && !w.isTown ? '' : 'disabled'}>刷新</button></div>
-
-    <div class="npc-row"><div>
-      <div class="nr-name" style="color:#ff6b5a">清空本图怪物</div>
-      <div class="nr-info">把当前地图所有怪物移除（含 BOSS）</div></div>
-      <button data-dbg-clear ${w && !w.isTown ? '' : 'disabled'}>清空</button></div>
+      <div class="nr-name" style="color:#4ad4ff">快速刷怪（间隔 1 秒）</div>
+      <div class="nr-info">开启后小怪每 1 秒补满一次（默认 15 秒）　当前：${tag(d.fastSpawn)}</div></div>
+      <button data-dbg-toggle="fastSpawn" ${d.fastSpawn ? 'style="border-color:#5fdc4a;color:#b9ffb0"' : ''}>${d.fastSpawn ? '关闭' : '开启'}</button></div>
 
     <div class="npc-row"><div>
       <div class="nr-name">技能 CD 固定 1 秒</div>
@@ -1650,20 +1645,6 @@ function bindModal() {
     toast(`${k}: ${G.debug[k] ? '开' : '关'}`);
     openModal('debug', '调试面板 · N', debugHtml());
   });
-  body.querySelectorAll('[data-dbg-spawn]').forEach(b => b.onclick = () => {
-    if (!G.world || G.world.isTown) { toast('城镇里不能刷怪'); return; }
-    const room = DATA.ROOMS[G.world.roomId];
-    spawnWave(room); spawnBoss(room);
-    toast(`已刷新：${G.world.monsters.filter(m => m.alive).length} 只`);
-    openModal('debug', '调试面板 · N', debugHtml());
-  });
-  body.querySelectorAll('[data-dbg-clear]').forEach(b => b.onclick = () => {
-    if (!G.world) return;
-    G.world.monsters.forEach(m => { m.alive = false; });
-    G.world.monsters = [];
-    toast('已清空本图怪物');
-    openModal('debug', '调试面板 · N', debugHtml());
-  });
   body.querySelectorAll('[data-act-pick-char]').forEach(b => b.onclick = () => {
     openModal('chars', '选择角色', charListHtml());
   });
@@ -1808,6 +1789,22 @@ function showTooltip(it, x, y) {
 
     // 与已装备逐条对比
     const cur = G.player.equip[it.slot];
+    if (cur) {
+      // 先把「当前装备」完整列出来，方便直接对照
+      const curM = enhMul(cur);
+      const curLines = [];
+      for (const k in cur.stats) {
+        const v = cur.stats[k] * curM;
+        curLines.push(`+${PCT_KEYS.includes(k) ? (v*100).toFixed(1)+'%' : Math.round(v)} ${AFFIX_NAMES[k]||k}`);
+      }
+      if (cur.effect) for (const k in cur.effect) curLines.push(effectText(k, cur.effect[k] * curM));
+      parts.push(`<div style="margin-top:6px;border-top:1px solid rgba(212,175,55,.35);padding-top:5px">
+        <div style="font-size:10.5px;color:#8f8570;margin-bottom:2px">当前装备</div>
+        <div style="font-size:12px;color:${cur.color || '#c8c8c8'};font-weight:700">
+          ${cur.enh ? '+' + cur.enh + ' ' : ''}${cur.name}</div>
+        <div style="font-size:11px;color:#c8bfa8;line-height:1.55">${curLines.join('<br>') || '（无属性）'}</div>
+      </div>`);
+    }
     if (cur) {
       const keys = new Set([...Object.keys(it.stats), ...Object.keys(cur.stats)]);
       const diffs = [];

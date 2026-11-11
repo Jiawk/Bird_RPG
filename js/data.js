@@ -127,7 +127,8 @@ DATA.QUALITY = [
   {key:'rare',     name:'精良', color:'#4a9eff', affixes:2, mult:1.80, lvl:4,  weight:1600},
   {key:'epic',     name:'史诗', color:'#b45cff', affixes:3, mult:2.40, lvl:9,  weight:520},
   {key:'legendary',name:'传说', color:'#ff9a2e', affixes:4, mult:3.20, lvl:16, weight:120},
-  {key:'mythic',   name:'神话', color:'#ff3b3b', affixes:5, mult:4.40, lvl:24, weight:16}
+  {key:'mythic',   name:'神话', color:'#ff3b3b', affixes:5, mult:4.40, lvl:24, weight:16},
+  {key:'relic',    name:'圣物', color:'#ffe9a8', affixes:6, mult:5.60, lvl:34, weight:0}
 ];
 
 DATA.BOSS_WEIGHTS = {rare:3600, epic:3800, legendary:2100, mythic:500};
@@ -149,6 +150,30 @@ DATA.AFFIXES = [
 ];
 
 /* ---------------- 武器种类（与本命职业匹配有加成） ---------------- */
+/* 圣物武器：200k 金币兑换，20 级可用，属性优于同级别神话装备 */
+DATA.RELIC_WEAPONS = [
+  { key:'relic_sword', cls:'warrior', wtype:'sword',
+    name:'圣物·灰烬使者', color:'#ffe9a8', price:200000, reqLv:20,
+    stats:{ atk:760, str:120, critDmg:0.60, crit:0.10, lifesteal:0.05, hit:0.12 },
+    relicPct:0.05,
+    desc:'命中即削掉目标 5% 最大生命；吸血 5%' },
+  { key:'relic_staff', cls:'mage', wtype:'staff',
+    name:'圣物·艾露尼斯', color:'#ffe9a8', price:200000, reqLv:20,
+    stats:{ spell:760, int:120, critDmg:0.60, crit:0.10, lifesteal:0.05, hit:0.12 },
+    relicPct:0.05,
+    desc:'命中即削掉目标 5% 最大生命；吸血 5%' },
+  { key:'relic_bow', cls:'archer', wtype:'bow',
+    name:'圣物·索利达尔', color:'#ffe9a8', price:200000, reqLv:20,
+    stats:{ atk:760, agi:120, critDmg:0.60, crit:0.10, lifesteal:0.05, hit:0.12 },
+    relicPct:0.05,
+    desc:'命中即削掉目标 5% 最大生命；吸血 5%' },
+  { key:'relic_dagger', cls:'assassin', wtype:'dagger',
+    name:'圣物·埃辛诺斯', color:'#ffe9a8', price:200000, reqLv:20,
+    stats:{ atk:760, agi:120, critDmg:0.60, crit:0.15, lifesteal:0.05, hit:0.12 },
+    relicPct:0.05,
+    desc:'命中即削掉目标 5% 最大生命；吸血 5%' }
+];
+
 DATA.WEAPON_KINDS = {
   sword:   {label:'剑',   cls:['warrior'],  bonus:0.12, fx:'slash', names:['长剑','阔剑','骑士剑','军刀']},
   axe:     {label:'斧',   cls:['warrior'],  bonus:0.12, fx:'slash', names:['战斧','巨斧','劈山斧']},

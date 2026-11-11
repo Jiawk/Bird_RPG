@@ -26,6 +26,10 @@ function damageMonster(m, amount, type, isDot) {
     p._forceCrit = false;
     if (crit) dmg *= p.stats.critDmg;
   }
+  // 圣物武器：命中额外削掉目标 5% 最大生命
+  if (!isDot && p.stats.relicPct > 0 && m.hpMax > 0) {
+    dmg += Math.max(1, Math.round(m.hpMax * p.stats.relicPct));
+  }
   dmg = Math.max(1, Math.round(dmg));
   m.hp -= dmg;
   m.hitFlash = 0.12;

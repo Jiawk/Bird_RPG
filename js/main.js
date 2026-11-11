@@ -61,7 +61,14 @@ function initInput() {
 
   CV.addEventListener('mousemove', e => { Input.mouse.x = e.clientX; Input.mouse.y = e.clientY; });
   CV.addEventListener('mousedown', e => {
-    if (e.button === 0) { Input.mouse.down = true; Input.mouse.right = false; G.moveTarget = null; }
+    if (e.button === 0) {
+      // 左键优先判断是否点在 NPC 上 → 交互（不再误触发攻击）
+      const wx0 = e.clientX + CAM.x;
+      const wy0 = e.clientY / YS + CAM.y;
+      const npcL = npcAt(wx0, wy0);
+      if (npcL) { G.moveTarget = null; interactNPC(npcL); return; }
+      Input.mouse.down = true; Input.mouse.right = false; G.moveTarget = null;
+    }
     if (e.button === 2) {
       Input.mouse.right = true;
       // 右键：点 NPC 就交互，否则走过去
@@ -76,6 +83,18 @@ function initInput() {
     if (e.button === 0) Input.mouse.down = false;
     if (e.button === 2) Input.mouse.right = false;   // 松开不停，继续走
   });
+  // 触屏：轻点 NPC 交互
+  let _tapX = 0, _tapY = 0, _tapT = 0;
+  CV.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) return;
+    _tapX = e.touches[0].clientX; _tapY = e.touches[0].clientY; _tapT = Date.now();
+  }, { passive: true });
+  CV.addEventListener('touchend', e => {
+    if (Date.now() - _tapT > 350) return;      // 长按 / 拖动摇杆不算
+    const npcT = npcAt(_tapX + CAM.x, _tapY / YS + CAM.y);
+    if (npcT) { G.moveTarget = null; interactNPC(npcT); }
+  }, { passive: true });
+
   // 全局禁用右键菜单（Mac 双指点按也不会弹出来）
   document.addEventListener('contextmenu', e => e.preventDefault());
   CV.addEventListener('contextmenu', e => e.preventDefault());
@@ -370,6 +389,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const craftTest = /n$/.test(location.hash);
     const mapTest = /m$/.test(location.hash);
     const ringGift = /#rings/.test(location.hash);
+    const shopTest = /#devshop/.test(location.hash);
     const n = parseInt(location.hash.slice(4), 10);
     G.diff = 'normal';
     G.player = createPlayer('human', 'archer');
@@ -381,6 +401,10 @@ window.addEventListener('DOMContentLoaded', () => {
     G.player.mp = G.player.stats.mpMax;
     startGame();
     if (!isNaN(n)) enterRoom(n);
+    if (shopTest) {
+      G.player.gold = 600000; G.player.level = 20;
+      openModal('merchant', '商人 · 赵帅帅', merchantHtml());
+    }
     if (dropTest) {
       G.autoPickup = false;
       G.world.monsters.filter(m => !m.isBoss).slice(0, 5)

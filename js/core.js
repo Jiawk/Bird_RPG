@@ -96,12 +96,13 @@ function recalcStats(p) {
   };
 
   // 本命武器：武器种类与职业匹配 → 攻击加成 + 特效
-  let weaponBonus = 0, weaponFx = 'slash';
+  let weaponBonus = 0, weaponFx = 'slash', relicPct = 0;
   const wpn = p.equip.weapon;
   if (wpn && wpn.wtype && DATA.WEAPON_KINDS[wpn.wtype]) {
     const K = DATA.WEAPON_KINDS[wpn.wtype];
     weaponFx = K.fx;
     if (K.cls.includes(p.cls)) weaponBonus = K.bonus;
+    if (wpn.relicPct) relicPct = wpn.relicPct;
   }
 
   // 特戒效果（强化会放大）
@@ -175,6 +176,7 @@ function recalcStats(p) {
     armor,
     dr: clamp(dr + bf.dr, 0, 0.85),
     lifesteal: (eq.lifesteal || 0) + RFX.lifesteal,
+    relicPct,
     mpRegen: (0.02 * (1 + (bonus.mpRegen || 0))),
     goldBonus: (bonus.goldBonus || 0) + RFX.goldBonus,
     expBonus: (race.expBonus || 0) + RFX.expBonus,

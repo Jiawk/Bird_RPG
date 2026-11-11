@@ -902,14 +902,75 @@ function interactNPC(target) {
 
 function merchantHtml() {
   const p = G.player;
-  let html = '<div class="npc-list">';
-  for (const po of DATA.POTIONS) {
-    html += `<div class="npc-row"><div><div class="nr-name" style="color:${po.color}">${po.name}</div>
-      <div class="nr-info">${po.hp?'回复 '+po.hp+' 生命':'回复 '+po.mp+' 法力'}　${po.price} 金</div></div>
-      <button data-buy-potion="${po.key}" ${p.gold>=po.price?'':'disabled'}>购买</button></div>`;
+  const GOLD = fmt(p.gold);
+  const sel = G._relicSel;
+  const COLS = 4, ROWS = 6, TOTAL = COLS * ROWS;
+
+  let cells = [];
+  // 第一排：药水（4 格）
+  DATA.POTIONS.forEach(po => {
+    const ok = p.gold >= po.price;
+    cells.push(`<div class="m-cell potion" data-buy-potion="${po.key}" style="${ok?'':'opacity:.5'}">
+      <div class="m-ic" style="color:${po.color};font-size:22px">⚗</div>
+      <div class="m-nm" style="color:${po.color}">${po.name}</div>
+      <div class="m-sub">${po.hp ? '生命 +' + po.hp : '法力 +' + po.mp}</div>
+      <div class="m-price">${fmt(po.price)} 金</div></div>`);
+  });
+  while (cells.length < COLS) cells.push('<div class="m-cell empty">—</div>');
+
+  // 第 2 排起：圣物武器（每职业一把）
+  const relics = DATA.RELIC_WEAPONS || [];
+  relics.forEach(w => {
+    const okLv = p.level >= w.reqLv;
+    const okGold = p.gold >= w.price;
+    const can = okLv && okGold;
+    const own = (p.bag || []).some(x => x.relicKey === w.key) ||
+                (p.equip.weapon && p.equip.weapon.relicKey === w.key);
+    cells.push(`<div class="m-cell relic${sel === w.key ? ' sel' : ''}" data-relic="${w.key}">
+      <div class="m-ic relic-ic">${own ? '★' : '◆'}</div>
+      <div class="m-nm relic-nm">${w.name.replace('圣物·','')}</div>
+      <div class="m-sub">${DATA.CLASSES[w.cls].name}</div>
+      <div class="m-price ${can ? 'ok' : 'no'}">${fmt(w.price)} 金</div></div>`);
+  });
+  while (cells.length < TOTAL) cells.push('<div class="m-cell empty">—</div>');
+
+  let html = `<div class="m-head"><span>商人 · 赵帅帅</span><b>金币 ${GOLD}</b></div>`;
+  html += `<div class="m-grid">${cells.join('')}</div>`;
+
+  // 选中圣物 → 显示详情 + 兑换按钮
+  if (sel) {
+    const w = (DATA.RELIC_WEAPONS || []).find(x => x.key === sel);
+    if (w) {
+      const okLv = p.level >= w.reqLv, okGold = p.gold >= w.price;
+      const lines = Object.keys(w.stats).map(k => {
+        const v = w.stats[k];
+        const pct = ['crit','critDmg','lifesteal','hit','dodge'].includes(k);
+        return `<div class="rl-stat"><span>${AFFIX_NAMES[k] || k}</span><b>+${pct ? (v*100).toFixed(1)+'%' : Math.round(v)}</b></div>`;
+      }).join('');
+      html += `<div class="rl-box">
+        <div class="rl-title" style="color:${w.color}">${w.name}</div>
+        <div class="rl-meta">圣物 · ${DATA.CLASSES[w.cls].name}专用 · 需要 Lv.${w.reqLv}</div>
+        <div class="rl-stats">${lines}
+          <div class="rl-stat"><span>圣物特效</span><b class="rlc">命中削 5% 最大生命</b></div>
+          <div class="rl-stat"><span>吸血</span><b class="rlc">+5.0%</b></div>
+        </div>
+        <div class="rl-tip">${w.desc}</div>
+        <div class="rl-actions">
+          <button data-relic-cancel>取消</button>
+          <button data-buy-relic="${w.key}" ${okLv && okGold ? '' : 'disabled'}>
+            ${okLv ? (okGold ? `确认兑换（${fmt(w.price)} 金）` : '金币不足') : '等级不足 Lv.' + w.reqLv}
+          </button>
+        </div>
+      </div>`;
+    }
+  } else {
+    html += `<div style="margin-top:8px;font-size:11px;color:#8f8570">
+      点击圣物格子查看详情并兑换。圣物装备仅可用金币兑换，</div>
+      <div style="font-size:11px;color:#8f8570;margin-top:2px">当前金币：<b style="color:#ffd24a">${GOLD}</b></div>`;
   }
-  return html + `</div><div style="margin-top:10px;font-size:11px;color:#8f8570">金币：${fmt(p.gold)}</div>`;
+  return html;
 }
+
 
 function exchangeHtml() {
   const p = G.player;
@@ -964,6 +1025,35 @@ function settingsHtml() {
       <div class="nr-info">删除角色，不可恢复</div></div>
       <button data-act-reset style="border-color:#6b2b2b;color:#ff8a7a">重开</button></div>
   </div>`;
+}
+
+/* ---------------- 圣物兑换 ---------------- */
+function buyRelic(key) {
+  const p = G.player;
+  const w = (DATA.RELIC_WEAPONS || []).find(x => x.key === key);
+  if (!w) return;
+  if (p.level < w.reqLv) { toast(`等级不足：需要 Lv.${w.reqLv}`); return; }
+  if (p.gold < w.price) { toast('金币不足'); return; }
+  const own = (p.bag || []).some(x => x.relicKey === key) ||
+              (p.equip.weapon && p.equip.weapon.relicKey === key);
+  if (own) { toast('这件圣物你已经拥有了'); return; }
+
+  p.gold -= w.price;
+  const item = {
+    id: 'rl' + Math.random().toString(36).slice(2, 8),
+    slot: 'weapon', type: 'equip', quality: 'relic',
+    name: w.name, color: w.color, ilvl: w.reqLv, reqLv: w.reqLv,
+    wtype: w.wtype, relicKey: w.key, relicPct: w.relicPct,
+    stats: Object.assign({}, w.stats), enh: 0, locked: true
+  };
+  const ok = addToBag(p, item);
+  if (!ok) { p.gold += w.price; toast('背包已满'); return; }
+  if (typeof Sfx !== 'undefined') { Sfx.play('lvlup'); Sfx.speak('A relic of power.'); }
+  toast(`兑换成功：${w.name}`);
+  logMsg(`🎖 获得圣物 ${w.name}`, 'level');
+  G._relicSel = null;
+  saveGame();
+  openModal('merchant', '商人 · 赵帅帅', merchantHtml());
 }
 
 /* ---------------- 调试面板 ---------------- */
@@ -1672,6 +1762,18 @@ function bindModal() {
     openModal('bag','背包 · 装备', bagHtml());
   });
 
+  body.querySelectorAll('[data-relic]').forEach(el => el.onclick = () => {
+    G._relicSel = (G._relicSel === el.dataset.relic) ? null : el.dataset.relic;
+    if (typeof Sfx !== 'undefined') Sfx.play('click');
+    openModal('merchant', '商人 · 赵帅帅', merchantHtml());
+  });
+  body.querySelectorAll('[data-relic-cancel]').forEach(el => el.onclick = () => {
+    G._relicSel = null;
+    openModal('merchant', '商人 · 赵帅帅', merchantHtml());
+  });
+  body.querySelectorAll('[data-buy-relic]').forEach(el => el.onclick = () => {
+    buyRelic(el.dataset.buyRelic);
+  });
   body.querySelectorAll('[data-dbg-toggle]').forEach(b => b.onclick = () => {
     const k = b.dataset.dbgToggle;
     G.debug[k] = !G.debug[k];

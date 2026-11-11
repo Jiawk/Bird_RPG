@@ -874,6 +874,50 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   .sound-toggle{position:fixed !important;left:8px !important;top:104px !important;width:28px !important;height:28px !important;font-size:12px !important}
 }
 
+/* ============ 商人面板：4×6 格子 ============ */
+.m-head{display:flex;justify-content:space-between;align-items:center;
+  padding:4px 2px 8px;font-size:12px;color:#c8bfa8}
+.m-head b{color:#ffd24a;font-size:13px}
+.m-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.m-cell{position:relative;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:1px;padding:8px 4px;border-radius:3px;cursor:pointer;
+  background:linear-gradient(180deg,rgba(40,33,20,.9),rgba(12,9,5,.96));
+  border:1px solid #4a3d28;min-height:78px;transition:all .12s;user-select:none}
+.m-cell:hover{border-color:#d4af37;box-shadow:0 0 10px rgba(212,175,55,.35)}
+.m-cell.empty{opacity:.25;cursor:default;border-style:dashed}
+.m-cell.empty:hover{border-color:#4a3d28;box-shadow:none}
+.m-cell.relic{border-color:#8a6d2f;background:linear-gradient(180deg,rgba(70,52,18,.92),rgba(20,14,4,.97))}
+.m-cell.relic:hover{border-color:#ffe9a8;box-shadow:0 0 14px rgba(255,233,168,.5)}
+.m-cell.relic.sel{border-color:#ffe9a8;box-shadow:0 0 0 2px rgba(255,233,168,.45),0 0 16px rgba(255,233,168,.55)}
+.m-ic{font-size:22px;line-height:1;color:#ffe9a8}
+.m-cell.potion .m-ic{color:#5fd45f}
+.m-nm{font-size:10.5px;font-weight:700;color:#e8e0cc;text-align:center;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.relic-nm{color:#ffe9a8;font-size:10px}
+.m-sub{font-size:9px;color:#9a907a;white-space:nowrap}
+.m-price{font-size:9.5px;color:#ffd24a;margin-top:2px}
+.m-price.no{color:#ff6b5a}
+.m-price.ok{color:#5fdc4a}
+
+/* 圣物详情 */
+.rl-box{margin-top:10px;padding:10px;border-radius:3px;
+  background:linear-gradient(180deg,rgba(52,40,16,.95),rgba(14,10,4,.98));
+  border:1px solid #8a6d2f;box-shadow:inset 0 0 24px rgba(255,233,168,.10)}
+.rl-title{font-family:var(--serif);font-size:15px;font-weight:700;letter-spacing:.08em}
+.rl-meta{font-size:10.5px;color:#9a907a;margin:2px 0 7px}
+.rl-stats{display:grid;grid-template-columns:1fr 1fr;gap:2px 12px;font-size:11px}
+.rl-stat{display:flex;justify-content:space-between;padding:1px 0}
+.rl-stat span{color:#9a907a}
+.rl-stat b{color:#e8e0cc}
+.rl-stat b.rlc{color:#ffe9a8}
+.rl-tip{font-size:10.5px;color:#b9a97e;margin-top:7px;font-style:italic}
+.rl-actions{display:flex;gap:8px;margin-top:10px}
+.rl-actions button{flex:1;padding:8px;font-size:12px;font-family:var(--serif);
+  border-radius:3px;border:1px solid var(--bronze);cursor:pointer;
+  background:linear-gradient(180deg,rgba(58,47,28,.96),rgba(16,12,7,.98));color:#e8e0cc}
+.rl-actions button:hover{border-color:var(--gold-lt);color:#ffd24a}
+.rl-actions button[disabled]{opacity:.45;cursor:not-allowed}
+
 </style>
 </head>
 <body>
@@ -1159,7 +1203,8 @@ DATA.QUALITY = [
   {key:'rare',     name:'精良', color:'#4a9eff', affixes:2, mult:1.80, lvl:4,  weight:1600},
   {key:'epic',     name:'史诗', color:'#b45cff', affixes:3, mult:2.40, lvl:9,  weight:520},
   {key:'legendary',name:'传说', color:'#ff9a2e', affixes:4, mult:3.20, lvl:16, weight:120},
-  {key:'mythic',   name:'神话', color:'#ff3b3b', affixes:5, mult:4.40, lvl:24, weight:16}
+  {key:'mythic',   name:'神话', color:'#ff3b3b', affixes:5, mult:4.40, lvl:24, weight:16},
+  {key:'relic',    name:'圣物', color:'#ffe9a8', affixes:6, mult:5.60, lvl:34, weight:0}
 ];
 
 DATA.BOSS_WEIGHTS = {rare:3600, epic:3800, legendary:2100, mythic:500};
@@ -1181,6 +1226,30 @@ DATA.AFFIXES = [
 ];
 
 /* ---------------- 武器种类（与本命职业匹配有加成） ---------------- */
+/* 圣物武器：200k 金币兑换，20 级可用，属性优于同级别神话装备 */
+DATA.RELIC_WEAPONS = [
+  { key:'relic_sword', cls:'warrior', wtype:'sword',
+    name:'圣物·灰烬使者', color:'#ffe9a8', price:200000, reqLv:20,
+    stats:{ atk:760, str:120, critDmg:0.60, crit:0.10, lifesteal:0.05, hit:0.12 },
+    relicPct:0.05,
+    desc:'命中即削掉目标 5% 最大生命；吸血 5%' },
+  { key:'relic_staff', cls:'mage', wtype:'staff',
+    name:'圣物·艾露尼斯', color:'#ffe9a8', price:200000, reqLv:20,
+    stats:{ spell:760, int:120, critDmg:0.60, crit:0.10, lifesteal:0.05, hit:0.12 },
+    relicPct:0.05,
+    desc:'命中即削掉目标 5% 最大生命；吸血 5%' },
+  { key:'relic_bow', cls:'archer', wtype:'bow',
+    name:'圣物·索利达尔', color:'#ffe9a8', price:200000, reqLv:20,
+    stats:{ atk:760, agi:120, critDmg:0.60, crit:0.10, lifesteal:0.05, hit:0.12 },
+    relicPct:0.05,
+    desc:'命中即削掉目标 5% 最大生命；吸血 5%' },
+  { key:'relic_dagger', cls:'assassin', wtype:'dagger',
+    name:'圣物·埃辛诺斯', color:'#ffe9a8', price:200000, reqLv:20,
+    stats:{ atk:760, agi:120, critDmg:0.60, crit:0.15, lifesteal:0.05, hit:0.12 },
+    relicPct:0.05,
+    desc:'命中即削掉目标 5% 最大生命；吸血 5%' }
+];
+
 DATA.WEAPON_KINDS = {
   sword:   {label:'剑',   cls:['warrior'],  bonus:0.12, fx:'slash', names:['长剑','阔剑','骑士剑','军刀']},
   axe:     {label:'斧',   cls:['warrior'],  bonus:0.12, fx:'slash', names:['战斧','巨斧','劈山斧']},
@@ -1706,12 +1775,13 @@ function recalcStats(p) {
   };
 
   // 本命武器：武器种类与职业匹配 → 攻击加成 + 特效
-  let weaponBonus = 0, weaponFx = 'slash';
+  let weaponBonus = 0, weaponFx = 'slash', relicPct = 0;
   const wpn = p.equip.weapon;
   if (wpn && wpn.wtype && DATA.WEAPON_KINDS[wpn.wtype]) {
     const K = DATA.WEAPON_KINDS[wpn.wtype];
     weaponFx = K.fx;
     if (K.cls.includes(p.cls)) weaponBonus = K.bonus;
+    if (wpn.relicPct) relicPct = wpn.relicPct;
   }
 
   // 特戒效果（强化会放大）
@@ -1785,6 +1855,7 @@ function recalcStats(p) {
     armor,
     dr: clamp(dr + bf.dr, 0, 0.85),
     lifesteal: (eq.lifesteal || 0) + RFX.lifesteal,
+    relicPct,
     mpRegen: (0.02 * (1 + (bonus.mpRegen || 0))),
     goldBonus: (bonus.goldBonus || 0) + RFX.goldBonus,
     expBonus: (race.expBonus || 0) + RFX.expBonus,
@@ -2983,6 +3054,10 @@ function damageMonster(m, amount, type, isDot) {
     crit = p._forceCrit || Math.random() < p.stats.crit;
     p._forceCrit = false;
     if (crit) dmg *= p.stats.critDmg;
+  }
+  // 圣物武器：命中额外削掉目标 5% 最大生命
+  if (!isDot && p.stats.relicPct > 0 && m.hpMax > 0) {
+    dmg += Math.max(1, Math.round(m.hpMax * p.stats.relicPct));
   }
   dmg = Math.max(1, Math.round(dmg));
   m.hp -= dmg;
@@ -5326,14 +5401,75 @@ function interactNPC(target) {
 
 function merchantHtml() {
   const p = G.player;
-  let html = '<div class="npc-list">';
-  for (const po of DATA.POTIONS) {
-    html += `<div class="npc-row"><div><div class="nr-name" style="color:${po.color}">${po.name}</div>
-      <div class="nr-info">${po.hp?'回复 '+po.hp+' 生命':'回复 '+po.mp+' 法力'}　${po.price} 金</div></div>
-      <button data-buy-potion="${po.key}" ${p.gold>=po.price?'':'disabled'}>购买</button></div>`;
+  const GOLD = fmt(p.gold);
+  const sel = G._relicSel;
+  const COLS = 4, ROWS = 6, TOTAL = COLS * ROWS;
+
+  let cells = [];
+  // 第一排：药水（4 格）
+  DATA.POTIONS.forEach(po => {
+    const ok = p.gold >= po.price;
+    cells.push(`<div class="m-cell potion" data-buy-potion="${po.key}" style="${ok?'':'opacity:.5'}">
+      <div class="m-ic" style="color:${po.color};font-size:22px">⚗</div>
+      <div class="m-nm" style="color:${po.color}">${po.name}</div>
+      <div class="m-sub">${po.hp ? '生命 +' + po.hp : '法力 +' + po.mp}</div>
+      <div class="m-price">${fmt(po.price)} 金</div></div>`);
+  });
+  while (cells.length < COLS) cells.push('<div class="m-cell empty">—</div>');
+
+  // 第 2 排起：圣物武器（每职业一把）
+  const relics = DATA.RELIC_WEAPONS || [];
+  relics.forEach(w => {
+    const okLv = p.level >= w.reqLv;
+    const okGold = p.gold >= w.price;
+    const can = okLv && okGold;
+    const own = (p.bag || []).some(x => x.relicKey === w.key) ||
+                (p.equip.weapon && p.equip.weapon.relicKey === w.key);
+    cells.push(`<div class="m-cell relic${sel === w.key ? ' sel' : ''}" data-relic="${w.key}">
+      <div class="m-ic relic-ic">${own ? '★' : '◆'}</div>
+      <div class="m-nm relic-nm">${w.name.replace('圣物·','')}</div>
+      <div class="m-sub">${DATA.CLASSES[w.cls].name}</div>
+      <div class="m-price ${can ? 'ok' : 'no'}">${fmt(w.price)} 金</div></div>`);
+  });
+  while (cells.length < TOTAL) cells.push('<div class="m-cell empty">—</div>');
+
+  let html = `<div class="m-head"><span>商人 · 赵帅帅</span><b>金币 ${GOLD}</b></div>`;
+  html += `<div class="m-grid">${cells.join('')}</div>`;
+
+  // 选中圣物 → 显示详情 + 兑换按钮
+  if (sel) {
+    const w = (DATA.RELIC_WEAPONS || []).find(x => x.key === sel);
+    if (w) {
+      const okLv = p.level >= w.reqLv, okGold = p.gold >= w.price;
+      const lines = Object.keys(w.stats).map(k => {
+        const v = w.stats[k];
+        const pct = ['crit','critDmg','lifesteal','hit','dodge'].includes(k);
+        return `<div class="rl-stat"><span>${AFFIX_NAMES[k] || k}</span><b>+${pct ? (v*100).toFixed(1)+'%' : Math.round(v)}</b></div>`;
+      }).join('');
+      html += `<div class="rl-box">
+        <div class="rl-title" style="color:${w.color}">${w.name}</div>
+        <div class="rl-meta">圣物 · ${DATA.CLASSES[w.cls].name}专用 · 需要 Lv.${w.reqLv}</div>
+        <div class="rl-stats">${lines}
+          <div class="rl-stat"><span>圣物特效</span><b class="rlc">命中削 5% 最大生命</b></div>
+          <div class="rl-stat"><span>吸血</span><b class="rlc">+5.0%</b></div>
+        </div>
+        <div class="rl-tip">${w.desc}</div>
+        <div class="rl-actions">
+          <button data-relic-cancel>取消</button>
+          <button data-buy-relic="${w.key}" ${okLv && okGold ? '' : 'disabled'}>
+            ${okLv ? (okGold ? `确认兑换（${fmt(w.price)} 金）` : '金币不足') : '等级不足 Lv.' + w.reqLv}
+          </button>
+        </div>
+      </div>`;
+    }
+  } else {
+    html += `<div style="margin-top:8px;font-size:11px;color:#8f8570">
+      点击圣物格子查看详情并兑换。圣物装备仅可用金币兑换，</div>
+      <div style="font-size:11px;color:#8f8570;margin-top:2px">当前金币：<b style="color:#ffd24a">${GOLD}</b></div>`;
   }
-  return html + `</div><div style="margin-top:10px;font-size:11px;color:#8f8570">金币：${fmt(p.gold)}</div>`;
+  return html;
 }
+
 
 function exchangeHtml() {
   const p = G.player;
@@ -5388,6 +5524,35 @@ function settingsHtml() {
       <div class="nr-info">删除角色，不可恢复</div></div>
       <button data-act-reset style="border-color:#6b2b2b;color:#ff8a7a">重开</button></div>
   </div>`;
+}
+
+/* ---------------- 圣物兑换 ---------------- */
+function buyRelic(key) {
+  const p = G.player;
+  const w = (DATA.RELIC_WEAPONS || []).find(x => x.key === key);
+  if (!w) return;
+  if (p.level < w.reqLv) { toast(`等级不足：需要 Lv.${w.reqLv}`); return; }
+  if (p.gold < w.price) { toast('金币不足'); return; }
+  const own = (p.bag || []).some(x => x.relicKey === key) ||
+              (p.equip.weapon && p.equip.weapon.relicKey === key);
+  if (own) { toast('这件圣物你已经拥有了'); return; }
+
+  p.gold -= w.price;
+  const item = {
+    id: 'rl' + Math.random().toString(36).slice(2, 8),
+    slot: 'weapon', type: 'equip', quality: 'relic',
+    name: w.name, color: w.color, ilvl: w.reqLv, reqLv: w.reqLv,
+    wtype: w.wtype, relicKey: w.key, relicPct: w.relicPct,
+    stats: Object.assign({}, w.stats), enh: 0, locked: true
+  };
+  const ok = addToBag(p, item);
+  if (!ok) { p.gold += w.price; toast('背包已满'); return; }
+  if (typeof Sfx !== 'undefined') { Sfx.play('lvlup'); Sfx.speak('A relic of power.'); }
+  toast(`兑换成功：${w.name}`);
+  logMsg(`🎖 获得圣物 ${w.name}`, 'level');
+  G._relicSel = null;
+  saveGame();
+  openModal('merchant', '商人 · 赵帅帅', merchantHtml());
 }
 
 /* ---------------- 调试面板 ---------------- */
@@ -6096,6 +6261,18 @@ function bindModal() {
     openModal('bag','背包 · 装备', bagHtml());
   });
 
+  body.querySelectorAll('[data-relic]').forEach(el => el.onclick = () => {
+    G._relicSel = (G._relicSel === el.dataset.relic) ? null : el.dataset.relic;
+    if (typeof Sfx !== 'undefined') Sfx.play('click');
+    openModal('merchant', '商人 · 赵帅帅', merchantHtml());
+  });
+  body.querySelectorAll('[data-relic-cancel]').forEach(el => el.onclick = () => {
+    G._relicSel = null;
+    openModal('merchant', '商人 · 赵帅帅', merchantHtml());
+  });
+  body.querySelectorAll('[data-buy-relic]').forEach(el => el.onclick = () => {
+    buyRelic(el.dataset.buyRelic);
+  });
   body.querySelectorAll('[data-dbg-toggle]').forEach(b => b.onclick = () => {
     const k = b.dataset.dbgToggle;
     G.debug[k] = !G.debug[k];
@@ -6465,7 +6642,14 @@ function initInput() {
 
   CV.addEventListener('mousemove', e => { Input.mouse.x = e.clientX; Input.mouse.y = e.clientY; });
   CV.addEventListener('mousedown', e => {
-    if (e.button === 0) { Input.mouse.down = true; Input.mouse.right = false; G.moveTarget = null; }
+    if (e.button === 0) {
+      // 左键优先判断是否点在 NPC 上 → 交互（不再误触发攻击）
+      const wx0 = e.clientX + CAM.x;
+      const wy0 = e.clientY / YS + CAM.y;
+      const npcL = npcAt(wx0, wy0);
+      if (npcL) { G.moveTarget = null; interactNPC(npcL); return; }
+      Input.mouse.down = true; Input.mouse.right = false; G.moveTarget = null;
+    }
     if (e.button === 2) {
       Input.mouse.right = true;
       // 右键：点 NPC 就交互，否则走过去
@@ -6480,6 +6664,18 @@ function initInput() {
     if (e.button === 0) Input.mouse.down = false;
     if (e.button === 2) Input.mouse.right = false;   // 松开不停，继续走
   });
+  // 触屏：轻点 NPC 交互
+  let _tapX = 0, _tapY = 0, _tapT = 0;
+  CV.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) return;
+    _tapX = e.touches[0].clientX; _tapY = e.touches[0].clientY; _tapT = Date.now();
+  }, { passive: true });
+  CV.addEventListener('touchend', e => {
+    if (Date.now() - _tapT > 350) return;      // 长按 / 拖动摇杆不算
+    const npcT = npcAt(_tapX + CAM.x, _tapY / YS + CAM.y);
+    if (npcT) { G.moveTarget = null; interactNPC(npcT); }
+  }, { passive: true });
+
   // 全局禁用右键菜单（Mac 双指点按也不会弹出来）
   document.addEventListener('contextmenu', e => e.preventDefault());
   CV.addEventListener('contextmenu', e => e.preventDefault());
@@ -6774,6 +6970,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const craftTest = /n$/.test(location.hash);
     const mapTest = /m$/.test(location.hash);
     const ringGift = /#rings/.test(location.hash);
+    const shopTest = /#devshop/.test(location.hash);
     const n = parseInt(location.hash.slice(4), 10);
     G.diff = 'normal';
     G.player = createPlayer('human', 'archer');
@@ -6785,6 +6982,10 @@ window.addEventListener('DOMContentLoaded', () => {
     G.player.mp = G.player.stats.mpMax;
     startGame();
     if (!isNaN(n)) enterRoom(n);
+    if (shopTest) {
+      G.player.gold = 600000; G.player.level = 20;
+      openModal('merchant', '商人 · 赵帅帅', merchantHtml());
+    }
     if (dropTest) {
       G.autoPickup = false;
       G.world.monsters.filter(m => !m.isBoss).slice(0, 5)

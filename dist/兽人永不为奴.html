@@ -918,6 +918,64 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .rl-actions button:hover{border-color:var(--gold-lt);color:#ffd24a}
 .rl-actions button[disabled]{opacity:.45;cursor:not-allowed}
 
+/* ============ 右上角设置按钮 ============ */
+.settings-btn{border-color:rgba(212,175,55,.75) !important;color:#ffd24a !important;
+  background:linear-gradient(180deg,rgba(80,64,26,.92),rgba(24,18,8,.96)) !important}
+.settings-btn:hover{box-shadow:0 0 14px rgba(255,210,74,.55)}
+
+/* ============ 弹窗适配手机竖屏 ============ */
+@media (max-width:820px){
+  .modal{padding:8px;align-items:center}
+  .modal-frame{width:100%;max-height:92vh;border-width:1px}
+  .modal-head{padding:8px 10px;font-size:14px}
+  .modal-body{padding:8px}
+  .codex-card,.npc-row{padding:8px}
+}
+@media (max-width:520px){
+  .modal{padding:4px}
+  .modal-frame{max-height:94vh;border-radius:4px}
+  .modal-head{font-size:13px;padding:7px 9px}
+  .modal-body{padding:6px;font-size:11px}
+  .npc-row{flex-wrap:wrap;gap:6px;padding:7px}
+  .npc-row .nr-name{font-size:12px}
+  .npc-row .nr-info{font-size:10px}
+  .npc-row button{padding:6px 12px;font-size:11.5px}
+  .rl-stats{grid-template-columns:1fr;gap:1px}
+  .m-grid{gap:4px}
+  .m-cell{min-height:66px;padding:6px 3px}
+  .m-nm{font-size:9.5px}
+  .m-sub{font-size:8px}
+  .m-price{font-size:8.5px}
+}
+
+/* ============ 选人页适配手机竖屏 ============ */
+@media (max-width:820px){
+  .create-wrap{padding:10px !important;width:100% !important}
+  .race-list,.class-list{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:7px !important}
+  .card{padding:8px 9px}
+  .card h3{font-size:13.5px;margin-bottom:4px}
+  .card p{font-size:10px;line-height:1.45}
+  .card .tag{font-size:9px;padding:0 5px}
+  .panel-title{font-size:13px;margin:10px 0 7px}
+}
+@media (max-width:520px){
+  .create-wrap{padding:7px !important}
+  .race-list,.class-list{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:5px !important}
+  .race-portrait{width:92px;height:56px;margin-bottom:5px}
+  .race-portrait .av-img{width:92px;height:56px;background-size:1104px 56px;
+    background-position:calc(var(--ai,0) * -92px) 0}
+  .cls-portrait{height:104px;margin:-2px -3px 6px}
+  .cls-portrait .av-img.big{width:96px;height:104px;
+    background-size:1152px 104px;background-position:calc(var(--ai,0) * -96px) 0}
+  .cls-badge{width:26px;height:26px;background-size:168px 42px;top:3px;left:3px}
+  .card{padding:6px 6px}
+  .card h3{font-size:11.5px}
+  .card p{font-size:9px;line-height:1.35}
+  .card .tag{font-size:8px}
+  .create-actions{margin-top:12px;gap:8px}
+  .big-btn{min-width:0;flex:1;padding:9px 6px;font-size:13px}
+}
+
 </style>
 </head>
 <body>
@@ -940,6 +998,7 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
       <div class="res-box"><i class="ic-cp">战</i><b id="cpVal">0</b></div>
       <div class="res-box"><i class="ic-gear">装</i><b id="gearVal">未集齐</b></div>
       <div class="res-box"><i class="ic-diff">难</i><b id="diffVal">简单</b></div>
+      <button class="codex-btn settings-btn" data-act="settings">⚙ 设置</button>
       <button class="codex-btn" data-act="codexEquip">装备图鉴</button>
       <button class="codex-btn" data-act="codexCollect">收藏图鉴</button>
     </div>
@@ -1581,41 +1640,94 @@ const Sfx = {
     src.start(t0);
   },
 
+  /* ---------- 翻书声 ---------- */
+  page(up) {
+    const c = this.init(); if (!c || !this.on) return;
+    this.resume();
+    const t0 = c.currentTime;
+    // 纸张摩擦：带通噪声从高扫到低（开）/ 低到高（关）
+    const dur = 0.20;
+    const len = Math.floor(c.sampleRate * dur);
+    const buf = c.createBuffer(1, len, c.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) {
+      const k = i / len;
+      // 前段密集、后段稀疏 → 像翻页
+      const env = Math.pow(1 - k, 2.2) * (i % 37 < 26 ? 1 : 0.25);
+      d[i] = (Math.random() * 2 - 1) * env;
+    }
+    const src = c.createBufferSource(); src.buffer = buf;
+    const f = c.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 0.9;
+    f.frequency.setValueAtTime(up ? 1200 : 2600, t0);
+    f.frequency.exponentialRampToValueAtTime(up ? 3200 : 900, t0 + dur);
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.55 * this.vol, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    src.connect(f); f.connect(g); g.connect(c.destination);
+    src.start(t0);
+    // 书页合上的闷响
+    this._tone({ freq: up ? 150 : 120, to: 70, dur: 0.09, type: 'sine', gain: 0.10 });
+  },
+
+  /* ---------- 金属撞击（魔兽风） ---------- */
+  clang(gain, pitch) {
+    const c = this.init(); if (!c || !this.on) return;
+    this.resume();
+    const t0 = c.currentTime;
+    const g0 = (gain === undefined ? 0.7 : gain) * this.vol;
+    // 起始的金属噪音瞬态
+    this._noise({ dur: 0.045, freq: 3400 * pitch, q: 0.8, gain: g0 * 0.5, filter: 'highpass' });
+    // 非谐波泛音堆叠 → 金属感
+    const base = 1380 * pitch;
+    const ratios = [1, 2.76, 5.40, 8.93];
+    const amps   = [1, 0.55, 0.30, 0.16];
+    ratios.forEach((r, i) => {
+      this._tone({
+        freq: base * r,
+        dur: 0.10 + 0.20 / (i + 1),
+        type: i === 0 ? 'triangle' : 'sine',
+        gain: g0 * amps[i] * 0.22
+      });
+    });
+    // 低频冲击（砸在盔甲上的闷响）
+    this._tone({ freq: 160, to: 70, dur: 0.10, type: 'sine', gain: g0 * 0.20 });
+  },
+
   /* ---------- 音效表 ---------- */
   play(name) {
     if (!this.on) return;
     this.resume();
     switch (name) {
       case 'click':
-        this._tone({ freq: 880, to: 760, dur: 0.05, type: 'square', gain: 0.10 });
+        this._tone({ freq: 420, to: 300, dur: 0.045, type: 'triangle', gain: 0.09 });
+        this._noise({ dur: 0.03, freq: 1800, q: 2.0, gain: 0.05, filter: 'bandpass' });
         break;
-      case 'open':
-        this._tone({ freq: 520, dur: 0.09, type: 'triangle', gain: 0.16 });
-        this._tone({ freq: 780, dur: 0.11, type: 'triangle', gain: 0.13, delay: 0.06 });
-        break;
-      case 'close':
-        this._tone({ freq: 700, dur: 0.08, type: 'triangle', gain: 0.14 });
-        this._tone({ freq: 420, dur: 0.10, type: 'triangle', gain: 0.11, delay: 0.05 });
-        break;
+      /* ---- 翻书声：菜单/对话/窗口 统一用这个 ---- */
+      case 'open':  this.page(true);  break;
+      case 'close': this.page(false); break;
+
       case 'cast':
-        this._tone({ freq: 300, to: 980, dur: 0.16, type: 'sawtooth', gain: 0.11 });
-        this._noise({ dur: 0.14, freq: 2200, q: 0.9, gain: 0.10 });
+        // 施法：低沉的气流 + 一点金属尾音，不再卡通
+        this._noise({ dur: 0.22, freq: 700, q: 0.6, gain: 0.14, filter: 'lowpass' });
+        this._tone({ freq: 180, to: 520, dur: 0.20, type: 'sine', gain: 0.07 });
         break;
+
+      /* ---- 战斗：魔兽风金属撞击 ---- */
       case 'hit': {
         const now = Date.now();
-        if (now - this._lastHit < 55) return;      // 连击限流
+        if (now - this._lastHit < 45) return;      // 连击限流
         this._lastHit = now;
-        this._noise({ dur: 0.07, freq: 900, q: 1.4, gain: 0.20 });
-        this._tone({ freq: 150, to: 80, dur: 0.07, type: 'sine', gain: 0.16 });
+        this.clang(0.55, 1.0);
         break;
       }
       case 'crit':
-        this._noise({ dur: 0.10, freq: 1600, q: 1.0, gain: 0.24 });
-        this._tone({ freq: 420, to: 180, dur: 0.10, type: 'square', gain: 0.12 });
+        this.clang(1.0, 1.35);
+        this._tone({ freq: 92, to: 55, dur: 0.14, type: 'sine', gain: 0.14 });
         break;
       case 'kill':
-        this._noise({ dur: 0.18, freq: 500, q: 0.8, gain: 0.20 });
-        this._tone({ freq: 300, to: 70, dur: 0.22, type: 'sawtooth', gain: 0.14 });
+        this.clang(0.75, 0.95);
+        this._tone({ freq: 120, to: 45, dur: 0.28, type: 'sine', gain: 0.16 });
+        this._noise({ dur: 0.22, freq: 380, q: 0.6, gain: 0.13, filter: 'lowpass' });
         break;
       case 'death':
         this._tone({ freq: 220, to: 38, dur: 1.0, type: 'sawtooth', gain: 0.22 });
@@ -5387,6 +5499,7 @@ function npcAt(wx, wy) {
 function interactNPC(target) {
   const n = target || nearestNPC();
   if (!n) return;
+  if (typeof Sfx !== 'undefined') Sfx.play('open');   // 翻书声
   switch (n.kind) {
     case 'teleport': openTownMap(); break;
     case 'merchant': toggleModal('merchant', '商人 · 赵帅帅', merchantHtml); break;

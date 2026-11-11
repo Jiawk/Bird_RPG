@@ -888,6 +888,7 @@ function npcAt(wx, wy) {
 function interactNPC(target) {
   const n = target || nearestNPC();
   if (!n) return;
+  if (typeof Sfx !== 'undefined') Sfx.play('open');   // 翻书声
   switch (n.kind) {
     case 'teleport': openTownMap(); break;
     case 'merchant': toggleModal('merchant', '商人 · 赵帅帅', merchantHtml); break;

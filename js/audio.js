@@ -63,41 +63,94 @@ const Sfx = {
     src.start(t0);
   },
 
+  /* ---------- 翻书声 ---------- */
+  page(up) {
+    const c = this.init(); if (!c || !this.on) return;
+    this.resume();
+    const t0 = c.currentTime;
+    // 纸张摩擦：带通噪声从高扫到低（开）/ 低到高（关）
+    const dur = 0.20;
+    const len = Math.floor(c.sampleRate * dur);
+    const buf = c.createBuffer(1, len, c.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) {
+      const k = i / len;
+      // 前段密集、后段稀疏 → 像翻页
+      const env = Math.pow(1 - k, 2.2) * (i % 37 < 26 ? 1 : 0.25);
+      d[i] = (Math.random() * 2 - 1) * env;
+    }
+    const src = c.createBufferSource(); src.buffer = buf;
+    const f = c.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 0.9;
+    f.frequency.setValueAtTime(up ? 1200 : 2600, t0);
+    f.frequency.exponentialRampToValueAtTime(up ? 3200 : 900, t0 + dur);
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.55 * this.vol, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    src.connect(f); f.connect(g); g.connect(c.destination);
+    src.start(t0);
+    // 书页合上的闷响
+    this._tone({ freq: up ? 150 : 120, to: 70, dur: 0.09, type: 'sine', gain: 0.10 });
+  },
+
+  /* ---------- 金属撞击（魔兽风） ---------- */
+  clang(gain, pitch) {
+    const c = this.init(); if (!c || !this.on) return;
+    this.resume();
+    const t0 = c.currentTime;
+    const g0 = (gain === undefined ? 0.7 : gain) * this.vol;
+    // 起始的金属噪音瞬态
+    this._noise({ dur: 0.045, freq: 3400 * pitch, q: 0.8, gain: g0 * 0.5, filter: 'highpass' });
+    // 非谐波泛音堆叠 → 金属感
+    const base = 1380 * pitch;
+    const ratios = [1, 2.76, 5.40, 8.93];
+    const amps   = [1, 0.55, 0.30, 0.16];
+    ratios.forEach((r, i) => {
+      this._tone({
+        freq: base * r,
+        dur: 0.10 + 0.20 / (i + 1),
+        type: i === 0 ? 'triangle' : 'sine',
+        gain: g0 * amps[i] * 0.22
+      });
+    });
+    // 低频冲击（砸在盔甲上的闷响）
+    this._tone({ freq: 160, to: 70, dur: 0.10, type: 'sine', gain: g0 * 0.20 });
+  },
+
   /* ---------- 音效表 ---------- */
   play(name) {
     if (!this.on) return;
     this.resume();
     switch (name) {
       case 'click':
-        this._tone({ freq: 880, to: 760, dur: 0.05, type: 'square', gain: 0.10 });
+        this._tone({ freq: 420, to: 300, dur: 0.045, type: 'triangle', gain: 0.09 });
+        this._noise({ dur: 0.03, freq: 1800, q: 2.0, gain: 0.05, filter: 'bandpass' });
         break;
-      case 'open':
-        this._tone({ freq: 520, dur: 0.09, type: 'triangle', gain: 0.16 });
-        this._tone({ freq: 780, dur: 0.11, type: 'triangle', gain: 0.13, delay: 0.06 });
-        break;
-      case 'close':
-        this._tone({ freq: 700, dur: 0.08, type: 'triangle', gain: 0.14 });
-        this._tone({ freq: 420, dur: 0.10, type: 'triangle', gain: 0.11, delay: 0.05 });
-        break;
+      /* ---- 翻书声：菜单/对话/窗口 统一用这个 ---- */
+      case 'open':  this.page(true);  break;
+      case 'close': this.page(false); break;
+
       case 'cast':
-        this._tone({ freq: 300, to: 980, dur: 0.16, type: 'sawtooth', gain: 0.11 });
-        this._noise({ dur: 0.14, freq: 2200, q: 0.9, gain: 0.10 });
+        // 施法：低沉的气流 + 一点金属尾音，不再卡通
+        this._noise({ dur: 0.22, freq: 700, q: 0.6, gain: 0.14, filter: 'lowpass' });
+        this._tone({ freq: 180, to: 520, dur: 0.20, type: 'sine', gain: 0.07 });
         break;
+
+      /* ---- 战斗：魔兽风金属撞击 ---- */
       case 'hit': {
         const now = Date.now();
-        if (now - this._lastHit < 55) return;      // 连击限流
+        if (now - this._lastHit < 45) return;      // 连击限流
         this._lastHit = now;
-        this._noise({ dur: 0.07, freq: 900, q: 1.4, gain: 0.20 });
-        this._tone({ freq: 150, to: 80, dur: 0.07, type: 'sine', gain: 0.16 });
+        this.clang(0.55, 1.0);
         break;
       }
       case 'crit':
-        this._noise({ dur: 0.10, freq: 1600, q: 1.0, gain: 0.24 });
-        this._tone({ freq: 420, to: 180, dur: 0.10, type: 'square', gain: 0.12 });
+        this.clang(1.0, 1.35);
+        this._tone({ freq: 92, to: 55, dur: 0.14, type: 'sine', gain: 0.14 });
         break;
       case 'kill':
-        this._noise({ dur: 0.18, freq: 500, q: 0.8, gain: 0.20 });
-        this._tone({ freq: 300, to: 70, dur: 0.22, type: 'sawtooth', gain: 0.14 });
+        this.clang(0.75, 0.95);
+        this._tone({ freq: 120, to: 45, dur: 0.28, type: 'sine', gain: 0.16 });
+        this._noise({ dur: 0.22, freq: 380, q: 0.6, gain: 0.13, filter: 'lowpass' });
         break;
       case 'death':
         this._tone({ freq: 220, to: 38, dur: 1.0, type: 'sawtooth', gain: 0.22 });

@@ -910,3 +910,61 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   background:linear-gradient(180deg,rgba(58,47,28,.96),rgba(16,12,7,.98));color:#e8e0cc}
 .rl-actions button:hover{border-color:var(--gold-lt);color:#ffd24a}
 .rl-actions button[disabled]{opacity:.45;cursor:not-allowed}
+
+/* ============ 右上角设置按钮 ============ */
+.settings-btn{border-color:rgba(212,175,55,.75) !important;color:#ffd24a !important;
+  background:linear-gradient(180deg,rgba(80,64,26,.92),rgba(24,18,8,.96)) !important}
+.settings-btn:hover{box-shadow:0 0 14px rgba(255,210,74,.55)}
+
+/* ============ 弹窗适配手机竖屏 ============ */
+@media (max-width:820px){
+  .modal{padding:8px;align-items:center}
+  .modal-frame{width:100%;max-height:92vh;border-width:1px}
+  .modal-head{padding:8px 10px;font-size:14px}
+  .modal-body{padding:8px}
+  .codex-card,.npc-row{padding:8px}
+}
+@media (max-width:520px){
+  .modal{padding:4px}
+  .modal-frame{max-height:94vh;border-radius:4px}
+  .modal-head{font-size:13px;padding:7px 9px}
+  .modal-body{padding:6px;font-size:11px}
+  .npc-row{flex-wrap:wrap;gap:6px;padding:7px}
+  .npc-row .nr-name{font-size:12px}
+  .npc-row .nr-info{font-size:10px}
+  .npc-row button{padding:6px 12px;font-size:11.5px}
+  .rl-stats{grid-template-columns:1fr;gap:1px}
+  .m-grid{gap:4px}
+  .m-cell{min-height:66px;padding:6px 3px}
+  .m-nm{font-size:9.5px}
+  .m-sub{font-size:8px}
+  .m-price{font-size:8.5px}
+}
+
+/* ============ 选人页适配手机竖屏 ============ */
+@media (max-width:820px){
+  .create-wrap{padding:10px !important;width:100% !important}
+  .race-list,.class-list{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:7px !important}
+  .card{padding:8px 9px}
+  .card h3{font-size:13.5px;margin-bottom:4px}
+  .card p{font-size:10px;line-height:1.45}
+  .card .tag{font-size:9px;padding:0 5px}
+  .panel-title{font-size:13px;margin:10px 0 7px}
+}
+@media (max-width:520px){
+  .create-wrap{padding:7px !important}
+  .race-list,.class-list{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:5px !important}
+  .race-portrait{width:92px;height:56px;margin-bottom:5px}
+  .race-portrait .av-img{width:92px;height:56px;background-size:1104px 56px;
+    background-position:calc(var(--ai,0) * -92px) 0}
+  .cls-portrait{height:104px;margin:-2px -3px 6px}
+  .cls-portrait .av-img.big{width:96px;height:104px;
+    background-size:1152px 104px;background-position:calc(var(--ai,0) * -96px) 0}
+  .cls-badge{width:26px;height:26px;background-size:168px 42px;top:3px;left:3px}
+  .card{padding:6px 6px}
+  .card h3{font-size:11.5px}
+  .card p{font-size:9px;line-height:1.35}
+  .card .tag{font-size:8px}
+  .create-actions{margin-top:12px;gap:8px}
+  .big-btn{min-width:0;flex:1;padding:9px 6px;font-size:13px}
+}

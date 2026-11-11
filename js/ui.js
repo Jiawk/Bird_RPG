@@ -16,7 +16,8 @@ const AUTO = { atk: false, skill: false };
 const EQUIP_IDX  = { helm:7, chest:8, legs:9, boots:10, neck:11, ring:12, trinket:13 };
 const WEAPON_IDX = { sword:0, axe:1, bow:2, crossbow:3, dagger:4, staff:5, orb:6 };
 const RELIC_IDX  = { relic_sword:14, relic_staff:15, relic_bow:16, relic_dagger:17 };
-const EQUIP_COUNT = 18;
+const EQUIP_COUNT = 20;
+const POTION_IDX  = { hp:18, mp:19 };
 
 function iconIdxOf(slot, wtype, relicKey) {
   if (relicKey && RELIC_IDX[relicKey] !== undefined) return RELIC_IDX[relicKey];
@@ -626,8 +627,9 @@ function bagHtml() {
     const it = p.bag[i];
     if (!it) { html += '<div class="bag-cell empty">—</div>'; continue; }
     if (it.type === 'potion') {
+      const pi2 = POTION_IDX[it.key] !== undefined ? POTION_IDX[it.key] : 18;
       html += `<div class="bag-cell potion" data-potion="${it.key}">
-        <div class="ic" style="color:${it.color}">⚗</div>
+        <span class="ic-sprite" style="width:34px;height:34px;background-size:${34*EQUIP_COUNT}px 34px;background-position:${-pi2*34}px 0"></span>
         <div class="nm" style="color:${it.color}">${it.name}</div>
         <span class="stack">×${it.count || 1}</span></div>`;
     } else if (it.type === 'book') {
@@ -922,8 +924,9 @@ function merchantHtml() {
   // 第一排：药水（4 格）
   DATA.POTIONS.forEach(po => {
     const ok = p.gold >= po.price;
+    const pi = POTION_IDX[po.key] !== undefined ? POTION_IDX[po.key] : 18;
     cells.push(`<div class="m-cell potion" data-buy-potion="${po.key}" style="${ok?'':'opacity:.5'}">
-      <div class="m-ic" style="color:${po.color};font-size:22px">⚗</div>
+      <span class="ic-sprite" style="width:34px;height:34px;background-size:${34*EQUIP_COUNT}px 34px;background-position:${-pi*34}px 0"></span>
       <div class="m-nm" style="color:${po.color}">${po.name}</div>
       <div class="m-sub">${po.hp ? '生命 +' + po.hp : '法力 +' + po.mp}</div>
       <div class="m-price">${fmt(po.price)} 金</div></div>`);
@@ -939,7 +942,7 @@ function merchantHtml() {
     const own = (p.bag || []).some(x => x.relicKey === w.key) ||
                 (p.equip.weapon && p.equip.weapon.relicKey === w.key);
     cells.push(`<div class="m-cell relic${sel === w.key ? ' sel' : ''}" data-relic="${w.key}">
-      <div class="m-ic relic-ic">${own ? '★' : '◆'}</div>
+      ${iconTag('weapon', 38, w.wtype, w.key)}
       <div class="m-nm relic-nm">${w.name.replace('圣物·','')}</div>
       <div class="m-sub">${DATA.CLASSES[w.cls].name}</div>
       <div class="m-price ${can ? 'ok' : 'no'}">${fmt(w.price)} 金</div></div>`);

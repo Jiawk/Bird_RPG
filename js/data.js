@@ -154,24 +154,24 @@ DATA.AFFIXES = [
 DATA.RELIC_WEAPONS = [
   { key:'relic_sword', cls:'warrior', wtype:'sword',
     name:'圣物·灰烬使者', color:'#ffe9a8', price:500000, reqLv:20,
-    stats:{ atk:760, str:120, critDmg:0.60, crit:0.10, lifesteal:0.05, hit:0.12 },
+    stats:{ atk:760, str:120, critDmg:0.60, crit:0.10, skillDmg:0.05, hit:0.12 },
     relicPct:0.05,
-    desc:'命中即削掉目标 5% 最大生命；吸血 5%' },
+    desc:'命中即削掉目标 5% 最大生命；技能增伤 5%' },
   { key:'relic_staff', cls:'mage', wtype:'staff',
     name:'圣物·艾露尼斯', color:'#ffe9a8', price:500000, reqLv:20,
-    stats:{ spell:760, int:120, critDmg:0.60, crit:0.10, lifesteal:0.05, hit:0.12 },
+    stats:{ spell:760, int:120, critDmg:0.60, crit:0.10, skillDmg:0.05, hit:0.12 },
     relicPct:0.05,
-    desc:'命中即削掉目标 5% 最大生命；吸血 5%' },
+    desc:'命中即削掉目标 5% 最大生命；技能增伤 5%' },
   { key:'relic_bow', cls:'archer', wtype:'bow',
     name:'圣物·索利达尔', color:'#ffe9a8', price:500000, reqLv:20,
-    stats:{ atk:760, agi:120, critDmg:0.60, crit:0.10, lifesteal:0.05, hit:0.12 },
+    stats:{ atk:760, agi:120, critDmg:0.60, crit:0.10, skillDmg:0.05, hit:0.12 },
     relicPct:0.05,
-    desc:'命中即削掉目标 5% 最大生命；吸血 5%' },
+    desc:'命中即削掉目标 5% 最大生命；技能增伤 5%' },
   { key:'relic_dagger', cls:'assassin', wtype:'dagger',
     name:'圣物·埃辛诺斯', color:'#ffe9a8', price:500000, reqLv:20,
-    stats:{ atk:760, agi:120, critDmg:0.60, crit:0.15, lifesteal:0.05, hit:0.12 },
+    stats:{ atk:760, agi:120, critDmg:0.60, crit:0.15, skillDmg:0.05, hit:0.12 },
     relicPct:0.05,
-    desc:'命中即削掉目标 5% 最大生命；吸血 5%' }
+    desc:'命中即削掉目标 5% 最大生命；技能增伤 5%' }
 ];
 
 
@@ -205,13 +205,13 @@ DATA.RELIC_SETS = {
   archer: {
     cls:'archer', name:'月华', full:'月华·流光', color:'#ffe9a8', price:300000, reqLv:20,
     pieces: {
-      helm:    { slotName:'轻盔', stats:{ armor:170, agi:80, vit:50, hp:700 } },
-      chest:   { slotName:'皮甲', stats:{ armor:250, agi:95, vit:75, hp:1100 } },
-      legs:    { slotName:'护腿', stats:{ armor:210, agi:85, vit:60, hp:900 } },
-      boots:   { slotName:'疾行靴', stats:{ armor:150, agi:70, vit:40, hp:600 } },
-      neck:    { slotName:'月链', stats:{ agi:90, crit:0.07, hit:0.05 } },
-      ring:    { slotName:'月戒', stats:{ agi:85, critDmg:0.30, hit:0.06 } },
-      trinket: { slotName:'月符', stats:{ agi:95, lifesteal:0.03, hp:500 } }
+      helm:    { slotName:'轻盔', stats:{ armor:170, agi:80, vit:50, as:0.05 } },
+      chest:   { slotName:'皮甲', stats:{ armor:250, agi:95, vit:75, as:0.06 } },
+      legs:    { slotName:'护腿', stats:{ armor:210, agi:85, vit:60, as:0.05 } },
+      boots:   { slotName:'疾行靴', stats:{ armor:150, agi:70, vit:40, as:0.08 } },
+      neck:    { slotName:'月链', stats:{ agi:90, crit:0.07, as:0.05 } },
+      ring:    { slotName:'月戒', stats:{ agi:85, critDmg:0.30, as:0.05 } },
+      trinket: { slotName:'月符', stats:{ agi:95, lifesteal:0.03, as:0.06 } }
     }
   },
   assassin: {

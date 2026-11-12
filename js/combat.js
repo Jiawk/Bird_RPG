@@ -232,7 +232,7 @@ function castSkillImpl(key) {
           for (const m of w.monsters) {
             if (!m.alive) continue;
             if (Math.hypot(m.x - ax, m.y - ay) <= sp.radius * 42 * _mods.radiusMul + m.r) {
-              damageMonster(m, p.stats.power * (p.stats.skillMul || 1) * sp.dmg * mul * _mods.dmgMul, 'skill');
+              damageMonster(m, p.stats.power * (p.stats.skillMul || 1) * (1 + (p.stats.skillDmg || 0)) * sp.dmg * mul * _mods.dmgMul, 'skill');
               if (sp.freeze) m.frozen = Math.max(m.frozen, sp.freeze * _mods.ctrlMul);
               if (sp.root) m.root = Math.max(m.root, sp.root * _mods.ctrlMul);
             }
@@ -248,7 +248,7 @@ function castSkillImpl(key) {
         if (d > sp.range * 32 + m.r) continue;
         const a = Math.atan2(m.y - p.y, m.x - p.x);
         if (Math.abs(normalizeAngle(a - ang)) > sp.arc / 2) continue;
-        damageMonster(m, p.stats.power * (p.stats.skillMul || 1) * sp.dmg * mul * _mods.dmgMul, 'skill');
+        damageMonster(m, p.stats.power * (p.stats.skillMul || 1) * (1 + (p.stats.skillDmg || 0)) * sp.dmg * mul * _mods.dmgMul, 'skill');
         if (sp.poison) m.poison = { dps: sp.poison.dps * mul, t: sp.poison.dur };
       }
       burst(p.x + Math.cos(ang) * 40, p.y + Math.sin(ang) * 40, '#b45cff', 10, 180);

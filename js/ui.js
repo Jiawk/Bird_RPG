@@ -2826,8 +2826,8 @@ function findItem(id) {
 /* ---------------- Tooltip ---------------- */
 const AFFIX_NAMES = { str:'力量', agi:'敏捷', int:'智力', vit:'体质', atk:'攻击力', spell:'法术强度',
   as:'攻击速度', crit:'暴击率', critDmg:'暴击伤害', armor:'护甲', hp:'生命值',
-  dodge:'闪避率', lifesteal:'吸血', hit:'命中', mp:'法力值', all:'全属性' };
-const PCT_KEYS = ['as','crit','critDmg','dodge','lifesteal','hit'];
+  dodge:'闪避率', lifesteal:'吸血', hit:'命中', mp:'法力值', all:'全属性', skillDmg:'技能增伤' };
+const PCT_KEYS = ['as','crit','critDmg','dodge','lifesteal','hit','skillDmg'];
 
 function showTooltip(it, x, y) {
   hideTooltip();

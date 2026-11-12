@@ -126,9 +126,11 @@ function playerAttack() {
       x: p.x + Math.cos(ang) * 22, y: p.y + Math.sin(ang) * 22,
       vx: Math.cos(ang) * 520, vy: Math.sin(ang) * 520,
       life: 0.9, dead: false, pierce: false, dmg: p.stats.power,
-      color: p.stats.weaponFx === 'arrow' ? '#d8f0ff'
-           : (p.stats.weaponFx === 'spell' ? '#9f7fff' : '#ffe08a'),
+      color: (p.cls === 'mage') ? '#ff7a2a'
+           : (p.stats.weaponFx === 'arrow' ? '#d8f0ff'
+           : (p.stats.weaponFx === 'spell' ? '#9f7fff' : '#ffe08a')),
       shape: (p.cls === 'archer') ? 'arrow'
+           : (p.cls === 'mage') ? 'fireball'          // 法师平A = 火球
            : (p.stats.weaponFx === 'arrow' ? 'arrow'
            : (p.stats.weaponFx === 'spell' ? 'orb'
            : (p.stats.weaponFx === 'stab' ? 'blade' : 'bolt'))),

@@ -675,6 +675,51 @@ function drawProjectile(pr) {
   const x = px(pr.x), y = py(pr.y) - 18;
   const ang = Math.atan2(pr.vy, pr.vx);
 
+  // ---- 火球：纯程序化绘制（有拖尾火焰 + 跳动核心）----
+  if (pr.shape === 'fireball') {
+    const t = G.time * 18;
+    // 外焰光晕
+    const g0 = CTX.createRadialGradient(x, y, 2, x, y, 30);
+    g0.addColorStop(0, 'rgba(255,190,90,.75)');
+    g0.addColorStop(0.45, 'rgba(255,110,30,.45)');
+    g0.addColorStop(1, 'rgba(255,60,0,0)');
+    CTX.fillStyle = g0;
+    CTX.beginPath(); CTX.arc(x, y, 30, 0, 6.283); CTX.fill();
+
+    // 拖尾火星
+    for (let i = 1; i <= 4; i++) {
+      const tx = x - Math.cos(ang) * i * 9;
+      const ty = y - Math.sin(ang) * i * 9 + Math.sin(t + i) * 2;
+      CTX.globalAlpha = 0.55 - i * 0.11;
+      CTX.fillStyle = i < 3 ? '#ffb347' : '#ff6a2a';
+      CTX.beginPath(); CTX.arc(tx, ty, 6 - i, 0, 6.283); CTX.fill();
+    }
+    CTX.globalAlpha = 1;
+
+    // 核心：橙红 + 白热，尺寸跳动
+    const r = 9 + Math.sin(t) * 1.6;
+    const g1 = CTX.createRadialGradient(x, y, 1, x, y, r);
+    g1.addColorStop(0, '#fffbe8');
+    g1.addColorStop(0.45, '#ffd24a');
+    g1.addColorStop(1, 'rgba(255,90,20,.15)');
+    CTX.fillStyle = g1;
+    CTX.beginPath(); CTX.arc(x, y, r, 0, 6.283); CTX.fill();
+
+    // 环绕的火焰小瓣
+    CTX.save(); CTX.translate(x, y); CTX.rotate(ang + t * 0.6);
+    for (let i = 0; i < 3; i++) {
+      const a = i * 2.094;
+      CTX.globalAlpha = 0.7;
+      CTX.fillStyle = i % 2 ? '#ffb347' : '#ff6a2a';
+      CTX.beginPath();
+      CTX.ellipse(Math.cos(a) * 10, Math.sin(a) * 10, 5, 3, a, 0, 6.283);
+      CTX.fill();
+    }
+    CTX.restore();
+    CTX.globalAlpha = 1;
+    return;
+  }
+
   if (imgReady('proj')) {
     const idx = pr.shape === 'arrow' ? 0 : (pr.shape === 'blade' ? 2 : 1);
     const glowCol = idx === 0 ? 'rgba(255,240,200,.45)'

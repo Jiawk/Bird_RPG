@@ -2121,3 +2121,31 @@ PUT /api/save 带 meta  ✅
   - 背包红装战力 ≥ 身上该部位 → **保留**
   - 每件返还 **龙鳞片×1 + 虚空碎片×2**
 - 验证：3 件红装（10级/20级弱 + 特戒）→ 分解 2 件，剩特戒；龙鳞+2 / 碎片+4 ✅
+
+### v141 · 修复「一键分解红装」点了没反应
+**现象**：背包里按钮显示正常，但点击无任何反应。
+
+**根因**：这个项目的工具栏按钮**不是靠事件委托**，而是每个按钮在 `bindModal` 里**逐个显式绑定**：
+
+```js
+body.querySelectorAll('[data-act="sellWorse"]').forEach(b => b.onclick = () => handleCommand('sellWorse'));
+body.querySelectorAll('[data-act="sortBag"]').forEach(b => ...);
+body.querySelectorAll('[data-act="sellWeapons"]').forEach(b => ...);
+```
+
+我上一版只加了 HTML 按钮和 `handleCommand` 分支，**漏了这一行绑定** → 按钮永远没有 onclick。
+
+**修复**：
+```js
+body.querySelectorAll('[data-act="salvageMythic"]').forEach(b => b.onclick = () => handleCommand('salvageMythic'));
+```
+
+**核查**：四个工具栏按钮现在都是「按钮 2 处 / 绑定 1 处」的匹配状态
+```
+sortBag        按钮:2 绑定:1
+sellWorse      按钮:2 绑定:1
+sellWeapons    按钮:2 绑定:1
+salvageMythic  按钮:2 绑定:1
+```
+
+**验证**：调用后龙鳞+1 / 碎片+2，背包清空 ✅

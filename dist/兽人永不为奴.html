@@ -9120,6 +9120,7 @@ function bindModal() {
     openModal('bag', '背包 · 装备', bagHtml());
   });
   body.querySelectorAll('[data-act="sellWorse"]').forEach(b => b.onclick = () => handleCommand('sellWorse'));
+  body.querySelectorAll('[data-act="salvageMythic"]').forEach(b => b.onclick = () => handleCommand('salvageMythic'));
   body.querySelectorAll('[data-act="sortBag"]').forEach(b => b.onclick = () => {
     const n = sortBag(G.player);
     Sfx.play('click');

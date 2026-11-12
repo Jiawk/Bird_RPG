@@ -431,12 +431,15 @@ DATA.MAX_LEVEL = 60;
 /* 经验曲线：1~25 级沿用原版 100×lv^1.5；26 级起每级 ×2.4（25 级之后非常慢） */
 DATA.EXP_TAIL_FROM = 26;
 DATA.EXP_TAIL_MUL = 2.4;
+DATA.EXP_GEOM_MUL = 1.5;   // 30 级起每级相对上一级的倍率
 DATA.expForLevel = (lv) => {
   if (lv < DATA.EXP_TAIL_FROM) return Math.floor(100 * Math.pow(lv, 1.5));
   if (lv < 30) {
     const base = Math.floor(100 * Math.pow(DATA.EXP_TAIL_FROM - 1, 1.5));
     return Math.round(base * Math.pow(DATA.EXP_TAIL_MUL, lv - (DATA.EXP_TAIL_FROM - 1)));
   }
-  // 30 级之后：每级基数 35 万且逐级递增 4.5 万（满级约需挂机 24~30 小时）
-  return Math.round(350000 + (lv - 30) * 45000);
+  // 30 级之后：每级需求 = 上一级 × 1.5（几何增长）
+  const b0 = Math.floor(100 * Math.pow(DATA.EXP_TAIL_FROM - 1, 1.5));
+  const n29 = Math.round(b0 * Math.pow(DATA.EXP_TAIL_MUL, 29 - (DATA.EXP_TAIL_FROM - 1)));
+  return Math.round(n29 * Math.pow(DATA.EXP_GEOM_MUL, lv - 29));
 };

@@ -1203,19 +1203,37 @@ function exchangeHtml() {
   const L = DATA.LOTTERY;
   const tok = p.materials.bossToken || 0;
   const can1 = tok >= L.cost1, can10 = tok >= L.cost10;
+  const n = L.prizes.length;
+  const seg = 360 / n;
 
-  const cells = L.prizes.map((z, i) => `
-    <div class="lot-cell${z.id === 'relic' ? ' rare' : ''}" data-lot="${i}">
-      <div class="lc-name" style="color:${z.color}">${z.name}</div>
-      <div class="lc-prob">${(z.prob * 100).toFixed(0)}%</div>
-    </div>`).join('');
+  // 圆盘扇区（等分）
+  const stops = L.prizes.map((z, i) =>
+    `${i % 2 ? 'rgba(120,92,26,.55)' : 'rgba(70,54,18,.75)'} ${i * seg}deg ${(i + 1) * seg}deg`
+  ).join(',');
+
+  // 扇形文字：每个标签旋转到扇区中线
+  const labels = L.prizes.map((z, i) => {
+    const ang = i * seg + seg / 2;
+    return `<div class="wh-label" style="transform:rotate(${ang}deg) translateY(-104px) rotate(${-ang}deg)">
+      <span style="color:${z.color}">${z.name}</span></div>`;
+  }).join('');
 
   return `<div class="lot-box">
     <div class="lot-head">
       <span>🎰 抽奖转盘</span>
       <span class="lot-tok">BOSS击杀凭证 <b>${fmt(tok)}</b></span>
     </div>
-    <div class="lot-grid">${cells}</div>
+
+    <div class="wh-wrap">
+      <div class="wh-pointer"></div>
+      <div class="wh-ring">
+        <div class="wh-wheel" id="lotWheel" style="background:conic-gradient(from -90deg, ${stops})">
+          ${labels}
+        </div>
+        <div class="wh-hub">抽<br>奖</div>
+      </div>
+    </div>
+
     <div class="lot-actions">
       <button class="lot-btn one" data-lot-draw="1" ${can1 ? '' : 'disabled'}>
         单抽<br><small>${L.cost1} 凭证</small></button>
@@ -1251,7 +1269,7 @@ function doLottery(times) {
     const z = roll();
     if (z.kind === 'mat') {
       p.materials[z.key] = (p.materials[z.key] || 0) + z.amount;
-      got.push({ name: z.name, color: z.color, ok: true });
+      got.push({ id: z.id, name: z.name, color: z.color, ok: true });
     } else if (z.kind === 'relic') {
       // 本职业 7 件套随机一件，直接进背包
       const cls = p.cls || 'warrior';
@@ -1261,11 +1279,11 @@ function doLottery(times) {
       const it = relicPieceItem(S.cls, sl);
       it.id = 'rp' + Math.random().toString(36).slice(2, 8);
       if (addToBag(p, it)) {
-        got.push({ name: it.name, color: S.color, ok: true });
+        got.push({ id: z.id, name: it.name, color: S.color, ok: true });
         logMsg(`🎁 抽中圣物：${it.name}`, 'level');
       } else {
         p.materials.bossToken += L.cost1;
-        got.push({ name: '背包已满，已退还凭证', color: '#ff5a40', ok: false });
+        got.push({ id: z.id, name: '背包已满，已退还凭证', color: '#ff5a40', ok: false });
       }
     }
   }
@@ -1773,6 +1791,11 @@ function debugTogglesHtml() {
           <button class="dbg-gear red" data-dbg-gear="${cl}|mythic">${nm}·红</button>`).join('')}
       </div>
     </div>
+
+    <div class="npc-row"><div>
+      <div class="nr-name" style="color:#ff9a3c">发放 BOSS击杀凭证 ×1000</div>
+      <div class="nr-info">用于抽奖转盘（10 抽/次，100 十连）</div></div>
+      <button data-dbg-token="1" style="border-color:#ff9a3c;color:#ffc78a">领取</button></div>
 
     <div class="npc-row"><div>
       <div class="nr-name" style="color:#ffd24a">发放金币 550k</div>
@@ -2684,25 +2707,38 @@ function bindModal() {
     const n = +b.dataset.lotDraw;
     const got = doLottery(n);
     if (!got) return;
-    // 在转盘下方展示结果
-    const box = body.querySelector('#lotResult');
-    if (box) {
-      const rows = got.map(g => `<div class="lr-row" style="color:${g.color}">${g.ok ? '🎁' : '⚠'} ${g.name}</div>`).join('');
-      box.innerHTML = `<div class="lr-title">本次获得</div>${rows}`;
-      box.classList.add('got');
+
+    // 圆盘旋转：让中奖扇区停在正上方指针处
+    const L = DATA.LOTTERY, seg = 360 / L.prizes.length;
+    const idx = Math.max(0, L.prizes.findIndex(z => z.id === got[0].id));
+    const target = 360 * 6 - (idx * seg + seg / 2);
+    const wheel = body.querySelector('#lotWheel');
+    if (wheel) {
+      wheel.style.transition = 'transform 2.2s cubic-bezier(.16,.84,.28,1)';
+      wheel.style.transform = `rotate(${target}deg)`;
     }
-    const best = got.find(g => g.name.indexOf('圣物') >= 0);
-    if (best) { bigAnnounce('🎉 抽中圣物：' + best.name, '#ffd24a'); if (typeof Sfx !== 'undefined') Sfx.play('lvlup'); }
-    else toast(`抽奖完成：${got.map(g => g.name).join('、')}`);
-    // 刷新按钮可用状态与凭证数
-    const tokEl = body.querySelector('.lot-tok b');
-    if (tokEl) tokEl.textContent = fmt(G.player.materials.bossToken || 0);
-    const L = DATA.LOTTERY, tok = G.player.materials.bossToken || 0;
-    body.querySelectorAll('[data-lot-draw]').forEach(x => {
-      const need = +x.dataset.lotDraw === 10 ? L.cost10 : L.cost1;
-      x.disabled = tok < need;
-    });
-    saveGame();
+
+    const box = body.querySelector('#lotResult');
+    const render = () => {
+      if (box) {
+        const rows = got.map(g => `<div class="lr-row" style="color:${g.color}">${g.ok ? '🎁' : '⚠'} ${g.name}</div>`).join('');
+        box.innerHTML = `<div class="lr-title">本次获得</div>${rows}`;
+        box.classList.add('got');
+      }
+      const best = got.find(g => g.name.indexOf('圣物') >= 0);
+      if (best) { bigAnnounce('🎉 抽中圣物：' + best.name, '#ffd24a'); if (typeof Sfx !== 'undefined') Sfx.play('lvlup'); }
+      else toast(`抽奖完成：${got.map(g => g.name).join('、')}`);
+      const tokEl = body.querySelector('.lot-tok b');
+      if (tokEl) tokEl.textContent = fmt(G.player.materials.bossToken || 0);
+      const tok = G.player.materials.bossToken || 0;
+      body.querySelectorAll('[data-lot-draw]').forEach(x => {
+        x.disabled = tok < (+x.dataset.lotDraw === 10 ? L.cost10 : L.cost1);
+      });
+      saveGame();
+    };
+
+    if (box) box.innerHTML = '<div class="lr-hint">转盘旋转中…</div>';
+    setTimeout(render, 2300);
   });
   body.querySelectorAll('[data-mat-close]').forEach(b => b.onclick = () => closeModal());
   body.querySelectorAll('[data-mail-claim-all]').forEach(b => b.onclick = () => {
@@ -2731,6 +2767,14 @@ function bindModal() {
     mailDelete(G.player, +b.dataset.mailDel);
     saveGame(); mailRefreshDot();
     openModal('mail', '邮箱', mailHtml());
+  });
+  body.querySelectorAll('[data-dbg-token]').forEach(b => b.onclick = () => {
+    const p = G.player;
+    p.materials.bossToken = (p.materials.bossToken || 0) + 1000;
+    saveGame();
+    toast('已发放 BOSS击杀凭证 ×1000');
+    logMsg('🛠 调试：发放 BOSS击杀凭证 ×1000', 'loot');
+    openModal('debug', '调试面板 · N', debugHtml());
   });
   body.querySelectorAll('[data-dbg-gear]').forEach(b => b.onclick = () => {
     const [cl, q] = b.dataset.dbgGear.split('|');

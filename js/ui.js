@@ -1196,47 +1196,90 @@ function itemDetailHtml(id, from) {
   </div>`;
 }
 
-/* ---------------- 特戒强化 ---------------- */
+/* ---------------- 特戒强化 · 二级：选择特戒 ---------------- */
 function ringUpHtml() {
   const p = G.player;
   const pool = ringMergeList(p);
-  if (!pool.length) {
-    return `<div style="padding:20px;text-align:center;color:#8f8570">
-      还没有可用于合成的特戒。<br>特戒来自 BOSS 掉落与首杀奖励。</div>
-      <div class="idt-actions" style="margin-top:14px"><button data-act-craft>返回锻造台</button></div>`;
-  }
-  // 按 (ringKey, star) 分组
-  const groups = {};
+
+  // 统计每种特戒的数量与最高星
+  const stat = {};
+  Object.keys(DATA.SPECIAL_RINGS).forEach(k => { stat[k] = { n: 0, maxStar: 0 }; });
   pool.forEach(x => {
-    const k = x.ring.ringKey + '|' + (x.ring.star || 0);
-    (groups[k] = groups[k] || []).push(x);
+    const k = x.ring.ringKey;
+    if (!stat[k]) stat[k] = { n: 0, maxStar: 0 };
+    stat[k].n++;
+    stat[k].maxStar = Math.max(stat[k].maxStar, x.ring.star || 0);
   });
 
   let html = `<div style="font-size:11.5px;color:#8f8570;margin-bottom:10px">
-    规则：<b style="color:#ff8a8a">2 枚同款同星</b> → 合成 1 枚 <b>+1 星</b>，最高 5 星。<br>
-    每星让特戒效果 <b style="color:#ffd24a">+50%</b>（5 星 = 3.5 倍）。
-  </div><div class="npc-list">`;
+    选择要强化的特戒。规则：<b style="color:#ff8a8a">2 枚同款同星</b> → 合成 <b>+1 星</b>，最高 5 星，每星效果 <b style="color:#ffd24a">+50%</b>。
+  </div><div class="ring-pick">`;
 
-  Object.keys(groups).forEach(gk => {
-    const arr = groups[gk];
-    const r = arr[0].ring;
-    const star = r.star || 0;
-    const can = arr.length >= 2 && star < RING_MAX_STAR;
-    const def = DATA.SPECIAL_RINGS[r.ringKey];
-    const effTxt = Object.keys(def.effect).map(k => effectText(k, def.effect[k] * ringStarMul(star))).join('；');
-    html += `<div class="npc-row" style="border-color:${star ? '#ff3b3b' : '#4a3d28'}">
-      <div style="flex:1">
-        <div class="nr-name" style="color:#ff8a8a">
-          ${DATA.SPECIAL_RINGS[r.ringKey].name} ${'★'.repeat(star)}${'☆'.repeat(RING_MAX_STAR - star)}
-          <span style="font-size:10px;color:#8f8570">×${arr.length}</span></div>
-        <div class="nr-info" style="font-size:10px">${effTxt}</div>
+  Object.keys(DATA.SPECIAL_RINGS).forEach(k => {
+    const def = DATA.SPECIAL_RINGS[k];
+    const st = stat[k] || { n: 0, maxStar: 0 };
+    const have = st.n > 0;
+    html += `<div class="ring-card ${have ? '' : 'empty'}" data-ring-pick="${k}">
+      <span class="rc-ic">${iconTag('ring_' + (k === 'exp' ? 'exp' : k), 40)}</span>
+      <div class="rc-body">
+        <div class="rc-name" style="color:#ff8a8a">${def.name}</div>
+        <div class="rc-sub">${st.maxStar ? '最高 ' + st.maxStar + '★' : '未拥有'}</div>
+        <div class="rc-cnt">持有 <b>${st.n}</b> 枚</div>
       </div>
-      <button data-ring-merge="${r.ringKey}" data-ring-star="${star}" ${can ? '' : 'disabled'}>
-        ${star >= RING_MAX_STAR ? '已满星' : (arr.length >= 2 ? '合成 ' + (star + 1) + ' 星' : '数量不足')}
-      </button></div>`;
+      <span class="rc-arrow">›</span>
+    </div>`;
   });
 
   html += `</div><div class="idt-actions" style="margin-top:12px">
+    <button data-act-craft>返回锻造台</button></div>`;
+  return html;
+}
+
+/* ---------------- 特戒强化 · 三级：某个特戒的 1~5 星 ---------------- */
+function ringStarHtml(ringKey) {
+  const p = G.player;
+  const def = DATA.SPECIAL_RINGS[ringKey];
+  if (!def) return ringUpHtml();
+
+  const pool = ringMergeList(p).filter(x => x.ring.ringKey === ringKey);
+  const cnt = {};
+  pool.forEach(x => { const st = x.ring.star || 0; cnt[st] = (cnt[st] || 0) + 1; });
+
+  const baseEff = Object.keys(def.effect).map(k => effectText(k, def.effect[k])).join('；');
+
+  let html = `<div class="ring-detail-head">
+    <span>${iconTag('ring_exp', 46)}</span>
+    <div>
+      <div class="rdh-name" style="color:#ff8a8a">${def.name}</div>
+      <div class="rdh-sub">基础效果：${baseEff}</div>
+      <div class="rdh-sub">持有合计 <b style="color:#ffd24a">${pool.length}</b> 枚</div>
+    </div>
+  </div>`;
+
+  html += '<div class="star-list">';
+  for (let star = 1; star <= RING_MAX_STAR; star++) {
+    const src = star - 1;                       // 用 src 星合成 star 星
+    const need = 2;
+    const have = cnt[src] || 0;
+    const can = have >= need;
+    const effMul = ringStarMul(star);
+    const effTxt = Object.keys(def.effect).map(k => effectText(k, def.effect[k] * effMul)).join('；');
+
+    html += `<div class="star-row ${can ? 'can' : ''}">
+      <div class="sr-star">${'★'.repeat(star)}${'☆'.repeat(RING_MAX_STAR - star)}</div>
+      <div class="sr-body">
+        <div class="sr-need">需要 <b>${src}★ × ${need}</b>　持有 <b class="${can ? 'ok' : 'no'}">${have}</b></div>
+        <div class="sr-eff">${effTxt}</div>
+      </div>
+      <button data-ring-merge="${ringKey}" data-ring-star="${src}" ${can ? '' : 'disabled'}>
+        ${can ? '合成 ' + star + '★' : '材料不足'}
+      </button>
+    </div>`;
+  }
+  html += '</div>';
+
+  html += `<div class="idt-actions" style="margin-top:12px">
+    <button data-ring-back="1">返回特戒列表</button>
     <button data-act-craft>返回锻造台</button></div>`;
   return html;
 }
@@ -2022,13 +2065,22 @@ function bindModal() {
   body.querySelectorAll('[data-act-craft]').forEach(el => el.onclick = () => {
     openModal('craft', '锻造台', craftHtml());
   });
+  body.querySelectorAll('[data-ring-pick]').forEach(el => el.onclick = () => {
+    const k = el.dataset.ringPick;
+    Sfx.play('click');
+    openModal('ringup', '特戒强化 · ' + DATA.SPECIAL_RINGS[k].name, ringStarHtml(k));
+  });
+  body.querySelectorAll('[data-ring-back]').forEach(el => el.onclick = () => {
+    openModal('ringup', '特戒强化', ringUpHtml());
+  });
   body.querySelectorAll('[data-ring-merge]').forEach(el => el.onclick = () => {
-    const r = mergeRings(G.player, el.dataset.ringMerge, +el.dataset.ringStar);
+    const key = el.dataset.ringMerge, src = +el.dataset.ringStar;
+    const r = mergeRings(G.player, key, src);
     if (!r.ok) { toast(r.msg); return; }
     Sfx.play('lvlup');
     toast(`合成成功：${r.ring.name}`);
     saveGame();
-    openModal('ringup', '特戒强化', ringUpHtml());
+    openModal('ringup', '特戒强化 · ' + DATA.SPECIAL_RINGS[key].name, ringStarHtml(key));
   });
   body.querySelectorAll('[data-mat]').forEach(el => {
     el.onclick = () => {

@@ -1170,3 +1170,49 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   .fh-mid{order:-1}
   #enhPortrait{width:76px;height:92px}
 }
+
+/* ============ 特戒强化 · 二级：选择特戒 ============ */
+.ring-pick{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.ring-card{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:4px;
+  cursor:pointer;transition:all .14s;
+  background:linear-gradient(180deg,rgba(58,20,20,.85),rgba(18,6,6,.94));
+  border:1px solid #ff3b3b;box-shadow:0 0 0 1px rgba(255,59,59,.25)}
+.ring-card:hover{border-color:#ff8a8a;box-shadow:0 0 16px rgba(255,59,59,.55);transform:translateY(-1px)}
+.ring-card.empty{opacity:.42;border-color:#4a3d28;box-shadow:none;
+  background:linear-gradient(180deg,rgba(34,28,18,.9),rgba(10,8,4,.95))}
+.rc-body{flex:1;min-width:0}
+.rc-name{font-size:13px;font-weight:700;letter-spacing:.06em}
+.rc-sub{font-size:10px;color:#9a907a;margin-top:1px}
+.rc-cnt{font-size:10.5px;color:#c8bfa8}
+.rc-cnt b{color:#ffd24a}
+.rc-arrow{font-size:20px;color:#8a6d3f}
+
+/* ============ 特戒强化 · 三级：1~5 星 ============ */
+.ring-detail-head{display:flex;gap:12px;align-items:center;padding:10px;margin-bottom:10px;
+  border-radius:4px;background:rgba(58,20,20,.4);border:1px solid rgba(255,59,59,.35)}
+.rdh-name{font-family:var(--serif);font-size:16px;font-weight:700}
+.rdh-sub{font-size:10.5px;color:#9a907a;margin-top:2px}
+.star-list{display:flex;flex-direction:column;gap:7px}
+.star-row{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:4px;
+  background:linear-gradient(180deg,rgba(34,28,18,.92),rgba(10,8,4,.96));
+  border:1px solid #4a3d28}
+.star-row.can{border-color:#ff3b3b;box-shadow:0 0 10px rgba(255,59,59,.28)}
+.sr-star{font-size:14px;color:#ffd24a;letter-spacing:1px;min-width:76px;
+  text-shadow:0 0 8px rgba(255,210,74,.6)}
+.sr-body{flex:1;min-width:0}
+.sr-need{font-size:11.5px;color:#c8bfa8}
+.sr-need b{color:#ffd24a}
+.sr-need b.ok{color:#5fdc4a}
+.sr-need b.no{color:#ff6b5a}
+.sr-eff{font-size:10px;color:#9a907a;margin-top:2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.star-row button{flex:0 0 auto;padding:7px 12px;font-size:11.5px;border-radius:3px;cursor:pointer;
+  color:#ffe6a8;border:1px solid var(--bronze);
+  background:linear-gradient(180deg,rgba(58,47,28,.96),rgba(16,12,7,.98))}
+.star-row button:hover:not([disabled]){border-color:#ff8a8a;color:#ff8a8a}
+.star-row button[disabled]{opacity:.4;cursor:not-allowed}
+@media (max-width:560px){
+  .ring-pick{grid-template-columns:1fr}
+  .star-row{flex-wrap:wrap}
+  .sr-eff{white-space:normal}
+}

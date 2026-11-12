@@ -1275,6 +1275,16 @@ function debugHtml() {
       <button data-dbg-toggle="fastSpawn" ${d.fastSpawn ? 'style="border-color:#5fdc4a;color:#b9ffb0"' : ''}>${d.fastSpawn ? '关闭' : '开启'}</button></div>
 
     <div class="npc-row"><div>
+      <div class="nr-name" style="color:#ff3b3b">获取特戒 ×2（每种）</div>
+      <div class="nr-info">6 种特戒各发 2 枚，用于测试特戒合成升星</div></div>
+      <button data-dbg-rings="2" style="border-color:#ff3b3b;color:#ff8a8a">发放</button></div>
+
+    <div class="npc-row"><div>
+      <div class="nr-name" style="color:#ff3b3b">获取特戒 ×8（每种）</div>
+      <div class="nr-info">每种 8 枚，够合成到 3 星</div></div>
+      <button data-dbg-rings="8" style="border-color:#ff3b3b;color:#ff8a8a">发放</button></div>
+
+    <div class="npc-row"><div>
       <div class="nr-name" style="color:#ffb347">攻速加强（平A ×6 速度）</div>
       <div class="nr-info">开启后普通攻击冷却缩短到 1/6，箭雨一样快　当前：${tag(d.fastAtk)}</div></div>
       <button data-dbg-toggle="fastAtk" ${d.fastAtk ? 'style="border-color:#5fdc4a;color:#b9ffb0"' : ''}>${d.fastAtk ? '关闭' : '开启'}</button></div>
@@ -2051,6 +2061,21 @@ function bindModal() {
   });
   body.querySelectorAll('[data-buy-relic]').forEach(el => el.onclick = () => {
     buyRelic(el.dataset.buyRelic);
+  });
+  body.querySelectorAll('[data-dbg-rings]').forEach(b => b.onclick = () => {
+    const n = +b.dataset.dbgRings || 1;
+    const p = G.player;
+    let given = 0;
+    Object.keys(DATA.SPECIAL_RINGS).forEach(k => {
+      for (let i = 0; i < n; i++) {
+        equipSpecialRing(p, makeRing(DATA.SPECIAL_RINGS[k], k));
+        given++;
+      }
+    });
+    recalcStats(p); saveGame();
+    toast(`已发放 ${given} 枚特戒（${Object.keys(DATA.SPECIAL_RINGS).length} 种 × ${n}）`);
+    logMsg(`🛠 调试：发放 ${given} 枚特戒`, 'loot');
+    openModal('debug', '调试面板 · N', debugHtml());
   });
   body.querySelectorAll('[data-dbg-toggle]').forEach(b => b.onclick = () => {
     const k = b.dataset.dbgToggle;

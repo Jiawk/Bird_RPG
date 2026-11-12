@@ -805,28 +805,6 @@ function isWorseThanEquipped(p, it) {
 }
 
 /* 一键出售劣质装备，返回卖出件数与金币 */
-/* 打怪升技能：每 2000 只怪升 1 级（可跨级，最多 Lv.5） */
-function gainSkillKill(p, amount) {
-  const cls = DATA.CLASSES[p.cls];
-  const keys = [cls.keymap.q, cls.keymap.w, cls.keymap.e, cls.keymap.r, cls.keymap.d];
-  if (!p.skillKills) p.skillKills = {};
-  const ups = [];
-  for (const k of keys) {
-    const lv = p.skills[k] || 1;
-    if (lv >= 5) continue;
-    let cur = (p.skillKills[k] || 0) + amount;
-    while (cur >= DATA.SKILL_LV_KILLS && (p.skills[k] || 1) < 5) {
-      cur -= DATA.SKILL_LV_KILLS;
-      p.skills[k] = (p.skills[k] || 1) + 1;
-      ups.push({ key: k, lv: p.skills[k] });
-    }
-    if ((p.skills[k] || 1) >= 5) cur = 0;   // 满级后不再累计
-    p.skillKills[k] = cur;
-  }
-  if (ups.length) recalcStats(p);
-  return ups;
-}
-
 /* 金币升级技能等级（Lv.1 → Lv.5） */
 function skillLvCost(lv) {
   const i = Math.max(0, (lv || 1) - 1);
@@ -840,7 +818,6 @@ function upgradeSkillGold(p, key) {
   if (p.gold < cost) return { ok:false, msg:`金币不足（需 ${fmt(cost)}）` };
   p.gold -= cost;
   p.skills[key] = lv + 1;
-  if (p.skillKills) p.skillKills[key] = 0;
   recalcStats(p);
   return { ok:true, lv: p.skills[key], cost };
 }

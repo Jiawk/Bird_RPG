@@ -1146,6 +1146,38 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   .author-tag{font-size:8.5px;padding:1px 8px 2px}
 }
 
+/* ============ 强化页：左4 - 中人物 - 右4 ============ */
+.fh-wrap{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;
+  margin:8px 0 4px;padding:10px 6px;border-radius:3px;
+  background:linear-gradient(170deg,rgba(40,33,20,.55),rgba(12,9,5,.75));
+  border:1px solid #4a3d28}
+.fh-col{display:flex;flex-direction:column;gap:6px}
+.fh-slot{position:relative;display:flex;align-items:center;gap:7px;padding:5px 7px;
+  border-radius:3px;border:1px solid #4a3d28;cursor:pointer;transition:all .12s;
+  background:linear-gradient(180deg,rgba(34,28,18,.9),rgba(10,8,4,.95))}
+.fh-slot:hover{border-color:#d4af37;box-shadow:0 0 10px rgba(212,175,55,.35)}
+.fh-slot.empty{opacity:.4;cursor:default}
+.fh-slot.empty:hover{border-color:#4a3d28;box-shadow:none}
+.fh-nm{font-size:10.5px;color:#e8e0cc;flex:1;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.fh-enh{position:absolute;right:5px;top:3px;font-size:9.5px;color:#ffd24a;font-weight:700}
+.fh-sub{font-size:9px;color:#8f8570}
+.fh-ph{font-size:16px;color:#5a5348}
+.fh-mid{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  padding:0 6px}
+#enhPortrait{width:92px;height:110px;border-radius:3px;
+  border:1px solid var(--bronze);background:#0b0d10;
+  box-shadow:inset 0 0 14px rgba(0,0,0,.8)}
+.fh-name{font-family:var(--serif);font-size:11px;color:#ffd98a;margin-top:3px;white-space:nowrap}
+.fh-lv{font-size:10px;color:#9a907a}
+@media (max-width:560px){
+  .fh-wrap{grid-template-columns:1fr;gap:8px}
+  .fh-col{flex-direction:row;flex-wrap:wrap;justify-content:center}
+  .fh-slot{flex:1 1 44%;min-width:0}
+  .fh-mid{order:-1}
+  #enhPortrait{width:76px;height:92px}
+}
+
 </style>
 </head>
 <body>
@@ -5361,6 +5393,10 @@ function openModal(key, title, html) {
   $('modal').classList.remove('hidden');
   bindModal();
   if (key === 'char') requestAnimationFrame(drawCharPortrait);
+  if (key === 'enhance') requestAnimationFrame(() => {
+    const cv = document.getElementById('enhPortrait');
+    if (cv && cv.getContext) drawCharPortraitTo(cv);
+  });
 }
 function closeModal() {
   if (typeof Sfx !== 'undefined') Sfx.play('close');
@@ -5378,8 +5414,7 @@ function toggleModal(key, title, htmlFn) {
 }
 
 /* 角色面板立绘：把行走图放大画进 canvas */
-function drawCharPortrait() {
-  const cv = document.getElementById('charPortrait');
+function drawCharPortraitTo(cv) {
   if (!cv) return;
   const ctx = cv.getContext('2d');
   const p = G.player;
@@ -5399,6 +5434,10 @@ function drawCharPortrait() {
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(IMG.units, ci * 128 + frame * U_FRAME_W, 0, U_FRAME_W, U_FRAME_H,
                 (cv.width - sw) / 2, cv.height - sh - 2, sw, sh);
+}
+
+function drawCharPortrait() {
+  drawCharPortraitTo(document.getElementById('charPortrait'));
 }
 
 /* 技能图标 tag */
@@ -6450,23 +6489,38 @@ function matBar(p) {
 /* 第一步：锻造台 —— 选择要强化的装备（身上 + 背包） */
 function enhanceHtml() {
   const p = G.player;
+  const cls = DATA.CLASSES[p.cls], race = DATA.RACES[p.race];
   let html = matBar(p);
-  html += '<div class="col-title" style="margin:6px 0 8px">身上装备 · 点击选择</div>';
-  html += '<div class="forge-grid">';
-  for (const sk in DATA.SLOTS) {
-    if (sk.indexOf('ring_') === 0) continue;   // 特戒不走装备强化（改用特戒强化升星）
+
+  // ---- 身上装备：左右各 4 格 + 中间人物（与 C 面板一致）----
+  const eqSlot = (sk) => {
     const it = p.equip[sk];
     const lv = it ? (it.enh || 0) : 0;
-    html += `<div class="forge-slot${it ? '' : ' empty'}" ${it ? `data-enh-pick="${it.id}"` : ''}>
-      <span class="fs-slot">${DATA.SLOTS[sk].name}</span>
-      ${iconTag(sk, 42)}
-      ${it ? `<span class="fs-enh">+${lv}</span>` : ''}
-      <span class="fs-nm" style="${it ? 'color:' + it.color : 'color:#5a5348'}">${it ? it.name.slice(0, 6) : '未装备'}</span>
-    </div>`;
-  }
+    if (!it) {
+      return `<div class="fh-slot empty">
+        <span class="fh-nm">${DATA.SLOTS[sk].name}</span>
+        <span class="fh-ph">—</span>
+        <span class="fh-sub">未装备</span></div>`;
+    }
+    return `<div class="fh-slot" data-enh-pick="${it.id}" style="border-color:${it.color}">
+      ${iconTag(sk, 40, it.wtype, it.relicKey)}
+      <span class="fh-enh">+${lv}</span>
+      <span class="fh-nm" style="color:${it.color}">${it.name.slice(0, 6)}</span>
+      <span class="fh-sub">${DATA.SLOTS[sk].name}</span></div>`;
+  };
+
+  html += '<div class="fh-wrap">';
+  html += '<div class="fh-col">' + ['weapon','helm','chest','legs'].map(eqSlot).join('') + '</div>';
+  html += `<div class="fh-mid">
+    <canvas id="enhPortrait" width="92" height="110"></canvas>
+    <div class="fh-name">${race.name} · ${cls.name}</div>
+    <div class="fh-lv">Lv.${p.level}</div>
+  </div>`;
+  html += '<div class="fh-col">' + ['boots','neck','ring','trinket'].map(eqSlot).join('') + '</div>';
   html += '</div>';
 
-  const bagItems = p.bag.filter(it => it.type !== 'potion');
+  // ---- 背包装备 ----
+  const bagItems = p.bag.filter(it => it.type !== 'potion' && it.type !== 'book' && it.slot);
   html += `<div class="col-title" style="margin:14px 0 8px">背包装备（${bagItems.length}）</div>`;
   if (!bagItems.length) {
     html += '<div style="color:#6b6558;font-size:12px;padding:6px">背包里没有装备</div>';
@@ -6481,9 +6535,10 @@ function enhanceHtml() {
     });
     html += '</div>';
   }
-  html += '<div style="font-size:11px;color:#8f8570;margin-top:12px">+1~+5 必成 · +6~+10 成功率 72% · +11 起 45% 且失败掉一级（保护券可免）· 每 +1 属性 +6%</div>';
+  html += '<div style="font-size:11px;color:#8f8570;margin-top:12px">点上面任意一格选择要强化的装备 · 特戒请用「特戒强化」升星</div>';
   return html;
 }
+
 
 /* 第二步：选中某件装备 → 强化详情 */
 function enhanceItemHtml(id) {

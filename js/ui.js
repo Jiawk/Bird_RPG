@@ -474,6 +474,10 @@ function openModal(key, title, html) {
   $('modal').classList.remove('hidden');
   bindModal();
   if (key === 'char') requestAnimationFrame(drawCharPortrait);
+  if (key === 'enhance') requestAnimationFrame(() => {
+    const cv = document.getElementById('enhPortrait');
+    if (cv && cv.getContext) drawCharPortraitTo(cv);
+  });
 }
 function closeModal() {
   if (typeof Sfx !== 'undefined') Sfx.play('close');
@@ -491,8 +495,7 @@ function toggleModal(key, title, htmlFn) {
 }
 
 /* 角色面板立绘：把行走图放大画进 canvas */
-function drawCharPortrait() {
-  const cv = document.getElementById('charPortrait');
+function drawCharPortraitTo(cv) {
   if (!cv) return;
   const ctx = cv.getContext('2d');
   const p = G.player;
@@ -512,6 +515,10 @@ function drawCharPortrait() {
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(IMG.units, ci * 128 + frame * U_FRAME_W, 0, U_FRAME_W, U_FRAME_H,
                 (cv.width - sw) / 2, cv.height - sh - 2, sw, sh);
+}
+
+function drawCharPortrait() {
+  drawCharPortraitTo(document.getElementById('charPortrait'));
 }
 
 /* 技能图标 tag */
@@ -1563,23 +1570,38 @@ function matBar(p) {
 /* 第一步：锻造台 —— 选择要强化的装备（身上 + 背包） */
 function enhanceHtml() {
   const p = G.player;
+  const cls = DATA.CLASSES[p.cls], race = DATA.RACES[p.race];
   let html = matBar(p);
-  html += '<div class="col-title" style="margin:6px 0 8px">身上装备 · 点击选择</div>';
-  html += '<div class="forge-grid">';
-  for (const sk in DATA.SLOTS) {
-    if (sk.indexOf('ring_') === 0) continue;   // 特戒不走装备强化（改用特戒强化升星）
+
+  // ---- 身上装备：左右各 4 格 + 中间人物（与 C 面板一致）----
+  const eqSlot = (sk) => {
     const it = p.equip[sk];
     const lv = it ? (it.enh || 0) : 0;
-    html += `<div class="forge-slot${it ? '' : ' empty'}" ${it ? `data-enh-pick="${it.id}"` : ''}>
-      <span class="fs-slot">${DATA.SLOTS[sk].name}</span>
-      ${iconTag(sk, 42)}
-      ${it ? `<span class="fs-enh">+${lv}</span>` : ''}
-      <span class="fs-nm" style="${it ? 'color:' + it.color : 'color:#5a5348'}">${it ? it.name.slice(0, 6) : '未装备'}</span>
-    </div>`;
-  }
+    if (!it) {
+      return `<div class="fh-slot empty">
+        <span class="fh-nm">${DATA.SLOTS[sk].name}</span>
+        <span class="fh-ph">—</span>
+        <span class="fh-sub">未装备</span></div>`;
+    }
+    return `<div class="fh-slot" data-enh-pick="${it.id}" style="border-color:${it.color}">
+      ${iconTag(sk, 40, it.wtype, it.relicKey)}
+      <span class="fh-enh">+${lv}</span>
+      <span class="fh-nm" style="color:${it.color}">${it.name.slice(0, 6)}</span>
+      <span class="fh-sub">${DATA.SLOTS[sk].name}</span></div>`;
+  };
+
+  html += '<div class="fh-wrap">';
+  html += '<div class="fh-col">' + ['weapon','helm','chest','legs'].map(eqSlot).join('') + '</div>';
+  html += `<div class="fh-mid">
+    <canvas id="enhPortrait" width="92" height="110"></canvas>
+    <div class="fh-name">${race.name} · ${cls.name}</div>
+    <div class="fh-lv">Lv.${p.level}</div>
+  </div>`;
+  html += '<div class="fh-col">' + ['boots','neck','ring','trinket'].map(eqSlot).join('') + '</div>';
   html += '</div>';
 
-  const bagItems = p.bag.filter(it => it.type !== 'potion');
+  // ---- 背包装备 ----
+  const bagItems = p.bag.filter(it => it.type !== 'potion' && it.type !== 'book' && it.slot);
   html += `<div class="col-title" style="margin:14px 0 8px">背包装备（${bagItems.length}）</div>`;
   if (!bagItems.length) {
     html += '<div style="color:#6b6558;font-size:12px;padding:6px">背包里没有装备</div>';
@@ -1594,9 +1616,10 @@ function enhanceHtml() {
     });
     html += '</div>';
   }
-  html += '<div style="font-size:11px;color:#8f8570;margin-top:12px">+1~+5 必成 · +6~+10 成功率 72% · +11 起 45% 且失败掉一级（保护券可免）· 每 +1 属性 +6%</div>';
+  html += '<div style="font-size:11px;color:#8f8570;margin-top:12px">点上面任意一格选择要强化的装备 · 特戒请用「特戒强化」升星</div>';
   return html;
 }
+
 
 /* 第二步：选中某件装备 → 强化详情 */
 function enhanceItemHtml(id) {

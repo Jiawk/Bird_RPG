@@ -790,6 +790,33 @@ function isWorseThanEquipped(p, it) {
 }
 
 /* 一键出售劣质装备，返回卖出件数与金币 */
+/* 背包整理：按类型分组，组内按战力从高到低 */
+const BAG_TYPE_ORDER = ['weapon','helm','chest','legs','boots','neck','ring','trinket',
+                        'ring_exp','ring_revive','ring_summon','ring_cleave','ring_drop','ring_gather'];
+function bagTypeRank(it) {
+  if (!it) return 99;
+  if (it.ringKey) {
+    const i = BAG_TYPE_ORDER.indexOf('ring_' + it.ringKey);
+    return i >= 0 ? i : 9;
+  }
+  if (it.slot) { const i = BAG_TYPE_ORDER.indexOf(it.slot); return i >= 0 ? i : 8; }
+  if (it.type === 'book') return 20;
+  if (it.type === 'potion') return 21;
+  return 22;
+}
+function sortBag(p) {
+  if (!p.bag || !p.bag.length) return 0;
+  p.bag.sort((a, b) => {
+    const ra = bagTypeRank(a), rb = bagTypeRank(b);
+    if (ra !== rb) return ra - rb;                    // 先按类型
+    const pa = itemPower(a), pb = itemPower(b);
+    if (pb !== pa) return pb - pa;                    // 再按战力降序
+    return (b.star || 0) - (a.star || 0);
+  });
+  p.bagPage = 0;                                       // 回到第一页
+  return p.bag.length;
+}
+
 /* 是否为「低战力武器」：背包里的武器、战力不高于身上那把、且不是红装/特戒 */
 function isLowPowerWeapon(p, it) {
   if (!it || it.slot !== 'weapon' || it.ringKey) return false;

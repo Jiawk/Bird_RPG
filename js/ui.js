@@ -679,6 +679,7 @@ function bagHtml() {
   const idx = DATA.QUALITY.findIndex(q => q.key === (p.equip.weapon?.qKey || ''));
 
   let html = `<div class="bag-toolbar">
+    <button class="sm-btn" data-act="sortBag">整理背包</button>
     <button class="sm-btn danger" data-act="sellWorse">一键出售低战力</button>
     <label class="auto-toggle">
       <input type="checkbox" data-toggle-autosell ${G.autoSell ? 'checked' : ''}>
@@ -2262,6 +2263,13 @@ function bindModal() {
     openModal('bag', '背包 · 装备', bagHtml());
   });
   body.querySelectorAll('[data-act="sellWorse"]').forEach(b => b.onclick = () => handleCommand('sellWorse'));
+  body.querySelectorAll('[data-act="sortBag"]').forEach(b => b.onclick = () => {
+    const n = sortBag(G.player);
+    Sfx.play('click');
+    toast(`已整理 ${n} 件物品（按类型 + 战力降序）`);
+    saveGame();
+    openModal('bag', '背包 · 装备', bagHtml());
+  });
   body.querySelectorAll('[data-act="sellWeapons"]').forEach(b => b.onclick = () => {
     const p = G.player;
     const cnt = p.bag.filter(x => isLowPowerWeapon(p, x)).length;

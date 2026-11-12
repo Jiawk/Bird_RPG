@@ -2818,6 +2818,20 @@ function isWorseThanEquipped(p, it) {
 }
 
 /* 一键出售劣质装备，返回卖出件数与金币 */
+/* 出售背包里所有武器（明确操作，不保护本命/红装） */
+function sellAllWeapons(p) {
+  let n = 0, gold = 0;
+  for (let i = p.bag.length - 1; i >= 0; i--) {
+    const it = p.bag[i];
+    if (!it || it.slot !== 'weapon' || it.ringKey) continue;
+    const q = DATA.QUALITY.find(x => x.key === (it.qKey || it.quality)) || { key:'common' };
+    const price = Math.round((20 + it.ilvl * 8) * Math.pow(2.2, DATA.QUALITY.indexOf(q)));
+    p.gold += price; gold += price; n++;
+    p.bag.splice(i, 1);
+  }
+  return { n, gold };
+}
+
 function sellAllWorse(p) {
   let n = 0, gold = 0;
   for (let i = p.bag.length - 1; i >= 0; i--) {
@@ -3864,6 +3878,14 @@ function pickupDrop(d) {
     p.gold += d.gold;
     floatText(d.x, d.y - 10, `+${d.gold} 金`, '#ffd24a', 15);
   } else if (d.type === 'item') {
+    // 自动出售所有武器
+    if (G.autoSellWeapon && d.item.slot === 'weapon' && !d.item.ringKey) {
+      const q = DATA.QUALITY.find(x => x.key === (d.item.qKey || d.item.quality)) || {key:'common'};
+      const price = Math.round((20 + d.item.ilvl * 8) * Math.pow(2.2, DATA.QUALITY.indexOf(q)));
+      p.gold += price;
+      floatText(d.x, d.y - 10, `+${price} 金`, '#ffd24a', 12);
+      return;
+    }
     // 自动出售：比身上差的直接折现
     if (G.autoSell && isWorseThanEquipped(p, d.item)) {
       const q = DATA.QUALITY.find(x => x.key === d.item.qKey);
@@ -5610,6 +5632,11 @@ function bagHtml() {
       <input type="checkbox" data-toggle-autosell ${G.autoSell ? 'checked' : ''}>
       <span>自动出售低战力</span>
     </label>
+    <button class="sm-btn danger" data-act="sellWeapons">一键出售所有武器</button>
+    <label class="auto-toggle">
+      <input type="checkbox" data-toggle-autosellweapon ${G.autoSellWeapon ? 'checked' : ''}>
+      <span>自动出售所有武器</span>
+    </label>
     <span class="bag-count">${p.bag.length} / ${BAG_MAX}</span>
   </div>`;
 
@@ -7098,6 +7125,22 @@ function bindModal() {
     openModal('bag', '背包 · 装备', bagHtml());
   });
   body.querySelectorAll('[data-act="sellWorse"]').forEach(b => b.onclick = () => handleCommand('sellWorse'));
+  body.querySelectorAll('[data-act="sellWeapons"]').forEach(b => b.onclick = () => {
+    const p = G.player;
+    const cnt = p.bag.filter(x => x && x.slot === 'weapon' && !x.ringKey).length;
+    if (!cnt) { toast('背包里没有武器'); return; }
+    if (!confirm(`确定出售背包里全部 ${cnt} 件武器？不可撤销`)) return;
+    const r = sellAllWeapons(p);
+    toast(`已出售 ${r.n} 件武器，获得 ${fmt(r.gold)} 金`);
+    logMsg(`出售 ${r.n} 件武器 → ${fmt(r.gold)} 金`, 'loot');
+    saveGame();
+    openModal('bag', '背包 · 装备', bagHtml());
+  });
+  body.querySelectorAll('[data-toggle-autosellweapon]').forEach(cb => cb.onchange = () => {
+    G.autoSellWeapon = cb.checked;
+    toast('自动出售所有武器：' + (cb.checked ? '开' : '关'));
+    saveGame();
+  });
   body.querySelectorAll('[data-toggle-autosell]').forEach(cb => cb.onchange = () => {
     G.autoSell = cb.checked; toast(G.autoSell ? '自动出售：开' : '自动出售：关');
   });

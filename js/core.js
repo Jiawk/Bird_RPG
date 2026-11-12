@@ -787,6 +787,20 @@ function isWorseThanEquipped(p, it) {
 }
 
 /* 一键出售劣质装备，返回卖出件数与金币 */
+/* 出售背包里所有武器（明确操作，不保护本命/红装） */
+function sellAllWeapons(p) {
+  let n = 0, gold = 0;
+  for (let i = p.bag.length - 1; i >= 0; i--) {
+    const it = p.bag[i];
+    if (!it || it.slot !== 'weapon' || it.ringKey) continue;
+    const q = DATA.QUALITY.find(x => x.key === (it.qKey || it.quality)) || { key:'common' };
+    const price = Math.round((20 + it.ilvl * 8) * Math.pow(2.2, DATA.QUALITY.indexOf(q)));
+    p.gold += price; gold += price; n++;
+    p.bag.splice(i, 1);
+  }
+  return { n, gold };
+}
+
 function sellAllWorse(p) {
   let n = 0, gold = 0;
   for (let i = p.bag.length - 1; i >= 0; i--) {

@@ -410,6 +410,14 @@ function pickupDrop(d) {
     p.gold += d.gold;
     floatText(d.x, d.y - 10, `+${d.gold} 金`, '#ffd24a', 15);
   } else if (d.type === 'item') {
+    // 自动出售所有武器
+    if (G.autoSellWeapon && d.item.slot === 'weapon' && !d.item.ringKey) {
+      const q = DATA.QUALITY.find(x => x.key === (d.item.qKey || d.item.quality)) || {key:'common'};
+      const price = Math.round((20 + d.item.ilvl * 8) * Math.pow(2.2, DATA.QUALITY.indexOf(q)));
+      p.gold += price;
+      floatText(d.x, d.y - 10, `+${price} 金`, '#ffd24a', 12);
+      return;
+    }
     // 自动出售：比身上差的直接折现
     if (G.autoSell && isWorseThanEquipped(p, d.item)) {
       const q = DATA.QUALITY.find(x => x.key === d.item.qKey);

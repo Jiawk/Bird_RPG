@@ -684,7 +684,8 @@ function bagHtml() {
     } else {
       const dCP = equipDeltaPower(p, it);
       const locked = it.reqLv > p.level;
-      html += `<div class="bag-cell${locked ? ' locked' : ''}" data-item="${it.id}">
+      const _isRing = it.slot && it.slot.indexOf('ring_') === 0;
+      html += `<div class="bag-cell${locked ? ' locked' : ''}${_isRing ? ' relic-ring has' : ''}" data-item="${it.id}">
         ${iconTag(it.slot, 30, it.wtype, it.relicKey)}
         <div class="nm" style="color:${it.color}">${it.name}</div>
         ${!locked && dCP > 0 ? '<span class="up">▲</span>' : ''}
@@ -723,10 +724,13 @@ function charHtml() {
   const cp = combatPower(p), gp = Math.round(gearPower(p));
   const gt = gearTier(p);
 
+  const isRing = sk => sk.indexOf('ring_') === 0;
   const slotHtml = (sk, size) => {
     const it = p.equip[sk];
     const qi = it ? DATA.QUALITY.findIndex(q => q.key === it.qKey) : -1;
-    return `<div class="eq-v ${it ? 'q-border-' + it.qKey : 'none'}" data-slot="${sk}" ${it ? `data-item="${it.id}"` : ''}>
+    const ringCls = isRing(sk) ? (it ? ' relic-ring has' : ' relic-ring') : '';
+    return `<div class="eq-v ${it ? 'q-border-' + it.qKey : 'none'}${ringCls}" data-slot="${sk}" ${it ? `data-item="${it.id}"` : ''}>
+      ${isRing(sk) && it ? '<span class="relic-star">✦</span>' : ''}
       <span class="eq-lv">${it ? it.ilvl : '—'}</span>
       ${iconTag(sk, size || 34)}
       <span class="eq-nm" style="${it ? 'color:' + it.color : ''}">${it ? (it.enh ? '+' + it.enh + ' ' : '') + it.name.slice(0, 5) : DATA.SLOTS[sk].name}</span>

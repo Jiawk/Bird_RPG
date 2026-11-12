@@ -381,12 +381,12 @@ DATA.RING_SLOTS = [
 ];
 
 DATA.SPECIAL_RINGS = {
-  exp:    {name:'经验之戒', color:'#b45cff', effect:{expBonus:0.25}},
-  revive: {name:'复活之戒', color:'#f7e26b', effect:{revive:1}},
-  summon: {name:'召唤之戒', color:'#4ad4ff', effect:{summon:1}},
-  cleave: {name:'切割之戒', color:'#ff5a4a', effect:{cleave:0.08}},
-  drop:   {name:'爆率之戒', color:'#3fd45a', effect:{dropBonus:0.35}},
-  gather: {name:'聚合之戒', color:'#ffd24a', effect:{gather:1}}
+  exp:    {name:'经验之戒', color:'#ff3b3b', effect:{expBonus:0.25}},
+  revive: {name:'复活之戒', color:'#ff3b3b', effect:{revive:1}},
+  summon: {name:'召唤之戒', color:'#ff3b3b', effect:{summon:1}},
+  cleave: {name:'切割之戒', color:'#ff3b3b', effect:{cleave:0.08}},
+  drop:   {name:'爆率之戒', color:'#ff3b3b', effect:{dropBonus:0.35}},
+  gather: {name:'聚合之戒', color:'#ff3b3b', effect:{gather:1}}
 };
 
 /* 每图「简单」难度的推荐战力（按各档装备实测值标定） */

@@ -1047,3 +1047,57 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   .big-announce{font-size:19px;top:28%}
   .hud-perf{left:6px;bottom:330px;width:92px}
 }
+
+/* ============================================================
+   特戒：红色 + 专属特效
+   ============================================================ */
+.relic-ring{
+  position:relative;
+  border-color:#ff3b3b !important;
+  background:
+    radial-gradient(circle at 50% 40%,rgba(255,59,59,.22),transparent 68%),
+    linear-gradient(180deg,rgba(58,20,20,.92),rgba(18,6,6,.96)) !important;
+  box-shadow:0 0 0 1px rgba(255,59,59,.35), inset 0 0 14px rgba(255,59,59,.20) !important;
+  animation:ringPulse 2.4s ease-in-out infinite;
+}
+@keyframes ringPulse{
+  0%,100%{box-shadow:0 0 0 1px rgba(255,59,59,.30), inset 0 0 12px rgba(255,59,59,.16)}
+  50%    {box-shadow:0 0 12px rgba(255,59,59,.75), 0 0 0 2px rgba(255,90,90,.55), inset 0 0 18px rgba(255,59,59,.35)}
+}
+/* 已装备的特戒：更强的红光 */
+.relic-ring.has{
+  animation:ringPulseHot 2.0s ease-in-out infinite;
+  background:
+    radial-gradient(circle at 50% 40%,rgba(255,59,59,.34),transparent 70%),
+    linear-gradient(180deg,rgba(78,18,18,.94),rgba(24,5,5,.97)) !important;
+}
+@keyframes ringPulseHot{
+  0%,100%{box-shadow:0 0 8px rgba(255,59,59,.55), 0 0 0 1px rgba(255,59,59,.55), inset 0 0 16px rgba(255,59,59,.28)}
+  50%    {box-shadow:0 0 20px rgba(255,70,70,.95), 0 0 0 2px rgba(255,120,120,.8), inset 0 0 24px rgba(255,59,59,.5)}
+}
+/* 右上角星标 */
+.relic-star{
+  position:absolute;top:-6px;right:-6px;z-index:3;
+  font-size:11px;line-height:1;color:#fff;
+  text-shadow:0 0 6px #ff3b3b,0 0 12px #ff3b3b,0 1px 2px #000;
+  animation:starSpin 3.6s linear infinite;
+  pointer-events:none;
+}
+@keyframes starSpin{
+  0%{transform:rotate(0) scale(1);opacity:1}
+  50%{transform:rotate(180deg) scale(1.25);opacity:.75}
+  100%{transform:rotate(360deg) scale(1);opacity:1}
+}
+/* 扫光 */
+.relic-ring::after{
+  content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.28) 48%,transparent 62%);
+  background-size:280% 100%;
+  animation:ringShine 3.2s ease-in-out infinite;
+  mix-blend-mode:screen;opacity:.8;
+}
+@keyframes ringShine{
+  0%{background-position:180% 0}
+  55%,100%{background-position:-80% 0}
+}
+.relic-ring .eq-nm{color:#ff8a8a !important;font-weight:700}

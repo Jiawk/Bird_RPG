@@ -1055,6 +1055,60 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   .hud-perf{left:6px;bottom:330px;width:92px}
 }
 
+/* ============================================================
+   特戒：红色 + 专属特效
+   ============================================================ */
+.relic-ring{
+  position:relative;
+  border-color:#ff3b3b !important;
+  background:
+    radial-gradient(circle at 50% 40%,rgba(255,59,59,.22),transparent 68%),
+    linear-gradient(180deg,rgba(58,20,20,.92),rgba(18,6,6,.96)) !important;
+  box-shadow:0 0 0 1px rgba(255,59,59,.35), inset 0 0 14px rgba(255,59,59,.20) !important;
+  animation:ringPulse 2.4s ease-in-out infinite;
+}
+@keyframes ringPulse{
+  0%,100%{box-shadow:0 0 0 1px rgba(255,59,59,.30), inset 0 0 12px rgba(255,59,59,.16)}
+  50%    {box-shadow:0 0 12px rgba(255,59,59,.75), 0 0 0 2px rgba(255,90,90,.55), inset 0 0 18px rgba(255,59,59,.35)}
+}
+/* 已装备的特戒：更强的红光 */
+.relic-ring.has{
+  animation:ringPulseHot 2.0s ease-in-out infinite;
+  background:
+    radial-gradient(circle at 50% 40%,rgba(255,59,59,.34),transparent 70%),
+    linear-gradient(180deg,rgba(78,18,18,.94),rgba(24,5,5,.97)) !important;
+}
+@keyframes ringPulseHot{
+  0%,100%{box-shadow:0 0 8px rgba(255,59,59,.55), 0 0 0 1px rgba(255,59,59,.55), inset 0 0 16px rgba(255,59,59,.28)}
+  50%    {box-shadow:0 0 20px rgba(255,70,70,.95), 0 0 0 2px rgba(255,120,120,.8), inset 0 0 24px rgba(255,59,59,.5)}
+}
+/* 右上角星标 */
+.relic-star{
+  position:absolute;top:-6px;right:-6px;z-index:3;
+  font-size:11px;line-height:1;color:#fff;
+  text-shadow:0 0 6px #ff3b3b,0 0 12px #ff3b3b,0 1px 2px #000;
+  animation:starSpin 3.6s linear infinite;
+  pointer-events:none;
+}
+@keyframes starSpin{
+  0%{transform:rotate(0) scale(1);opacity:1}
+  50%{transform:rotate(180deg) scale(1.25);opacity:.75}
+  100%{transform:rotate(360deg) scale(1);opacity:1}
+}
+/* 扫光 */
+.relic-ring::after{
+  content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.28) 48%,transparent 62%);
+  background-size:280% 100%;
+  animation:ringShine 3.2s ease-in-out infinite;
+  mix-blend-mode:screen;opacity:.8;
+}
+@keyframes ringShine{
+  0%{background-position:180% 0}
+  55%,100%{background-position:-80% 0}
+}
+.relic-ring .eq-nm{color:#ff8a8a !important;font-weight:700}
+
 </style>
 </head>
 <body>
@@ -1614,12 +1668,12 @@ DATA.RING_SLOTS = [
 ];
 
 DATA.SPECIAL_RINGS = {
-  exp:    {name:'经验之戒', color:'#b45cff', effect:{expBonus:0.25}},
-  revive: {name:'复活之戒', color:'#f7e26b', effect:{revive:1}},
-  summon: {name:'召唤之戒', color:'#4ad4ff', effect:{summon:1}},
-  cleave: {name:'切割之戒', color:'#ff5a4a', effect:{cleave:0.08}},
-  drop:   {name:'爆率之戒', color:'#3fd45a', effect:{dropBonus:0.35}},
-  gather: {name:'聚合之戒', color:'#ffd24a', effect:{gather:1}}
+  exp:    {name:'经验之戒', color:'#ff3b3b', effect:{expBonus:0.25}},
+  revive: {name:'复活之戒', color:'#ff3b3b', effect:{revive:1}},
+  summon: {name:'召唤之戒', color:'#ff3b3b', effect:{summon:1}},
+  cleave: {name:'切割之戒', color:'#ff3b3b', effect:{cleave:0.08}},
+  drop:   {name:'爆率之戒', color:'#ff3b3b', effect:{dropBonus:0.35}},
+  gather: {name:'聚合之戒', color:'#ff3b3b', effect:{gather:1}}
 };
 
 /* 每图「简单」难度的推荐战力（按各档装备实测值标定） */
@@ -5405,7 +5459,8 @@ function bagHtml() {
     } else {
       const dCP = equipDeltaPower(p, it);
       const locked = it.reqLv > p.level;
-      html += `<div class="bag-cell${locked ? ' locked' : ''}" data-item="${it.id}">
+      const _isRing = it.slot && it.slot.indexOf('ring_') === 0;
+      html += `<div class="bag-cell${locked ? ' locked' : ''}${_isRing ? ' relic-ring has' : ''}" data-item="${it.id}">
         ${iconTag(it.slot, 30, it.wtype, it.relicKey)}
         <div class="nm" style="color:${it.color}">${it.name}</div>
         ${!locked && dCP > 0 ? '<span class="up">▲</span>' : ''}
@@ -5444,10 +5499,13 @@ function charHtml() {
   const cp = combatPower(p), gp = Math.round(gearPower(p));
   const gt = gearTier(p);
 
+  const isRing = sk => sk.indexOf('ring_') === 0;
   const slotHtml = (sk, size) => {
     const it = p.equip[sk];
     const qi = it ? DATA.QUALITY.findIndex(q => q.key === it.qKey) : -1;
-    return `<div class="eq-v ${it ? 'q-border-' + it.qKey : 'none'}" data-slot="${sk}" ${it ? `data-item="${it.id}"` : ''}>
+    const ringCls = isRing(sk) ? (it ? ' relic-ring has' : ' relic-ring') : '';
+    return `<div class="eq-v ${it ? 'q-border-' + it.qKey : 'none'}${ringCls}" data-slot="${sk}" ${it ? `data-item="${it.id}"` : ''}>
+      ${isRing(sk) && it ? '<span class="relic-star">✦</span>' : ''}
       <span class="eq-lv">${it ? it.ilvl : '—'}</span>
       ${iconTag(sk, size || 34)}
       <span class="eq-nm" style="${it ? 'color:' + it.color : ''}">${it ? (it.enh ? '+' + it.enh + ' ' : '') + it.name.slice(0, 5) : DATA.SLOTS[sk].name}</span>

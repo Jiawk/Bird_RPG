@@ -1307,6 +1307,12 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   font-family:var(--serif);font-size:15px;letter-spacing:.2em;color:#ff8a8a;
   background:rgba(10,8,6,.6);border-radius:3px;pointer-events:none}
 
+/* 图鉴领取按钮 */
+.cx-claim{margin-left:8px;padding:3px 12px;font-size:11px;border-radius:3px;cursor:pointer;
+  color:#ffd98a;border:1px solid #d4af37;
+  background:linear-gradient(180deg,rgba(90,70,24,.95),rgba(26,20,8,.98))}
+.cx-claim:hover{box-shadow:0 0 10px rgba(255,210,74,.6);color:#fff}
+
 </style>
 </head>
 <body>
@@ -2845,16 +2851,31 @@ function consumeRevive(p) {
 }
 
 /* ---------------- BOSS 首杀戒指 ---------------- */
-function grantFirstKillRing(p, bossKey) {
-  const def = DATA.BOSS_RINGS[bossKey];
-  if (!def) return null;
+/* 首杀只记录成就，不再自动发戒；戒指改为在「装备图鉴」里手动领取 */
+function markFirstKill(p, bossKey) {
   if (!p.firstKills) p.firstKills = {};
-  if (p.firstKills[bossKey]) return null;
+  if (p.firstKills[bossKey]) return false;
   p.firstKills[bossKey] = true;
-  const ringDef = DATA.SPECIAL_RINGS[def.ring];
-  const ring = makeRing(ringDef, def.ring);
-  equipSpecialRing(p, ring);
-  return ring;
+  return true;
+}
+
+function ringClaimed(p, bossKey) {
+  return !!(p.ringClaimed && p.ringClaimed[bossKey]);
+}
+
+/* 领取首杀戒指 → 进背包（玩家需自己穿戴） */
+function claimFirstKillRing(p, bossKey) {
+  const def = DATA.BOSS_RINGS[bossKey];
+  if (!def) return { ok:false, msg:'无此奖励' };
+  if (!p.firstKills || !p.firstKills[bossKey]) return { ok:false, msg:'尚未首杀该 BOSS' };
+  if (ringClaimed(p, bossKey)) return { ok:false, msg:'该奖励已领取' };
+  if (!p.ringClaimed) p.ringClaimed = {};
+  p.ringClaimed[bossKey] = true;
+  const ring = makeRing(DATA.SPECIAL_RINGS[def.ring], def.ring);
+  const ok = addToBag(p, ring);
+  if (!ok) { p.ringClaimed[bossKey] = false; return { ok:false, msg:'背包已满' }; }
+  recalcStats(p);
+  return { ok:true, ring };
 }
 
 /* ---------------- 职业套装 ---------------- */
@@ -5528,12 +5549,12 @@ function onMonsterKilled(m) {
   }
 
   // ---- BOSS 首杀戒指 ----
-  if (m.isBoss && m.kind && DATA.BOSS_RINGS[m.kind] && !(p.firstKills || {})[m.kind]) {
-    const ring = grantFirstKillRing(p, m.kind);
-    if (ring) {
-      bigAnnounce(`🏆 首杀 · ${ring.name}`, ring.color || '#ffd24a');
-      toast(`🏆 首杀成就：获得【${ring.name}】`);
-      logMsg(`🏆 首杀 ${m.name} → ${ring.name}（${ring.effectDesc}）`, 'level');
+  if (m.isBoss && m.kind && DATA.BOSS_RINGS[m.kind]) {
+    if (markFirstKill(p, m.kind)) {
+      const rn = DATA.SPECIAL_RINGS[DATA.BOSS_RINGS[m.kind].ring].name;
+      bigAnnounce(`🏆 首杀 · ${rn} 可领取`, '#ffd24a');
+      toast(`🏆 首杀成就达成！去「装备图鉴」领取【${rn}】`);
+      logMsg(`🏆 首杀 ${m.name} → 可在装备图鉴领取 ${rn}`, 'level');
       saveGame();
     }
   }
@@ -6746,18 +6767,27 @@ function codexEquipHtml() {
   html += `<div class="col-title" style="margin:14px 0 8px">特戒</div>`;
   html += '<div class="npc-list">';
   DATA.RING_SLOTS.forEach(rs => {
-    const got = !!(p.firstKills && Object.keys(DATA.BOSS_RINGS).some(k => DATA.BOSS_RINGS[k].ring === rs.ring && p.firstKills[k]))
-      || !!(p.equip[rs.slot]);
     const bossKey = Object.keys(DATA.BOSS_RINGS).find(k => DATA.BOSS_RINGS[k].ring === rs.ring);
+    const killed = !!(p.firstKills && bossKey && p.firstKills[bossKey]);
+    const claimed = bossKey ? ringClaimed(p, bossKey) : false;
+    const wearing = !!(p.equip[rs.slot]);
+    const owned = claimed || wearing ||
+      (p.bag || []).some(x => x.ringKey === rs.ring);
+
+    let btn = '';
+    if (killed && !claimed) {
+      btn = `<button class="cx-claim" data-claim-ring="${bossKey}">领取</button>`;
+    }
     html += `<div class="cx-row">
-      <span class="set-dot" style="background:${got ? rs.color : '#3a3020'}"></span>
-      <span class="cx-nm" style="color:${got ? rs.color : '#6b6558'}">${rs.name}</span>
+      <span class="set-dot" style="background:${owned ? rs.color : '#3a3020'}"></span>
+      <span class="cx-nm" style="color:${owned ? rs.color : '#6b6558'}">${rs.name}</span>
       <span style="font-size:10px;color:#8f8570">${bossKey ? DATA.BOSSES[bossKey].name : '—'}</span>
-      <span class="cx-cnt" style="color:${got ? '#5fdc4a' : '#6b6558'}">${got ? '已获得' : '未获得'}</span>
+      <span class="cx-cnt" style="color:${owned ? '#5fdc4a' : killed ? '#ffd24a' : '#6b6558'}">${owned ? '已获得' : killed ? '待领取' : '未获得'}</span>
+      ${btn}
     </div>`;
   });
   html += '</div>';
-  html += `<div style="margin-top:10px;font-size:11px;color:#8f8570">套装仅「地狱」难度掉落（7%）；特戒由 BOSS 掉落或首杀获得</div>`;
+  html += `<div style="margin-top:10px;font-size:11px;color:#8f8570">套装仅「地狱」难度掉落（7%）；首杀后可在此领取特戒（进背包，需自己穿戴）</div>`;
   return html;
 }
 
@@ -7404,6 +7434,16 @@ function bindModal() {
     if (!r.ok) { toast(r.msg); return; }
     toast('已移到背包：' + it.name);
     saveGame(); closeModal();
+  });
+  body.querySelectorAll('[data-claim-ring]').forEach(el => el.onclick = () => {
+    const r = claimFirstKillRing(G.player, el.dataset.claimRing);
+    if (!r.ok) { toast(r.msg); return; }
+    if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
+    toast(`领取成功：${r.ring.name}（已放入背包）`);
+    logMsg(`🎖 领取首杀奖励 ${r.ring.name}`, 'level');
+    bigAnnounce(`💍 ${r.ring.name}`, r.ring.color || '#ff3b3b');
+    saveGame();
+    openModal('codexEquip', '装备图鉴', codexEquipHtml());
   });
   body.querySelectorAll('[data-wh-item]').forEach(el => {
     const p = G.player;

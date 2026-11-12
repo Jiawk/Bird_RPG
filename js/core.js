@@ -685,16 +685,31 @@ function consumeRevive(p) {
 }
 
 /* ---------------- BOSS 首杀戒指 ---------------- */
-function grantFirstKillRing(p, bossKey) {
-  const def = DATA.BOSS_RINGS[bossKey];
-  if (!def) return null;
+/* 首杀只记录成就，不再自动发戒；戒指改为在「装备图鉴」里手动领取 */
+function markFirstKill(p, bossKey) {
   if (!p.firstKills) p.firstKills = {};
-  if (p.firstKills[bossKey]) return null;
+  if (p.firstKills[bossKey]) return false;
   p.firstKills[bossKey] = true;
-  const ringDef = DATA.SPECIAL_RINGS[def.ring];
-  const ring = makeRing(ringDef, def.ring);
-  equipSpecialRing(p, ring);
-  return ring;
+  return true;
+}
+
+function ringClaimed(p, bossKey) {
+  return !!(p.ringClaimed && p.ringClaimed[bossKey]);
+}
+
+/* 领取首杀戒指 → 进背包（玩家需自己穿戴） */
+function claimFirstKillRing(p, bossKey) {
+  const def = DATA.BOSS_RINGS[bossKey];
+  if (!def) return { ok:false, msg:'无此奖励' };
+  if (!p.firstKills || !p.firstKills[bossKey]) return { ok:false, msg:'尚未首杀该 BOSS' };
+  if (ringClaimed(p, bossKey)) return { ok:false, msg:'该奖励已领取' };
+  if (!p.ringClaimed) p.ringClaimed = {};
+  p.ringClaimed[bossKey] = true;
+  const ring = makeRing(DATA.SPECIAL_RINGS[def.ring], def.ring);
+  const ok = addToBag(p, ring);
+  if (!ok) { p.ringClaimed[bossKey] = false; return { ok:false, msg:'背包已满' }; }
+  recalcStats(p);
+  return { ok:true, ring };
 }
 
 /* ---------------- 职业套装 ---------------- */

@@ -1247,6 +1247,27 @@ function settingsHtml() {
   </div>`;
 }
 
+/* ---------------- 材料详情 ---------------- */
+function matDetailHtml(key) {
+  const p = G.player;
+  const M = DATA.MATERIALS[key];
+  if (!M) return '<div style="padding:20px">未知材料</div>';
+  const cnt = (p.materials && p.materials[key]) || 0;
+  const idx = MAT_IDX[key];
+  return `<div class="md-box">
+    <div class="md-head">
+      <span class="ic-sprite" style="width:48px;height:48px;background-size:${48*EQUIP_COUNT}px 48px;background-position:${-idx*48}px 0"></span>
+      <div>
+        <div class="md-name" style="color:${M.color}">${M.name}</div>
+        <div class="md-cnt">持有 <b>${fmt(cnt)}</b> 个 · 自动堆叠</div>
+      </div>
+    </div>
+    <div class="md-sec"><span class="md-tag">作用</span><div>${M.desc || '—'}</div></div>
+    <div class="md-sec"><span class="md-tag use">使用</span><div>${M.use || '—'}</div></div>
+    <div class="md-actions"><button data-mat-close="1">关闭</button></div>
+  </div>`;
+}
+
 /* ---------------- 邮箱 ---------------- */
 function mailHtml() {
   const p = G.player;
@@ -2481,9 +2502,7 @@ function bindModal() {
     el.onclick = () => {
       const k = el.dataset.mat;
       const M = DATA.MATERIALS[k];
-      const cnt = (G.player.materials && G.player.materials[k]) || 0;
-      const extra = M.desc ? `\n${M.desc}` : '';
-      toast(`${M.name}：${cnt} 个${extra}`);
+      openModal('mat', M.name, matDetailHtml(k));
     };
   });
   body.querySelectorAll('[data-potion]').forEach(el => el.onclick = () => {
@@ -2593,6 +2612,7 @@ function bindModal() {
   body.querySelectorAll('[data-buy-relic]').forEach(el => el.onclick = () => {
     buyRelic(el.dataset.buyRelic);
   });
+  body.querySelectorAll('[data-mat-close]').forEach(b => b.onclick = () => closeModal());
   body.querySelectorAll('[data-mail-claim-all]').forEach(b => b.onclick = () => {
     const r = mailClaimAll(G.player);
     if (typeof Sfx !== 'undefined') Sfx.play('loot');

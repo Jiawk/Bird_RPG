@@ -310,16 +310,33 @@ DATA.DIFF_ORDER = ['normal', 'hard', 'hell'];
 
 /* ---------------- 材料（合成史诗装备用） ---------------- */
 DATA.MATERIALS = {
-  iron:   {name:'魔铁锭', color:'#9aa0a6', icon:'▰'},
-  mithril:{name:'秘银矿', color:'#7fb3d5', icon:'▰'},
-  scale:  {name:'龙鳞片', color:'#ff9a2e', icon:'▰'},
-  shard:  {name:'虚空碎片', color:'#b45cff', icon:'▰'},
-  stone:  {name:'强化石',     color:'#9aa0a6', icon:'◆'},
-  protect:{name:'强化保护券', color:'#4a9eff', icon:'◇'},
-  skillT: {name:'技能强化券', color:'#3fd45a', icon:'✦'},
-  breakT: {name:'技能突破券', color:'#b45cff', icon:'✧'},
+  iron:   {name:'魔铁锭', color:'#9aa0a6', icon:'▰',
+    desc:'最常见的打造材料，用于熔铸史诗品质装备。',
+    use:'锻造台（按 T 打开）→ 材料合成装备'},
+  mithril:{name:'秘银矿', color:'#7fb3d5', icon:'▰',
+    desc:'稀有金属，用于熔铸传说品质装备，也是史诗配方的辅料。',
+    use:'锻造台（按 T 打开）→ 材料合成装备'},
+  scale:  {name:'龙鳞片', color:'#ff9a2e', icon:'▰',
+    desc:'巨龙身上剥下的鳞片，传说与神话装备的核心材料；出售神话装备也会返还。',
+    use:'锻造台（按 T 打开）→ 材料合成装备'},
+  shard:  {name:'虚空碎片', color:'#b45cff', icon:'▰',
+    desc:'虚空裂隙中凝结的碎片，神话装备的核心材料；出售神话装备也会返还。',
+    use:'锻造台（按 T 打开）→ 材料合成装备'},
+  stone:  {name:'强化石', color:'#9aa0a6', icon:'◆',
+    desc:'提升装备强化等级所需的消耗品，等级越高消耗越多。',
+    use:'锻造台（按 T 打开）→ 装备强化'},
+  protect:{name:'强化保护券', color:'#4a9eff', icon:'◇',
+    desc:'强化失败时保护装备不掉级。强化到 N 级需要 N+1 张，可使成功率翻倍。',
+    use:'锻造台（按 T 打开）→ 装备强化 → 勾选「使用保护券」'},
+  skillT: {name:'技能强化券', color:'#3fd45a', icon:'✦',
+    desc:'直接提升技能熟练度，让你更快攒满一次突破所需的熟练度。',
+    use:'技能页（按 K 打开）→ 每个技能右侧的「强化券」按钮'},
+  breakT: {name:'技能突破券', color:'#b45cff', icon:'✧',
+    desc:'技能突破层数的门票。突破到 2/3/4/5/6 层分别需要 1/3/5/7/9 张。',
+    use:'技能页（按 K 打开）→ 每个技能右侧的「突破」按钮'},
   bossToken:{name:'BOSS击杀凭证', color:'#ff9a3c', icon:'⬢',
-    desc:'击败 BOSS 获得。可用于兑换神秘物品（内容待定）'}
+    desc:'击败 BOSS 的荣誉证明。可用于兑换神秘物品（内容待定）。',
+    use:'暂无（后续开放神秘兑换）'}
 };
 
 /* 合成配方：3 材料 + 金币 → 指定品质随机部位 */

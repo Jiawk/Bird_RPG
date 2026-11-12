@@ -33,6 +33,8 @@ html = html.replace('<link rel="stylesheet" href="css/style.css">',
 def repl(m):
     src = m.group(1)
     code = io.open(os.path.join(ROOT, src), encoding='utf-8').read()
+    # 内联时必须转义 </script>，否则脚本会被提前截断
+    code = code.replace('</script>', '<\\/script>')
     return '<script>\n/* ===== ' + src + ' ===== */\n' + code + '\n</script>'
 
 html = re.sub(r'<script src="([^"]+)"></script>', repl, html)

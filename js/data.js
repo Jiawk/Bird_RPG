@@ -264,12 +264,12 @@ DATA.CRAFT = [
 
 /* ---------------- 悬赏任务 ---------------- */
 DATA.QUEST_POOL = [
-  {id:'q1', name:'清剿荒野', room:0, need:12, exp:260,  gold:220,  mat:'iron',    matN:2},
-  {id:'q2', name:'矿洞除虫', room:1, need:15, exp:620,  gold:480,  mat:'iron',    matN:3},
-  {id:'q3', name:'击退兽人', room:2, need:18, exp:1400, gold:900,  mat:'mithril', matN:2},
-  {id:'q4', name:'净化亡灵', room:3, need:20, exp:2600, gold:1500, mat:'mithril', matN:3},
-  {id:'q5', name:'封印恶魔', room:4, need:22, exp:4800, gold:2600, mat:'scale',   matN:2},
-  {id:'q6', name:'深渊终战', room:5, need:25, exp:8000, gold:4200, mat:'shard',   matN:1}
+  {id:'q1', name:'清剿荒野', room:0, need:80, exp:260,  gold:220,  mat:'iron',    matN:2},
+  {id:'q2', name:'矿洞除虫', room:1, need:80, exp:620,  gold:480,  mat:'iron',    matN:3},
+  {id:'q3', name:'击退兽人', room:2, need:80, exp:1400, gold:900,  mat:'mithril', matN:2},
+  {id:'q4', name:'净化亡灵', room:3, need:80, exp:2600, gold:1500, mat:'mithril', matN:3},
+  {id:'q5', name:'封印恶魔', room:4, need:80, exp:4800, gold:2600, mat:'scale',   matN:2},
+  {id:'q6', name:'深渊终战', room:5, need:80, exp:8000, gold:4200, mat:'shard',   matN:1}
 ];
 
 /* ---------------- 职业专属套装（每图一套，共 6×4 = 24 套） ---------------- */
@@ -358,8 +358,12 @@ DATA.SKILL_TIER = {
 DATA.TOWER = {
   maxFloor: 20,
   dailyAttempts: 2,
-  hpMul: f => 1 + (f - 1) * 0.62,
-  atkMul: f => 1 + (f - 1) * 0.30,
+  // 适配 60 级版本：以玩家 Lv.51~60 的战力为基准
+  // 20 层时血量 ×8.0、攻击 ×6.0（原为 ×12.8 / ×6.7，重排后更平滑）
+  hpMul:  f => 1 + (f - 1) * 0.37,
+  atkMul: f => 1 + (f - 1) * 0.26,
+  // 塔内怪物等级随层数提升（1 层 = 玩家等级，20 层 = 玩家等级 +19）
+  levelOf: (f, baseLv) => Math.max(1, Math.min(70, (baseLv || 1) + (f - 1))),
   reward: f => ({
     gold: 1200 * f,
     stone: 2 + Math.floor(f / 2),

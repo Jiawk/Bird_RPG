@@ -100,6 +100,7 @@ function makeMonster(kindKey, x, y, isBoss, level, diff, isElite) {
   if (G.tower && G.tower.active) {
     hpMul *= DATA.TOWER.hpMul(G.tower.floor);
     atkMul *= DATA.TOWER.atkMul(G.tower.floor);
+    if (DATA.TOWER.levelOf) level = DATA.TOWER.levelOf(G.tower.floor, G.player ? G.player.level : 1);
     expMul *= 1 + G.tower.floor * 0.15;
   }
   // 精英

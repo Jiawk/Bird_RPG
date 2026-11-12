@@ -1425,3 +1425,15 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .dbg-gear.red{border-color:#ff3b3b;color:#ff9a9a}
 .dbg-gear:hover{box-shadow:0 0 10px rgba(255,255,255,.25)}
 @media (max-width:560px){ .dbg-gear-grid{grid-template-columns:repeat(2,1fr)} }
+
+/* 背包：8 列 × 12 行 */
+.bag-grid-8{grid-template-columns:repeat(8,1fr) !important;gap:6px}
+.bag-grid-8 .bag-cell{aspect-ratio:1}
+.mat-page .bag-cell.mat{cursor:pointer}
+.pg-btn{min-width:auto;padding:5px 12px;white-space:nowrap}
+@media (max-width:900px){
+  .bag-grid-8{grid-template-columns:repeat(6,1fr) !important}
+}
+@media (max-width:620px){
+  .bag-grid-8{grid-template-columns:repeat(4,1fr) !important}
+}

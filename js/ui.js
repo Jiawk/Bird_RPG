@@ -699,6 +699,24 @@ function usePotion() {
 }
 
 /* ---------------- 背包 ---------------- */
+/* 材料背包页：8×12 网格 */
+function matPageHtml() {
+  const p = G.player;
+  const keys = Object.keys(MAT_IDX);
+  let out = '', filled = 0;
+  keys.forEach(k => {
+    const cnt = (p.materials && p.materials[k]) || 0;
+    const M = DATA.MATERIALS[k];
+    out += `<div class="bag-cell mat${cnt ? '' : ' zero'}" data-mat="${k}" title="${M.desc || ''}">
+      <span class="ic-sprite" style="width:38px;height:38px;background-size:${38 * EQUIP_COUNT}px 38px;background-position:${-MAT_IDX[k] * 38}px 0"></span>
+      <div class="nm" style="color:${M.color}">${M.name}</div>
+      <span class="stack">×${cnt}</span></div>`;
+    filled++;
+  });
+  while (filled < MAT_CELLS) { out += '<div class="bag-cell empty">—</div>'; filled++; }
+  return out;
+}
+
 /* 材料格子（堆叠展示，来源仍是 p.materials） */
 function matCellsHtml(count) {
   const p = G.player;
@@ -719,7 +737,7 @@ function matCellsHtml(count) {
 function bagHtml() {
   const p = G.player;
   (p.bag || []).forEach(normalizeSlot);
-  const page = clamp(p.bagPage || 0, 0, BAG_PAGES - 1);
+  const page = clamp(p.bagPage || 0, 0, BAG_PAGES);   // 0/1 装备页，2 材料页
   const start = page * BAG_PAGE_SIZE, end = start + BAG_PAGE_SIZE;
   const idx = DATA.QUALITY.findIndex(q => q.key === (p.equip.weapon?.qKey || ''));
 
@@ -740,16 +758,21 @@ function bagHtml() {
 
   html += '<div class="bag-pager">';
   for (let i = 0; i < BAG_PAGES; i++) {
-    html += `<button class="pg-btn ${i === page ? 'on' : ''}" data-bag-page="${i}">${i + 1}</button>`;
+    html += `<button class="pg-btn ${i === page ? 'on' : ''}" data-bag-page="${i}">装备背包 ${i + 1}</button>`;
   }
-  html += '<span class="pg-tip">背包 ' + BAG_PAGES + ' 页 · 每页 ' + BAG_PAGE_SIZE + ' 格</span></div>';
+  html += `<button class="pg-btn ${page === 2 ? 'on' : ''}" data-bag-page="2">材料背包 1</button>`;
+  html += `<span class="pg-tip">每页 8 列 × 12 行 = ${BAG_PAGE_SIZE} 格</span></div>`;
 
-  // ---- 材料区（堆叠）----
-  const mc = matCellsHtml();
-  html += `<div class="mat-title">材料　<span style="font-size:10px;color:#8f8570">已拥有 ${mc.n} 种 · 可堆叠</span></div>`;
-  html += `<div class="mat-grid">${mc.html}</div>`;
+  // ---- 材料背包页 ----
+  if (page === 2) {
+    html += '<div class="bag-grid bag-grid-8 mat-page">';
+    html += matPageHtml();
+    html += '</div>';
+    html += '<div style="font-size:11px;color:#8f8570;margin-top:10px">材料自动堆叠，不占装备背包格</div>';
+    return html;
+  }
 
-  html += '<div class="bag-grid">';
+  html += '<div class="bag-grid bag-grid-8">';
   for (let i = start; i < end; i++) {
     const it = p.bag[i];
     if (!it) { html += '<div class="bag-cell empty">—</div>'; continue; }

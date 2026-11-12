@@ -289,9 +289,10 @@ function makeItem(slot, ilvl, forcedQuality, preferMagic) {
 }
 
 /* ---------------- 装备 / 背包 ---------------- */
-const BAG_PAGE_SIZE = 24;
-const BAG_PAGES = 6;              // 6 页 = 144 格
-const BAG_MAX = BAG_PAGE_SIZE * BAG_PAGES;
+const BAG_PAGE_SIZE = 96;         // 每页 8 列 × 12 行
+const BAG_PAGES = 2;              // 装备背包 1 / 装备背包 2
+const BAG_MAX = BAG_PAGE_SIZE * BAG_PAGES;   // 192 格
+const MAT_CELLS = 96;             // 材料背包：8 × 12
 
 function equipItem(p, item) {
   normalizeSlot(item);

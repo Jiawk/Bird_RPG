@@ -339,11 +339,18 @@ DATA.ENHANCE = {
 DATA.SKILL_LV_COST = [100000, 200000, 300000, 400000];
 
 DATA.SKILL_TIER = {
-  maxTier: 5,
+  maxTier: 6,
+  breakCost: [1, 3, 5, 7, 9],      // 突破到 2/3/4/5/6 层所需突破券
   needProf: 100,
   tierDmg: 0.08,       // 每层 +8% 伤害
   tierCd: 0.05,        // 每层 -5% 冷却
-  killProf: 1.5,       // 每杀一只怪 +1.5%
+  killProf: 1.5,
+  // 技能等级 Lv 成长
+  lvDmg: 0.20,      // 每级 +20% 伤害
+  lvMana: 0.10,     // 每级 -10% 法力消耗
+  lvRadius: 0.06,   // 每级 +6% 作用范围
+  // 突破层数成长
+  tierCtrl: 0.25,   // 每层 +25% 控制时长       // 每杀一只怪 +1.5%
   ticketProf: 15       // 技能强化券 +15%
 };
 

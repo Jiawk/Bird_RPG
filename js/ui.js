@@ -898,7 +898,10 @@ function skillHtml() {
     const pf = skillProfOf(p, k);
     const pct = (pf.prof / DATA.SKILL_TIER.needProf * 100).toFixed(0);
     const full = pf.prof >= DATA.SKILL_TIER.needProf;
-    const canBreak = full && pf.tier < DATA.SKILL_TIER.maxTier;
+    const breakCost = breakCostOf(pf.tier);
+    const lvFull = lv >= 5;
+    const canBreak = full && lvFull && pf.tier < DATA.SKILL_TIER.maxTier;
+    const breakable = pf.tier < DATA.SKILL_TIER.maxTier;
     const dmgUp = Math.round((DATA.SKILL_TIER.tierDmg * (pf.tier - 1)) * 100);
     const cdDown = Math.round((DATA.SKILL_TIER.tierCd * (pf.tier - 1)) * 100);
     html += `<div class="skill-row ${lv?'learned':''}">
@@ -907,17 +910,20 @@ function skillHtml() {
       <div class="sk-main"><div class="sk-name">${sp.name}
         <small>Lv.${lv}</small>
         <small style="color:#ffd24a">${pf.tier} 层</small>
-        ${dmgUp||cdDown ? `<small style="color:#5fdc4a">+${dmgUp}%伤害 / -${cdDown}%CD</small>` : ''}</div>
+        ${cdDown ? `<small style="color:#5fdc4a">-${cdDown}%CD / +${Math.round((pf.tier-1)*DATA.SKILL_TIER.tierCtrl*100)}%控制</small>` : ''}
+        ${lv>1 ? `<small style="color:#4ad4ff">+${Math.round((lv-1)*DATA.SKILL_TIER.lvDmg*100)}%伤害 / -${Math.round((lv-1)*DATA.SKILL_TIER.lvMana*100)}%耗蓝 / +${Math.round((lv-1)*DATA.SKILL_TIER.lvRadius*100)}%范围</small>` : ''}</div>
       <div class="sk-desc">${sp.desc}　冷却 ${sp.cd}s${sp.cost?'　法力 '+sp.cost:''}</div>
       <div class="prof-bar"><i style="width:${pct}%;background:${full?'#ffd24a':'#5b3fa8'}"></i>
         <span>${pf.prof.toFixed(0)} / ${DATA.SKILL_TIER.needProf}</span></div>
       </div>
       ${canBreak
-        ? `<button class="sk-btn ${(p.materials.breakT||0)>0?'':'lack'}" data-break-skill="${k}">
-             突破 → ${pf.tier+1} 层<br><small>突破券 ${p.materials.breakT||0}/1</small></button>`
-        : (pf.tier >= DATA.SKILL_TIER.maxTier
-            ? `<button class="sk-btn" disabled>已满 5 层</button>`
-            : `<button class="sk-btn" disabled>熟练度未满</button>`)}
+        ? `<button class="sk-btn ${(p.materials.breakT||0)>=breakCost?'':'lack'}" data-break-skill="${k}">
+             突破 → ${pf.tier+1} 层<br><small>突破券 ${p.materials.breakT||0}/${breakCost}</small></button>`
+        : (!breakable
+            ? `<button class="sk-btn" disabled>已满 ${DATA.SKILL_TIER.maxTier} 层</button>`
+            : (!full
+                ? `<button class="sk-btn" disabled>熟练度未满</button>`
+                : `<button class="sk-btn" disabled>需先把技能练到 Lv.5</button>`))}
       ${(function(){
         if (lv >= 5) return `<button class="sk-btn" disabled>已满级 Lv.5</button>`;
         const cost = skillLvCost(lv);
@@ -2421,10 +2427,15 @@ function bindModal() {
   body.querySelectorAll('[data-break-skill]').forEach(b => b.onclick = () => {
     const k = b.dataset.breakSkill;
     const r = breakthrough(G.player, k);
-    toast(r === 'ok' ? `✅ 突破成功！${DATA.SKILLS[k].name} 升到第 ${skillProfOf(G.player,k).tier} 层`
-        : r === 'max' ? '已是最高层（5 层）'
-        : r === 'prof' ? `熟练度未满（${skillProfOf(G.player,k).prof.toFixed(0)}/${DATA.SKILL_TIER.needProf}）`
-        : `❌ 缺少技能突破券（现有 ${G.player.materials.breakT||0} 张）`);
+    const _pf = skillProfOf(G.player, k);
+    const _cost = breakCostOf(_pf.tier - (r === 'ok' ? 1 : 0));
+    toast(r === 'ok'
+        ? `✅ 突破成功！${DATA.SKILLS[k].name} 升到第 ${_pf.tier} 层（技能等级已重置为 Lv.1）`
+        : r === 'max' ? `已是最高层（${DATA.SKILL_TIER.maxTier} 层）`
+        : r === 'prof' ? `熟练度未满（${_pf.prof.toFixed(0)}/${DATA.SKILL_TIER.needProf}）`
+        : r === 'lv' ? '需先把该技能练到 Lv.5 才能突破'
+        : `❌ 突破券不足（需 ${breakCostOf(_pf.tier)} 张，现有 ${G.player.materials.breakT||0} 张）`);
+    if (r === 'ok' && typeof Sfx !== 'undefined') Sfx.play('lvlup');
     openModal('skill', '技能', skillHtml());
   });
   body.querySelectorAll('[data-bag-page]').forEach(b => b.onclick = () => {

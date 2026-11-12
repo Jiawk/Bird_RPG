@@ -183,7 +183,8 @@ function castSkillImpl(key) {
       if (Math.random() < 0.25) Sfx.speak(voiceFor(p));
     }
     const _col = (DATA.SKILL_COLOR && DATA.SKILL_COLOR[key]) || _sp.color || '#ffd24a';
-    const _rad = _sp.radius ? _sp.radius * 42
+    const _rMods = (typeof skillMods === 'function') ? skillMods(p, key) : { radiusMul:1 };
+    const _rad = _sp.radius ? _sp.radius * 42 * _rMods.radiusMul
                : (_sp.kind === 'proj' ? 42 : _sp.kind === 'blink' ? 90 : 110);
 
     // 落点：多段地面 AOE（暴风雪）指向最近敌人，其余以自身为中心
@@ -203,9 +204,12 @@ function castSkillImpl(key) {
   const mul = 1 + (lv - 1) * 0.2;
   const cd = p.cd[key] || 0;
   if (cd > 0) { toast(`${sp.name} 冷却中 ${cd.toFixed(1)}s`); return; }
-  if (p.mp < (sp.cost || 0)) { toast('法力不足'); return; }
-  p.mp -= sp.cost || 0;
-  p.cd[key] = (G.debug && G.debug.noCd) ? 1 : sp.cd;   // 调试：CD 固定 1 秒
+  const _mods = (typeof skillMods === 'function') ? skillMods(p, key)
+              : { dmgMul:1, manaMul:1, radiusMul:1, cdMul:1, ctrlMul:1 };
+  const _cost = Math.max(0, Math.round((sp.cost || 0) * _mods.manaMul));
+  if (p.mp < _cost) { toast('法力不足'); return; }
+  p.mp -= _cost;
+  p.cd[key] = (G.debug && G.debug.noCd) ? 1 : sp.cd * _mods.cdMul;   // 层数降冷却
   p.castAnim = 0.2;
 
   const w = G.world;
@@ -222,10 +226,10 @@ function castSkillImpl(key) {
           burst(ax, ay, acol, 14, 220);
           for (const m of w.monsters) {
             if (!m.alive) continue;
-            if (Math.hypot(m.x - ax, m.y - ay) <= sp.radius * 42 + m.r) {
-              damageMonster(m, p.stats.power * (p.stats.skillMul || 1) * sp.dmg * mul, 'skill');
-              if (sp.freeze) m.frozen = Math.max(m.frozen, sp.freeze);
-              if (sp.root) m.root = Math.max(m.root, sp.root);
+            if (Math.hypot(m.x - ax, m.y - ay) <= sp.radius * 42 * _mods.radiusMul + m.r) {
+              damageMonster(m, p.stats.power * (p.stats.skillMul || 1) * sp.dmg * mul * _mods.dmgMul, 'skill');
+              if (sp.freeze) m.frozen = Math.max(m.frozen, sp.freeze * _mods.ctrlMul);
+              if (sp.root) m.root = Math.max(m.root, sp.root * _mods.ctrlMul);
             }
           }
         });
@@ -239,7 +243,7 @@ function castSkillImpl(key) {
         if (d > sp.range * 32 + m.r) continue;
         const a = Math.atan2(m.y - p.y, m.x - p.x);
         if (Math.abs(normalizeAngle(a - ang)) > sp.arc / 2) continue;
-        damageMonster(m, p.stats.power * (p.stats.skillMul || 1) * sp.dmg * mul, 'skill');
+        damageMonster(m, p.stats.power * (p.stats.skillMul || 1) * sp.dmg * mul * _mods.dmgMul, 'skill');
         if (sp.poison) m.poison = { dps: sp.poison.dps * mul, t: sp.poison.dur };
       }
       burst(p.x + Math.cos(ang) * 40, p.y + Math.sin(ang) * 40, '#b45cff', 10, 180);

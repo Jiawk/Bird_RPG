@@ -1843,11 +1843,18 @@ DATA.ENHANCE = {
 DATA.SKILL_LV_COST = [100000, 200000, 300000, 400000];
 
 DATA.SKILL_TIER = {
-  maxTier: 5,
+  maxTier: 6,
+  breakCost: [1, 3, 5, 7, 9],      // 突破到 2/3/4/5/6 层所需突破券
   needProf: 100,
   tierDmg: 0.08,       // 每层 +8% 伤害
   tierCd: 0.05,        // 每层 -5% 冷却
-  killProf: 1.5,       // 每杀一只怪 +1.5%
+  killProf: 1.5,
+  // 技能等级 Lv 成长
+  lvDmg: 0.20,      // 每级 +20% 伤害
+  lvMana: 0.10,     // 每级 -10% 法力消耗
+  lvRadius: 0.06,   // 每级 +6% 作用范围
+  // 突破层数成长
+  tierCtrl: 0.25,   // 每层 +25% 控制时长       // 每杀一只怪 +1.5%
   ticketProf: 15       // 技能强化券 +15%
 };
 
@@ -2736,15 +2743,38 @@ function useSkillTicket(p) {
 }
 
 /* 突破：满级熟练 + 突破券 */
+/* 突破到下一层需要的突破券 */
+function breakCostOf(tier) {
+  return DATA.SKILL_TIER.breakCost[Math.min(tier - 1, DATA.SKILL_TIER.breakCost.length - 1)];
+}
+
 function breakthrough(p, key) {
   const sp = skillProfOf(p, key);
   if (sp.tier >= DATA.SKILL_TIER.maxTier) return 'max';
   if (sp.prof < DATA.SKILL_TIER.needProf) return 'prof';
-  if ((p.materials.breakT || 0) < 1) return 'ticket';
-  p.materials.breakT -= 1;
+  if ((p.skills[key] || 1) < 5) return 'lv';           // 必须先把技能等级练满 Lv.5
+  const cost = breakCostOf(sp.tier);
+  if ((p.materials.breakT || 0) < cost) return 'ticket';
+  p.materials.breakT -= cost;
   sp.tier += 1;
   sp.prof = 0;
+  p.skills[key] = 1;                                   // 突破后技能等级重置
+  recalcStats(p);
   return 'ok';
+}
+
+/* 技能修正：等级 → 伤害/耗蓝/范围；层数 → 冷却/控制 */
+function skillMods(p, key) {
+  const lv = p.skills[key] || 1;
+  const tier = (p.skillProf && p.skillProf[key]) ? p.skillProf[key].tier : 1;
+  const T = DATA.SKILL_TIER;
+  return {
+    dmgMul:    1 + (lv - 1) * T.lvDmg,
+    manaMul:   Math.max(0.35, 1 - (lv - 1) * T.lvMana),
+    radiusMul: 1 + (lv - 1) * T.lvRadius,
+    cdMul:     Math.max(0.45, 1 - (tier - 1) * T.tierCd),
+    ctrlMul:   1 + (tier - 1) * T.tierCtrl
+  };
 }
 
 /* 特戒颜色（按效果区分） */
@@ -3898,7 +3928,8 @@ function castSkillImpl(key) {
       if (Math.random() < 0.25) Sfx.speak(voiceFor(p));
     }
     const _col = (DATA.SKILL_COLOR && DATA.SKILL_COLOR[key]) || _sp.color || '#ffd24a';
-    const _rad = _sp.radius ? _sp.radius * 42
+    const _rMods = (typeof skillMods === 'function') ? skillMods(p, key) : { radiusMul:1 };
+    const _rad = _sp.radius ? _sp.radius * 42 * _rMods.radiusMul
                : (_sp.kind === 'proj' ? 42 : _sp.kind === 'blink' ? 90 : 110);
 
     // 落点：多段地面 AOE（暴风雪）指向最近敌人，其余以自身为中心
@@ -3918,9 +3949,12 @@ function castSkillImpl(key) {
   const mul = 1 + (lv - 1) * 0.2;
   const cd = p.cd[key] || 0;
   if (cd > 0) { toast(`${sp.name} 冷却中 ${cd.toFixed(1)}s`); return; }
-  if (p.mp < (sp.cost || 0)) { toast('法力不足'); return; }
-  p.mp -= sp.cost || 0;
-  p.cd[key] = (G.debug && G.debug.noCd) ? 1 : sp.cd;   // 调试：CD 固定 1 秒
+  const _mods = (typeof skillMods === 'function') ? skillMods(p, key)
+              : { dmgMul:1, manaMul:1, radiusMul:1, cdMul:1, ctrlMul:1 };
+  const _cost = Math.max(0, Math.round((sp.cost || 0) * _mods.manaMul));
+  if (p.mp < _cost) { toast('法力不足'); return; }
+  p.mp -= _cost;
+  p.cd[key] = (G.debug && G.debug.noCd) ? 1 : sp.cd * _mods.cdMul;   // 层数降冷却
   p.castAnim = 0.2;
 
   const w = G.world;
@@ -3937,10 +3971,10 @@ function castSkillImpl(key) {
           burst(ax, ay, acol, 14, 220);
           for (const m of w.monsters) {
             if (!m.alive) continue;
-            if (Math.hypot(m.x - ax, m.y - ay) <= sp.radius * 42 + m.r) {
-              damageMonster(m, p.stats.power * (p.stats.skillMul || 1) * sp.dmg * mul, 'skill');
-              if (sp.freeze) m.frozen = Math.max(m.frozen, sp.freeze);
-              if (sp.root) m.root = Math.max(m.root, sp.root);
+            if (Math.hypot(m.x - ax, m.y - ay) <= sp.radius * 42 * _mods.radiusMul + m.r) {
+              damageMonster(m, p.stats.power * (p.stats.skillMul || 1) * sp.dmg * mul * _mods.dmgMul, 'skill');
+              if (sp.freeze) m.frozen = Math.max(m.frozen, sp.freeze * _mods.ctrlMul);
+              if (sp.root) m.root = Math.max(m.root, sp.root * _mods.ctrlMul);
             }
           }
         });
@@ -3954,7 +3988,7 @@ function castSkillImpl(key) {
         if (d > sp.range * 32 + m.r) continue;
         const a = Math.atan2(m.y - p.y, m.x - p.x);
         if (Math.abs(normalizeAngle(a - ang)) > sp.arc / 2) continue;
-        damageMonster(m, p.stats.power * (p.stats.skillMul || 1) * sp.dmg * mul, 'skill');
+        damageMonster(m, p.stats.power * (p.stats.skillMul || 1) * sp.dmg * mul * _mods.dmgMul, 'skill');
         if (sp.poison) m.poison = { dps: sp.poison.dps * mul, t: sp.poison.dur };
       }
       burst(p.x + Math.cos(ang) * 40, p.y + Math.sin(ang) * 40, '#b45cff', 10, 180);
@@ -6122,7 +6156,10 @@ function skillHtml() {
     const pf = skillProfOf(p, k);
     const pct = (pf.prof / DATA.SKILL_TIER.needProf * 100).toFixed(0);
     const full = pf.prof >= DATA.SKILL_TIER.needProf;
-    const canBreak = full && pf.tier < DATA.SKILL_TIER.maxTier;
+    const breakCost = breakCostOf(pf.tier);
+    const lvFull = lv >= 5;
+    const canBreak = full && lvFull && pf.tier < DATA.SKILL_TIER.maxTier;
+    const breakable = pf.tier < DATA.SKILL_TIER.maxTier;
     const dmgUp = Math.round((DATA.SKILL_TIER.tierDmg * (pf.tier - 1)) * 100);
     const cdDown = Math.round((DATA.SKILL_TIER.tierCd * (pf.tier - 1)) * 100);
     html += `<div class="skill-row ${lv?'learned':''}">
@@ -6131,17 +6168,20 @@ function skillHtml() {
       <div class="sk-main"><div class="sk-name">${sp.name}
         <small>Lv.${lv}</small>
         <small style="color:#ffd24a">${pf.tier} 层</small>
-        ${dmgUp||cdDown ? `<small style="color:#5fdc4a">+${dmgUp}%伤害 / -${cdDown}%CD</small>` : ''}</div>
+        ${cdDown ? `<small style="color:#5fdc4a">-${cdDown}%CD / +${Math.round((pf.tier-1)*DATA.SKILL_TIER.tierCtrl*100)}%控制</small>` : ''}
+        ${lv>1 ? `<small style="color:#4ad4ff">+${Math.round((lv-1)*DATA.SKILL_TIER.lvDmg*100)}%伤害 / -${Math.round((lv-1)*DATA.SKILL_TIER.lvMana*100)}%耗蓝 / +${Math.round((lv-1)*DATA.SKILL_TIER.lvRadius*100)}%范围</small>` : ''}</div>
       <div class="sk-desc">${sp.desc}　冷却 ${sp.cd}s${sp.cost?'　法力 '+sp.cost:''}</div>
       <div class="prof-bar"><i style="width:${pct}%;background:${full?'#ffd24a':'#5b3fa8'}"></i>
         <span>${pf.prof.toFixed(0)} / ${DATA.SKILL_TIER.needProf}</span></div>
       </div>
       ${canBreak
-        ? `<button class="sk-btn ${(p.materials.breakT||0)>0?'':'lack'}" data-break-skill="${k}">
-             突破 → ${pf.tier+1} 层<br><small>突破券 ${p.materials.breakT||0}/1</small></button>`
-        : (pf.tier >= DATA.SKILL_TIER.maxTier
-            ? `<button class="sk-btn" disabled>已满 5 层</button>`
-            : `<button class="sk-btn" disabled>熟练度未满</button>`)}
+        ? `<button class="sk-btn ${(p.materials.breakT||0)>=breakCost?'':'lack'}" data-break-skill="${k}">
+             突破 → ${pf.tier+1} 层<br><small>突破券 ${p.materials.breakT||0}/${breakCost}</small></button>`
+        : (!breakable
+            ? `<button class="sk-btn" disabled>已满 ${DATA.SKILL_TIER.maxTier} 层</button>`
+            : (!full
+                ? `<button class="sk-btn" disabled>熟练度未满</button>`
+                : `<button class="sk-btn" disabled>需先把技能练到 Lv.5</button>`))}
       ${(function(){
         if (lv >= 5) return `<button class="sk-btn" disabled>已满级 Lv.5</button>`;
         const cost = skillLvCost(lv);
@@ -7645,10 +7685,15 @@ function bindModal() {
   body.querySelectorAll('[data-break-skill]').forEach(b => b.onclick = () => {
     const k = b.dataset.breakSkill;
     const r = breakthrough(G.player, k);
-    toast(r === 'ok' ? `✅ 突破成功！${DATA.SKILLS[k].name} 升到第 ${skillProfOf(G.player,k).tier} 层`
-        : r === 'max' ? '已是最高层（5 层）'
-        : r === 'prof' ? `熟练度未满（${skillProfOf(G.player,k).prof.toFixed(0)}/${DATA.SKILL_TIER.needProf}）`
-        : `❌ 缺少技能突破券（现有 ${G.player.materials.breakT||0} 张）`);
+    const _pf = skillProfOf(G.player, k);
+    const _cost = breakCostOf(_pf.tier - (r === 'ok' ? 1 : 0));
+    toast(r === 'ok'
+        ? `✅ 突破成功！${DATA.SKILLS[k].name} 升到第 ${_pf.tier} 层（技能等级已重置为 Lv.1）`
+        : r === 'max' ? `已是最高层（${DATA.SKILL_TIER.maxTier} 层）`
+        : r === 'prof' ? `熟练度未满（${_pf.prof.toFixed(0)}/${DATA.SKILL_TIER.needProf}）`
+        : r === 'lv' ? '需先把该技能练到 Lv.5 才能突破'
+        : `❌ 突破券不足（需 ${breakCostOf(_pf.tier)} 张，现有 ${G.player.materials.breakT||0} 张）`);
+    if (r === 'ok' && typeof Sfx !== 'undefined') Sfx.play('lvlup');
     openModal('skill', '技能', skillHtml());
   });
   body.querySelectorAll('[data-bag-page]').forEach(b => b.onclick = () => {

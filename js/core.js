@@ -558,15 +558,38 @@ function useSkillTicket(p) {
 }
 
 /* 突破：满级熟练 + 突破券 */
+/* 突破到下一层需要的突破券 */
+function breakCostOf(tier) {
+  return DATA.SKILL_TIER.breakCost[Math.min(tier - 1, DATA.SKILL_TIER.breakCost.length - 1)];
+}
+
 function breakthrough(p, key) {
   const sp = skillProfOf(p, key);
   if (sp.tier >= DATA.SKILL_TIER.maxTier) return 'max';
   if (sp.prof < DATA.SKILL_TIER.needProf) return 'prof';
-  if ((p.materials.breakT || 0) < 1) return 'ticket';
-  p.materials.breakT -= 1;
+  if ((p.skills[key] || 1) < 5) return 'lv';           // 必须先把技能等级练满 Lv.5
+  const cost = breakCostOf(sp.tier);
+  if ((p.materials.breakT || 0) < cost) return 'ticket';
+  p.materials.breakT -= cost;
   sp.tier += 1;
   sp.prof = 0;
+  p.skills[key] = 1;                                   // 突破后技能等级重置
+  recalcStats(p);
   return 'ok';
+}
+
+/* 技能修正：等级 → 伤害/耗蓝/范围；层数 → 冷却/控制 */
+function skillMods(p, key) {
+  const lv = p.skills[key] || 1;
+  const tier = (p.skillProf && p.skillProf[key]) ? p.skillProf[key].tier : 1;
+  const T = DATA.SKILL_TIER;
+  return {
+    dmgMul:    1 + (lv - 1) * T.lvDmg,
+    manaMul:   Math.max(0.35, 1 - (lv - 1) * T.lvMana),
+    radiusMul: 1 + (lv - 1) * T.lvRadius,
+    cdMul:     Math.max(0.45, 1 - (tier - 1) * T.tierCd),
+    ctrlMul:   1 + (tier - 1) * T.tierCtrl
+  };
 }
 
 /* 特戒颜色（按效果区分） */

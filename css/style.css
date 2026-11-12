@@ -1314,3 +1314,13 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   background:linear-gradient(180deg,rgba(72,56,20,.95),rgba(20,15,6,.98))}
 .sk-btn.gold-up:hover:not([disabled]){box-shadow:0 0 12px rgba(255,210,74,.5)}
 .sk-btn.gold-up.lack{opacity:.45}
+
+/* 开发中占位 */
+.coming-soon{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:8px;padding:48px 20px;text-align:center}
+.cs-ic{font-size:42px;opacity:.45;filter:grayscale(.4)}
+.cs-title{font-family:var(--serif);font-size:22px;letter-spacing:.3em;color:#ffd98a;
+  text-shadow:0 0 18px rgba(212,175,55,.5)}
+.cs-sub{font-size:13px;letter-spacing:.4em;color:#9a907a}
+.cs-tip{margin-top:10px;font-size:11px;color:#6b6558}
+.cs-tip b{color:#ff8a8a}

@@ -1117,19 +1117,12 @@ function merchantHtml() {
 
 /* ---------------- 兑换员 / 铁匠 / 设置 ---------------- */
 function exchangeHtml() {
-  const p = G.player;
-  const mySkills = DATA.CLASSES[p.cls].skills;
-  let html = '<div class="npc-list">';
-  for (const k of mySkills) {
-    const sp = DATA.SKILLS[k], lv = p.skills[k] || 0;
-    const price = skillLvCost(lv) || 0;
-    const maxed = lv >= 5;
-    html += `<div class="npc-row"><div><div class="nr-name">${sp.name}
-      <span style="font-size:11px;color:#8f8570">${lv?'Lv.'+lv:'未学习'}</span></div>
-      <div class="nr-info">${sp.type==='active'?'主动':'被动'}　${maxed?'已满级':price+' 金'}</div></div>
-      <button data-buy-skill="${k}" ${maxed||p.gold<price?'disabled':''}>${maxed?'满级':'购买'}</button></div>`;
-  }
-  return html + `</div><div style="margin-top:10px;font-size:11px;color:#8f8570">金币：${fmt(p.gold)}　·　Lv.1→Lv.5 共需 100 万金币（也可在 K 键技能页升级）</div>`;
+  return `<div class="coming-soon">
+    <div class="cs-ic">⚒</div>
+    <div class="cs-title">开发中</div>
+    <div class="cs-sub">敬请期待</div>
+    <div class="cs-tip">技能升级已移至 <b>K 键 · 技能页</b></div>
+  </div>`;
 }
 
 function smithHtml() {

@@ -449,12 +449,13 @@ function ringStarMul(star) { return 1 + (star || 0) * 0.5; }
 
 function ringMergeList(p) {
   const pool = [];
-  if (!p.ringBag) p.ringBag = [];
   for (const k in p.equip) {
     const it = p.equip[k];
     if (it && it.ringKey) pool.push({ src: 'equip', slot: k, ring: it });
   }
-  p.ringBag.forEach((it, i) => pool.push({ src: 'bag', idx: i, ring: it }));
+  (p.bag || []).forEach((it, i) => {
+    if (it && it.ringKey) pool.push({ src: 'bag', idx: i, ring: it });
+  });
   return pool;
 }
 
@@ -472,8 +473,10 @@ function mergeRings(p, ringKey, star) {
   for (const x of used) {
     if (x.src === 'equip') { p.equip[x.slot] = null; delete p.equip[x.slot]; }
   }
-  const bagUsed = used.filter(x => x.src === 'bag').map(x => x.idx).sort((a, b) => b - a);
-  bagUsed.forEach(i => p.ringBag.splice(i, 1));
+  used.filter(x => x.src === 'bag').forEach(x => {
+    const i = p.bag.findIndex(y => y.id === x.ring.id);
+    if (i >= 0) p.bag.splice(i, 1);
+  });
 
   // 生成升星后的戒指
   const base = used[0].ring;
@@ -631,24 +634,28 @@ function makeRing(def, idSuffix) {
 }
 
 /* 放进第一个空的特戒槽，满了就进背包 */
+/* 特戒一律先进背包（不自动装备、不可堆叠），由玩家自己穿戴 */
 function equipSpecialRing(p, ring) {
-  const slot = ringSlotOf(ring.ringKey);
-  if (slot) {
-    ring.slot = slot;
-    if (p.equip[slot]) {
-      // 同槽已有 → 新的放进「特戒仓库」，可用于合成升星
-      if (!p.ringBag) p.ringBag = [];
-      ring.slot = null;
-      p.ringBag.push(ring);
-    } else {
-      p.equip[slot] = ring;
-    }
-    recalcStats(p);
-    return ring;
-  }
+  ring.slot = null;
+  ring.ringSlot = ringSlotOf(ring.ringKey);   // 记住它该去哪个槽
   addToBag(p, ring);
   recalcStats(p);
   return ring;
+}
+
+/* 从背包把特戒穿到对应槽位 */
+function wearRing(p, ring) {
+  const slot = ring.ringSlot || ringSlotOf(ring.ringKey);
+  if (!slot) return false;
+  const i = p.bag.findIndex(x => x.id === ring.id);
+  if (i < 0) return false;
+  const old = p.equip[slot];
+  p.bag.splice(i, 1);
+  if (old) { old.slot = null; p.bag.push(old); }   // 旧的换回背包
+  ring.slot = slot;
+  p.equip[slot] = ring;
+  recalcStats(p);
+  return true;
 }
 
 /* 把 6 枚特戒各发一枚到背包（已拥有则不重复发） */

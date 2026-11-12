@@ -710,6 +710,11 @@ function bagHtml() {
         <span class="ic-sprite" style="width:34px;height:34px;background-size:${34*EQUIP_COUNT}px 34px;background-position:${-pi2*34}px 0"></span>
         <div class="nm" style="color:${it.color}">${it.name}</div>
         <span class="stack">×${it.count || 1}</span></div>`;
+    } else if (it.ringKey) {
+      const st = it.star || 0;
+      html += `<div class="bag-cell relic-ring has" data-item="${it.id}">
+        ${iconTag(it.ringSlot || 'ring_exp', 34)}
+        <div class="nm" style="color:#ff8a8a">${it.ringKey ? DATA.SPECIAL_RINGS[it.ringKey].name : it.name}${st ? ' ' + '★'.repeat(st) : ''}</div></div>`;
     } else if (it.type === 'book') {
       html += `<div class="bag-cell book" data-book="${it.stat}">
         <div class="ic" style="color:${it.color};font-family:var(--serif)">书</div>
@@ -1158,13 +1163,16 @@ function itemDetailHtml(id, from) {
   const equipped = !!equippedSlot;
   const locked = it.reqLv > p.level;
 
+  const isRingItem = !!it.ringKey;
+  const enhBtn = isRingItem
+    ? `<button data-idt-ringup="1">升星</button>`
+    : `<button data-idt-enh="${it.id}">强化</button>`;
   const btns =
-    `<button data-idt-enh="${it.id}">强化</button>` +
+    enhBtn +
     `<button class="primary" data-idt-equip="${it.id}" ${(equipped || locked) ? 'disabled' : ''}>` +
       (locked ? '需要 Lv.' + it.reqLv : '穿戴') + `</button>` +
     `<button class="danger" data-idt-unequip="${equippedSlot || it.slot}" ${equipped ? '' : 'disabled'}>卸下</button>` +
-    (equipped ? '' : `<button class="danger" data-idt-sell="${it.id}">出售</button>`) +
-    `<button data-idt-close>关闭</button>`;
+    (equipped ? '' : `<button class="danger" data-idt-sell="${it.id}">出售</button>`);
 
   return `<div class="idt-wrap" style="border-color:${q.color}44">
     <div class="idt-head">
@@ -1975,7 +1983,8 @@ function bindModal() {
       if (el.dataset.slot) { unequipItem(G.player, el.dataset.slot); }
       else {
         if (it.reqLv > G.player.level) { toast(`等级不足：需要 Lv.${it.reqLv}（当前 ${G.player.level}）`); return; }
-        equipItem(G.player, it);
+        if (it.ringKey) wearRing(G.player, it);
+        else equipItem(G.player, it);
       }
       Sfx.play('click');
       saveGame();
@@ -2037,7 +2046,9 @@ function bindModal() {
   body.querySelectorAll('[data-idt-equip]').forEach(el => el.onclick = () => {
     const it = findItem(el.dataset.idtEquip); if (!it) return;
     if (it.reqLv > G.player.level) { toast('等级不足'); return; }
-    equipItem(G.player, it); saveGame(); closeModal();
+    if (it.ringKey) { wearRing(G.player, it); }
+    else equipItem(G.player, it);
+    saveGame(); closeModal();
   });
   body.querySelectorAll('[data-idt-unequip]').forEach(el => el.onclick = () => {
     unequipItem(G.player, el.dataset.idtUnequip); saveGame(); closeModal();
@@ -2045,6 +2056,9 @@ function bindModal() {
   body.querySelectorAll('[data-idt-sell]').forEach(el => el.onclick = () => {
     const it = findItem(el.dataset.idtSell); if (!it) return;
     sellItem(G.player, it); saveGame(); closeModal();
+  });
+  body.querySelectorAll('[data-idt-ringup]').forEach(el => el.onclick = () => {
+    openModal('ringup', '特戒强化', ringUpHtml());
   });
   body.querySelectorAll('[data-idt-enh]').forEach(el => el.onclick = () => {
     openModal('forge', '强化 · 铸造台', enhanceItemHtml(el.dataset.idtEnh));

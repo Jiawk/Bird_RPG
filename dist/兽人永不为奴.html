@@ -6256,6 +6256,63 @@ function merchantHtml() {
     </div>`;
 }
 
+/* ---------------- 兑换员 / 铁匠 / 设置 ---------------- */
+function exchangeHtml() {
+  const p = G.player;
+  const mySkills = DATA.CLASSES[p.cls].skills;
+  let html = '<div class="npc-list">';
+  for (const k of mySkills) {
+    const sp = DATA.SKILLS[k], lv = p.skills[k] || 0;
+    const price = 220 + lv * 380;
+    const maxed = lv >= 5;
+    html += `<div class="npc-row"><div><div class="nr-name">${sp.name}
+      <span style="font-size:11px;color:#8f8570">${lv?'Lv.'+lv:'未学习'}</span></div>
+      <div class="nr-info">${sp.type==='active'?'主动':'被动'}　${maxed?'已满级':price+' 金'}</div></div>
+      <button data-buy-skill="${k}" ${maxed||p.gold<price?'disabled':''}>${maxed?'满级':'购买'}</button></div>`;
+  }
+  return html + `</div><div style="margin-top:10px;font-size:11px;color:#8f8570">金币：${fmt(p.gold)}</div>`;
+}
+
+function smithHtml() {
+  const p = G.player;
+  const enh = `<div class="npc-row" style="margin-bottom:10px"><div>
+    <div class="nr-name">装备强化</div>
+    <div class="nr-info">消耗金币 + 强化石提升装备，最高 +15</div></div>
+    <button data-act-enhance style="border-color:#d4af37;color:#ffd24a">打开</button></div>`;
+  const items = p.bag.filter(it => it.type !== 'potion');
+  if (!items.length) return enh + '<div style="color:#8f8570">背包里没有可出售的装备</div>';
+  let html = enh + '<div class="npc-list">';
+  items.forEach(it => {
+    const q = DATA.QUALITY.find(x => x.key === (it.qKey || it.quality))
+              || { name:'普通', color:'#c8c8c8', key:'common' };
+    const price = Math.round((20 + it.ilvl * 8) * Math.pow(2.2, DATA.QUALITY.indexOf(q)));
+    html += `<div class="npc-row"><div><div class="nr-name" style="color:${it.color}">${it.name}</div>
+      <div class="nr-info">物品等级 ${it.ilvl}　售价 ${price} 金</div></div>
+      <button data-sell="${it.id}">出售</button></div>`;
+  });
+  return html + '</div>';
+}
+
+function settingsHtml() {
+  const n = (G.chars || []).length;
+  return `<div class="npc-list">
+    <div class="npc-row"><div><div class="nr-name" style="color:#ffd24a">选择角色</div>
+      <div class="nr-info">当前存档已有 ${n} / ${MAX_CHARS} 个角色</div></div>
+      <button data-act-pick-char style="border-color:#d4af37;color:#ffd24a">打开</button></div>
+    <div class="npc-row"><div><div class="nr-name">创建角色</div>
+      <div class="nr-info">${n >= MAX_CHARS ? '角色已满，需先删除一个' : '再建一个新角色，进度互相独立'}</div></div>
+      <button data-act-new-char ${n >= MAX_CHARS ? 'disabled' : ''}>新建</button></div>
+
+    <div class="npc-row"><div><div class="nr-name">存档</div><div class="nr-info">手动保存</div></div>
+      <button data-act-save>保存</button></div>
+    <div class="npc-row"><div><div class="nr-name">导出存档</div><div class="nr-info">下载 json 备份</div></div>
+      <button data-act-export>导出</button></div>
+    <div class="npc-row"><div><div class="nr-name" style="color:#ff6b5a">重新开局</div>
+      <div class="nr-info">删除角色，不可恢复</div></div>
+      <button data-act-reset style="border-color:#6b2b2b;color:#ff8a7a">重开</button></div>
+  </div>`;
+}
+
 /* ---------------- 仓库 ---------------- */
 function warehouseHtml() {
   const p = G.player;

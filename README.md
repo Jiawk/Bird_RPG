@@ -1404,3 +1404,17 @@ python3 build.py     # 重新打包成单文件 dist/兽人永不为奴.html
   - 仓库满了 / 背包满了会提示，不会丢物品
 - `findItem()` 现在也搜索仓库，仓库里的物品能正常看详情
 - `p.warehouse` / `p.whPage` 随存档保存
+
+### v94 · 修复兑换员报错（误删三个函数）
+- **现象**：点「兑换员 · 李准」→ `Uncaught ReferenceError: exchangeHtml is not defined`
+- **根因**：v92 重构商人面板时，我用**行号范围替换** `merchantHtml`，
+  范围把紧挨着的 **`exchangeHtml` / `smithHtml` / `settingsHtml`** 一起删掉了
+- **教训**：按行号替换函数体太危险，应该按函数边界（大括号配平）截取
+- **修复**：从 `915b329`（v91）取回三个函数原文，插回 `ui.js`
+- **核对**：与 v91 对比函数列表，**已无缺失**
+- **冒烟测试**：11 个面板渲染函数全部正常
+  ```
+  exchangeHtml 1724 · smithHtml 282 · settingsHtml 952 · merchantHtml 3482
+  warehouseHtml 1484 · ringUpHtml 3048 · craftHtml 2952 · bagHtml 1915
+  charHtml 7864 · questHtml 2130 · towerHtml 653
+  ```

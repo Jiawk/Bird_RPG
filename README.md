@@ -1481,3 +1481,15 @@ python3 build.py     # 重新打包成单文件 dist/兽人永不为奴.html
 - K 键技能页按钮恢复为单行「金币升级 Lv.X→Y / N 万金」
 - 击杀时不再触发技能升级广播
 - 「熟练度 → 突破层数」系统**保持不变**（那是另一套，靠打怪涨熟练度 + 突破券升层）
+
+### v100 · 修复点仓库没反应
+- **现象**：主城点「仓库 · 大木箱」无任何反应
+- **根因**：`case 'warehouse'` 只加进了 `handleCommand` 的分支，
+  **没加进 `interactNPC` 的 switch** —— 而点击 NPC 走的是后者
+  （上次的批量替换 `replace(..., 1)` 只命中了第一处）
+- **修复**：`interactNPC` 补上 `case 'warehouse'`
+- **验证**：5 种 NPC 交互全部正确打开对应面板
+  ```
+  warehouse → warehouse   craft → craft   tower → tower
+  merchant  → merchant    exchange → exchange
+  ```

@@ -360,6 +360,16 @@ function removeFromBag(p, item) {
 function sellItem(p, item) {
   normalizeSlot(item);
   if (item.ringKey) { toast('特戒无法分解或出售'); return; }
+  if (item.relicKey || item.relicPieceKey) { toast('圣物无法出售'); return; }
+  // 神话（红装）出售 → 返还打造材料，而不是金币
+  if (item.qKey === 'mythic') {
+    p.materials.scale = (p.materials.scale || 0) + 1;
+    p.materials.shard = (p.materials.shard || 0) + 2;
+    removeFromBag(p, item);
+    toast(`分解 ${item.name}：龙鳞片 +1 · 虚空碎片 +2`);
+    logMsg(`♻ 分解神话 ${item.name}：龙鳞片+1 虚空碎片+2`, 'loot');
+    return;
+  }
   const q = DATA.QUALITY.find(x => x.key === item.qKey);
   const idx = DATA.QUALITY.indexOf(q);
   const price = Math.round((20 + item.ilvl * 8) * Math.pow(2.2, idx));

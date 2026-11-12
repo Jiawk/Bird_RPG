@@ -196,6 +196,7 @@ function recalcStats(p) {
 /* ---------------- 经验 / 升级 ---------------- */
 function gainExp(p, amount) {
   amount = Math.floor(amount * (1 + (p.stats.expBonus || 0)));
+  if (typeof perfAdd === 'function' && amount > 0) perfAdd('e', amount);
   if (p.level >= DATA.MAX_LEVEL) return 0;
   p.exp += amount;
   let ups = 0;

@@ -204,8 +204,8 @@ DATA.MONSTERS = {
 
 /* BOSS：魔兽争霸3 冰封王座角色 */
 DATA.BOSSES = {
-  bossWolf:     {name:'半人马可汗',      title:'贫瘠之地的可汗',  color:'#c09a70', hp:1500, atk:12,  spd:2.6, r:30, exp:320,  gold:[200,400]},
-  bossKobold:   {name:'狗头人地卜师',    title:'矿洞的守财奴',    color:'#c97b2e', hp:4200, atk:15,  spd:2.3, r:32, exp:800,  gold:[450,800]},
+  bossWolf:     {name:'基尔加丹',        title:'燃烧军团的欺诈者',  color:'#c09a70', hp:1500, atk:12,  spd:2.6, r:30, exp:320,  gold:[200,400]},
+  bossKobold:   {name:'拉格纳罗斯',      title:'炎魔之王',    color:'#c97b2e', hp:4200, atk:15,  spd:2.3, r:32, exp:800,  gold:[450,800]},
   bossGrom:     {name:'格罗姆·地狱咆哮', title:'战歌氏族的酋长',  color:'#7a9b2e', hp:11500, atk:34,  spd:2.5, r:34, exp:1800, gold:[900,1500]},
   bossKel:      {name:'克尔苏加德',      title:'亡灵天灾的巫妖',  color:'#7fb3d5', hp:25000, atk:54,  spd:2.3, r:34, exp:3400, gold:[1600,2600]},
   bossMannoroth:{name:'玛诺洛斯',        title:'燃烧军团的毁灭者',color:'#a83232', hp:52000, atk:98,  spd:2.4, r:38, exp:6000, gold:[2800,4400]},
@@ -214,12 +214,12 @@ DATA.BOSSES = {
 
 /* ---------------- 房间 ---------------- */
 DATA.ROOMS = [
-  {id:0, name:'贫瘠之地',    lv:1,  mons:'centaur',   boss:'bossWolf',      count:50, elite:20, bosses:2,  bg:'#26221a', accent:'#5a4a32', desc:'半人马在荒野游荡'},
-  {id:1, name:'废弃矿洞',    lv:6,  mons:'kobold',    boss:'bossKobold',    count:50, elite:20, bosses:2, bg:'#241f18', accent:'#5a4a30', desc:'矿车早已锈死'},
-  {id:2, name:'兽人营地',    lv:11, mons:'grunt',     boss:'bossGrom',      count:50, elite:20, bosses:2, bg:'#241a14', accent:'#6b4a2a', desc:'战鼓声从未停歇'},
-  {id:3, name:'亡灵墓穴',    lv:16, mons:'skeleton',  boss:'bossKel',       count:50, elite:20, bosses:2, bg:'#1a1f26', accent:'#3f5568', desc:'死亡并非终点'},
-  {id:4, name:'燃烧军团裂隙',lv:21, mons:'doomguard', boss:'bossMannoroth', count:50, elite:20, bosses:2, bg:'#26141a', accent:'#6b2438', desc:'虚空在低语'},
-  {id:5, name:'深渊祭坛',    lv:26, mons:'abyssal',   boss:'bossArchimonde',count:50, elite:20, bosses:2, bg:'#1c1226', accent:'#4a2a6b', desc:'污染者的王座'}
+  {id:0, name:'贫瘠之地',    lv:1,  reqLv:1,  mons:'centaur',   boss:'bossWolf',      count:50, elite:20, bosses:2,  bg:'#26221a', accent:'#5a4a32', desc:'半人马在荒野游荡'},
+  {id:1, name:'废弃矿洞',    lv:11, reqLv:11, mons:'kobold',    boss:'bossKobold',    count:50, elite:20, bosses:2, bg:'#241f18', accent:'#5a4a30', desc:'矿车早已锈死'},
+  {id:2, name:'兽人营地',    lv:21, reqLv:21, mons:'grunt',     boss:'bossGrom',      count:50, elite:20, bosses:2, bg:'#241a14', accent:'#6b4a2a', desc:'战鼓声从未停歇'},
+  {id:3, name:'亡灵墓穴',    lv:31, reqLv:31, mons:'skeleton',  boss:'bossKel',       count:50, elite:20, bosses:2, bg:'#1a1f26', accent:'#3f5568', desc:'死亡并非终点'},
+  {id:4, name:'燃烧军团裂隙',lv:41, reqLv:41, mons:'doomguard', boss:'bossMannoroth', count:50, elite:20, bosses:2, bg:'#26141a', accent:'#6b2438', desc:'虚空在低语'},
+  {id:5, name:'深渊祭坛',    lv:51, reqLv:51, mons:'abyssal',   boss:'bossArchimonde',count:50, elite:20, bosses:2, bg:'#1c1226', accent:'#4a2a6b', desc:'污染者的王座'}
 ];
 
 DATA.POTIONS = [
@@ -427,12 +427,16 @@ DATA.SKILL_COLOR = {
 DATA.RACE_AVATAR  = { human:0, orc:1, undead:2, elf:3 };
 DATA.CLASS_AVATAR = { warrior:4, mage:5, archer:6, assassin:7 };
 
-DATA.MAX_LEVEL = 30;
+DATA.MAX_LEVEL = 60;
 /* 经验曲线：1~25 级沿用原版 100×lv^1.5；26 级起每级 ×2.4（25 级之后非常慢） */
 DATA.EXP_TAIL_FROM = 26;
 DATA.EXP_TAIL_MUL = 2.4;
 DATA.expForLevel = (lv) => {
   if (lv < DATA.EXP_TAIL_FROM) return Math.floor(100 * Math.pow(lv, 1.5));
-  const base = Math.floor(100 * Math.pow(DATA.EXP_TAIL_FROM - 1, 1.5));
-  return Math.round(base * Math.pow(DATA.EXP_TAIL_MUL, lv - (DATA.EXP_TAIL_FROM - 1)));
+  if (lv < 30) {
+    const base = Math.floor(100 * Math.pow(DATA.EXP_TAIL_FROM - 1, 1.5));
+    return Math.round(base * Math.pow(DATA.EXP_TAIL_MUL, lv - (DATA.EXP_TAIL_FROM - 1)));
+  }
+  // 30 级之后：每级基数 35 万且逐级递增 4.5 万（满级约需挂机 24~30 小时）
+  return Math.round(350000 + (lv - 30) * 45000);
 };

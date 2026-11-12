@@ -15,6 +15,37 @@ let autoSaveAcc = 0;
 let autoSkillCd = 0;
 
 /* ---------------- 启动 ---------------- */
+/* 效率统计：10 个 6 秒桶滑动窗口 */
+function perfInit() {
+  G.perf = { buckets: [], acc: { k:0, e:0, g:0, i:0 }, t: 0 };
+}
+function perfAdd(kind, n) {
+  if (!G.perf) perfInit();
+  if (G.perf.acc[kind] === undefined) G.perf.acc[kind] = 0;
+  G.perf.acc[kind] += (n || 1);
+}
+function perfTick(dt) {
+  if (!G.perf) perfInit();
+  G.perf.t += dt;
+  if (G.perf.t >= 6) {
+    G.perf.t = 0;
+    G.perf.buckets.push(Object.assign({ k:0,e:0,g:0,i:0 }, G.perf.acc));
+    G.perf.acc = { k:0, e:0, g:0, i:0 };
+    if (G.perf.buckets.length > 10) G.perf.buckets.shift();
+  }
+}
+function perfRates() {
+  const p = G.perf || { buckets: [], acc: { k:0,e:0,g:0,i:0 }, t:0 };
+  const sum = { k:0, e:0, g:0, i:0 };
+  p.buckets.forEach(b => { for (const k in sum) sum[k] += (b[k] || 0); });
+  for (const k in sum) sum[k] += (p.acc[k] || 0);
+  // 窗口实际时长（分钟）
+  const mins = Math.max((p.buckets.length * 6 + p.t) / 60, 1 / 60);
+  const out = {};
+  for (const k in sum) out[k] = Math.round(sum[k] / mins);
+  return out;
+}
+
 function startGame() {
   const p = G.player;
   prevBossKills = p.bossKills;
@@ -352,6 +383,7 @@ function loop(ts) {
     updatePet(dt);
     updateTimers(dt);
     updateCamera();
+    perfTick(dt);
     updateHUD(dt);
     checkBossUnlock();
 

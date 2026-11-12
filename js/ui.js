@@ -192,6 +192,29 @@ function updateHUD(dt) {
   $('hpText').textContent = `${Math.ceil(p.hp)} / ${p.stats.hpMax}`;
   $('mpText').textContent = `${Math.ceil(p.mp)} / ${p.stats.mpMax}`;
   $('xpText').textContent = p.level >= DATA.MAX_LEVEL ? '满级' : `${Math.floor(xpPct)}%`;
+
+  // 当前位置 / 难度
+  const _t = w.isTown;
+  const pr = $('placeRoom'), pd = $('placeDiff');
+  if (pr) pr.textContent = _t ? '暴风城 · 安全区' : DATA.ROOMS[w.roomId].name;
+  if (pd) {
+    const D = DATA.DIFFICULTY[G.diff] || DATA.DIFFICULTY.normal;
+    pd.textContent = _t ? '无战斗' : (D.name + '难度');
+    pd.style.color = _t ? '#9a907a' : D.color;
+  }
+
+  // 效率面板（每 0.5 秒刷新）
+  if (G._pfT === undefined) G._pfT = 0;
+  G._pfT += dt;
+  if (G._pfT > 0.5 && typeof perfRates === 'function') {
+    G._pfT = 0;
+    const R = perfRates();
+    const set = (id, v) => { const e = $(id); if (e) e.textContent = fmt(v); };
+    set('pfKill', R.k || 0);
+    set('pfExp', R.e || 0);
+    set('pfGold', R.g || 0);
+    set('pfItem', R.i || 0);
+  }
   $('pLevel').textContent = p.level;
   $('pName').textContent = `${DATA.RACES[p.race].name} · ${DATA.CLASSES[p.cls].name}`;
   $('pStats').innerHTML =
@@ -308,6 +331,7 @@ function onMonsterKilled(m) {
       const k = keys[Math.floor(Math.random() * keys.length)];
       const ring = makeRing(DATA.SPECIAL_RINGS[k], k);
       equipSpecialRing(p, ring);
+      bigAnnounce(`💍 ${ring.name}`, ring.color || '#b45cff');
       toast(`💍 BOSS 掉落【${ring.name}】`);
       logMsg(`💍 掉落 ${ring.name}`, 'loot');
     }
@@ -317,6 +341,7 @@ function onMonsterKilled(m) {
   if (m.isBoss && m.kind && DATA.BOSS_RINGS[m.kind] && !(p.firstKills || {})[m.kind]) {
     const ring = grantFirstKillRing(p, m.kind);
     if (ring) {
+      bigAnnounce(`🏆 首杀 · ${ring.name}`, ring.color || '#ffd24a');
       toast(`🏆 首杀成就：获得【${ring.name}】`);
       logMsg(`🏆 首杀 ${m.name} → ${ring.name}（${ring.effectDesc}）`, 'level');
       saveGame();
@@ -417,6 +442,20 @@ function claimAllQuests() {
 
 /* ---------------- Toast ---------------- */
 let toastTimer = null;
+/* 大字醒目广播（驻留 10 秒） */
+function bigAnnounce(text, color) {
+  const el = $('bigAnnounce');
+  if (!el) return;
+  el.textContent = text;
+  el.style.color = color || '#ffd24a';
+  el.classList.remove('hidden');
+  el.classList.remove('pop');
+  void el.offsetWidth;
+  el.classList.add('pop');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.add('hidden'), 10000);
+}
+
 function toast(msg) {
   const t = $('toast');
   t.textContent = msg;
@@ -839,12 +878,14 @@ function townMapHtml() {
   html += '<div style="font-size:12px;color:#8f8570;margin:10px 0 8px">选择房间，再选难度进入</div><div class="room-pick">';
   DATA.ROOMS.forEach((r, i) => {
     const unlocked = p.unlocked.includes(i);
+    const lvOk = p.level >= (r.reqLv || 1);
+    const ok = unlocked && lvOk;
     const need = requiredCP(i, 'normal');
     const v = cpVerdict(combatPower(p), need);
-    html += `<div class="room-btn ${unlocked?'':'locked'}" data-pick-room="${i}">
+    html += `<div class="room-btn ${ok?'':'locked'}" data-pick-room="${i}" data-reqlv="${r.reqLv||1}">
       <div class="rb-name">${r.name}</div>
-      <div class="rb-sub">等级 ${r.lv}+　${unlocked?'已解锁':'未解锁'}</div>
-      <div class="rb-sub" style="color:${unlocked?v.color:'#6b6558'}">推荐 ${fmt(need)}　你 ${fmt(combatPower(p))}</div></div>`;
+      <div class="rb-sub">建议等级 ${r.reqLv}+　${ok ? '可进入' : (lvOk ? '未解锁' : '等级不足')}</div>
+      <div class="rb-sub" style="color:${ok?v.color:'#ff6b5a'}">${lvOk ? '推荐 '+fmt(need)+'　你 '+fmt(combatPower(p)) : '需要 Lv.'+(r.reqLv||1)+'（当前 '+p.level+'）'}</div></div>`;
   });
   html += '</div><div style="font-size:11px;color:#8f8570">当前装备达成：<b style="color:#ffd98a">' +
     gearTier(p).tierName + '</b>　建议：简单=绿装 / 困难=蓝装 / 地狱=紫装</div>';
@@ -1048,6 +1089,63 @@ function settingsHtml() {
   </div>`;
 }
 
+/* ---------------- 装备详情页 ---------------- */
+function itemDetailHtml(id, from) {
+  const p = G.player;
+  const it = findItem(id);
+  if (!it) return '<div style="padding:20px;text-align:center;color:#8f8570">物品不存在</div>';
+
+  const q = DATA.QUALITY.find(x => x.key === (it.qKey || it.quality)) || { name:'普通', color:'#c8c8c8' };
+  const m = enhMul(it);
+  const pctKeys = ['crit','critDmg','lifesteal','hit','dodge','as','all'];
+  const W = DATA.WEAPON_KINDS[it.wtype];
+
+  let stats = '';
+  for (const k in (it.stats || {})) {
+    const v = it.stats[k] * m;
+    stats += `<div class="idt-stat"><span>${AFFIX_NAMES[k] || k}</span>
+      <b>+${pctKeys.includes(k) ? (v*100).toFixed(1)+'%' : Math.round(v)}</b></div>`;
+  }
+  if (it.effect) {
+    for (const k in it.effect) {
+      stats += `<div class="idt-stat"><span>特戒效果</span><b class="eff">${effectText(k, it.effect[k] * m)}</b></div>`;
+    }
+  }
+  if (it.relicPct) {
+    stats += `<div class="idt-stat"><span>圣物特效</span><b class="eff">命中削 ${(it.relicPct*100).toFixed(0)}% 最大生命</b></div>`;
+  }
+
+  const equipped = (from === 'char') || Object.values(p.equip).some(x => x && x.id === it.id);
+  const locked = it.reqLv > p.level;
+
+  let btns = '';
+  if (from === 'char' || equipped) {
+    btns = `<button data-idt-enh="${it.id}">强化</button>
+            <button class="danger" data-idt-unequip="${it.slot}">卸下</button>`;
+  } else {
+    btns = `<button class="primary" data-idt-equip="${it.id}" ${locked?'disabled':''}>
+              ${locked ? '需要 Lv.'+it.reqLv : '装备'}</button>
+            <button data-idt-enh="${it.id}">强化</button>
+            <button class="danger" data-idt-sell="${it.id}">出售</button>`;
+  }
+
+  return `<div class="idt-wrap" style="border-color:${q.color}44">
+    <div class="idt-head">
+      ${iconTag(it.slot, 56, it.wtype, it.relicKey)}
+      <div class="idt-title">
+        <div class="idt-name" style="color:${it.color}">${it.enh ? '+' + it.enh + ' ' : ''}${it.name}</div>
+        <div class="idt-sub" style="color:${q.color}">${q.name} · ${slotName(it.slot)}${W ? ' · '+W.label : ''} · 物品等级 ${it.ilvl}</div>
+        ${it.reqLv > 1 ? `<div class="idt-req" style="${locked?'color:#ff6b5a':''}">需要等级 ${it.reqLv}${locked?'（当前 '+p.level+'）':''}</div>` : ''}
+      </div>
+    </div>
+    <div class="idt-stats">${stats || '<div style="color:#8f8570">（无属性）</div>'}</div>
+    <div class="idt-actions">${btns}
+      <button data-idt-close>关闭</button>
+    </div>
+    <div class="idt-hint">右键装备可直接穿戴 / 卸下</div>
+  </div>`;
+}
+
 /* ---------------- 圣物兑换 ---------------- */
 function buyRelic(key) {
   const p = G.player;
@@ -1167,7 +1265,8 @@ function setDetailHtml(key) {
     const it = p.equip[sl];
     const mine = it && it.setKey === set.key;
     const anyInSlot = p.bag.find(x => x.type !== 'potion' && x.setKey === set.key && x.slot === sl);
-    html += `<div class="eq-slot ${mine ? 'q-border-rare' : ''}" style="cursor:default;opacity:${mine || anyInSlot ? 1 : .45}">
+    html += `<div class="eq-slot ${mine ? 'q-border-rare' : ''}" style="cursor:default;opacity:${mine || anyInSlot ? 1 : .45}"
+      ${it ? `data-item="${it.id}" data-slot="${sk}"` : ''}>
       <span class="eq-lv">${DATA.SLOTS[sl].name}</span>
       ${iconTag(sl, 34)}
       <span class="eq-nm" style="${mine ? 'color:#5fdc4a' : anyInSlot ? 'color:#ffd24a' : ''}">
@@ -1743,14 +1842,23 @@ function bindModal() {
     el.onmouseenter = e => showTooltip(it, e.clientX, e.clientY);
     el.onmousemove = e => moveTooltip(e.clientX, e.clientY);
     el.onmouseleave = hideTooltip;
+    // 左键：打开详情页（装备 / 强化 / 出售）
     el.onclick = () => {
-      if (el.dataset.slot) { unequipItem(G.player, el.dataset.slot); openModal('bag','背包 · 装备', bagHtml()); return; }
-      if (it.reqLv > G.player.level) { toast(`等级不足：需要 Lv.${it.reqLv}（当前 ${G.player.level}）`); return; }
-      equipItem(G.player, it); openModal('bag','背包 · 装备', bagHtml());
+      hideTooltip();
+      openModal('item', it.name, () => itemDetailHtml(it.id, el.dataset.slot ? 'char' : 'bag'));
     };
+    // 右键：直接装备 / 卸下
     el.oncontextmenu = e => {
       e.preventDefault();
-      if (!el.dataset.slot) { sellItem(G.player, it); openModal('bag','背包 · 装备', bagHtml()); }
+      hideTooltip();
+      if (el.dataset.slot) { unequipItem(G.player, el.dataset.slot); }
+      else {
+        if (it.reqLv > G.player.level) { toast(`等级不足：需要 Lv.${it.reqLv}（当前 ${G.player.level}）`); return; }
+        equipItem(G.player, it);
+      }
+      Sfx.play('click');
+      saveGame();
+      openModal('bag', '背包 · 装备', bagHtml());
     };
   });
 
@@ -1783,6 +1891,22 @@ function bindModal() {
     openModal('bag','背包 · 装备', bagHtml());
   });
 
+  body.querySelectorAll('[data-idt-equip]').forEach(el => el.onclick = () => {
+    const it = findItem(el.dataset.idtEquip); if (!it) return;
+    if (it.reqLv > G.player.level) { toast('等级不足'); return; }
+    equipItem(G.player, it); saveGame(); closeModal();
+  });
+  body.querySelectorAll('[data-idt-unequip]').forEach(el => el.onclick = () => {
+    unequipItem(G.player, el.dataset.idtUnequip); saveGame(); closeModal();
+  });
+  body.querySelectorAll('[data-idt-sell]').forEach(el => el.onclick = () => {
+    const it = findItem(el.dataset.idtSell); if (!it) return;
+    sellItem(G.player, it); saveGame(); closeModal();
+  });
+  body.querySelectorAll('[data-idt-enh]').forEach(el => el.onclick = () => {
+    openModal('forge', '强化 · 铸造台', () => enhanceItemHtml(el.dataset.idtEnh));
+  });
+  body.querySelectorAll('[data-idt-close]').forEach(el => el.onclick = () => closeModal());
   body.querySelectorAll('[data-relic]').forEach(el => el.onclick = () => {
     G._relicSel = (G._relicSel === el.dataset.relic) ? null : el.dataset.relic;
     if (typeof Sfx !== 'undefined') Sfx.play('click');
@@ -2060,15 +2184,15 @@ function bindSfxUI() {
   const btn = $('soundToggle');
   if (btn) {
     const sync = () => {
-      const on = Sfx.on && (G.soundOn !== false);
+      const on = Sfx.on && (G.soundOn === true);
       btn.textContent = on ? '🔊' : '🔇';
       btn.classList.toggle('off', !on);
     };
-    Sfx.setOn(G.soundOn !== false);
+    Sfx.setOn(G.soundOn === true);   // 默认关闭
     sync();
     btn.onclick = (e) => {
       e.stopPropagation();
-      G.soundOn = !(G.soundOn !== false);
+      G.soundOn = !(G.soundOn === true);
       Sfx.setOn(G.soundOn);
       sync();
       if (G.soundOn) { Sfx.resume(); Sfx.play('open'); }

@@ -335,6 +335,7 @@ function monsterDie(m) {
   if (!m.alive) return;
   m.alive = false;
     if (typeof Sfx !== 'undefined') Sfx.play(m.isBoss ? 'boss' : 'kill');
+    if (typeof perfAdd === 'function') perfAdd('k', 1);
   const p = G.player;
   burst(m.x, m.y, m.color, m.isBoss ? 30 : 10, m.isBoss ? 300 : 160);
   p.kills++;
@@ -401,6 +402,7 @@ function dropLoot(m) {
 }
 
 function pickupDrop(d) {
+  if (typeof perfAdd === 'function') perfAdd(d.type === 'gold' ? 'g' : 'i', d.gold || 1);
   if (typeof Sfx !== 'undefined') Sfx.play('loot');
   const p = G.player;
   d.taken = true;

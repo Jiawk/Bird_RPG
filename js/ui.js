@@ -1088,7 +1088,7 @@ function relicSideHtml(key) {
   const okLv = p.level >= w.reqLv, okGold = p.gold >= w.price;
   const own = (p.bag || []).some(x => x.relicKey === key) ||
               (p.equip.weapon && p.equip.weapon.relicKey === key);
-  const pct = ['crit','critDmg','lifesteal','hit','dodge','as','skillDmg','cdr'];
+  const pct = ['crit','critDmg','lifesteal','hit','dodge','as','skillDmg','cdr','dr'];
   const lines = Object.keys(w.stats).map(k => {
     const v = w.stats[k];
     return `<div class="rl-stat"><span>${AFFIX_NAMES[k] || k}</span>`
@@ -1369,7 +1369,7 @@ function relicPieceSideHtml(key) {
   const okLv = p.level >= S.reqLv, okGold = p.gold >= S.price;
   const own = (p.bag || []).some(x => x.relicPieceKey === key) ||
               ['helm','chest','legs','boots','neck','ring','trinket'].some(s2 => p.equip[s2] && p.equip[s2].relicPieceKey === key);
-  const pct = ['crit','critDmg','lifesteal','hit','dodge','as','skillDmg','cdr'];
+  const pct = ['crit','critDmg','lifesteal','hit','dodge','as','skillDmg','cdr','dr'];
   const lines = Object.keys(piece.stats).map(k => {
     const v = piece.stats[k];
     return `<div class="rl-stat"><span>${AFFIX_NAMES[k] || k}</span><b>+${pct.includes(k) ? (v*100).toFixed(1)+'%' : Math.round(v)}</b></div>`;
@@ -2880,8 +2880,8 @@ function findItem(id) {
 /* ---------------- Tooltip ---------------- */
 const AFFIX_NAMES = { str:'力量', agi:'敏捷', int:'智力', vit:'体质', atk:'攻击力', spell:'法术强度',
   as:'攻击速度', crit:'暴击率', critDmg:'暴击伤害', armor:'护甲', hp:'生命值',
-  dodge:'闪避率', lifesteal:'吸血', hit:'命中', mp:'法力值', all:'全属性', skillDmg:'技能增伤', cdr:'冷却缩减' };
-const PCT_KEYS = ['as','crit','critDmg','dodge','lifesteal','hit','skillDmg','cdr'];
+  dodge:'闪避率', lifesteal:'吸血', hit:'命中', mp:'法力值', all:'全属性', skillDmg:'技能增伤', cdr:'冷却缩减', dr:'受伤减免' };
+const PCT_KEYS = ['as','crit','critDmg','dodge','lifesteal','hit','skillDmg','cdr','dr'];
 
 function showTooltip(it, x, y) {
   hideTooltip();

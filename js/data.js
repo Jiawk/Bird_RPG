@@ -208,13 +208,13 @@ DATA.RELIC_SETS = {
   archer: {
     cls:'archer', name:'月华', full:'月华·流光', color:'#ffe9a8', price:500000, reqLv:20,
     pieces: {
-      helm:    { slotName:'轻盔', stats:{ armor:380, agi:340, atk:1250, as:0.06, crit:0.05 } },
-      chest:   { slotName:'皮甲', stats:{ armor:520, agi:400, atk:1300, as:0.07, crit:0.06 } },
-      legs:    { slotName:'护腿', stats:{ armor:440, agi:350, atk:1100, as:0.06, crit:0.05 } },
-      boots:   { slotName:'疾行靴', stats:{ armor:380, agi:380, atk:1300, as:0.12, crit:0.04 } },
-      neck:    { slotName:'月链', stats:{ agi:440, atk:1650, crit:0.09, critDmg:0.35, hit:0.06 } },
-      ring:    { slotName:'月戒', stats:{ agi:420, atk:1350, crit:0.08, critDmg:0.35, as:0.05 } },
-      trinket: { slotName:'月符', stats:{ agi:430, atk:1400, lifesteal:0.04, crit:0.06, hit:0.06 } }
+      helm:    { slotName:'轻盔', stats:{ armor:380, agi:340, atk:1250, hp:900, dr:0.02, as:0.06, crit:0.05 } },
+      chest:   { slotName:'皮甲', stats:{ armor:520, agi:400, atk:1300, hp:1400, dr:0.03, as:0.07, crit:0.06 } },
+      legs:    { slotName:'护腿', stats:{ armor:440, agi:350, atk:1100, hp:1100, dr:0.02, as:0.06, crit:0.05 } },
+      boots:   { slotName:'疾行靴', stats:{ armor:380, agi:380, atk:1300, hp:800, dr:0.02, as:0.12, crit:0.04 } },
+      neck:    { slotName:'月链', stats:{ agi:440, atk:1650, hp:700, dr:0.02, crit:0.09, critDmg:0.35, hit:0.06 } },
+      ring:    { slotName:'月戒', stats:{ agi:420, atk:1350, hp:700, dr:0.02, crit:0.08, critDmg:0.35, as:0.05 } },
+      trinket: { slotName:'月符', stats:{ agi:430, atk:1400, hp:700, dr:0.03, lifesteal:0.04, crit:0.06, hit:0.06 } }
     }
   },
   /* 恶魔猎手：攻速 / 攻击 / 吸血 / 物爆 / 物爆伤 / 命中 */

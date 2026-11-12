@@ -717,9 +717,13 @@ function bagHtml() {
         <span class="stack">×${it.count || 1}</span></div>`;
     } else if (it.ringKey) {
       const st = it.star || 0;
+      const dCP = equipDeltaPower(p, it);
+      const worn = !!(p.equip[it.ringSlot || ringSlotOf(it.ringKey)] || {}).id === it.id;
       html += `<div class="bag-cell relic-ring has" data-item="${it.id}">
         ${iconTag(it.ringSlot || 'ring_exp', 34)}
-        <div class="nm" style="color:#ff8a8a">${it.ringKey ? DATA.SPECIAL_RINGS[it.ringKey].name : it.name}${st ? ' ' + '★'.repeat(st) : ''}</div></div>`;
+        <div class="nm" style="color:#ff8a8a">${DATA.SPECIAL_RINGS[it.ringKey].name}${st ? ' ' + '★'.repeat(st) : ''}</div>
+        ${!worn && dCP > 0 ? '<span class="up">▲</span>' : ''}
+        <span class="cp-mini">${worn ? '已穿戴' : (dCP > 0 ? '+' : '') + dCP}</span></div>`;
     } else if (it.type === 'book') {
       html += `<div class="bag-cell book" data-book="${it.stat}">
         <div class="ic" style="color:${it.color};font-family:var(--serif)">书</div>

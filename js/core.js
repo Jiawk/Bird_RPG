@@ -764,11 +764,14 @@ function combatPower(p) {
 /* 换装后的战力变化（正数=更强） */
 function equipDeltaPower(p, item) {
   if (!item || item.type === 'potion') return 0;
+  // 特戒的目标槽位与 item.slot 不同，要单独解析
+  const slot = item.ringKey ? (item.ringSlot || ringSlotOf(item.ringKey)) : item.slot;
+  if (!slot) return 0;
   const before = gearPower(p);
-  const cur = p.equip[item.slot];
-  p.equip[item.slot] = item;
+  const cur = p.equip[slot];
+  p.equip[slot] = item;
   const after = gearPower(p);
-  if (cur) p.equip[item.slot] = cur; else delete p.equip[item.slot];
+  if (cur) p.equip[slot] = cur; else delete p.equip[slot];
   return Math.round(after - before);
 }
 

@@ -21,7 +21,8 @@ const RING_IDX = {
   ring_cleave:24, ring_drop:25, ring_gather:26
 };
 const MAT_IDX = { iron:27, mithril:28, scale:29, shard:30, stone:31, protect:32, skillT:33, breakT:34, bossToken:35 };
-const EQUIP_COUNT = 36;
+const EQUIP_COUNT = 37;
+const BOOK_IDX = 36;
 const POTION_IDX  = { hp:18, mp:19 };
 
 function iconIdxOf(slot, wtype, relicKey) {
@@ -686,7 +687,7 @@ function matPageHtml() {
     const cnt = (p.materials && p.materials[k]) || 0;
     const M = DATA.MATERIALS[k];
     out += `<div class="bag-cell mat${cnt ? '' : ' zero'}" data-mat="${k}" title="${M.desc || ''}">
-      <span class="ic-sprite" style="width:38px;height:38px;background-size:${38 * EQUIP_COUNT}px 38px;background-position:${-MAT_IDX[k] * 38}px 0"></span>
+      <span class="ic-sprite" style="width:26px;height:26px;background-size:${26 * EQUIP_COUNT}px 26px;background-position:${-MAT_IDX[k] * 26}px 0"></span>
       <div class="nm" style="color:${M.color}">${M.name}</div>
       <span class="stack">×${cnt}</span></div>`;
     filled++;
@@ -757,7 +758,7 @@ function bagHtml() {
     if (it.type === 'potion') {
       const pi2 = POTION_IDX[it.key] !== undefined ? POTION_IDX[it.key] : 18;
       html += `<div class="bag-cell potion" data-potion="${it.key}">
-        <span class="ic-sprite" style="width:34px;height:34px;background-size:${34*EQUIP_COUNT}px 34px;background-position:${-pi2*34}px 0"></span>
+        <span class="ic-sprite" style="width:26px;height:26px;background-size:${26*EQUIP_COUNT}px 26px;background-position:${-pi2*26}px 0"></span>
         <div class="nm" style="color:${it.color}">${it.name}</div>
         <span class="stack">×${it.count || 1}</span></div>`;
     } else if (it.ringKey) {
@@ -765,13 +766,13 @@ function bagHtml() {
       const dCP = equipDeltaPower(p, it);
       const worn = !!(p.equip[it.ringSlot || ringSlotOf(it.ringKey)] || {}).id === it.id;
       html += `<div class="bag-cell relic-ring has" data-item="${it.id}">
-        ${iconTag(it.ringSlot || 'ring_exp', 34)}
+        ${iconTag(it.ringSlot || 'ring_exp', 26)}
         <div class="nm" style="color:#ff8a8a">${DATA.SPECIAL_RINGS[it.ringKey].name}${st ? ' ' + '★'.repeat(st) : ''}</div>
         ${!worn && dCP > 0 ? '<span class="up">▲</span>' : ''}
         <span class="cp-mini">${worn ? '已穿戴' : (dCP > 0 ? '+' : '') + dCP}</span></div>`;
     } else if (it.type === 'book') {
       html += `<div class="bag-cell book" data-book="${it.stat}">
-        <div class="ic" style="color:${it.color};font-family:var(--serif)">书</div>
+        <span class="ic-sprite" style="width:26px;height:26px;background-size:${26*EQUIP_COUNT}px 26px;background-position:${-BOOK_IDX*26}px 0"></span>
         <div class="nm" style="color:${it.color}">${it.name}</div>
         <span class="stack">×${it.count || 1}</span></div>`;
     } else {
@@ -779,7 +780,7 @@ function bagHtml() {
       const locked = it.reqLv > p.level;
       const _isRing = it.slot && it.slot.indexOf('ring_') === 0;
       html += `<div class="bag-cell${locked ? ' locked' : ''}${_isRing ? ' relic-ring has' : ''}" data-item="${it.id}">
-        ${iconTag(it.slot, 30, it.wtype, it.relicKey)}
+        ${iconTag(it.slot, 26, it.wtype, it.relicKey)}
         <div class="nm" style="color:${it.color}">${it.name}</div>
         ${!locked && dCP > 0 ? '<span class="up">▲</span>' : ''}
         <span class="cp-mini">${dCP > 0 ? '+' : ''}${dCP}</span>

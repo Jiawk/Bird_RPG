@@ -1445,15 +1445,12 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 
 .bag-grid-8{grid-template-columns:repeat(12,minmax(0,1fr)) !important;gap:4px !important}
 .bag-grid-8 .bag-cell{aspect-ratio:1;border-width:1px;border-radius:2px}
-.bag-grid-8 .bag-cell .ic-sprite{width:26px !important;height:26px !important;
-  background-size:calc(26px * 36) 26px !important}
 .bag-grid-8 .bag-cell .nm{font-size:8px !important;line-height:1.15;padding:0 1px}
 .bag-grid-8 .bag-cell .stack{font-size:8px;padding:0 3px}
 .bag-grid-8 .bag-cell .cp-mini{font-size:8px}
 .bag-grid-8 .bag-cell .lock-tag{font-size:7.5px;padding:1px 3px}
 .bag-grid-8 .bag-cell .up{font-size:10px}
 .bag-grid-8 .bag-cell .ic{font-size:14px !important}
-.mat-page .bag-cell .ic-sprite{width:26px !important;height:26px !important}
 
 @media (max-width:1100px){
   .bag-grid-8{grid-template-columns:repeat(9,minmax(0,1fr)) !important}

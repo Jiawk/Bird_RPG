@@ -739,7 +739,7 @@ function bagHtml() {
     html += `<button class="pg-btn ${i === page ? 'on' : ''}" data-bag-page="${i}">装备背包 ${i + 1}</button>`;
   }
   html += `<button class="pg-btn ${page === 2 ? 'on' : ''}" data-bag-page="2">材料背包 1</button>`;
-  html += `<span class="pg-tip">每页 8 列 × 12 行 = ${BAG_PAGE_SIZE} 格</span></div>`;
+  html += `<span class="pg-tip">每页 12 列 × 12 行 = ${BAG_PAGE_SIZE} 格</span></div>`;
 
   // ---- 材料背包页 ----
   if (page === 2) {

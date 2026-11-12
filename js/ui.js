@@ -20,7 +20,8 @@ const RING_IDX = {
   ring:20, ring_exp:21, ring_revive:22, ring_summon:23,
   ring_cleave:24, ring_drop:25, ring_gather:26
 };
-const EQUIP_COUNT = 27;
+const MAT_IDX = { iron:27, mithril:28, scale:29, shard:30, stone:31, protect:32, skillT:33, breakT:34 };
+const EQUIP_COUNT = 35;
 const POTION_IDX  = { hp:18, mp:19 };
 
 function iconIdxOf(slot, wtype, relicKey) {
@@ -598,6 +599,7 @@ function handleCommand(act) {
     case 'town': goTown(); break;
     case 'quest': toggleModal('quest', '任务官 · 黄仁勋', questHtml); break;
     case 'craft': toggleModal('craft', '锻造台', craftHtml); break;
+    case 'ringup': toggleModal('ringup', '特戒强化', ringUpHtml); break;
     case 'codexEquip': toggleModal('codexEquip', '装备图鉴', codexEquipHtml); break;
     case 'codexCollect': toggleModal('codexCollect', '收藏图鉴', codexCollectHtml); break;
     case 'debug': toggleModal('debug', '调试面板 · N', debugHtml); break;
@@ -644,6 +646,24 @@ function usePotion() {
 }
 
 /* ---------------- 背包 ---------------- */
+/* 材料格子（堆叠展示，来源仍是 p.materials） */
+function matCellsHtml(count) {
+  const p = G.player;
+  let out = '';
+  let n = 0;
+  for (const k in MAT_IDX) {
+    const cnt = (p.materials && p.materials[k]) || 0;
+    if (!cnt) continue;
+    n++;
+    const M = DATA.MATERIALS[k];
+    out += `<div class="bag-cell mat" data-mat="${k}">
+      <span class="ic-sprite" style="width:34px;height:34px;background-size:${34*EQUIP_COUNT}px 34px;background-position:${-MAT_IDX[k]*34}px 0"></span>
+      <div class="nm" style="color:${M.color}">${M.name}</div>
+      <span class="stack">×${cnt}</span></div>`;
+  }
+  return { html: out, n };
+}
+
 function bagHtml() {
   const p = G.player;
   (p.bag || []).forEach(normalizeSlot);
@@ -665,6 +685,13 @@ function bagHtml() {
     html += `<button class="pg-btn ${i === page ? 'on' : ''}" data-bag-page="${i}">${i + 1}</button>`;
   }
   html += '<span class="pg-tip">背包 ' + BAG_PAGES + ' 页 · 每页 ' + BAG_PAGE_SIZE + ' 格</span></div>';
+
+  // ---- 材料区（堆叠）----
+  const mc = matCellsHtml();
+  if (mc.n) {
+    html += `<div class="mat-title">材料　<span style="font-size:10px;color:#8f8570">共 ${mc.n} 种 · 可堆叠</span></div>`;
+    html += `<div class="mat-grid">${mc.html}</div>`;
+  }
 
   html += '<div class="bag-grid">';
   for (let i = start; i < end; i++) {
@@ -1149,6 +1176,51 @@ function itemDetailHtml(id, from) {
   </div>`;
 }
 
+/* ---------------- 特戒强化 ---------------- */
+function ringUpHtml() {
+  const p = G.player;
+  const pool = ringMergeList(p);
+  if (!pool.length) {
+    return `<div style="padding:20px;text-align:center;color:#8f8570">
+      还没有可用于合成的特戒。<br>特戒来自 BOSS 掉落与首杀奖励。</div>
+      <div class="idt-actions" style="margin-top:14px"><button data-act-craft>返回锻造台</button></div>`;
+  }
+  // 按 (ringKey, star) 分组
+  const groups = {};
+  pool.forEach(x => {
+    const k = x.ring.ringKey + '|' + (x.ring.star || 0);
+    (groups[k] = groups[k] || []).push(x);
+  });
+
+  let html = `<div style="font-size:11.5px;color:#8f8570;margin-bottom:10px">
+    规则：<b style="color:#ff8a8a">2 枚同款同星</b> → 合成 1 枚 <b>+1 星</b>，最高 5 星。<br>
+    每星让特戒效果 <b style="color:#ffd24a">+50%</b>（5 星 = 3.5 倍）。
+  </div><div class="npc-list">`;
+
+  Object.keys(groups).forEach(gk => {
+    const arr = groups[gk];
+    const r = arr[0].ring;
+    const star = r.star || 0;
+    const can = arr.length >= 2 && star < RING_MAX_STAR;
+    const def = DATA.SPECIAL_RINGS[r.ringKey];
+    const effTxt = Object.keys(def.effect).map(k => effectText(k, def.effect[k] * ringStarMul(star))).join('；');
+    html += `<div class="npc-row" style="border-color:${star ? '#ff3b3b' : '#4a3d28'}">
+      <div style="flex:1">
+        <div class="nr-name" style="color:#ff8a8a">
+          ${DATA.SPECIAL_RINGS[r.ringKey].name} ${'★'.repeat(star)}${'☆'.repeat(RING_MAX_STAR - star)}
+          <span style="font-size:10px;color:#8f8570">×${arr.length}</span></div>
+        <div class="nr-info" style="font-size:10px">${effTxt}</div>
+      </div>
+      <button data-ring-merge="${r.ringKey}" data-ring-star="${star}" ${can ? '' : 'disabled'}>
+        ${star >= RING_MAX_STAR ? '已满星' : (arr.length >= 2 ? '合成 ' + (star + 1) + ' 星' : '数量不足')}
+      </button></div>`;
+  });
+
+  html += `</div><div class="idt-actions" style="margin-top:12px">
+    <button data-act-craft>返回锻造台</button></div>`;
+  return html;
+}
+
 /* ---------------- 圣物兑换 ---------------- */
 function buyRelic(key) {
   const p = G.player;
@@ -1495,6 +1567,7 @@ function enhanceHtml() {
   html += '<div class="col-title" style="margin:6px 0 8px">身上装备 · 点击选择</div>';
   html += '<div class="forge-grid">';
   for (const sk in DATA.SLOTS) {
+    if (sk.indexOf('ring_') === 0) continue;   // 特戒不走装备强化（改用特戒强化升星）
     const it = p.equip[sk];
     const lv = it ? (it.enh || 0) : 0;
     html += `<div class="forge-slot${it ? '' : ' empty'}" ${it ? `data-enh-pick="${it.id}"` : ''}>
@@ -1586,12 +1659,17 @@ function enhanceItemHtml(id) {
     if (lv >= 11) {
       html += `<div class="enh-line"><span>失败惩罚</span><b class="bad">掉 1 级（用保护券可免）</b></div>`;
     }
+    // 保护券
+    const pNeed = DATA.ENHANCE.protectNeed(lv);
+    const pHave = p.materials.protect || 0;
+    const pRate = Math.round(DATA.ENHANCE.rateWithProtect(lv) * 100);
+    html += `<div class="enh-line"><span>保护券</span><b class="${pHave >= pNeed ? 'ok' : ''}">需要 ${pNeed} 张 / 持有 ${pHave}</b></div>`;
+    html += `<div class="enh-line"><span>用券后成功率</span><b class="ok">${pRate}%</b></div>`;
+
     html += '<div class="enh-btns">';
     html += `<button class="big-btn primary" data-enh-do="${it.id}" data-protect="0">强化</button>`;
-    if (lv >= 11) {
-      html += `<button class="big-btn" data-enh-do="${it.id}" data-protect="1"
-        ${(p.materials.protect||0) > 0 ? '' : 'disabled'}>用保护券强化（${p.materials.protect||0}）</button>`;
-    }
+    html += `<button class="big-btn" data-enh-do="${it.id}" data-protect="1"
+      ${pHave >= pNeed ? '' : 'disabled'}>用保护券（${pNeed} 张）</button>`;
     html += '<button class="big-btn" data-enh-back="1">返回</button>';
     html += '</div>';
   }
@@ -1716,8 +1794,15 @@ function craftHtml() {
     <div class="nr-info">消耗金币 + 强化石，把装备强化到最高 +15</div></div>
     <button data-act-enhance style="border-color:#d4af37;color:#ffd24a">打开</button></div>`;
 
+  // ---- 特戒强化入口 ----
+  html += `<div class="npc-row" style="margin-bottom:12px;border-color:#ff3b3b">
+    <div><div class="nr-name" style="color:#ff6b6b">💍 特戒强化</div>
+    <div class="nr-info">2 枚同款同星特戒 → 合成 +1 星（最高 5 星，每星 +50% 效果）</div></div>
+    <button data-act-ringup style="border-color:#ff3b3b;color:#ff8a8a">打开</button></div>`;
+
   // ---- 合成说明 ----
   html += `<div class="col-title" style="margin:8px 0 8px">材料合成装备</div>`;
+  html += `<div style="font-size:11px;color:#8f8570;margin-bottom:8px">按当前角色等级（Lv.${p.level}）打造</div>`;
   html += `<div style="font-size:11.5px;color:#8f8570;line-height:1.7;margin-bottom:10px;
     padding:8px 10px;background:rgba(60,48,28,.35);border-left:2px solid #8a6d3b;border-radius:2px">
     用材料<b style="color:#ffd98a">直接打造</b>一件指定品质的装备（部位随机）。<br>
@@ -1769,7 +1854,7 @@ function doCraft(i) {
   Object.keys(c.need).forEach(k => { p.materials[k] -= c.need[k]; });
   p.gold -= c.gold;
   const slot = pick(DATA.LOOT_SLOTS);
-  const lvl = Math.max(6, Math.min(28, p.level + 4));
+  const lvl = Math.max(1, p.level);   // 按当前角色等级打造
   const it = makeItem(slot, lvl, c.quality, p.stats.isMagic);
   if (!addToBag(p, it)) { p.gold += 30; }
   toast(`锻造出 ${it.name}`);
@@ -1883,6 +1968,28 @@ function bindModal() {
     el.onmouseenter = e => showTooltip(bk, e.clientX, e.clientY);
     el.onmousemove = e => moveTooltip(e.clientX, e.clientY);
     el.onmouseleave = hideTooltip;
+  });
+  body.querySelectorAll('[data-act-ringup]').forEach(el => el.onclick = () => {
+    openModal('ringup', '特戒强化', ringUpHtml());
+  });
+  body.querySelectorAll('[data-act-craft]').forEach(el => el.onclick = () => {
+    openModal('craft', '锻造台', craftHtml());
+  });
+  body.querySelectorAll('[data-ring-merge]').forEach(el => el.onclick = () => {
+    const r = mergeRings(G.player, el.dataset.ringMerge, +el.dataset.ringStar);
+    if (!r.ok) { toast(r.msg); return; }
+    Sfx.play('lvlup');
+    toast(`合成成功：${r.ring.name}`);
+    saveGame();
+    openModal('ringup', '特戒强化', ringUpHtml());
+  });
+  body.querySelectorAll('[data-mat]').forEach(el => {
+    el.onclick = () => {
+      const k = el.dataset.mat;
+      const M = DATA.MATERIALS[k];
+      const cnt = (G.player.materials && G.player.materials[k]) || 0;
+      toast(`${M.name}：${cnt} 个（材料自动堆叠，不占背包格）`);
+    };
   });
   body.querySelectorAll('[data-potion]').forEach(el => el.onclick = () => {
     const p = G.player;

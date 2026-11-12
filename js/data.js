@@ -257,9 +257,9 @@ DATA.MATERIALS = {
 
 /* 合成配方：3 材料 + 金币 → 指定品质随机部位 */
 DATA.CRAFT = [
-  {need:{iron:8, mithril:4},            gold:1200, quality:'epic',      name:'史诗装备（随机部位）'},
-  {need:{mithril:8, scale:4},           gold:3600, quality:'legendary', name:'传说装备（随机部位）'},
-  {need:{scale:6, shard:6},             gold:9000, quality:'mythic',    name:'神话装备（随机部位）'}
+  { need:{ iron:8, mithril:4 },              gold:10000, quality:'epic',      name:'史诗装备（当前等级）' },
+  { need:{ mithril:8, scale:4 },             gold:30000, quality:'legendary', name:'传说装备（当前等级）' },
+  { need:{ scale:6, shard:6 },               gold:50000, quality:'mythic',    name:'神话装备（当前等级）' }
 ];
 
 /* ---------------- 悬赏任务 ---------------- */
@@ -318,11 +318,18 @@ DATA.SKILL_ICON = {
 };
 
 /* ---------------- 强化 ---------------- */
+/* 强化表（按《数值配置表》[4.1]，下标 = 当前强化等级） */
 DATA.ENHANCE = {
   max: 15,
-  goldCost: lv => 120 * (lv + 1) * (lv + 1),
-  stoneCost: lv => 1 + Math.floor(lv / 2),
-  rate: lv => lv < 5 ? 1.0 : (lv < 10 ? 0.72 : 0.45),
+  GOLD:  [120, 480, 1080, 1920, 3000, 4320, 5880, 7680, 9720, 12000, 14520, 17280, 20280, 23520, 27000],
+  STONE: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+  RATE:  [1.00, 0.95, 0.90, 0.85, 0.80, 0.75, 0.70, 0.65, 0.60, 0.50, 0.45, 0.30, 0.25, 0.20, 0.15],
+  goldCost:  lv => DATA.ENHANCE.GOLD[Math.min(lv, 14)],
+  stoneCost: lv => DATA.ENHANCE.STONE[Math.min(lv, 14)],
+  rate:      lv => DATA.ENHANCE.RATE[Math.min(lv, 14)],
+  // 保护券：强化到 +N 需要 N 张，成功率翻倍（上限 100%）
+  protectNeed: lv => lv + 1,
+  rateWithProtect: lv => Math.min(1, DATA.ENHANCE.RATE[Math.min(lv, 14)] * 2),
   failDrop: lv => lv >= 11 ? 1 : 0,
   statMul: lv => 1 + lv * 0.06          // +15 → +90%
 };

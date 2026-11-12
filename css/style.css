@@ -1107,3 +1107,12 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   .idt-actions{gap:6px}
   .idt-actions button{flex:1 1 calc(50% - 3px);min-width:0;padding:9px 2px;font-size:12px}
 }
+
+/* 背包材料区 */
+.mat-title{margin:6px 0 5px;font-size:12px;color:#ffd98a;font-family:var(--serif);
+  letter-spacing:.1em;border-bottom:1px dotted rgba(184,173,147,.2);padding-bottom:3px}
+.mat-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;margin-bottom:10px}
+.bag-cell.mat{cursor:pointer;border-color:#4a4a52;
+  background:linear-gradient(180deg,rgba(38,38,44,.9),rgba(10,10,14,.96))}
+.bag-cell.mat:hover{border-color:#9aa0a6;box-shadow:0 0 8px rgba(154,160,166,.35)}
+@media (max-width:820px){ .mat-grid{grid-template-columns:repeat(4,1fr)} }

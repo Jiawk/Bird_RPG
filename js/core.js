@@ -437,7 +437,54 @@ function giveStarterGear(p) {
 }
 
 /* ---------------- 装备强化 ---------------- */
-function enhMul(it) { return DATA.ENHANCE.statMul(it.enh || 0); }
+function enhMul(it) {
+  const enh = DATA.ENHANCE.statMul(it.enh || 0);
+  const star = 1 + (it.star || 0) * 0.5;      // 特戒星级：每星 +50% 效果
+  return enh * star;
+}
+
+/* 特戒升星：同款 2 枚同星 → 1 枚 +1 星（最高 5 星） */
+const RING_MAX_STAR = 5;
+function ringStarMul(star) { return 1 + (star || 0) * 0.5; }
+
+function ringMergeList(p) {
+  const pool = [];
+  if (!p.ringBag) p.ringBag = [];
+  for (const k in p.equip) {
+    const it = p.equip[k];
+    if (it && it.ringKey) pool.push({ src: 'equip', slot: k, ring: it });
+  }
+  p.ringBag.forEach((it, i) => pool.push({ src: 'bag', idx: i, ring: it }));
+  return pool;
+}
+
+function mergeRings(p, ringKey, star) {
+  const pool = ringMergeList(p).filter(x => x.ring.ringKey === ringKey && (x.ring.star || 0) === star);
+  if (pool.length < 2) return { ok:false, msg:'需要 2 枚同款同星特戒' };
+  if (star >= RING_MAX_STAR) return { ok:false, msg:'已达 5 星' };
+
+  // 消耗：优先消耗背包里的，其次身上的
+  const used = [];
+  for (const x of pool) {
+    if (used.length >= 2) break;
+    used.push(x);
+  }
+  for (const x of used) {
+    if (x.src === 'equip') { p.equip[x.slot] = null; delete p.equip[x.slot]; }
+  }
+  const bagUsed = used.filter(x => x.src === 'bag').map(x => x.idx).sort((a, b) => b - a);
+  bagUsed.forEach(i => p.ringBag.splice(i, 1));
+
+  // 生成升星后的戒指
+  const base = used[0].ring;
+  const def = DATA.SPECIAL_RINGS[ringKey];
+  const nr = makeRing(def, ringKey);
+  nr.star = star + 1;
+  nr.name = nr.name + ' ' + '★'.repeat(star + 1);
+  equipSpecialRing(p, nr);
+  recalcStats(p);
+  return { ok:true, ring: nr };
+}
 
 /* 强化后的词条（不修改原数据） */
 function itemStats(it) {
@@ -454,15 +501,18 @@ function enhanceItem(p, it, useProtect) {
   if (lv >= DATA.ENHANCE.max) return { ok:false, msg:'已达到 +15 上限' };
   const gold = DATA.ENHANCE.goldCost(lv);
   const stone = DATA.ENHANCE.stoneCost(lv);
+  // 保护券：强化到 +(lv+1) 需要 (lv+1) 张
+  const pNeed = DATA.ENHANCE.protectNeed(lv);
+  const useP = !!useProtect;
   if (p.gold < gold) return { ok:false, msg:`金币不足（需 ${fmt(gold)}）` };
   if ((p.materials.stone || 0) < stone) return { ok:false, msg:`强化石不足（需 ${stone}）` };
-  if (useProtect && (p.materials.protect || 0) < 1) return { ok:false, msg:'没有强化保护券' };
+  if (useP && (p.materials.protect || 0) < pNeed) return { ok:false, msg:`保护券不足（需 ${pNeed} 张）` };
 
   p.gold -= gold;
   p.materials.stone -= stone;
-  if (useProtect) p.materials.protect -= 1;
+  if (useP) p.materials.protect -= pNeed;
 
-  const rate = DATA.ENHANCE.rate(lv);
+  const rate = useP ? DATA.ENHANCE.rateWithProtect(lv) : DATA.ENHANCE.rate(lv);
   if (Math.random() < rate) {
     it.enh = lv + 1;
     return { ok:true, msg:`强化成功 → +${it.enh}`, up:true };
@@ -585,7 +635,14 @@ function equipSpecialRing(p, ring) {
   const slot = ringSlotOf(ring.ringKey);
   if (slot) {
     ring.slot = slot;
-    p.equip[slot] = ring;          // 同槽已被占则替换（旧的回背包）
+    if (p.equip[slot]) {
+      // 同槽已有 → 新的放进「特戒仓库」，可用于合成升星
+      if (!p.ringBag) p.ringBag = [];
+      ring.slot = null;
+      p.ringBag.push(ring);
+    } else {
+      p.equip[slot] = ring;
+    }
     recalcStats(p);
     return ring;
   }

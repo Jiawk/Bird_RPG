@@ -684,10 +684,10 @@ function bagHtml() {
       <input type="checkbox" data-toggle-autosell ${G.autoSell ? 'checked' : ''}>
       <span>自动出售低战力</span>
     </label>
-    <button class="sm-btn danger" data-act="sellWeapons">一键出售所有武器</button>
+    <button class="sm-btn danger" data-act="sellWeapons">一键出售低战力武器</button>
     <label class="auto-toggle">
       <input type="checkbox" data-toggle-autosellweapon ${G.autoSellWeapon ? 'checked' : ''}>
-      <span>自动出售所有武器</span>
+      <span>自动出售低战力武器</span>
     </label>
     <span class="bag-count">${p.bag.length} / ${BAG_MAX}</span>
   </div>`;
@@ -2179,18 +2179,18 @@ function bindModal() {
   body.querySelectorAll('[data-act="sellWorse"]').forEach(b => b.onclick = () => handleCommand('sellWorse'));
   body.querySelectorAll('[data-act="sellWeapons"]').forEach(b => b.onclick = () => {
     const p = G.player;
-    const cnt = p.bag.filter(x => x && x.slot === 'weapon' && !x.ringKey).length;
-    if (!cnt) { toast('背包里没有武器'); return; }
-    if (!confirm(`确定出售背包里全部 ${cnt} 件武器？不可撤销`)) return;
-    const r = sellAllWeapons(p);
-    toast(`已出售 ${r.n} 件武器，获得 ${fmt(r.gold)} 金`);
-    logMsg(`出售 ${r.n} 件武器 → ${fmt(r.gold)} 金`, 'loot');
+    const cnt = p.bag.filter(x => isLowPowerWeapon(p, x)).length;
+    if (!cnt) { toast('没有低战力武器（红装与特戒已排除）'); return; }
+    if (!confirm(`确定出售 ${cnt} 件低战力武器？（不含红装/特戒）`)) return;
+    const r = sellAllLowWeapons(p);
+    toast(`已出售 ${r.n} 件低战力武器，获得 ${fmt(r.gold)} 金`);
+    logMsg(`出售 ${r.n} 件低战力武器 → ${fmt(r.gold)} 金`, 'loot');
     saveGame();
     openModal('bag', '背包 · 装备', bagHtml());
   });
   body.querySelectorAll('[data-toggle-autosellweapon]').forEach(cb => cb.onchange = () => {
     G.autoSellWeapon = cb.checked;
-    toast('自动出售所有武器：' + (cb.checked ? '开' : '关'));
+    toast('自动出售低战力武器：' + (cb.checked ? '开' : '关'));
     saveGame();
   });
   body.querySelectorAll('[data-toggle-autosell]').forEach(cb => cb.onchange = () => {

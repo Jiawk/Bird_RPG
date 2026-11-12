@@ -787,12 +787,21 @@ function isWorseThanEquipped(p, it) {
 }
 
 /* 一键出售劣质装备，返回卖出件数与金币 */
-/* 出售背包里所有武器（明确操作，不保护本命/红装） */
-function sellAllWeapons(p) {
+/* 是否为「低战力武器」：背包里的武器、战力不高于身上那把、且不是红装/特戒 */
+function isLowPowerWeapon(p, it) {
+  if (!it || it.slot !== 'weapon' || it.ringKey) return false;
+  if (it.qKey === 'mythic') return false;                 // 红装不卖
+  const cur = p.equip.weapon;
+  if (!cur) return false;                                  // 身上没武器就留着
+  return equipDeltaPower(p, it) <= 0;                      // 不比身上强 → 低战力
+}
+
+/* 一键出售背包里的低战力武器（不含红装 / 特戒） */
+function sellAllLowWeapons(p) {
   let n = 0, gold = 0;
   for (let i = p.bag.length - 1; i >= 0; i--) {
     const it = p.bag[i];
-    if (!it || it.slot !== 'weapon' || it.ringKey) continue;
+    if (!isLowPowerWeapon(p, it)) continue;
     const q = DATA.QUALITY.find(x => x.key === (it.qKey || it.quality)) || { key:'common' };
     const price = Math.round((20 + it.ilvl * 8) * Math.pow(2.2, DATA.QUALITY.indexOf(q)));
     p.gold += price; gold += price; n++;

@@ -4283,7 +4283,14 @@ function dropLoot(m) {
   const w = G.world, p = G.player;
   const d = DATA.DIFFICULTY[G.diff];
   const dropMul = d.dropMul;
-  const ilvl = m.level;
+  // 每个副本只出「对应等级段」的装备：第 N 个副本最高 (N×10) 级
+  let ilvl = m.level;
+  if (!w.isTown && DATA.ROOMS[w.roomId]) {
+    const room = DATA.ROOMS[w.roomId];
+    const cap = (w.roomId + 1) * 10;
+    const floorLv = room.lv || 1;
+    ilvl = Math.max(floorLv, Math.min(ilvl, cap));
+  }
 
   const push = (obj) => {
     const a = Math.random() * Math.PI * 2, r = rnd(10, 46);

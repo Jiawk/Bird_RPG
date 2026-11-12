@@ -324,14 +324,16 @@ DATA.ENHANCE = {
   GOLD:  [120, 480, 1080, 1920, 3000, 4320, 5880, 7680, 9720, 12000, 14520, 17280, 20280, 23520, 27000],
   STONE: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
   RATE:  [1.00, 0.95, 0.90, 0.85, 0.80, 0.75, 0.70, 0.65, 0.60, 0.50, 0.45, 0.30, 0.25, 0.20, 0.15],
-  goldCost:  lv => DATA.ENHANCE.GOLD[Math.min(lv, 14)],
+  STAT_STEP: 0.06,     // 每级属性倍率
+  GOLD_MUL: 1,         // 强化金币系数
+  goldCost:  lv => Math.round(DATA.ENHANCE.GOLD[Math.min(lv, 14)] * (DATA.ENHANCE.GOLD_MUL || 1)),
   stoneCost: lv => DATA.ENHANCE.STONE[Math.min(lv, 14)],
   rate:      lv => DATA.ENHANCE.RATE[Math.min(lv, 14)],
   // 保护券：强化到 +N 需要 N 张，成功率翻倍（上限 100%）
   protectNeed: lv => lv + 1,
   rateWithProtect: lv => Math.min(1, DATA.ENHANCE.RATE[Math.min(lv, 14)] * 2),
   failDrop: lv => lv >= 11 ? 1 : 0,
-  statMul: lv => 1 + lv * 0.06          // +15 → +90%
+  statMul: lv => 1 + lv * (DATA.ENHANCE.STAT_STEP || 0.06)
 };
 
 /* ---------------- 技能强化 ---------------- */
@@ -362,8 +364,10 @@ DATA.TOWER = {
   dailyAttempts: 2,
   // 适配 60 级版本：以玩家 Lv.51~60 的战力为基准
   // 20 层时血量 ×8.0、攻击 ×6.0（原为 ×12.8 / ×6.7，重排后更平滑）
-  hpMul:  f => 1 + (f - 1) * 0.37,
-  atkMul: f => 1 + (f - 1) * 0.26,
+  HP_STEP: 0.37,      // 每层血量增幅
+  ATK_STEP: 0.26,     // 每层攻击增幅
+  hpMul:  f => 1 + (f - 1) * DATA.TOWER.HP_STEP,
+  atkMul: f => 1 + (f - 1) * DATA.TOWER.ATK_STEP,
   // 塔内怪物等级随层数提升（1 层 = 玩家等级，20 层 = 玩家等级 +19）
   levelOf: (f, baseLv) => Math.max(1, Math.min(70, (baseLv || 1) + (f - 1))),
   reward: f => ({
@@ -384,6 +388,8 @@ DATA.MATS2 = {
 };
 
 /* ---------------- BOSS 首杀戒指 ---------------- */
+DATA.RING_DROP_PCT = 0.5;   // BOSS 掉特戒基础概率（%）
+
 DATA.BOSS_RINGS = {
   bossWolf:      {ring:'exp',    name:'经验之戒'},
   bossKobold:    {ring:'drop',   name:'爆率之戒'},

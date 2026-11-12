@@ -342,7 +342,7 @@ function onMonsterKilled(m) {
   // ---- BOSS 掉特戒（难度越高爆率越高，仍是最低档）----
   if (m.isBoss) {
     const mul = G.diff === 'hell' ? 3 : G.diff === 'hard' ? 2 : 1;
-    if (Math.random() < 0.005 * mul) {   // 基础 0.5%（困难×2，地狱×3）
+    if (Math.random() < (DATA.RING_DROP_PCT / 100) * mul) {   // 基础概率可配置（困难×2，地狱×3）
       const keys = Object.keys(DATA.SPECIAL_RINGS);
       const k = keys[Math.floor(Math.random() * keys.length)];
       const ring = makeRing(DATA.SPECIAL_RINGS[k], k);
@@ -1395,7 +1395,64 @@ function buyRelic(key) {
 }
 
 /* ---------------- 调试面板 ---------------- */
+/* ---------------- 调试入口（两个大按钮）---------------- */
 function debugHtml() {
+  const view = G._dbgView || 'menu';
+  if (view === 'cfg') return cfgPanelHtml();
+  if (view === 'toggles') {
+    return `<div class="dbg-return"><button data-dbg-back="1">← 返回入口</button></div>`
+      + debugTogglesHtml().replace(/^<div style="font-size:11.5px/, '<div style="font-size:11.5px');
+  }
+  return `<div class="dbg-menu">
+    <div class="dbg-card" data-dbg-go="toggles">
+      <div class="dc-ic">🛠</div>
+      <div class="dc-name">调试开关</div>
+      <div class="dc-sub">刷怪 / 攻速 / 免CD / 无敌 / 无限蓝<br>发放材料 / 发放特戒</div>
+    </div>
+    <div class="dbg-card cfg" data-dbg-go="cfg">
+      <div class="dc-ic">⚙</div>
+      <div class="dc-name">数值修改</div>
+      <div class="dc-sub">经验 / 掉落 / 强化 / 技能 / 爬塔 / 任务 / 圣物<br>改完保存 → 可导出定制版 HTML</div>
+    </div>
+  </div>
+  <div style="font-size:11px;color:#8f8570;margin-top:12px;text-align:center">
+    调试开关只影响当前会话；「数值修改」保存后会写入存档与本文件
+  </div>`;
+}
+
+/* ---------------- 数值修改面板 ---------------- */
+function cfgPanelHtml() {
+  if (typeof CFG_DEFS === 'undefined') return '<div style="padding:20px">配置模块未加载</div>';
+  const groups = {};
+  CFG_DEFS.forEach(d => { (groups[d.g] = groups[d.g] || []).push(d); });
+
+  let html = `<div class="dbg-return"><button data-dbg-back="1">← 返回入口</button></div>
+    <div class="cfg-tip">改完点「保存数值」立即生效并写入存档；
+      点「导出定制版 HTML」会下载一个已烘焙这些数值的新文件，可直接发给朋友。</div>`;
+
+  Object.keys(groups).forEach(g => {
+    html += `<div class="cfg-group"><div class="cfg-gtitle">${g}</div>`;
+    groups[g].forEach(d => {
+      const v = d.get();
+      html += `<div class="cfg-row">
+        <span class="cfg-label">${d.label}</span>
+        <input class="cfg-input" type="number" data-cfg="${d.id}"
+          value="${v}" min="${d.min}" max="${d.max}" step="${d.step}">
+        <span class="cfg-hint">${d.fmt(v)}</span>
+      </div>`;
+    });
+    html += '</div>';
+  });
+
+  html += `<div class="cfg-actions">
+    <button class="cfg-btn primary" data-cfg-save="1">保存数值</button>
+    <button class="cfg-btn" data-cfg-reset="1">恢复默认</button>
+    <button class="cfg-btn gold" data-cfg-export="1">导出定制版 HTML</button>
+  </div>`;
+  return html;
+}
+
+function debugTogglesHtml() {
   const d = G.debug || (G.debug = {});
   const on = v => v ? 'style="border-color:#5fdc4a;color:#b9ffb0"' : '';
   const tag = v => v ? '已开启' : '已关闭';
@@ -2332,6 +2389,56 @@ function bindModal() {
     toast(`已发放 ${given} 枚特戒（${Object.keys(DATA.SPECIAL_RINGS).length} 种 × ${n}）`);
     logMsg(`🛠 调试：发放 ${given} 枚特戒`, 'loot');
     openModal('debug', '调试面板 · N', debugHtml());
+  });
+  body.querySelectorAll('[data-dbg-go]').forEach(el => el.onclick = () => {
+    G._dbgView = el.dataset.dbgGo;
+    openModal('debug', '调试面板 · N', debugHtml());
+  });
+  body.querySelectorAll('[data-dbg-back]').forEach(el => el.onclick = () => {
+    G._dbgView = 'menu';
+    openModal('debug', '调试面板 · N', debugHtml());
+  });
+  // 数值输入实时显示提示
+  body.querySelectorAll('[data-cfg]').forEach(inp => {
+    const d = CFG_DEFS.find(x => x.id === inp.dataset.cfg);
+    if (!d) return;
+    inp.oninput = () => {
+      const hint = inp.parentElement.querySelector('.cfg-hint');
+      const v = parseFloat(inp.value);
+      if (hint && !isNaN(v)) hint.textContent = d.fmt(v);
+    };
+  });
+  body.querySelectorAll('[data-cfg-save]').forEach(b => b.onclick = () => {
+    const inputs = body.querySelectorAll('[data-cfg]');
+    let n = 0;
+    inputs.forEach(inp => {
+      const d = CFG_DEFS.find(x => x.id === inp.dataset.cfg);
+      if (!d) return;
+      let v = parseFloat(inp.value);
+      if (isNaN(v)) return;
+      v = Math.max(d.min, Math.min(d.max, v));
+      d.set(v); n++;
+    });
+    cfgSave();
+    saveGame();
+    toast(`已保存 ${n} 项数值（立即生效）`);
+    openModal('debug', '调试面板 · N', debugHtml());
+  });
+  body.querySelectorAll('[data-cfg-reset]').forEach(b => b.onclick = () => {
+    localStorage.removeItem('orc_cfg');
+    const tag = document.getElementById('orc-cfg');
+    if (tag) tag.textContent = '{}';
+    toast('已清除自定义数值，刷新页面恢复默认');
+    G._dbgView = 'menu';
+    openModal('debug', '调试面板 · N', debugHtml());
+  });
+  body.querySelectorAll('[data-cfg-export]').forEach(b => b.onclick = () => {
+    try {
+      cfgExportHtml();
+      toast('已生成「兽人永不为奴-定制版.html」，可直接发给朋友');
+    } catch (e) {
+      toast('导出失败：' + e.message);
+    }
   });
   body.querySelectorAll('[data-dbg-toggle]').forEach(b => b.onclick = () => {
     const k = b.dataset.dbgToggle;

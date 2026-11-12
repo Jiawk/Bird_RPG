@@ -400,6 +400,8 @@ window.addEventListener('error', e => {
 });
 
 window.addEventListener('DOMContentLoaded', () => {
+  // 先应用用户自定义数值，再初始化 UI
+  try { if (typeof cfgApplyAll === 'function') cfgApplyAll(); } catch (e) { console.warn('cfg', e); }
   loadAssets();
   resizeCanvas();
   initInput();

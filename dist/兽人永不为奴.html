@@ -1332,7 +1332,49 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .cs-tip{margin-top:10px;font-size:11px;color:#6b6558}
 .cs-tip b{color:#ff8a8a}
 
+/* ============ N 面板：两个大入口 ============ */
+.dbg-menu{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:6px}
+.dbg-card{padding:16px 14px;border-radius:5px;cursor:pointer;transition:all .15s;
+  background:linear-gradient(180deg,rgba(44,36,20,.95),rgba(12,9,5,.98));
+  border:1px solid #4a3d28;text-align:center}
+.dbg-card:hover{border-color:#d4af37;box-shadow:0 0 16px rgba(212,175,55,.4);transform:translateY(-2px)}
+.dbg-card .dc-ic{font-size:30px;margin-bottom:6px}
+.dbg-card .dc-name{font-family:var(--serif);font-size:16px;color:#ffd98a;letter-spacing:.12em}
+.dbg-card .dc-sub{font-size:10.5px;color:#8f8570;margin-top:6px;line-height:1.6}
+.dbg-card.cfg{border-color:#8a6d3f;background:linear-gradient(180deg,rgba(56,42,16,.95),rgba(14,10,4,.98))}
+.dbg-return{margin-bottom:10px}
+.dbg-return button{padding:5px 14px;font-size:12px;border-radius:3px;cursor:pointer;
+  color:#c8bfa8;border:1px solid #4a3d28;background:rgba(30,25,15,.9)}
+.dbg-return button:hover{border-color:#d4af37;color:#ffd24a}
+
+/* ============ 数值修改面板 ============ */
+.cfg-tip{font-size:11px;color:#8f8570;line-height:1.7;margin-bottom:12px;
+  padding:8px 10px;background:rgba(60,48,28,.35);border-left:2px solid #8a6d3b;border-radius:2px}
+.cfg-group{margin-bottom:12px}
+.cfg-gtitle{font-family:var(--serif);font-size:13px;color:#ffd98a;letter-spacing:.14em;
+  padding-bottom:4px;margin-bottom:6px;border-bottom:1px solid rgba(212,175,55,.25)}
+.cfg-row{display:grid;grid-template-columns:1fr 120px 96px;gap:8px;align-items:center;padding:4px 0}
+.cfg-label{font-size:12px;color:#c8bfa8}
+.cfg-input{width:100%;padding:5px 8px;font-size:12.5px;border-radius:3px;
+  background:#0d0a06;border:1px solid #4a3d28;color:#f0e8d6;outline:none}
+.cfg-input:focus{border-color:#d4af37;box-shadow:0 0 0 2px rgba(212,175,55,.18)}
+.cfg-hint{font-size:11px;color:#ffd24a;text-align:right}
+.cfg-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.cfg-btn{flex:1 1 30%;padding:10px 6px;font-size:13px;font-family:var(--serif);
+  border-radius:3px;cursor:pointer;color:#e8e0cc;border:1px solid var(--bronze);
+  background:linear-gradient(180deg,rgba(58,47,28,.96),rgba(16,12,7,.98))}
+.cfg-btn:hover{border-color:var(--gold-lt);color:#ffd24a}
+.cfg-btn.primary{border-color:#8a6d2f;color:#ffd24a;
+  background:linear-gradient(180deg,rgba(90,70,24,.96),rgba(26,20,8,.98))}
+.cfg-btn.gold{border-color:#d4af37;color:#ffe6a8}
+@media (max-width:560px){
+  .dbg-menu{grid-template-columns:1fr}
+  .cfg-row{grid-template-columns:1fr 88px}
+  .cfg-hint{grid-column:2;text-align:right}
+}
+
 </style>
+<script id="orc-cfg" type="application/json">{}</script>
 </head>
 <body>
 <div id="app">
@@ -1838,14 +1880,16 @@ DATA.ENHANCE = {
   GOLD:  [120, 480, 1080, 1920, 3000, 4320, 5880, 7680, 9720, 12000, 14520, 17280, 20280, 23520, 27000],
   STONE: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
   RATE:  [1.00, 0.95, 0.90, 0.85, 0.80, 0.75, 0.70, 0.65, 0.60, 0.50, 0.45, 0.30, 0.25, 0.20, 0.15],
-  goldCost:  lv => DATA.ENHANCE.GOLD[Math.min(lv, 14)],
+  STAT_STEP: 0.06,     // 每级属性倍率
+  GOLD_MUL: 1,         // 强化金币系数
+  goldCost:  lv => Math.round(DATA.ENHANCE.GOLD[Math.min(lv, 14)] * (DATA.ENHANCE.GOLD_MUL || 1)),
   stoneCost: lv => DATA.ENHANCE.STONE[Math.min(lv, 14)],
   rate:      lv => DATA.ENHANCE.RATE[Math.min(lv, 14)],
   // 保护券：强化到 +N 需要 N 张，成功率翻倍（上限 100%）
   protectNeed: lv => lv + 1,
   rateWithProtect: lv => Math.min(1, DATA.ENHANCE.RATE[Math.min(lv, 14)] * 2),
   failDrop: lv => lv >= 11 ? 1 : 0,
-  statMul: lv => 1 + lv * 0.06          // +15 → +90%
+  statMul: lv => 1 + lv * (DATA.ENHANCE.STAT_STEP || 0.06)
 };
 
 /* ---------------- 技能强化 ---------------- */
@@ -1876,8 +1920,10 @@ DATA.TOWER = {
   dailyAttempts: 2,
   // 适配 60 级版本：以玩家 Lv.51~60 的战力为基准
   // 20 层时血量 ×8.0、攻击 ×6.0（原为 ×12.8 / ×6.7，重排后更平滑）
-  hpMul:  f => 1 + (f - 1) * 0.37,
-  atkMul: f => 1 + (f - 1) * 0.26,
+  HP_STEP: 0.37,      // 每层血量增幅
+  ATK_STEP: 0.26,     // 每层攻击增幅
+  hpMul:  f => 1 + (f - 1) * DATA.TOWER.HP_STEP,
+  atkMul: f => 1 + (f - 1) * DATA.TOWER.ATK_STEP,
   // 塔内怪物等级随层数提升（1 层 = 玩家等级，20 层 = 玩家等级 +19）
   levelOf: (f, baseLv) => Math.max(1, Math.min(70, (baseLv || 1) + (f - 1))),
   reward: f => ({
@@ -1898,6 +1944,8 @@ DATA.MATS2 = {
 };
 
 /* ---------------- BOSS 首杀戒指 ---------------- */
+DATA.RING_DROP_PCT = 0.5;   // BOSS 掉特戒基础概率（%）
+
 DATA.BOSS_RINGS = {
   bossWolf:      {ring:'exp',    name:'经验之戒'},
   bossKobold:    {ring:'drop',   name:'爆率之戒'},
@@ -2194,6 +2242,117 @@ function voiceFor(p, pool) {
   const lines = VOICE_LINES[p.cls] || ['For glory!'];
   return (pool && pool.length) ? pool[Math.floor(Math.random() * pool.length)]
                                : lines[Math.floor(Math.random() * lines.length)];
+}
+
+</script>
+<script>
+/* ===== js/cfg.js ===== */
+/* ============================================================
+   数值配置：运行时覆盖 + 存档 + 导出定制版 HTML
+   内嵌配置块：<script id="orc-cfg" type="application/json">{...}</script>
+   ============================================================ */
+const CFG_DEFS = [
+  // ---- 经验 ----
+  { g:'经验', id:'maxLevel',   label:'等级上限',            min:10, max:99,  step:1,     get:()=>DATA.MAX_LEVEL, set:v=>{DATA.MAX_LEVEL=v;}, fmt:v=>v+' 级' },
+  { g:'经验', id:'expTailFrom',label:'经验陡增起始等级',      min:2,  max:59,  step:1,     get:()=>DATA.EXP_TAIL_FROM, set:v=>{DATA.EXP_TAIL_FROM=v;}, fmt:v=>v+' 级' },
+  { g:'经验', id:'expTailMul', label:'经验陡增倍率(26~29)',   min:1,  max:5,   step:0.1,   get:()=>DATA.EXP_TAIL_MUL, set:v=>{DATA.EXP_TAIL_MUL=v;}, fmt:v=>'×'+v },
+  { g:'经验', id:'expGeomMul', label:'30级后每级倍率',        min:1,  max:2,   step:0.001, get:()=>DATA.EXP_GEOM_MUL, set:v=>{DATA.EXP_GEOM_MUL=v;}, fmt:v=>'×'+v.toFixed(3) },
+
+  // ---- 掉落 ----
+  { g:'掉落', id:'mythicW',    label:'红装(神话)权重·小怪',   min:0,  max:900, step:1,     get:()=>DATA.QUALITY.find(q=>q.key==='mythic').weight, set:v=>{DATA.QUALITY.find(q=>q.key==='mythic').weight=v;}, fmt:v=>v },
+  { g:'掉落', id:'bossMythic', label:'红装(神话)权重·BOSS',   min:0,  max:2000,step:10,    get:()=>DATA.BOSS_WEIGHTS.mythic, set:v=>{DATA.BOSS_WEIGHTS.mythic=v;}, fmt:v=>v },
+  { g:'掉落', id:'ringDrop',   label:'特戒爆率(基础)',        min:0,  max:10,  step:0.1,   get:()=>DATA.RING_DROP_PCT, set:v=>{DATA.RING_DROP_PCT=v;}, fmt:v=>v+'%' },
+
+  // ---- 强化 ----
+  { g:'强化', id:'enhMax',     label:'强化上限',             min:5,  max:30,  step:1,     get:()=>DATA.ENHANCE.max, set:v=>{DATA.ENHANCE.max=v;}, fmt:v=>'+'+v },
+  { g:'强化', id:'enhStat',    label:'每级属性倍率',          min:0.01,max:0.2,step:0.01,  get:()=>DATA.ENHANCE.STAT_STEP, set:v=>{DATA.ENHANCE.STAT_STEP=v;}, fmt:v=>'+'+(v*100).toFixed(0)+'%' },
+  { g:'强化', id:'enhGoldMul', label:'强化金币系数',          min:0.2, max:5,   step:0.1,   get:()=>DATA.ENHANCE.GOLD_MUL, set:v=>{DATA.ENHANCE.GOLD_MUL=v;}, fmt:v=>'×'+v },
+
+  // ---- 技能 ----
+  { g:'技能', id:'skLv1', label:'技能 Lv1→2 金币', min:0, max:2000000, step:1000, get:()=>DATA.SKILL_LV_COST[0], set:v=>{DATA.SKILL_LV_COST[0]=v;}, fmt:v=>fmt(v)+' 金' },
+  { g:'技能', id:'skLv2', label:'技能 Lv2→3 金币', min:0, max:2000000, step:1000, get:()=>DATA.SKILL_LV_COST[1], set:v=>{DATA.SKILL_LV_COST[1]=v;}, fmt:v=>fmt(v)+' 金' },
+  { g:'技能', id:'skLv3', label:'技能 Lv3→4 金币', min:0, max:2000000, step:1000, get:()=>DATA.SKILL_LV_COST[2], set:v=>{DATA.SKILL_LV_COST[2]=v;}, fmt:v=>fmt(v)+' 金' },
+  { g:'技能', id:'skLv4', label:'技能 Lv4→5 金币', min:0, max:2000000, step:1000, get:()=>DATA.SKILL_LV_COST[3], set:v=>{DATA.SKILL_LV_COST[3]=v;}, fmt:v=>fmt(v)+' 金' },
+  { g:'技能', id:'tierMax',  label:'突破层数上限',   min:2, max:10, step:1, get:()=>DATA.SKILL_TIER.maxTier, set:v=>{DATA.SKILL_TIER.maxTier=v;}, fmt:v=>v+' 层' },
+  { g:'技能', id:'lvDmg',    label:'每级伤害加成',   min:0, max:1, step:0.01, get:()=>DATA.SKILL_TIER.lvDmg, set:v=>{DATA.SKILL_TIER.lvDmg=v;}, fmt:v=>'+'+(v*100).toFixed(0)+'%' },
+  { g:'技能', id:'tierCd',   label:'每层冷却缩减',   min:0, max:0.5, step:0.01, get:()=>DATA.SKILL_TIER.tierCd, set:v=>{DATA.SKILL_TIER.tierCd=v;}, fmt:v=>'-'+(v*100).toFixed(0)+'%' },
+
+  // ---- 爬塔 ----
+  { g:'爬塔', id:'towerHp',  label:'每层血量增幅', min:0.05, max:2, step:0.01, get:()=>DATA.TOWER.HP_STEP, set:v=>{DATA.TOWER.HP_STEP=v;}, fmt:v=>'+'+(v*100).toFixed(0)+'%/层' },
+  { g:'爬塔', id:'towerAtk', label:'每层攻击增幅', min:0.05, max:2, step:0.01, get:()=>DATA.TOWER.ATK_STEP, set:v=>{DATA.TOWER.ATK_STEP=v;}, fmt:v=>'+'+(v*100).toFixed(0)+'%/层' },
+  { g:'爬塔', id:'towerMax', label:'塔层上限',     min:5, max:50, step:1, get:()=>DATA.TOWER.maxFloor, set:v=>{DATA.TOWER.maxFloor=v;}, fmt:v=>v+' 层' },
+
+  // ---- 任务 ----
+  { g:'任务', id:'questNeed',label:'悬赏任务杀怪数', min:10, max:500, step:10, get:()=>DATA.QUEST_POOL[0].need, set:v=>{DATA.QUEST_POOL.forEach(q=>{q.need=v});}, fmt:v=>v+' 只' },
+
+  // ---- 圣物 ----
+  { g:'圣物', id:'relicPrice',label:'圣物兑换价格', min:0, max:5000000, step:10000, get:()=>DATA.RELIC_WEAPONS[0].price, set:v=>{DATA.RELIC_WEAPONS.forEach(w=>{w.price=v});}, fmt:v=>fmt(v)+' 金' },
+  { g:'圣物', id:'relicPct',  label:'圣物削血比例', min:0, max:0.5, step:0.01, get:()=>DATA.RELIC_WEAPONS[0].relicPct, set:v=>{DATA.RELIC_WEAPONS.forEach(w=>{w.relicPct=v});}, fmt:v=>(v*100).toFixed(0)+'%' },
+];
+
+/* 从内嵌 JSON / localStorage 读取并应用 */
+function cfgApplyAll() {
+  // 内嵌配置（发出去的文件）优先，本机 localStorage 覆盖（作者自己调完立刻生效）
+  let baked = {}, local = {};
+  const tag = document.getElementById('orc-cfg');
+  if (tag && tag.textContent.trim()) { try { baked = JSON.parse(tag.textContent) || {}; } catch (e) {} }
+  try { local = JSON.parse(localStorage.getItem('orc_cfg') || 'null') || {}; } catch (e) {}
+  const raw = Object.assign({}, baked, local);
+  if (!Object.keys(raw).length) return {};
+  CFG_DEFS.forEach(d => {
+    if (raw[d.id] !== undefined && raw[d.id] !== null) { try { d.set(raw[d.id]); } catch (e) {} }
+  });
+  return raw;
+}
+
+function cfgCurrent() {
+  const o = {};
+  CFG_DEFS.forEach(d => { o[d.id] = d.get(); });
+  return o;
+}
+
+function cfgSave() {
+  const cur = cfgCurrent();
+  localStorage.setItem('orc_cfg', JSON.stringify(cur));
+  const tag = document.getElementById('orc-cfg');
+  if (tag) tag.textContent = JSON.stringify(cur);
+  return cur;
+}
+
+/* 生成一个「烘焙了当前数值」的新 HTML 并下载 */
+function cfgExportHtml() {
+  const cur = cfgSave();
+  const clone = document.documentElement.cloneNode(true);
+
+  // 清理运行时状态
+  const clean = (id, addHidden) => {
+    const el = clone.querySelector('#' + id);
+    if (!el) return;
+    if (id === 'modal') { el.classList.add('hidden'); const b = el.querySelector('#modalBody'); if (b) b.innerHTML = ''; }
+    else if (addHidden) el.classList.add('hidden');
+  };
+  ['modal', 'toast', 'tooltip', 'bigAnnounce', 'hud'].forEach(id => clean(id, true));
+  clone.querySelectorAll('#hud .modal, .modal').forEach(m => m.classList.add('hidden'));
+
+  // 写回配置
+  let tag = clone.querySelector('#orc-cfg');
+  if (!tag) {
+    tag = document.createElement('script');
+    tag.id = 'orc-cfg';
+    tag.type = 'application/json';
+    clone.querySelector('head').appendChild(tag);
+  }
+  tag.textContent = JSON.stringify(cur);
+
+  const html = '<!doctype html>\n' + clone.outerHTML;
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '兽人永不为奴-定制版.html';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+  return true;
 }
 
 </script>
@@ -5617,7 +5776,7 @@ function onMonsterKilled(m) {
   // ---- BOSS 掉特戒（难度越高爆率越高，仍是最低档）----
   if (m.isBoss) {
     const mul = G.diff === 'hell' ? 3 : G.diff === 'hard' ? 2 : 1;
-    if (Math.random() < 0.005 * mul) {   // 基础 0.5%（困难×2，地狱×3）
+    if (Math.random() < (DATA.RING_DROP_PCT / 100) * mul) {   // 基础概率可配置（困难×2，地狱×3）
       const keys = Object.keys(DATA.SPECIAL_RINGS);
       const k = keys[Math.floor(Math.random() * keys.length)];
       const ring = makeRing(DATA.SPECIAL_RINGS[k], k);
@@ -6670,7 +6829,64 @@ function buyRelic(key) {
 }
 
 /* ---------------- 调试面板 ---------------- */
+/* ---------------- 调试入口（两个大按钮）---------------- */
 function debugHtml() {
+  const view = G._dbgView || 'menu';
+  if (view === 'cfg') return cfgPanelHtml();
+  if (view === 'toggles') {
+    return `<div class="dbg-return"><button data-dbg-back="1">← 返回入口</button></div>`
+      + debugTogglesHtml().replace(/^<div style="font-size:11.5px/, '<div style="font-size:11.5px');
+  }
+  return `<div class="dbg-menu">
+    <div class="dbg-card" data-dbg-go="toggles">
+      <div class="dc-ic">🛠</div>
+      <div class="dc-name">调试开关</div>
+      <div class="dc-sub">刷怪 / 攻速 / 免CD / 无敌 / 无限蓝<br>发放材料 / 发放特戒</div>
+    </div>
+    <div class="dbg-card cfg" data-dbg-go="cfg">
+      <div class="dc-ic">⚙</div>
+      <div class="dc-name">数值修改</div>
+      <div class="dc-sub">经验 / 掉落 / 强化 / 技能 / 爬塔 / 任务 / 圣物<br>改完保存 → 可导出定制版 HTML</div>
+    </div>
+  </div>
+  <div style="font-size:11px;color:#8f8570;margin-top:12px;text-align:center">
+    调试开关只影响当前会话；「数值修改」保存后会写入存档与本文件
+  </div>`;
+}
+
+/* ---------------- 数值修改面板 ---------------- */
+function cfgPanelHtml() {
+  if (typeof CFG_DEFS === 'undefined') return '<div style="padding:20px">配置模块未加载</div>';
+  const groups = {};
+  CFG_DEFS.forEach(d => { (groups[d.g] = groups[d.g] || []).push(d); });
+
+  let html = `<div class="dbg-return"><button data-dbg-back="1">← 返回入口</button></div>
+    <div class="cfg-tip">改完点「保存数值」立即生效并写入存档；
+      点「导出定制版 HTML」会下载一个已烘焙这些数值的新文件，可直接发给朋友。</div>`;
+
+  Object.keys(groups).forEach(g => {
+    html += `<div class="cfg-group"><div class="cfg-gtitle">${g}</div>`;
+    groups[g].forEach(d => {
+      const v = d.get();
+      html += `<div class="cfg-row">
+        <span class="cfg-label">${d.label}</span>
+        <input class="cfg-input" type="number" data-cfg="${d.id}"
+          value="${v}" min="${d.min}" max="${d.max}" step="${d.step}">
+        <span class="cfg-hint">${d.fmt(v)}</span>
+      </div>`;
+    });
+    html += '</div>';
+  });
+
+  html += `<div class="cfg-actions">
+    <button class="cfg-btn primary" data-cfg-save="1">保存数值</button>
+    <button class="cfg-btn" data-cfg-reset="1">恢复默认</button>
+    <button class="cfg-btn gold" data-cfg-export="1">导出定制版 HTML</button>
+  </div>`;
+  return html;
+}
+
+function debugTogglesHtml() {
   const d = G.debug || (G.debug = {});
   const on = v => v ? 'style="border-color:#5fdc4a;color:#b9ffb0"' : '';
   const tag = v => v ? '已开启' : '已关闭';
@@ -7608,6 +7824,56 @@ function bindModal() {
     logMsg(`🛠 调试：发放 ${given} 枚特戒`, 'loot');
     openModal('debug', '调试面板 · N', debugHtml());
   });
+  body.querySelectorAll('[data-dbg-go]').forEach(el => el.onclick = () => {
+    G._dbgView = el.dataset.dbgGo;
+    openModal('debug', '调试面板 · N', debugHtml());
+  });
+  body.querySelectorAll('[data-dbg-back]').forEach(el => el.onclick = () => {
+    G._dbgView = 'menu';
+    openModal('debug', '调试面板 · N', debugHtml());
+  });
+  // 数值输入实时显示提示
+  body.querySelectorAll('[data-cfg]').forEach(inp => {
+    const d = CFG_DEFS.find(x => x.id === inp.dataset.cfg);
+    if (!d) return;
+    inp.oninput = () => {
+      const hint = inp.parentElement.querySelector('.cfg-hint');
+      const v = parseFloat(inp.value);
+      if (hint && !isNaN(v)) hint.textContent = d.fmt(v);
+    };
+  });
+  body.querySelectorAll('[data-cfg-save]').forEach(b => b.onclick = () => {
+    const inputs = body.querySelectorAll('[data-cfg]');
+    let n = 0;
+    inputs.forEach(inp => {
+      const d = CFG_DEFS.find(x => x.id === inp.dataset.cfg);
+      if (!d) return;
+      let v = parseFloat(inp.value);
+      if (isNaN(v)) return;
+      v = Math.max(d.min, Math.min(d.max, v));
+      d.set(v); n++;
+    });
+    cfgSave();
+    saveGame();
+    toast(`已保存 ${n} 项数值（立即生效）`);
+    openModal('debug', '调试面板 · N', debugHtml());
+  });
+  body.querySelectorAll('[data-cfg-reset]').forEach(b => b.onclick = () => {
+    localStorage.removeItem('orc_cfg');
+    const tag = document.getElementById('orc-cfg');
+    if (tag) tag.textContent = '{}';
+    toast('已清除自定义数值，刷新页面恢复默认');
+    G._dbgView = 'menu';
+    openModal('debug', '调试面板 · N', debugHtml());
+  });
+  body.querySelectorAll('[data-cfg-export]').forEach(b => b.onclick = () => {
+    try {
+      cfgExportHtml();
+      toast('已生成「兽人永不为奴-定制版.html」，可直接发给朋友');
+    } catch (e) {
+      toast('导出失败：' + e.message);
+    }
+  });
   body.querySelectorAll('[data-dbg-toggle]').forEach(b => b.onclick = () => {
     const k = b.dataset.dbgToggle;
     G.debug[k] = !G.debug[k];
@@ -8365,6 +8631,8 @@ window.addEventListener('error', e => {
 });
 
 window.addEventListener('DOMContentLoaded', () => {
+  // 先应用用户自定义数值，再初始化 UI
+  try { if (typeof cfgApplyAll === 'function') cfgApplyAll(); } catch (e) { console.warn('cfg', e); }
   loadAssets();
   resizeCanvas();
   initInput();

@@ -1119,19 +1119,18 @@ function itemDetailHtml(id, from) {
     stats += `<div class="idt-stat"><span>圣物特效</span><b class="eff">命中削 ${(it.relicPct*100).toFixed(0)}% 最大生命</b></div>`;
   }
 
-  const equipped = (from === 'char') || Object.values(p.equip).some(x => x && x.id === it.id);
+  // 是否已穿戴（按实例 id 判断，背包和面板通用）
+  const equippedSlot = Object.keys(p.equip).find(sk => p.equip[sk] && p.equip[sk].id === it.id);
+  const equipped = !!equippedSlot;
   const locked = it.reqLv > p.level;
 
-  let btns = '';
-  if (from === 'char' || equipped) {
-    btns = `<button data-idt-enh="${it.id}">强化</button>
-            <button class="danger" data-idt-unequip="${it.slot}">卸下</button>`;
-  } else {
-    btns = `<button class="primary" data-idt-equip="${it.id}" ${locked?'disabled':''}>
-              ${locked ? '需要 Lv.'+it.reqLv : '装备'}</button>
-            <button data-idt-enh="${it.id}">强化</button>
-            <button class="danger" data-idt-sell="${it.id}">出售</button>`;
-  }
+  const btns =
+    `<button data-idt-enh="${it.id}">强化</button>` +
+    `<button class="primary" data-idt-equip="${it.id}" ${(equipped || locked) ? 'disabled' : ''}>` +
+      (locked ? '需要 Lv.' + it.reqLv : '穿戴') + `</button>` +
+    `<button class="danger" data-idt-unequip="${equippedSlot || it.slot}" ${equipped ? '' : 'disabled'}>卸下</button>` +
+    (equipped ? '' : `<button class="danger" data-idt-sell="${it.id}">出售</button>`) +
+    `<button data-idt-close>关闭</button>`;
 
   return `<div class="idt-wrap" style="border-color:${q.color}44">
     <div class="idt-head">
@@ -2148,7 +2147,7 @@ function showTooltip(it, x, y) {
     } else if (cur) {
       parts.push(`<div class="tt-cp">战力持平</div>`);
     }
-    parts.push(`<div class="tt-desc">左键装备 / 右键出售</div>`);
+    parts.push(`<div class="tt-desc">点击查看详情（强化 / 穿戴 / 卸下）</div>`);
     TIP.innerHTML = parts.join('');
   }
   document.body.appendChild(TIP);

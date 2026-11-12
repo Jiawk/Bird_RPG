@@ -1101,3 +1101,9 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   55%,100%{background-position:-80% 0}
 }
 .relic-ring .eq-nm{color:#ff8a8a !important;font-weight:700}
+
+/* 详情页按钮自适应（手机 2 列） */
+@media (max-width:520px){
+  .idt-actions{gap:6px}
+  .idt-actions button{flex:1 1 calc(50% - 3px);min-width:0;padding:9px 2px;font-size:12px}
+}

@@ -489,16 +489,16 @@ DATA.LOTTERY = {
   cost1: 10,        // 单抽消耗 BOSS 击杀凭证
   cost10: 100,      // 十连消耗
   prizes: [
-    { id:'relic', icon:'🏆',  name:'圣物套装·随机一件', prob:0.01, color:'#ffd24a', kind:'relic',
+    { id:'relic', short:'圣物', icon:'🏆',  name:'圣物套装·随机一件', prob:0.01, color:'#ffd24a', kind:'relic',
       desc:'本职业 7 件套中随机 1 件' },
-    { id:'token100', icon:'⬢', name:'BOSS击杀凭证 ×100', prob:0.05, color:'#ff9a3c', kind:'mat', key:'bossToken', amount:100 },
-    { id:'token10', icon:'⬢',  name:'BOSS击杀凭证 ×10',  prob:0.10, color:'#ff9a3c', kind:'mat', key:'bossToken', amount:10 },
-    { id:'scale10', icon:'▰',  name:'龙鳞片 ×10',        prob:0.10, color:'#ff9a2e', kind:'mat', key:'scale',     amount:10 },
-    { id:'shard20', icon:'▰',  name:'虚空碎片 ×20',      prob:0.10, color:'#b45cff', kind:'mat', key:'shard',     amount:20 },
-    { id:'stone10', icon:'◆',  name:'强化石 ×10',        prob:0.25, color:'#9aa0a6', kind:'mat', key:'stone',     amount:10 },
-    { id:'protect10', icon:'◇',name:'强化保护券 ×10',    prob:0.13, color:'#4a9eff', kind:'mat', key:'protect',   amount:10 },
-    { id:'skillT10', icon:'✦', name:'技能强化券 ×10',    prob:0.13, color:'#3fd45a', kind:'mat', key:'skillT',    amount:10 },
-    { id:'breakT10', icon:'✧', name:'技能突破券 ×10',    prob:0.13, color:'#b45cff', kind:'mat', key:'breakT',    amount:10 }
+    { id:'token100', short:'凭证100', icon:'⬢', name:'BOSS击杀凭证 ×100', prob:0.05, color:'#ff9a3c', kind:'mat', key:'bossToken', amount:100 },
+    { id:'token10', short:'凭证10', icon:'⬢',  name:'BOSS击杀凭证 ×10',  prob:0.10, color:'#ff9a3c', kind:'mat', key:'bossToken', amount:10 },
+    { id:'scale10', short:'龙鳞10', icon:'▰',  name:'龙鳞片 ×10',        prob:0.10, color:'#ff9a2e', kind:'mat', key:'scale',     amount:10 },
+    { id:'shard20', short:'碎片20', icon:'▰',  name:'虚空碎片 ×20',      prob:0.10, color:'#b45cff', kind:'mat', key:'shard',     amount:20 },
+    { id:'stone10', short:'强化10', icon:'◆',  name:'强化石 ×10',        prob:0.25, color:'#9aa0a6', kind:'mat', key:'stone',     amount:10 },
+    { id:'protect10', short:'保护10', icon:'◇',name:'强化保护券 ×10',    prob:0.13, color:'#4a9eff', kind:'mat', key:'protect',   amount:10 },
+    { id:'skillT10', short:'技强10', icon:'✦', name:'技能强化券 ×10',    prob:0.13, color:'#3fd45a', kind:'mat', key:'skillT',    amount:10 },
+    { id:'breakT10', short:'突破10', icon:'✧', name:'技能突破券 ×10',    prob:0.13, color:'#b45cff', kind:'mat', key:'breakT',    amount:10 }
   ]
 };
 

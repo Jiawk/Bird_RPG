@@ -1567,6 +1567,16 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   .lg-name{font-size:9.5px}
 }
 
+/* 扇区短文字（正向显示） */
+.wh-txt{position:absolute;left:-30px;top:-9px;width:60px;text-align:center;
+  font-size:10px;font-weight:700;line-height:18px;letter-spacing:.02em;
+  text-shadow:0 1px 3px rgba(0,0,0,.95),0 0 5px rgba(0,0,0,.9);
+  white-space:nowrap;pointer-events:none;
+  transform-origin:50% 50%}
+@media (max-width:560px){
+  .wh-txt{font-size:8.5px;left:-26px;width:52px}
+}
+
 </style>
 <script id="orc-cfg" type="application/json">{}</script>
 </head>
@@ -2244,16 +2254,16 @@ DATA.LOTTERY = {
   cost1: 10,        // 单抽消耗 BOSS 击杀凭证
   cost10: 100,      // 十连消耗
   prizes: [
-    { id:'relic', icon:'🏆',  name:'圣物套装·随机一件', prob:0.01, color:'#ffd24a', kind:'relic',
+    { id:'relic', short:'圣物', icon:'🏆',  name:'圣物套装·随机一件', prob:0.01, color:'#ffd24a', kind:'relic',
       desc:'本职业 7 件套中随机 1 件' },
-    { id:'token100', icon:'⬢', name:'BOSS击杀凭证 ×100', prob:0.05, color:'#ff9a3c', kind:'mat', key:'bossToken', amount:100 },
-    { id:'token10', icon:'⬢',  name:'BOSS击杀凭证 ×10',  prob:0.10, color:'#ff9a3c', kind:'mat', key:'bossToken', amount:10 },
-    { id:'scale10', icon:'▰',  name:'龙鳞片 ×10',        prob:0.10, color:'#ff9a2e', kind:'mat', key:'scale',     amount:10 },
-    { id:'shard20', icon:'▰',  name:'虚空碎片 ×20',      prob:0.10, color:'#b45cff', kind:'mat', key:'shard',     amount:20 },
-    { id:'stone10', icon:'◆',  name:'强化石 ×10',        prob:0.25, color:'#9aa0a6', kind:'mat', key:'stone',     amount:10 },
-    { id:'protect10', icon:'◇',name:'强化保护券 ×10',    prob:0.13, color:'#4a9eff', kind:'mat', key:'protect',   amount:10 },
-    { id:'skillT10', icon:'✦', name:'技能强化券 ×10',    prob:0.13, color:'#3fd45a', kind:'mat', key:'skillT',    amount:10 },
-    { id:'breakT10', icon:'✧', name:'技能突破券 ×10',    prob:0.13, color:'#b45cff', kind:'mat', key:'breakT',    amount:10 }
+    { id:'token100', short:'凭证100', icon:'⬢', name:'BOSS击杀凭证 ×100', prob:0.05, color:'#ff9a3c', kind:'mat', key:'bossToken', amount:100 },
+    { id:'token10', short:'凭证10', icon:'⬢',  name:'BOSS击杀凭证 ×10',  prob:0.10, color:'#ff9a3c', kind:'mat', key:'bossToken', amount:10 },
+    { id:'scale10', short:'龙鳞10', icon:'▰',  name:'龙鳞片 ×10',        prob:0.10, color:'#ff9a2e', kind:'mat', key:'scale',     amount:10 },
+    { id:'shard20', short:'碎片20', icon:'▰',  name:'虚空碎片 ×20',      prob:0.10, color:'#b45cff', kind:'mat', key:'shard',     amount:20 },
+    { id:'stone10', short:'强化10', icon:'◆',  name:'强化石 ×10',        prob:0.25, color:'#9aa0a6', kind:'mat', key:'stone',     amount:10 },
+    { id:'protect10', short:'保护10', icon:'◇',name:'强化保护券 ×10',    prob:0.13, color:'#4a9eff', kind:'mat', key:'protect',   amount:10 },
+    { id:'skillT10', short:'技强10', icon:'✦', name:'技能强化券 ×10',    prob:0.13, color:'#3fd45a', kind:'mat', key:'skillT',    amount:10 },
+    { id:'breakT10', short:'突破10', icon:'✧', name:'技能突破券 ×10',    prob:0.13, color:'#b45cff', kind:'mat', key:'breakT',    amount:10 }
   ]
 };
 
@@ -7247,11 +7257,11 @@ function exchangeHtml() {
     `${i % 2 ? 'rgba(120,92,26,.55)' : 'rgba(70,54,18,.75)'} ${i * seg}deg ${(i + 1) * seg}deg`
   ).join(',');
 
-  // 扇区内只放图标（随盘旋转也不会出现倒字）
+  // 扇区短文字：外层随盘旋转，内层用相反角度补偿 → 永远正向
   const icons = L.prizes.map((z, i) => {
     const ang = i * seg + seg / 2;
-    return `<div class="wh-ico" style="transform:rotate(${ang}deg) translateY(-98px)">
-      <span style="color:${z.color}">${z.icon || '●'}</span></div>`;
+    return `<div class="wh-ico" style="transform:rotate(${ang}deg) translateY(-100px)">
+      <span class="wh-txt" data-ang="${ang}" style="color:${z.color};transform:rotate(${-ang}deg)">${z.short || z.name}</span></div>`;
   }).join('');
 
   // 静态图例：始终水平可读
@@ -8758,10 +8768,25 @@ function bindModal() {
     const L = DATA.LOTTERY, seg = 360 / L.prizes.length;
     const idx = Math.max(0, L.prizes.findIndex(z => z.id === got[0].id));
     const target = 360 * 6 - (idx * seg + seg / 2);
+    const DUR = 2200, EASE = 'cubic-bezier(.16,.84,.28,1)';
     const wheel = body.querySelector('#lotWheel');
     if (wheel) {
-      wheel.style.transition = 'transform 2.2s cubic-bezier(.16,.84,.28,1)';
+      wheel.style.transition = `transform ${DUR}ms ${EASE}`;
       wheel.style.transform = `rotate(${target}deg)`;
+      // 文字反向等速旋转 → 屏幕上始终保持正向
+      wheel.querySelectorAll('.wh-txt').forEach(el => {
+        const a = parseFloat(el.dataset.ang) || 0;
+        el.style.transition = 'none';
+        if (el.animate) {
+          el.animate(
+            [{ transform: `rotate(${-a}deg)` },
+             { transform: `rotate(${-a - target}deg)` }],
+            { duration: DUR, easing: EASE, fill: 'forwards' }
+          );
+        } else {
+          el.style.transform = `rotate(${-a - target}deg)`;
+        }
+      });
     }
 
     const box = body.querySelector('#lotResult');

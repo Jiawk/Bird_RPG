@@ -1211,11 +1211,11 @@ function exchangeHtml() {
     `${i % 2 ? 'rgba(120,92,26,.55)' : 'rgba(70,54,18,.75)'} ${i * seg}deg ${(i + 1) * seg}deg`
   ).join(',');
 
-  // 扇区内只放图标（随盘旋转也不会出现倒字）
+  // 扇区短文字：外层随盘旋转，内层用相反角度补偿 → 永远正向
   const icons = L.prizes.map((z, i) => {
     const ang = i * seg + seg / 2;
-    return `<div class="wh-ico" style="transform:rotate(${ang}deg) translateY(-98px)">
-      <span style="color:${z.color}">${z.icon || '●'}</span></div>`;
+    return `<div class="wh-ico" style="transform:rotate(${ang}deg) translateY(-100px)">
+      <span class="wh-txt" data-ang="${ang}" style="color:${z.color};transform:rotate(${-ang}deg)">${z.short || z.name}</span></div>`;
   }).join('');
 
   // 静态图例：始终水平可读
@@ -2722,10 +2722,25 @@ function bindModal() {
     const L = DATA.LOTTERY, seg = 360 / L.prizes.length;
     const idx = Math.max(0, L.prizes.findIndex(z => z.id === got[0].id));
     const target = 360 * 6 - (idx * seg + seg / 2);
+    const DUR = 2200, EASE = 'cubic-bezier(.16,.84,.28,1)';
     const wheel = body.querySelector('#lotWheel');
     if (wheel) {
-      wheel.style.transition = 'transform 2.2s cubic-bezier(.16,.84,.28,1)';
+      wheel.style.transition = `transform ${DUR}ms ${EASE}`;
       wheel.style.transform = `rotate(${target}deg)`;
+      // 文字反向等速旋转 → 屏幕上始终保持正向
+      wheel.querySelectorAll('.wh-txt').forEach(el => {
+        const a = parseFloat(el.dataset.ang) || 0;
+        el.style.transition = 'none';
+        if (el.animate) {
+          el.animate(
+            [{ transform: `rotate(${-a}deg)` },
+             { transform: `rotate(${-a - target}deg)` }],
+            { duration: DUR, easing: EASE, fill: 'forwards' }
+          );
+        } else {
+          el.style.transform = `rotate(${-a - target}deg)`;
+        }
+      });
     }
 
     const box = body.querySelector('#lotResult');

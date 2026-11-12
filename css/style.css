@@ -1559,3 +1559,13 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   .wh-legend{grid-template-columns:repeat(2,1fr)}
   .lg-name{font-size:9.5px}
 }
+
+/* 扇区短文字（正向显示） */
+.wh-txt{position:absolute;left:-30px;top:-9px;width:60px;text-align:center;
+  font-size:10px;font-weight:700;line-height:18px;letter-spacing:.02em;
+  text-shadow:0 1px 3px rgba(0,0,0,.95),0 0 5px rgba(0,0,0,.9);
+  white-space:nowrap;pointer-events:none;
+  transform-origin:50% 50%}
+@media (max-width:560px){
+  .wh-txt{font-size:8.5px;left:-26px;width:52px}
+}

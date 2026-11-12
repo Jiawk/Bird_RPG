@@ -326,6 +326,12 @@ DATA.CRAFT = [
 ];
 
 /* ---------------- 悬赏任务 ---------------- */
+/* 每次交任务的打造材料奖励
+   3 次 → 可造史诗（铁8 秘银4）
+   6 次 → 可造传说（秘银8 龙鳞4）
+   9 次 → 可造神话（龙鳞6 碎片6） */
+DATA.QUEST_MATS = { iron: 3, mithril: 2, scale: 1, shard: 1 };
+
 DATA.QUEST_POOL = [
   {id:'q1', name:'清剿荒野', room:0, need:80, exp:260,  gold:220,  mat:'iron',    matN:2},
   {id:'q2', name:'矿洞除虫', room:1, need:80, exp:620,  gold:480,  mat:'iron',    matN:3},

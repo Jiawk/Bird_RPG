@@ -74,7 +74,8 @@ function initInput() {
       case 'k': handleCommand('skill'); break;
       case 'm': handleCommand('map'); break;
       case 't': handleCommand('tower'); break;   // 爬塔
-      case 'j': handleCommand('quest'); break;   // 任务面板
+      case 'j':
+      case 'l': handleCommand('quest'); break;   // 任务面板（J / L 都可以）
       case 'x': useGatherRing(); break;          // 聚合之戒
       case 'n':                                  // 连按三次 N 才呼出调试面板
         G._nCount = (G._nCount || 0) + 1;

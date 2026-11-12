@@ -1849,7 +1849,7 @@ function bindModal() {
     // 左键：打开详情页（装备 / 强化 / 出售）
     el.onclick = () => {
       hideTooltip();
-      openModal('item', it.name, () => itemDetailHtml(it.id, el.dataset.slot ? 'char' : 'bag'));
+      openModal('item', it.name, itemDetailHtml(it.id, el.dataset.slot ? 'char' : 'bag'));
     };
     // 右键：直接装备 / 卸下
     el.oncontextmenu = e => {
@@ -1908,7 +1908,7 @@ function bindModal() {
     sellItem(G.player, it); saveGame(); closeModal();
   });
   body.querySelectorAll('[data-idt-enh]').forEach(el => el.onclick = () => {
-    openModal('forge', '强化 · 铸造台', () => enhanceItemHtml(el.dataset.idtEnh));
+    openModal('forge', '强化 · 铸造台', enhanceItemHtml(el.dataset.idtEnh));
   });
   body.querySelectorAll('[data-idt-close]').forEach(el => el.onclick = () => closeModal());
   body.querySelectorAll('[data-relic]').forEach(el => el.onclick = () => {

@@ -1126,3 +1126,12 @@ python3 build.py     # 重新打包成单文件 dist/兽人永不为奴.html
   | 红色内发光 | radial-gradient 背景 + inset 阴影 |
   | 名称高亮 | 特戒名字改为 `#ff8a8a` 加粗 |
 - 角色面板 6 个特戒槽与背包里的特戒格子都生效
+
+### v73 · 修复装备详情页显示函数源码
+- **现象**：角色面板左键点装备，弹窗标题正常但内容显示 `() => itemDetailHtml(it.id, ...)` 这串代码
+- **根因**：`openModal(key, title, html)` 的第三个参数**直接赋给 innerHTML**，不会调用函数；
+  我传了箭头函数进去 → 函数被转成字符串显示
+  （`toggleModal` 收函数，`openModal` 收字符串，两者签名不同）
+- **修复**：两处改成**先调用再传结果**
+  - `openModal('item', it.name, itemDetailHtml(...))`
+  - `openModal('forge', ..., enhanceItemHtml(...))`

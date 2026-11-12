@@ -378,6 +378,35 @@ function sellItem(p, item) {
   toast(`出售 ${item.name} +${price} 金`);
 }
 
+/* 收集「背包里比身上弱的红装」（特戒 / 圣物 自动排除） */
+function mythicSalvageList(p) {
+  const out = [];
+  for (const it of (p.bag || [])) {
+    if (!it || it.qKey !== 'mythic') continue;      // 只处理红装
+    if (it.ringKey) continue;                      // 特戒不碰
+    if (it.relicKey || it.relicPieceKey) continue;  // 圣物不碰
+    if (!it.slot || !DATA.SLOTS[it.slot]) continue;
+    const on = p.equip[it.slot];
+    if (!on) continue;                                    // 该部位没装备 → 保留，避免误分解
+    if (itemPower(it) >= itemPower(on)) continue;         // 比身上强 → 留着
+    out.push(it);
+  }
+  return out;
+}
+
+/* 分解（每件返还 龙鳞片1 + 虚空碎片2） */
+function salvageMythic(p) {
+  const list = mythicSalvageList(p);
+  if (!list.length) return { n: 0 };
+  list.forEach(it => {
+    p.materials.scale = (p.materials.scale || 0) + 1;
+    p.materials.shard = (p.materials.shard || 0) + 2;
+    removeFromBag(p, it);
+  });
+  recalcStats(p);
+  return { n: list.length, scale: list.length, shard: list.length * 2 };
+}
+
 /* 安全取槽位名（旧存档可能残留已删除的槽位） */
 function slotName(sk) {
   const d = DATA.SLOTS[sk];

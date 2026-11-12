@@ -1432,9 +1432,18 @@ function warehouseHtml() {
   const page = clamp(p.whPage || 0, 0, WH_PAGES - 1);
   const start = page * WH_PAGE_SIZE, end = start + WH_PAGE_SIZE;
 
+  const mList = mythicSalvageList(p);
   let html = '<div class="warehouse-head">'
     + `<span>仓库容量 <b>${p.warehouse.length} / ${WH_MAX}</b></span>`
     + `<span>背包 ${p.bag.length} / ${BAG_MAX}</span></div>`;
+
+  html += `<div class="wh-tools">
+    <button class="wh-salvage" data-salvage-mythic="1" ${mList.length ? '' : 'disabled'}>
+      ♻ 一键分解红装${mList.length ? `（${mList.length} 件）` : ''}
+    </button>
+    <span class="wh-tip">分解背包中比身上弱的红装 · 每件返还 龙鳞片×1 + 虚空碎片×2<br>
+      仅对红装生效，特戒与圣物不受影响</span>
+  </div>`;
 
   html += '<div class="bag-pager">';
   for (let i = 0; i < WH_PAGES; i++) {

@@ -214,7 +214,9 @@ function castSkillImpl(key) {
   const _cost = Math.max(0, Math.round((sp.cost || 0) * _mods.manaMul));
   if (p.mp < _cost) { toast('法力不足'); return; }
   p.mp -= _cost;
-  p.cd[key] = (G.debug && G.debug.noCd) ? 1 : sp.cd * _mods.cdMul;   // 层数降冷却
+  const _cdr = Math.min(0.6, p.stats.cdr || 0);           // 装备/词条的冷却缩减
+  p.cd[key] = (G.debug && G.debug.noCd) ? 1
+      : sp.cd * _mods.cdMul * (1 - _cdr);                 // 层数 + 冷却缩减
   p.castAnim = 0.2;
 
   const w = G.world;

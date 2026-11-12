@@ -81,7 +81,7 @@ function recalcStats(p) {
 
   // 装备加成汇总
   const eq = { str:0, agi:0, int:0, vit:0, atk:0, spell:0, as:0, crit:0,
-               critDmg:0, armor:0, hp:0, dodge:0, lifesteal:0, hit:0, mp:0, all:0, skillDmg:0 };
+               critDmg:0, armor:0, hp:0, dodge:0, lifesteal:0, hit:0, mp:0, all:0, skillDmg:0, cdr:0 };
   for (const s in p.equip) {
     const it = p.equip[s]; if (!it) continue;
     const st = itemStats(it);
@@ -182,6 +182,7 @@ function recalcStats(p) {
     lifesteal: (eq.lifesteal || 0) + RFX.lifesteal + (RSET.lifesteal || 0),
     finalDmg: (RSET.finalDmg || 0),
     skillDmg: (eq.skillDmg || 0),
+    cdr: Math.min(0.6, eq.cdr || 0),
     relicSetCount: RSET.count,
     relicPct,
     mpRegen: (0.02 * (1 + (bonus.mpRegen || 0))),

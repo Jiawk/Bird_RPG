@@ -1581,3 +1581,9 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   box-shadow:0 0 12px rgba(255,90,64,.45)}
 .wh-salvage[disabled]{opacity:.4;cursor:not-allowed}
 .wh-tip{font-size:10.5px;color:#8f8570;line-height:1.55}
+
+/* 一键分解红装按钮 */
+.sm-btn.salvage{color:#ff9a9a;border-color:#6b2b3b;
+  background:linear-gradient(180deg,rgba(70,26,34,.95),rgba(20,8,10,.98))}
+.sm-btn.salvage:hover{border-color:#ff5a40;color:#ffd0d0;
+  box-shadow:0 0 10px rgba(255,90,64,.45)}

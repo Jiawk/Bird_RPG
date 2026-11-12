@@ -638,6 +638,18 @@ function handleCommand(act) {
     case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
     case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
     case 'enhance': toggleModal('enhance', '铁匠 · 装备强化', enhanceHtml); break;
+    case 'salvageMythic': {
+      const list = mythicSalvageList(G.player);
+      if (!list.length) { toast('背包里没有可分解的低战力红装'); break; }
+      if (!confirm(`确定分解 ${list.length} 件低战力红装吗？\n每件返还 龙鳞片×1 + 虚空碎片×2`)) break;
+      const r = salvageMythic(G.player);
+      if (typeof Sfx !== 'undefined') Sfx.play('loot');
+      toast(`分解红装 ${r.n} 件：龙鳞片 +${r.scale}、虚空碎片 +${r.shard}`);
+      logMsg(`♻ 一键分解红装 ${r.n} 件`, 'loot');
+      saveGame();
+      handleCommand('bag');
+      break;
+    }
     case 'sellWorse': {
       const r = sellAllWorse(G.player);
       toast(r.n ? `已出售 ${r.n} 件低战力装备，+${fmt(r.gold)} 金` : '没有需要出售的装备');
@@ -722,6 +734,7 @@ function bagHtml() {
 
   let html = `<div class="bag-toolbar">
     <button class="sm-btn" data-act="sortBag">整理背包</button>
+    <button class="sm-btn salvage" data-act="salvageMythic">♻ 一键分解红装${mythicSalvageList(G.player).length ? `（${mythicSalvageList(G.player).length}）` : ''}</button>
     <button class="sm-btn danger" data-act="sellWorse">一键出售低战力</button>
     <label class="auto-toggle">
       <input type="checkbox" data-toggle-autosell ${G.autoSell ? 'checked' : ''}>
@@ -1432,18 +1445,9 @@ function warehouseHtml() {
   const page = clamp(p.whPage || 0, 0, WH_PAGES - 1);
   const start = page * WH_PAGE_SIZE, end = start + WH_PAGE_SIZE;
 
-  const mList = mythicSalvageList(p);
   let html = '<div class="warehouse-head">'
     + `<span>仓库容量 <b>${p.warehouse.length} / ${WH_MAX}</b></span>`
     + `<span>背包 ${p.bag.length} / ${BAG_MAX}</span></div>`;
-
-  html += `<div class="wh-tools">
-    <button class="wh-salvage" data-salvage-mythic="1" ${mList.length ? '' : 'disabled'}>
-      ♻ 一键分解红装${mList.length ? `（${mList.length} 件）` : ''}
-    </button>
-    <span class="wh-tip">分解背包中比身上弱的红装 · 每件返还 龙鳞片×1 + 虚空碎片×2<br>
-      仅对红装生效，特戒与圣物不受影响</span>
-  </div>`;
 
   html += '<div class="bag-pager">';
   for (let i = 0; i < WH_PAGES; i++) {

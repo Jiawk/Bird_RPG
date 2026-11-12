@@ -1539,3 +1539,23 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   .wh-label span{font-size:8px;left:-38px;width:76px}
   .wh-hub{width:54px;height:54px;font-size:11px}
 }
+
+/* 圆盘图标（随盘旋转，无文字所以不会倒） */
+.wh-ico{position:absolute;left:50%;top:50%;width:0;height:0;
+  transform-origin:0 0;display:flex;align-items:center;justify-content:center}
+.wh-ico span{position:absolute;left:-12px;top:-14px;width:24px;text-align:center;
+  font-size:19px;line-height:26px;height:26px;
+  text-shadow:0 2px 5px rgba(0,0,0,.95)}
+
+/* 静态奖品图例 */
+.wh-legend{display:grid;grid-template-columns:repeat(3,1fr);gap:5px 10px;
+  padding:10px 12px;margin-bottom:10px;border-radius:4px;
+  background:rgba(18,14,8,.7);border:1px solid #3a3123}
+.lg-item{display:flex;align-items:center;gap:5px;font-size:10.5px;line-height:1.5}
+.lg-dot{width:8px;height:8px;border-radius:2px;flex:0 0 auto;border:1px solid rgba(212,175,55,.5)}
+.lg-ico{font-size:11px;flex:0 0 auto}
+.lg-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:560px){
+  .wh-legend{grid-template-columns:repeat(2,1fr)}
+  .lg-name{font-size:9.5px}
+}

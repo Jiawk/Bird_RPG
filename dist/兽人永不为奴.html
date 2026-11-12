@@ -1547,6 +1547,26 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   .wh-hub{width:54px;height:54px;font-size:11px}
 }
 
+/* 圆盘图标（随盘旋转，无文字所以不会倒） */
+.wh-ico{position:absolute;left:50%;top:50%;width:0;height:0;
+  transform-origin:0 0;display:flex;align-items:center;justify-content:center}
+.wh-ico span{position:absolute;left:-12px;top:-14px;width:24px;text-align:center;
+  font-size:19px;line-height:26px;height:26px;
+  text-shadow:0 2px 5px rgba(0,0,0,.95)}
+
+/* 静态奖品图例 */
+.wh-legend{display:grid;grid-template-columns:repeat(3,1fr);gap:5px 10px;
+  padding:10px 12px;margin-bottom:10px;border-radius:4px;
+  background:rgba(18,14,8,.7);border:1px solid #3a3123}
+.lg-item{display:flex;align-items:center;gap:5px;font-size:10.5px;line-height:1.5}
+.lg-dot{width:8px;height:8px;border-radius:2px;flex:0 0 auto;border:1px solid rgba(212,175,55,.5)}
+.lg-ico{font-size:11px;flex:0 0 auto}
+.lg-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:560px){
+  .wh-legend{grid-template-columns:repeat(2,1fr)}
+  .lg-name{font-size:9.5px}
+}
+
 </style>
 <script id="orc-cfg" type="application/json">{}</script>
 </head>
@@ -2224,16 +2244,16 @@ DATA.LOTTERY = {
   cost1: 10,        // 单抽消耗 BOSS 击杀凭证
   cost10: 100,      // 十连消耗
   prizes: [
-    { id:'relic',  name:'圣物套装·随机一件', prob:0.01, color:'#ffd24a', kind:'relic',
+    { id:'relic', icon:'🏆',  name:'圣物套装·随机一件', prob:0.01, color:'#ffd24a', kind:'relic',
       desc:'本职业 7 件套中随机 1 件' },
-    { id:'token100', name:'BOSS击杀凭证 ×100', prob:0.05, color:'#ff9a3c', kind:'mat', key:'bossToken', amount:100 },
-    { id:'token10',  name:'BOSS击杀凭证 ×10',  prob:0.10, color:'#ff9a3c', kind:'mat', key:'bossToken', amount:10 },
-    { id:'scale10',  name:'龙鳞片 ×10',        prob:0.10, color:'#ff9a2e', kind:'mat', key:'scale',     amount:10 },
-    { id:'shard20',  name:'虚空碎片 ×20',      prob:0.10, color:'#b45cff', kind:'mat', key:'shard',     amount:20 },
-    { id:'stone10',  name:'强化石 ×10',        prob:0.25, color:'#9aa0a6', kind:'mat', key:'stone',     amount:10 },
-    { id:'protect10',name:'强化保护券 ×10',    prob:0.13, color:'#4a9eff', kind:'mat', key:'protect',   amount:10 },
-    { id:'skillT10', name:'技能强化券 ×10',    prob:0.13, color:'#3fd45a', kind:'mat', key:'skillT',    amount:10 },
-    { id:'breakT10', name:'技能突破券 ×10',    prob:0.13, color:'#b45cff', kind:'mat', key:'breakT',    amount:10 }
+    { id:'token100', icon:'⬢', name:'BOSS击杀凭证 ×100', prob:0.05, color:'#ff9a3c', kind:'mat', key:'bossToken', amount:100 },
+    { id:'token10', icon:'⬢',  name:'BOSS击杀凭证 ×10',  prob:0.10, color:'#ff9a3c', kind:'mat', key:'bossToken', amount:10 },
+    { id:'scale10', icon:'▰',  name:'龙鳞片 ×10',        prob:0.10, color:'#ff9a2e', kind:'mat', key:'scale',     amount:10 },
+    { id:'shard20', icon:'▰',  name:'虚空碎片 ×20',      prob:0.10, color:'#b45cff', kind:'mat', key:'shard',     amount:20 },
+    { id:'stone10', icon:'◆',  name:'强化石 ×10',        prob:0.25, color:'#9aa0a6', kind:'mat', key:'stone',     amount:10 },
+    { id:'protect10', icon:'◇',name:'强化保护券 ×10',    prob:0.13, color:'#4a9eff', kind:'mat', key:'protect',   amount:10 },
+    { id:'skillT10', icon:'✦', name:'技能强化券 ×10',    prob:0.13, color:'#3fd45a', kind:'mat', key:'skillT',    amount:10 },
+    { id:'breakT10', icon:'✧', name:'技能突破券 ×10',    prob:0.13, color:'#b45cff', kind:'mat', key:'breakT',    amount:10 }
   ]
 };
 
@@ -7210,12 +7230,20 @@ function exchangeHtml() {
     `${i % 2 ? 'rgba(120,92,26,.55)' : 'rgba(70,54,18,.75)'} ${i * seg}deg ${(i + 1) * seg}deg`
   ).join(',');
 
-  // 扇形文字：每个标签旋转到扇区中线
-  const labels = L.prizes.map((z, i) => {
+  // 扇区内只放图标（随盘旋转也不会出现倒字）
+  const icons = L.prizes.map((z, i) => {
     const ang = i * seg + seg / 2;
-    return `<div class="wh-label" style="transform:rotate(${ang}deg) translateY(-104px) rotate(${-ang}deg)">
-      <span style="color:${z.color}">${z.name}</span></div>`;
+    return `<div class="wh-ico" style="transform:rotate(${ang}deg) translateY(-98px)">
+      <span style="color:${z.color}">${z.icon || '●'}</span></div>`;
   }).join('');
+
+  // 静态图例：始终水平可读
+  const legend = L.prizes.map((z, i) => `
+    <div class="lg-item">
+      <i class="lg-dot" style="background:${i % 2 ? 'rgba(120,92,26,.85)' : 'rgba(70,54,18,.95)'}"></i>
+      <span class="lg-ico" style="color:${z.color}">${z.icon || '●'}</span>
+      <span class="lg-name" style="color:${z.color}">${z.name}</span>
+    </div>`).join('');
 
   return `<div class="lot-box">
     <div class="lot-head">
@@ -7227,11 +7255,13 @@ function exchangeHtml() {
       <div class="wh-pointer"></div>
       <div class="wh-ring">
         <div class="wh-wheel" id="lotWheel" style="background:conic-gradient(from -90deg, ${stops})">
-          ${labels}
+          ${icons}
         </div>
         <div class="wh-hub">抽<br>奖</div>
       </div>
     </div>
+
+    <div class="wh-legend">${legend}</div>
 
     <div class="lot-actions">
       <button class="lot-btn one" data-lot-draw="1" ${can1 ? '' : 'disabled'}>

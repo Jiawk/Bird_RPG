@@ -1211,12 +1211,20 @@ function exchangeHtml() {
     `${i % 2 ? 'rgba(120,92,26,.55)' : 'rgba(70,54,18,.75)'} ${i * seg}deg ${(i + 1) * seg}deg`
   ).join(',');
 
-  // 扇形文字：每个标签旋转到扇区中线
-  const labels = L.prizes.map((z, i) => {
+  // 扇区内只放图标（随盘旋转也不会出现倒字）
+  const icons = L.prizes.map((z, i) => {
     const ang = i * seg + seg / 2;
-    return `<div class="wh-label" style="transform:rotate(${ang}deg) translateY(-104px) rotate(${-ang}deg)">
-      <span style="color:${z.color}">${z.name}</span></div>`;
+    return `<div class="wh-ico" style="transform:rotate(${ang}deg) translateY(-98px)">
+      <span style="color:${z.color}">${z.icon || '●'}</span></div>`;
   }).join('');
+
+  // 静态图例：始终水平可读
+  const legend = L.prizes.map((z, i) => `
+    <div class="lg-item">
+      <i class="lg-dot" style="background:${i % 2 ? 'rgba(120,92,26,.85)' : 'rgba(70,54,18,.95)'}"></i>
+      <span class="lg-ico" style="color:${z.color}">${z.icon || '●'}</span>
+      <span class="lg-name" style="color:${z.color}">${z.name}</span>
+    </div>`).join('');
 
   return `<div class="lot-box">
     <div class="lot-head">
@@ -1228,11 +1236,13 @@ function exchangeHtml() {
       <div class="wh-pointer"></div>
       <div class="wh-ring">
         <div class="wh-wheel" id="lotWheel" style="background:conic-gradient(from -90deg, ${stops})">
-          ${labels}
+          ${icons}
         </div>
         <div class="wh-hub">抽<br>奖</div>
       </div>
     </div>
+
+    <div class="wh-legend">${legend}</div>
 
     <div class="lot-actions">
       <button class="lot-btn one" data-lot-draw="1" ${can1 ? '' : 'disabled'}>

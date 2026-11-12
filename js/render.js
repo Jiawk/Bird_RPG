@@ -70,18 +70,47 @@ function render() {
   list.sort((a, b) => a.y - b.y);
   for (const it of list) it.f();
 
-  // 召唤灵兽
-  if (G.pet) {
-    const pxp = px(G.pet.x), pyp = py(G.pet.y) - 16 + Math.sin(G.pet.phase * 3) * 4;
-    const g = CTX.createRadialGradient(pxp, pyp, 1, pxp, pyp, 22);
-    g.addColorStop(0, 'rgba(74,212,255,.9)');
-    g.addColorStop(1, 'rgba(74,212,255,0)');
-    CTX.fillStyle = g;
-    CTX.beginPath(); CTX.arc(pxp, pyp, 22, 0, 6.283); CTX.fill();
-    CTX.fillStyle = '#e8fbff';
-    CTX.beginPath(); CTX.arc(pxp, pyp, 7, 0, 6.283); CTX.fill();
-    CTX.strokeStyle = '#4ad4ff'; CTX.lineWidth = 2;
-    CTX.beginPath(); CTX.arc(pxp, pyp, 11, 0, 6.283); CTX.stroke();
+  // 召唤灵兽：用行走精灵（恶魔/灵体）绘制 + 血条
+  if (G.pet && imgReady('units')) {
+    const pet = G.pet;
+    const gx = px(pet.x), gy = py(pet.y);
+    const bob = Math.sin(pet.phase * 4) * 3;
+    const scale = 0.95;
+    const sw = U_FRAME_W * scale, sh = U_FRAME_H * scale;
+
+    // 脚下光环
+    const glow = CTX.createRadialGradient(gx, gy, 2, gx, gy, 34);
+    glow.addColorStop(0, 'rgba(74,212,255,.42)');
+    glow.addColorStop(1, 'rgba(74,212,255,0)');
+    CTX.fillStyle = glow;
+    CTX.beginPath(); CTX.arc(gx, gy, 34, 0, 6.283); CTX.fill();
+    CTX.strokeStyle = 'rgba(120,230,255,.75)'; CTX.lineWidth = 2;
+    CTX.beginPath(); CTX.ellipse(gx, gy, 20, 20 * YS, 0, 0, 6.283); CTX.stroke();
+
+    // 精灵：取 units 图集第 12 帧（恶魔），4 向行走
+    const frame = Math.floor(pet.phase * 6) % 4;
+    const row = 0;
+    CTX.save();
+    CTX.globalAlpha = 0.95;
+    CTX.imageSmoothingEnabled = false;
+    const baseX = 12 * 128 + frame * U_FRAME_W;
+    CTX.drawImage(IMG.units, baseX, row * U_FRAME_H, U_FRAME_W, U_FRAME_H,
+                  gx - sw / 2, gy - sh + 10 + bob, sw, sh);
+    CTX.restore();
+
+    // 名字 + 血条
+    const bw = 40;
+    const hpPct = clamp(pet.hp / Math.max(1, pet.hpMax), 0, 1);
+    CTX.fillStyle = 'rgba(0,0,0,.62)';
+    CTX.fillRect(gx - bw / 2, gy - sh + 2 + bob, bw, 5);
+    CTX.fillStyle = hpPct > 0.5 ? '#5fdc4a' : hpPct > 0.25 ? '#ffd24a' : '#ff5a40';
+    CTX.fillRect(gx - bw / 2 + 1, gy - sh + 3 + bob, (bw - 2) * hpPct, 3);
+    CTX.font = '700 10px "KaiTi",serif';
+    CTX.textAlign = 'center';
+    CTX.lineWidth = 3; CTX.strokeStyle = 'rgba(0,0,0,.9)';
+    CTX.strokeText('灵兽', gx, gy - sh - 3 + bob);
+    CTX.fillStyle = '#9fe8ff';
+    CTX.fillText('灵兽', gx, gy - sh - 3 + bob);
   }
 
   // 技能特效

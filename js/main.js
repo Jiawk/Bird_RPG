@@ -263,19 +263,68 @@ function useGatherRing() {
 function updatePet(dt) {
   const p = G.player, w = G.world;
   if (!p || !p.stats || !p.stats.summonRing || !w || w.isTown) { G.pet = null; return; }
-  if (!G.pet) G.pet = { x: p.x, y: p.y, atkCd: 0, phase: 0 };
+
+  if (!G.pet) {
+    G.pet = {
+      x: p.x - 40, y: p.y + 24, atkCd: 0, phase: 0, dir: 1,
+      hpMax: Math.round(p.stats.hpMax * 0.45), hp: 0,
+      atk: p.stats.power * 0.55, target: null
+    };
+    G.pet.hp = G.pet.hpMax;
+  }
   const pet = G.pet;
   pet.phase += dt;
-  const dx = p.x - pet.x, dy = p.y - pet.y, d = Math.hypot(dx, dy);
-  if (d > 70) { pet.x += dx / d * 200 * dt; pet.y += dy / d * 200 * dt; }
-  pet.atkCd -= dt;
-  if (pet.atkCd <= 0) {
-    const t = nearestMonster(280);
-    if (t) {
-      pet.atkCd = 1.1;
-      damageMonster(t, p.stats.power * 0.45, 'pet');
-      spawnVfx(t.x, t.y, '#4ad4ff', 40, 'hit', 0.28);
+  pet.hpMax = Math.round(p.stats.hpMax * 0.45);     // 随主人成长
+  pet.atk = p.stats.power * 0.55;
+  if (pet.hp > pet.hpMax) pet.hp = pet.hpMax;
+
+  // 找目标：优先附近怪物
+  if (!pet.target || !pet.target.alive || Math.hypot(pet.target.x - pet.x, pet.target.y - pet.y) > 380) {
+    pet.target = null;
+    let best = null, bd = 300;
+    for (const m of w.monsters) {
+      if (!m.alive) continue;
+      const d = Math.hypot(m.x - pet.x, m.y - pet.y);
+      if (d < bd) { bd = d; best = m; }
     }
+    pet.target = best;
+  }
+
+  const SPEED = 240;
+  if (pet.target) {
+    const t = pet.target;
+    const dx = t.x - pet.x, dy = t.y - pet.y, d = Math.hypot(dx, dy) || 1;
+    if (d > 52) {                                    // 追向目标
+      pet.x += dx / d * SPEED * dt;
+      pet.y += dy / d * SPEED * dt;
+      pet.dir = dx >= 0 ? 1 : -1;
+    }
+    pet.atkCd -= dt;
+    if (pet.atkCd <= 0 && d <= 70) {
+      pet.atkCd = 1.0;
+      damageMonster(t, pet.atk, 'pet');
+      spawnVfx(t.x, t.y, '#7fe6ff', 46, 'hit', 0.3);
+      spawnVfx(pet.x, pet.y, '#4ad4ff', 30, 'melee', 0.25);
+    }
+  } else {
+    // 无目标：跟随主人
+    const dx = p.x - pet.x, dy = p.y - pet.y, d = Math.hypot(dx, dy) || 1;
+    if (d > 64) {
+      pet.x += dx / d * SPEED * dt;
+      pet.y += dy / d * SPEED * dt;
+      pet.dir = dx >= 0 ? 1 : -1;
+    }
+    pet.atkCd = Math.min(pet.atkCd, 0.3);
+  }
+
+  // 超远距离直接拉回
+  if (Math.hypot(p.x - pet.x, p.y - pet.y) > 600) { pet.x = p.x - 40; pet.y = p.y + 24; }
+
+  // 灵兽不会真正死亡，血量归零后短暂消散再满血归来
+  if (pet.hp <= 0) {
+    pet.hp = pet.hpMax;
+    pet.x = p.x - 40; pet.y = p.y + 24;
+    pet.atkCd = 1.5;
   }
 }
 
@@ -476,7 +525,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     if (ringGift) {
       const n = grantAllRings(G.player);
-      setTimeout(() => toast(`🎁 已发放 ${n} 枚特戒到背包`), 300);
+      // 顺带穿上召唤之戒，方便查看灵兽
+      const sr = (G.player.bag || []).find(x => x.ringKey === 'summon');
+      if (sr) { wearRing(G.player, sr); recalcStats(G.player); }
+      setTimeout(() => toast(`🎁 已发放 ${n} 枚特戒（召唤之戒已装备）`), 300);
     }
     if (mapTest) {
       G.player.unlocked = [0,1,2,3,4,5];

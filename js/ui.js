@@ -1706,7 +1706,12 @@ function enhanceItemHtml(id) {
   const maxed = lv >= DATA.ENHANCE.max;
   const gold = DATA.ENHANCE.goldCost(lv);
   const stone = DATA.ENHANCE.stoneCost(lv);
-  const rate = Math.round(DATA.ENHANCE.rate(lv) * 100);
+  const pNeed0 = DATA.ENHANCE.protectNeed(lv);
+  const pHave0 = p.materials.protect || 0;
+  const canProtect = pHave0 >= pNeed0;
+  const useP = !!G._enhProtect && canProtect;
+  const baseRate = Math.round(DATA.ENHANCE.rate(lv) * 100);
+  const rate = useP ? Math.round(DATA.ENHANCE.rateWithProtect(lv) * 100) : baseRate;
   const curMul = DATA.ENHANCE.statMul(lv);
   const nextMul = DATA.ENHANCE.statMul(Math.min(lv + 1, DATA.ENHANCE.max));
   const delta = Math.round((nextMul - curMul) * 100);
@@ -1750,24 +1755,29 @@ function enhanceItemHtml(id) {
     html += '<div class="enh-big" style="color:#ffd24a">已达最高强化等级 +15</div>';
   } else {
     html += `<div class="enh-lv">强化等级 <b>+${lv}</b> → <b style="color:#5fdc4a">+${lv + 1}</b></div>`;
-    html += `<div class="enh-line"><span>成功率</span><b class="${rate >= 100 ? 'ok' : rate >= 70 ? 'warn' : 'bad'}">${rate}%</b></div>`;
+    const rateCls = rate >= 100 ? 'ok' : rate >= 70 ? 'warn' : 'bad';
+    html += `<div class="enh-rate-row">
+      <span>成功率</span>
+      <b class="${rateCls}">${rate}%</b>
+      ${useP ? `<i class="rate-from">原 ${baseRate}%</i>` : ''}
+    </div>`;
     html += `<div class="enh-line"><span>属性提升</span><b>+${delta}%</b></div>`;
     html += `<div class="enh-line"><span>消耗金币</span><b class="${p.gold >= gold ? '' : 'bad'}">${fmt(gold)} / ${fmt(p.gold)}</b></div>`;
     html += `<div class="enh-line"><span>消耗强化石</span><b class="${(p.materials.stone||0) >= stone ? '' : 'bad'}">${stone} / ${p.materials.stone||0}</b></div>`;
-    if (lv >= 11) {
-      html += `<div class="enh-line"><span>失败惩罚</span><b class="bad">掉 1 级（用保护券可免）</b></div>`;
+
+    // 保护券勾选框
+    html += `<label class="enh-protect ${canProtect ? '' : 'off'}">
+      <input type="checkbox" data-enh-protect="1" ${useP ? 'checked' : ''} ${canProtect ? '' : 'disabled'}>
+      <span class="ep-box"></span>
+      <span class="ep-txt">使用强化保护券</span>
+      <span class="ep-need ${canProtect ? 'ok' : 'bad'}">需 ${pNeed0} 张 · 持有 ${pHave0}</span>
+    </label>`;
+    if (!canProtect && pHave0 < pNeed0) {
+      html += `<div class="enh-warn">保护券不足，再攒 ${pNeed0 - pHave0} 张即可启用（成功率翻倍 + 免掉级）</div>`;
     }
-    // 保护券
-    const pNeed = DATA.ENHANCE.protectNeed(lv);
-    const pHave = p.materials.protect || 0;
-    const pRate = Math.round(DATA.ENHANCE.rateWithProtect(lv) * 100);
-    html += `<div class="enh-line"><span>保护券</span><b class="${pHave >= pNeed ? 'ok' : ''}">需要 ${pNeed} 张 / 持有 ${pHave}</b></div>`;
-    html += `<div class="enh-line"><span>用券后成功率</span><b class="ok">${pRate}%</b></div>`;
 
     html += '<div class="enh-btns">';
-    html += `<button class="big-btn primary" data-enh-do="${it.id}" data-protect="0">强化</button>`;
-    html += `<button class="big-btn" data-enh-do="${it.id}" data-protect="1"
-      ${pHave >= pNeed ? '' : 'disabled'}>用保护券（${pNeed} 张）</button>`;
+    html += `<button class="big-btn primary" data-enh-do="${it.id}" data-protect="${useP ? 1 : 0}">强 化</button>`;
     html += '<button class="big-btn" data-enh-back="1">返回</button>';
     html += '</div>';
   }
@@ -2073,6 +2083,11 @@ function bindModal() {
   });
   body.querySelectorAll('[data-act-craft]').forEach(el => el.onclick = () => {
     openModal('craft', '锻造台', craftHtml());
+  });
+  body.querySelectorAll('[data-enh-protect]').forEach(cb => cb.onchange = () => {
+    G._enhProtect = cb.checked;
+    const id = (body.querySelector('[data-enh-do]') || {}).dataset?.enhDo;
+    if (id) openModal('forge', '强化 · 铸造台', enhanceItemHtml(id));
   });
   body.querySelectorAll('[data-ring-pick]').forEach(el => el.onclick = () => {
     const k = el.dataset.ringPick;

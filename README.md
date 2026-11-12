@@ -2149,3 +2149,39 @@ salvageMythic  按钮:2 绑定:1
 ```
 
 **验证**：调用后龙鳞+1 / 碎片+2，背包清空 ✅
+
+### v142 · 修复排行榜/云存档被旧标签页覆盖
+**现象**：玩家已经 17k 战力，排行榜 10 分钟不动，一直显示 Lv.28 / 3,207。
+
+**诊断**（查服务端数据库）：
+```
+存档  Bird  updated_at 19:32:22（20 秒前）
+榜单  Bird  Lv.28 3207 秘银冰晶杖  updated_at 19:32:22（20 秒前）
+角色0  Lv.28 职业:mage 金币:546574     ← 云存档里也是 Lv.28
+```
+上传一直在发生，但**内容始终是 Lv.28 的旧快照** → 说明有**另一个旧标签页**还开着，
+每 25 秒把它的旧进度推到服务器，覆盖了当前进度。
+
+**两道防护**
+
+1. **后台标签页不再上传**（客户端）
+   ```js
+   if (!force && document.visibilityState === 'hidden') return;
+   ```
+   旧标签页一旦切到后台，就不再推送，无法覆盖前台的新进度。
+
+2. **服务端防降级覆盖**
+   ```js
+   const oldLv = saveMaxLevel(prev.payload);
+   const newLv = saveMaxLevel(payload);
+   if (newLv < oldLv) return res.json({ ok:true, ignored:true, reason:'stale' });
+   ```
+   等级更低的存档一律拒收。排行榜快照也随之不更新。
+
+**验证**
+```
+上传 Lv.50 → {"ok":true}
+上传 Lv.28 → {"ok":true,"ignored":true,"reason":"stale","serverLevel":50}
+榜单仍是 Lv.50 / 17000 ✅
+存档仍是 Lv.50        ✅
+```

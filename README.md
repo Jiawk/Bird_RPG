@@ -2185,3 +2185,32 @@ salvageMythic  按钮:2 绑定:1
 榜单仍是 Lv.50 / 17000 ✅
 存档仍是 Lv.50        ✅
 ```
+
+### v143 · 修复排行榜战力数值错误（3,159 vs 17.5k）
+**现象**：角色面板「战斗力 17.5k」，排行榜显示 `3,159`。
+
+**根因**：云存档快照里用的是 **内功攻击**，不是**战斗力**：
+
+```js
+power: Math.round(pp.stats.power)      // ❌ p.stats.power = 内功攻击 3159
+```
+
+而 UI 显示的战斗力是另一个函数算的：
+
+```js
+function combatPower(p) {
+  let sp = 0;
+  for (const k in p.skills) sp += (p.skills[k] || 0) * 26;      // 技能等级
+  const book = (p.bonus.str + p.bonus.agi + p.bonus.int + p.bonus.vit) * 12;  // 属性书
+  return Math.round(gearPower(p) + sp + p.level * 18 + book);   // 装备评分 + 技能 + 等级 + 书
+}
+```
+
+**修复**：
+```js
+var cp = (typeof combatPower === 'function') ? combatPower(pp) : 0;
+if (!cp) cp = Math.round(pp.stats.power || 0);
+```
+
+**顺带说明**：等级显示一直是对的，因为直接读 `p.level`；
+错的只有战力那一列。

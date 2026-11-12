@@ -26,6 +26,9 @@ function damageMonster(m, amount, type, isDot) {
     p._forceCrit = false;
     if (crit) dmg *= p.stats.critDmg;
   }
+  // 圣物套装 5 件套：最终伤害 +6%
+  if (!isDot && p.stats.finalDmg > 0) dmg *= (1 + p.stats.finalDmg);
+
   // 圣物武器：命中额外削掉目标 5% 最大生命
   if (!isDot && p.stats.relicPct > 0 && m.hpMax > 0) {
     dmg += Math.max(1, Math.round(m.hpMax * p.stats.relicPct));

@@ -174,6 +174,67 @@ DATA.RELIC_WEAPONS = [
     desc:'命中即削掉目标 5% 最大生命；吸血 5%' }
 ];
 
+
+/* 圣物套装：4 职业 × 7 件，金币兑换，单件强于神话（红装）
+   套装效果：3件 四维+6% ｜ 5件 最终伤害+6% ｜ 7件 经验/爆率/吸血 各+6% */
+DATA.RELIC_SETS = {
+  warrior: {
+    cls:'warrior', name:'破军', full:'破军·天罡', color:'#ffe9a8', price:300000, reqLv:20,
+    pieces: {
+      helm:    { slotName:'战盔', stats:{ armor:220, str:70, vit:60, hp:900 } },
+      chest:   { slotName:'胸甲', stats:{ armor:320, str:90, vit:90, hp:1400 } },
+      legs:    { slotName:'腿铠', stats:{ armor:260, str:75, vit:70, hp:1100 } },
+      boots:   { slotName:'战靴', stats:{ armor:180, str:55, vit:50, hp:700 } },
+      neck:    { slotName:'项饰', stats:{ str:85, crit:0.06, critDmg:0.30 } },
+      ring:    { slotName:'指环', stats:{ str:80, crit:0.05, hit:0.06 } },
+      trinket: { slotName:'印记', stats:{ str:90, lifesteal:0.03, hp:600 } }
+    }
+  },
+  mage: {
+    cls:'mage', name:'星穹', full:'星穹·霜语', color:'#ffe9a8', price:300000, reqLv:20,
+    pieces: {
+      helm:    { slotName:'兜帽', stats:{ armor:160, int:80, vit:55, mp:400 } },
+      chest:   { slotName:'法袍', stats:{ armor:240, int:100, vit:80, hp:1000 } },
+      legs:    { slotName:'护腿', stats:{ armor:200, int:85, vit:65, hp:800 } },
+      boots:   { slotName:'布靴', stats:{ armor:140, int:60, vit:45, hp:500 } },
+      neck:    { slotName:'颈饰', stats:{ int:95, spell:220, crit:0.06 } },
+      ring:    { slotName:'指环', stats:{ int:90, spell:200, hit:0.06 } },
+      trinket: { slotName:'秘宝', stats:{ int:100, critDmg:0.35, mp:300 } }
+    }
+  },
+  archer: {
+    cls:'archer', name:'月华', full:'月华·流光', color:'#ffe9a8', price:300000, reqLv:20,
+    pieces: {
+      helm:    { slotName:'轻盔', stats:{ armor:170, agi:80, vit:50, hp:700 } },
+      chest:   { slotName:'皮甲', stats:{ armor:250, agi:95, vit:75, hp:1100 } },
+      legs:    { slotName:'护腿', stats:{ armor:210, agi:85, vit:60, hp:900 } },
+      boots:   { slotName:'疾行靴', stats:{ armor:150, agi:70, vit:40, hp:600 } },
+      neck:    { slotName:'月链', stats:{ agi:90, crit:0.07, hit:0.05 } },
+      ring:    { slotName:'月戒', stats:{ agi:85, critDmg:0.30, hit:0.06 } },
+      trinket: { slotName:'月符', stats:{ agi:95, lifesteal:0.03, hp:500 } }
+    }
+  },
+  assassin: {
+    cls:'assassin', name:'影煞', full:'影煞·噬魂', color:'#ffe9a8', price:300000, reqLv:20,
+    pieces: {
+      helm:    { slotName:'面罩', stats:{ armor:150, agi:75, vit:45, hp:650 } },
+      chest:   { slotName:'影衣', stats:{ armor:230, agi:100, vit:70, hp:1000 } },
+      legs:    { slotName:'影裤', stats:{ armor:190, agi:90, vit:55, hp:850 } },
+      boots:   { slotName:'影靴', stats:{ armor:130, agi:72, vit:38, hp:550 } },
+      neck:    { slotName:'影链', stats:{ agi:95, crit:0.08, critDmg:0.20 } },
+      ring:    { slotName:'影戒', stats:{ agi:90, crit:0.06, hit:0.07 } },
+      trinket: { slotName:'影珠', stats:{ agi:100, lifesteal:0.04, critDmg:0.25 } }
+    }
+  }
+};
+
+/* 圣物套装效果门槛 */
+DATA.RELIC_SET_BONUS = {
+  b3: { attrPct: 0.06 },                                    // 四维 +6%
+  b5: { finalDmg: 0.06 },                                   // 最终伤害 +6%
+  b7: { expBonus: 0.06, dropBonus: 0.06, lifesteal: 0.06 }   // 经验/爆率/吸血 各 +6%
+};
+
 DATA.WEAPON_KINDS = {
   sword:   {label:'剑',   cls:['warrior'],  bonus:0.12, fx:'slash', names:['长剑','阔剑','骑士剑','军刀']},
   axe:     {label:'斧',   cls:['warrior'],  bonus:0.12, fx:'slash', names:['战斧','巨斧','劈山斧']},

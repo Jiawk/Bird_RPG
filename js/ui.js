@@ -1042,6 +1042,7 @@ function interactNPC(target) {
 
 function relicSideHtml(key) {
   const p = G.player;
+  if (key && key.indexOf('set_') === 0) return relicPieceSideHtml(key);
   if (!key) {
     return `<div class="m-side-hint">
       <div class="msh-ic">🛒</div>
@@ -1082,38 +1083,86 @@ function relicSideHtml(key) {
 function merchantHtml() {
   const p = G.player;
   const sel = G._relicSel;
-  const COLS = 4, TOTAL = 24;
+  const SRC = DATA.RELIC_SETS || {};
+  const CLS_ORDER = ['warrior', 'mage', 'archer', 'assassin'];
+  const PIECES = ['helm','chest','legs','boots','neck','ring','trinket'];
 
   let cells = [];
+  // 第 1 行：药水
   DATA.POTIONS.forEach(po => {
     const ok = p.gold >= po.price;
     const pi = POTION_IDX[po.key] !== undefined ? POTION_IDX[po.key] : 18;
     cells.push(`<div class="m-cell potion" data-buy-potion="${po.key}" style="${ok ? '' : 'opacity:.5'}">
-      <span class="ic-sprite" style="width:34px;height:34px;background-size:${34 * EQUIP_COUNT}px 34px;background-position:${-pi * 34}px 0"></span>
+      <span class="ic-sprite" style="width:32px;height:32px;background-size:${32 * EQUIP_COUNT}px 32px;background-position:${-pi * 32}px 0"></span>
       <div class="m-nm" style="color:${po.color}">${po.name}</div>
-      <div class="m-sub">${po.hp ? '生命 +' + po.hp : '法力 +' + po.mp}</div>
       <div class="m-price">${fmt(po.price)} 金</div></div>`);
   });
-  while (cells.length < COLS) cells.push('<div class="m-cell empty">—</div>');
 
-  (DATA.RELIC_WEAPONS || []).forEach(w => {
-    const okLv = p.level >= w.reqLv, okGold = p.gold >= w.price;
-    const own = (p.bag || []).some(x => x.relicKey === w.key) ||
-                (p.equip.weapon && p.equip.weapon.relicKey === w.key);
-    cells.push(`<div class="m-cell relic${sel === w.key ? ' sel' : ''}" data-relic="${w.key}">
-      ${iconTag('weapon', 38, w.wtype, w.key)}
-      <div class="m-nm relic-nm">${w.name.replace('圣物·', '')}</div>
-      <div class="m-sub">${DATA.CLASSES[w.cls].name}${own ? ' · 已有' : ''}</div>
-      <div class="m-price ${okLv && okGold ? 'ok' : 'no'}">${fmt(w.price)} 金</div></div>`);
+  // 第 2 行：4 把圣物武器（按职业列）
+  CLS_ORDER.forEach(cl => { cells.push(relicWeaponCell(cl, sel)); });
+
+  // 第 3~9 行：7 件圣物套装，竖着按职业排列
+  PIECES.forEach((sl, idx) => {
+    CLS_ORDER.forEach(cl => { cells.push(relicPieceCell(cl, sl, sel)); });
   });
-  while (cells.length < TOTAL) cells.push('<div class="m-cell empty">—</div>');
 
   return `<div class="m-head"><span>商人 · 赵帅帅</span><b>金币 ${fmt(p.gold)}</b></div>
+    <div class="m-legend">
+      ${CLS_ORDER.map(cl => `<span style="color:${DATA.CLASSES[cl].color}">${DATA.CLASSES[cl].name} · ${SRC[cl].full}</span>`).join('')}
+    </div>
     <div class="m-layout">
-      <div class="m-grid">${cells.join('')}</div>
+      <div class="m-grid m-grid-4x9">${cells.join('')}</div>
       <div class="m-side" id="mSide">${relicSideHtml(sel)}</div>
     </div>`;
 }
+
+/* 圣物武器格 */
+function relicWeaponCell(cl, sel) {
+  const p = G.player;
+  const w = (DATA.RELIC_WEAPONS || []).find(x => x.cls === cl);
+  if (!w) return '<div class="m-cell empty">—</div>';
+  const okGold = p.gold >= w.price, okLv = p.level >= w.reqLv;
+  const own = (p.bag || []).some(x => x.relicKey === w.key) ||
+              (p.equip.weapon && p.equip.weapon.relicKey === w.key);
+  return `<div class="m-cell relic${sel === w.key ? ' sel' : ''}" data-relic="${w.key}">
+    ${iconTag('weapon', 34, w.wtype, w.key)}
+    <div class="m-nm relic-nm">${w.name.replace('圣物·', '')}</div>
+    <div class="m-price ${okLv && okGold ? 'ok' : 'no'}">${fmt(w.price)}</div></div>`;
+}
+
+/* 圣物套装件格 */
+function relicPieceCell(cl, sl, sel) {
+  const p = G.player;
+  const S = (DATA.RELIC_SETS || {})[cl];
+  if (!S || !S.pieces[sl]) return '<div class="m-cell empty">—</div>';
+  const piece = S.pieces[sl];
+  const key = 'set_' + cl + '_' + sl;
+  const item = relicPieceItem(cl, sl);
+  const name = item.name;
+  const okGold = p.gold >= S.price, okLv = p.level >= S.reqLv;
+  const own = (p.bag || []).some(x => x.relicPieceKey === key) ||
+              ['helm','chest','legs','boots','neck','ring','trinket'].some(s2 => p.equip[s2] && p.equip[s2].relicPieceKey === key);
+  return `<div class="m-cell relic${sel === key ? ' sel' : ''}" data-relic="${key}">
+    ${iconTag(sl, 30)}
+    <div class="m-nm relic-nm">${piece.slotName}</div>
+    <div class="m-price ${okLv && okGold ? 'ok' : 'no'}">${fmt(S.price)}</div></div>`;
+}
+
+/* 构造一件圣物套装装备（不入背包） */
+function relicPieceItem(cl, sl) {
+  const S = DATA.RELIC_SETS[cl];
+  const piece = S.pieces[sl];
+  return {
+    id: 'rp_' + cl + '_' + sl,
+    slot: sl, type: 'equip', quality: 'relic', qKey: 'relic',
+    name: '圣物·' + DATA.CLASSES[cl].name + '·' + S.name + '·' + piece.slotName,
+    color: S.color, ilvl: S.reqLv, reqLv: S.reqLv,
+    relicSet: cl, relicPieceKey: 'set_' + cl + '_' + sl,
+    setKey: null,
+    stats: Object.assign({}, piece.stats), enh: 0, locked: true
+  };
+}
+
 
 /* ---------------- 兑换员 / 铁匠 / 设置 ---------------- */
 function exchangeHtml() {
@@ -1212,6 +1261,66 @@ function warehouseHtml() {
   html += '</div>';
   html += '<div style="font-size:11px;color:#8f8570;margin-top:10px">左键点物品 → 详情页里选「移到背包」</div>';
   return html;
+}
+
+/* 圣物套装件的右侧详情 */
+function relicPieceSideHtml(key) {
+  const p = G.player;
+  const parts = key.split('_');          // set_cl_slot
+  const cl = parts[1], sl = parts[2];
+  const S = (DATA.RELIC_SETS || {})[cl];
+  if (!S) return relicSideHtml(null);
+  const it = relicPieceItem(cl, sl);
+  const piece = S.pieces[sl];
+  const okLv = p.level >= S.reqLv, okGold = p.gold >= S.price;
+  const own = (p.bag || []).some(x => x.relicPieceKey === key) ||
+              ['helm','chest','legs','boots','neck','ring','trinket'].some(s2 => p.equip[s2] && p.equip[s2].relicPieceKey === key);
+  const pct = ['crit','critDmg','lifesteal','hit','dodge','as'];
+  const lines = Object.keys(piece.stats).map(k => {
+    const v = piece.stats[k];
+    return `<div class="rl-stat"><span>${AFFIX_NAMES[k] || k}</span><b>+${pct.includes(k) ? (v*100).toFixed(1)+'%' : Math.round(v)}</b></div>`;
+  }).join('');
+
+  return `<div class="rl-box side">
+    <div class="rl-title" style="color:${S.color}">${it.name}</div>
+    <div class="rl-meta">圣物套装 · ${DATA.CLASSES[cl].name} · ${S.full} · 需要 Lv.${S.reqLv}</div>
+    <div class="rl-stats">${lines}</div>
+    <div class="rl-sets">
+      <div class="${'rl-set on'}">3 件：四维 +6%</div>
+      <div class="${'rl-set on'}">5 件：最终伤害 +6%</div>
+      <div class="${'rl-set on'}">7 件：经验/爆率/吸血 各 +6%</div>
+    </div>
+    <div class="rl-actions">
+      <button data-relic-cancel>取消</button>
+      <button data-buy-relic-piece="${cl}|${sl}" ${(okLv && okGold && !own) ? '' : 'disabled'}>
+        ${own ? '已拥有' : (okLv ? (okGold ? '兑换 ' + fmt(S.price) + ' 金' : '金币不足') : '等级不足 Lv.' + S.reqLv)}
+      </button>
+    </div>
+    <div class="msh-gold">当前金币 <b>${fmt(p.gold)}</b></div>
+  </div>`;
+}
+
+/* 购买圣物套装件 */
+function buyRelicPiece(cl, sl) {
+  const p = G.player;
+  const S = DATA.RELIC_SETS[cl];
+  if (!S || !S.pieces[sl]) return;
+  if (p.level < S.reqLv) { toast(`等级不足：需要 Lv.${S.reqLv}`); return; }
+  if (p.gold < S.price) { toast('金币不足'); return; }
+  const it = relicPieceItem(cl, sl);
+  if ((p.bag || []).some(x => x.relicPieceKey === it.relicPieceKey) ||
+      ['helm','chest','legs','boots','neck','ring','trinket'].some(s2 => p.equip[s2] && p.equip[s2].relicPieceKey === it.relicPieceKey)) {
+    toast('这件圣物你已经拥有了'); return;
+  }
+  p.gold -= S.price;
+  it.id = 'rp' + Math.random().toString(36).slice(2, 8);
+  if (!addToBag(p, it)) { p.gold += S.price; toast('背包已满'); return; }
+  if (typeof Sfx !== 'undefined') { Sfx.play('lvlup'); }
+  toast(`兑换成功：${it.name}`);
+  logMsg(`🎖 获得圣物 ${it.name}`, 'level');
+  G._relicSel = null;
+  saveGame();
+  openModal('merchant', '商人 · 赵帅帅', merchantHtml());
 }
 
 /* ---------------- 装备详情页 ---------------- */
@@ -2353,6 +2462,12 @@ function bindModal() {
     sideEl.addEventListener('click', ev => {
       const buy = ev.target.closest('[data-buy-relic]');
       if (buy) { buyRelic(buy.dataset.buyRelic); return; }
+      const buyP = ev.target.closest('[data-buy-relic-piece]');
+      if (buyP) {
+        const [c0, s0] = buyP.dataset.buyRelicPiece.split('|');
+        buyRelicPiece(c0, s0);
+        return;
+      }
       if (ev.target.closest('[data-relic-cancel]')) {
         G._relicSel = null;
         openModal('merchant', '商人 · 赵帅帅', merchantHtml());

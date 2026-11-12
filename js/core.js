@@ -88,11 +88,13 @@ function recalcStats(p) {
   }
 
   const baseAll = eq.all || 0;
+  const _rset0 = (typeof relicSetBonus === 'function') ? relicSetBonus(p) : { attrPct:0 };
+  const _aMul = 1 + (_rset0.attrPct || 0);        // 圣物 3 件套：四维 +6%
   const A = {
-    str: p.attrs.str + p.bonus.str + baseAll + eq.str,
-    agi: p.attrs.agi + p.bonus.agi + baseAll + eq.agi,
-    int: p.attrs.int + p.bonus.int + baseAll + eq.int,
-    vit: p.attrs.vit + p.bonus.vit + baseAll + eq.vit
+    str: (p.attrs.str + p.bonus.str + baseAll + eq.str) * _aMul,
+    agi: (p.attrs.agi + p.bonus.agi + baseAll + eq.agi) * _aMul,
+    int: (p.attrs.int + p.bonus.int + baseAll + eq.int) * _aMul,
+    vit: (p.attrs.vit + p.bonus.vit + baseAll + eq.vit) * _aMul
   };
 
   // 本命武器：武器种类与职业匹配 → 攻击加成 + 特效
@@ -106,6 +108,7 @@ function recalcStats(p) {
   }
 
   // 特戒效果（强化会放大）
+  const RSET = (typeof relicSetBonus === 'function') ? relicSetBonus(p) : { attrPct:0, finalDmg:0, expBonus:0, dropBonus:0, lifesteal:0 };
   const RFX = { expBonus:0, goldBonus:0, lifesteal:0, cleave:0, critDmg:0, dropBonus:0, revive:0, summon:0, gather:0 };
   for (const sk of DATA.RING_SLOTS.map(x => x.slot).concat(['ring','trinket'])) {
     const it = p.equip[sk];
@@ -175,13 +178,15 @@ function recalcStats(p) {
     dodge: clamp(A.agi / 3000 + eq.dodge, 0, 0.3),
     armor,
     dr: clamp(dr + bf.dr, 0, 0.85),
-    lifesteal: (eq.lifesteal || 0) + RFX.lifesteal,
+    lifesteal: (eq.lifesteal || 0) + RFX.lifesteal + (RSET.lifesteal || 0),
+    finalDmg: (RSET.finalDmg || 0),
+    relicSetCount: RSET.count,
     relicPct,
     mpRegen: (0.02 * (1 + (bonus.mpRegen || 0))),
     goldBonus: (bonus.goldBonus || 0) + RFX.goldBonus,
-    expBonus: (race.expBonus || 0) + RFX.expBonus,
+    expBonus: (race.expBonus || 0) + RFX.expBonus + (RSET.expBonus || 0),
     cleave: RFX.cleave,
-    dropBonus: RFX.dropBonus,
+    dropBonus: RFX.dropBonus + (RSET.dropBonus || 0),
     revive: RFX.revive,
     summonRing: RFX.summon,
     gatherRing: RFX.gather,
@@ -733,6 +738,30 @@ function claimFirstKillRing(p, bossKey) {
   if (!ok) { p.ringClaimed[bossKey] = false; return { ok:false, msg:'背包已满' }; }
   recalcStats(p);
   return { ok:true, ring };
+}
+
+/* ---------------- 圣物套装 ---------------- */
+function relicSetCount(p) {
+  let n = 0, cls = null;
+  for (const sl of ['helm','chest','legs','boots','neck','ring','trinket']) {
+    const it = p.equip[sl];
+    if (it && it.relicSet) { n++; cls = it.relicSet; }
+  }
+  return { n, cls };
+}
+function relicSetBonus(p) {
+  const { n, cls } = relicSetCount(p);
+  const B = DATA.RELIC_SET_BONUS;
+  const out = { count:n, cls, attrPct:0, finalDmg:0, expBonus:0, dropBonus:0, lifesteal:0,
+                name: cls && DATA.RELIC_SETS[cls] ? DATA.RELIC_SETS[cls].full : null };
+  if (n >= 3) out.attrPct += B.b3.attrPct;
+  if (n >= 5) out.finalDmg += B.b5.finalDmg;
+  if (n >= 7) {
+    out.expBonus += B.b7.expBonus;
+    out.dropBonus += B.b7.dropBonus;
+    out.lifesteal += B.b7.lifesteal;
+  }
+  return out;
 }
 
 /* ---------------- 职业套装 ---------------- */

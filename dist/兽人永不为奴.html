@@ -1373,6 +1373,14 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   .cfg-hint{grid-column:2;text-align:right}
 }
 
+/* 商店：4 列 × 9 行 */
+.m-grid-4x9{grid-template-columns:repeat(4,1fr) !important}
+.m-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:10.5px;color:#8f8570;margin-bottom:8px}
+.m-legend span{white-space:nowrap}
+.rl-sets{margin-top:8px;display:flex;flex-direction:column;gap:3px}
+.rl-set{font-size:10.5px;color:#5fdc4a;padding:2px 6px;border-radius:2px;
+  background:rgba(95,220,74,.08);border-left:2px solid #5fdc4a}
+
 </style>
 <script id="orc-cfg" type="application/json">{}</script>
 </head>
@@ -1729,6 +1737,67 @@ DATA.RELIC_WEAPONS = [
     relicPct:0.05,
     desc:'命中即削掉目标 5% 最大生命；吸血 5%' }
 ];
+
+
+/* 圣物套装：4 职业 × 7 件，金币兑换，单件强于神话（红装）
+   套装效果：3件 四维+6% ｜ 5件 最终伤害+6% ｜ 7件 经验/爆率/吸血 各+6% */
+DATA.RELIC_SETS = {
+  warrior: {
+    cls:'warrior', name:'破军', full:'破军·天罡', color:'#ffe9a8', price:300000, reqLv:20,
+    pieces: {
+      helm:    { slotName:'战盔', stats:{ armor:220, str:70, vit:60, hp:900 } },
+      chest:   { slotName:'胸甲', stats:{ armor:320, str:90, vit:90, hp:1400 } },
+      legs:    { slotName:'腿铠', stats:{ armor:260, str:75, vit:70, hp:1100 } },
+      boots:   { slotName:'战靴', stats:{ armor:180, str:55, vit:50, hp:700 } },
+      neck:    { slotName:'项饰', stats:{ str:85, crit:0.06, critDmg:0.30 } },
+      ring:    { slotName:'指环', stats:{ str:80, crit:0.05, hit:0.06 } },
+      trinket: { slotName:'印记', stats:{ str:90, lifesteal:0.03, hp:600 } }
+    }
+  },
+  mage: {
+    cls:'mage', name:'星穹', full:'星穹·霜语', color:'#ffe9a8', price:300000, reqLv:20,
+    pieces: {
+      helm:    { slotName:'兜帽', stats:{ armor:160, int:80, vit:55, mp:400 } },
+      chest:   { slotName:'法袍', stats:{ armor:240, int:100, vit:80, hp:1000 } },
+      legs:    { slotName:'护腿', stats:{ armor:200, int:85, vit:65, hp:800 } },
+      boots:   { slotName:'布靴', stats:{ armor:140, int:60, vit:45, hp:500 } },
+      neck:    { slotName:'颈饰', stats:{ int:95, spell:220, crit:0.06 } },
+      ring:    { slotName:'指环', stats:{ int:90, spell:200, hit:0.06 } },
+      trinket: { slotName:'秘宝', stats:{ int:100, critDmg:0.35, mp:300 } }
+    }
+  },
+  archer: {
+    cls:'archer', name:'月华', full:'月华·流光', color:'#ffe9a8', price:300000, reqLv:20,
+    pieces: {
+      helm:    { slotName:'轻盔', stats:{ armor:170, agi:80, vit:50, hp:700 } },
+      chest:   { slotName:'皮甲', stats:{ armor:250, agi:95, vit:75, hp:1100 } },
+      legs:    { slotName:'护腿', stats:{ armor:210, agi:85, vit:60, hp:900 } },
+      boots:   { slotName:'疾行靴', stats:{ armor:150, agi:70, vit:40, hp:600 } },
+      neck:    { slotName:'月链', stats:{ agi:90, crit:0.07, hit:0.05 } },
+      ring:    { slotName:'月戒', stats:{ agi:85, critDmg:0.30, hit:0.06 } },
+      trinket: { slotName:'月符', stats:{ agi:95, lifesteal:0.03, hp:500 } }
+    }
+  },
+  assassin: {
+    cls:'assassin', name:'影煞', full:'影煞·噬魂', color:'#ffe9a8', price:300000, reqLv:20,
+    pieces: {
+      helm:    { slotName:'面罩', stats:{ armor:150, agi:75, vit:45, hp:650 } },
+      chest:   { slotName:'影衣', stats:{ armor:230, agi:100, vit:70, hp:1000 } },
+      legs:    { slotName:'影裤', stats:{ armor:190, agi:90, vit:55, hp:850 } },
+      boots:   { slotName:'影靴', stats:{ armor:130, agi:72, vit:38, hp:550 } },
+      neck:    { slotName:'影链', stats:{ agi:95, crit:0.08, critDmg:0.20 } },
+      ring:    { slotName:'影戒', stats:{ agi:90, crit:0.06, hit:0.07 } },
+      trinket: { slotName:'影珠', stats:{ agi:100, lifesteal:0.04, critDmg:0.25 } }
+    }
+  }
+};
+
+/* 圣物套装效果门槛 */
+DATA.RELIC_SET_BONUS = {
+  b3: { attrPct: 0.06 },                                    // 四维 +6%
+  b5: { finalDmg: 0.06 },                                   // 最终伤害 +6%
+  b7: { expBonus: 0.06, dropBonus: 0.06, lifesteal: 0.06 }   // 经验/爆率/吸血 各 +6%
+};
 
 DATA.WEAPON_KINDS = {
   sword:   {label:'剑',   cls:['warrior'],  bonus:0.12, fx:'slash', names:['长剑','阔剑','骑士剑','军刀']},
@@ -2448,11 +2517,13 @@ function recalcStats(p) {
   }
 
   const baseAll = eq.all || 0;
+  const _rset0 = (typeof relicSetBonus === 'function') ? relicSetBonus(p) : { attrPct:0 };
+  const _aMul = 1 + (_rset0.attrPct || 0);        // 圣物 3 件套：四维 +6%
   const A = {
-    str: p.attrs.str + p.bonus.str + baseAll + eq.str,
-    agi: p.attrs.agi + p.bonus.agi + baseAll + eq.agi,
-    int: p.attrs.int + p.bonus.int + baseAll + eq.int,
-    vit: p.attrs.vit + p.bonus.vit + baseAll + eq.vit
+    str: (p.attrs.str + p.bonus.str + baseAll + eq.str) * _aMul,
+    agi: (p.attrs.agi + p.bonus.agi + baseAll + eq.agi) * _aMul,
+    int: (p.attrs.int + p.bonus.int + baseAll + eq.int) * _aMul,
+    vit: (p.attrs.vit + p.bonus.vit + baseAll + eq.vit) * _aMul
   };
 
   // 本命武器：武器种类与职业匹配 → 攻击加成 + 特效
@@ -2466,6 +2537,7 @@ function recalcStats(p) {
   }
 
   // 特戒效果（强化会放大）
+  const RSET = (typeof relicSetBonus === 'function') ? relicSetBonus(p) : { attrPct:0, finalDmg:0, expBonus:0, dropBonus:0, lifesteal:0 };
   const RFX = { expBonus:0, goldBonus:0, lifesteal:0, cleave:0, critDmg:0, dropBonus:0, revive:0, summon:0, gather:0 };
   for (const sk of DATA.RING_SLOTS.map(x => x.slot).concat(['ring','trinket'])) {
     const it = p.equip[sk];
@@ -2535,13 +2607,15 @@ function recalcStats(p) {
     dodge: clamp(A.agi / 3000 + eq.dodge, 0, 0.3),
     armor,
     dr: clamp(dr + bf.dr, 0, 0.85),
-    lifesteal: (eq.lifesteal || 0) + RFX.lifesteal,
+    lifesteal: (eq.lifesteal || 0) + RFX.lifesteal + (RSET.lifesteal || 0),
+    finalDmg: (RSET.finalDmg || 0),
+    relicSetCount: RSET.count,
     relicPct,
     mpRegen: (0.02 * (1 + (bonus.mpRegen || 0))),
     goldBonus: (bonus.goldBonus || 0) + RFX.goldBonus,
-    expBonus: (race.expBonus || 0) + RFX.expBonus,
+    expBonus: (race.expBonus || 0) + RFX.expBonus + (RSET.expBonus || 0),
     cleave: RFX.cleave,
-    dropBonus: RFX.dropBonus,
+    dropBonus: RFX.dropBonus + (RSET.dropBonus || 0),
     revive: RFX.revive,
     summonRing: RFX.summon,
     gatherRing: RFX.gather,
@@ -3093,6 +3167,30 @@ function claimFirstKillRing(p, bossKey) {
   if (!ok) { p.ringClaimed[bossKey] = false; return { ok:false, msg:'背包已满' }; }
   recalcStats(p);
   return { ok:true, ring };
+}
+
+/* ---------------- 圣物套装 ---------------- */
+function relicSetCount(p) {
+  let n = 0, cls = null;
+  for (const sl of ['helm','chest','legs','boots','neck','ring','trinket']) {
+    const it = p.equip[sl];
+    if (it && it.relicSet) { n++; cls = it.relicSet; }
+  }
+  return { n, cls };
+}
+function relicSetBonus(p) {
+  const { n, cls } = relicSetCount(p);
+  const B = DATA.RELIC_SET_BONUS;
+  const out = { count:n, cls, attrPct:0, finalDmg:0, expBonus:0, dropBonus:0, lifesteal:0,
+                name: cls && DATA.RELIC_SETS[cls] ? DATA.RELIC_SETS[cls].full : null };
+  if (n >= 3) out.attrPct += B.b3.attrPct;
+  if (n >= 5) out.finalDmg += B.b5.finalDmg;
+  if (n >= 7) {
+    out.expBonus += B.b7.expBonus;
+    out.dropBonus += B.b7.dropBonus;
+    out.lifesteal += B.b7.lifesteal;
+  }
+  return out;
 }
 
 /* ---------------- 职业套装 ---------------- */
@@ -3947,6 +4045,9 @@ function damageMonster(m, amount, type, isDot) {
     p._forceCrit = false;
     if (crit) dmg *= p.stats.critDmg;
   }
+  // 圣物套装 5 件套：最终伤害 +6%
+  if (!isDot && p.stats.finalDmg > 0) dmg *= (1 + p.stats.finalDmg);
+
   // 圣物武器：命中额外削掉目标 5% 最大生命
   if (!isDot && p.stats.relicPct > 0 && m.hpMax > 0) {
     dmg += Math.max(1, Math.round(m.hpMax * p.stats.relicPct));
@@ -6483,6 +6584,7 @@ function interactNPC(target) {
 
 function relicSideHtml(key) {
   const p = G.player;
+  if (key && key.indexOf('set_') === 0) return relicPieceSideHtml(key);
   if (!key) {
     return `<div class="m-side-hint">
       <div class="msh-ic">🛒</div>
@@ -6523,38 +6625,86 @@ function relicSideHtml(key) {
 function merchantHtml() {
   const p = G.player;
   const sel = G._relicSel;
-  const COLS = 4, TOTAL = 24;
+  const SRC = DATA.RELIC_SETS || {};
+  const CLS_ORDER = ['warrior', 'mage', 'archer', 'assassin'];
+  const PIECES = ['helm','chest','legs','boots','neck','ring','trinket'];
 
   let cells = [];
+  // 第 1 行：药水
   DATA.POTIONS.forEach(po => {
     const ok = p.gold >= po.price;
     const pi = POTION_IDX[po.key] !== undefined ? POTION_IDX[po.key] : 18;
     cells.push(`<div class="m-cell potion" data-buy-potion="${po.key}" style="${ok ? '' : 'opacity:.5'}">
-      <span class="ic-sprite" style="width:34px;height:34px;background-size:${34 * EQUIP_COUNT}px 34px;background-position:${-pi * 34}px 0"></span>
+      <span class="ic-sprite" style="width:32px;height:32px;background-size:${32 * EQUIP_COUNT}px 32px;background-position:${-pi * 32}px 0"></span>
       <div class="m-nm" style="color:${po.color}">${po.name}</div>
-      <div class="m-sub">${po.hp ? '生命 +' + po.hp : '法力 +' + po.mp}</div>
       <div class="m-price">${fmt(po.price)} 金</div></div>`);
   });
-  while (cells.length < COLS) cells.push('<div class="m-cell empty">—</div>');
 
-  (DATA.RELIC_WEAPONS || []).forEach(w => {
-    const okLv = p.level >= w.reqLv, okGold = p.gold >= w.price;
-    const own = (p.bag || []).some(x => x.relicKey === w.key) ||
-                (p.equip.weapon && p.equip.weapon.relicKey === w.key);
-    cells.push(`<div class="m-cell relic${sel === w.key ? ' sel' : ''}" data-relic="${w.key}">
-      ${iconTag('weapon', 38, w.wtype, w.key)}
-      <div class="m-nm relic-nm">${w.name.replace('圣物·', '')}</div>
-      <div class="m-sub">${DATA.CLASSES[w.cls].name}${own ? ' · 已有' : ''}</div>
-      <div class="m-price ${okLv && okGold ? 'ok' : 'no'}">${fmt(w.price)} 金</div></div>`);
+  // 第 2 行：4 把圣物武器（按职业列）
+  CLS_ORDER.forEach(cl => { cells.push(relicWeaponCell(cl, sel)); });
+
+  // 第 3~9 行：7 件圣物套装，竖着按职业排列
+  PIECES.forEach((sl, idx) => {
+    CLS_ORDER.forEach(cl => { cells.push(relicPieceCell(cl, sl, sel)); });
   });
-  while (cells.length < TOTAL) cells.push('<div class="m-cell empty">—</div>');
 
   return `<div class="m-head"><span>商人 · 赵帅帅</span><b>金币 ${fmt(p.gold)}</b></div>
+    <div class="m-legend">
+      ${CLS_ORDER.map(cl => `<span style="color:${DATA.CLASSES[cl].color}">${DATA.CLASSES[cl].name} · ${SRC[cl].full}</span>`).join('')}
+    </div>
     <div class="m-layout">
-      <div class="m-grid">${cells.join('')}</div>
+      <div class="m-grid m-grid-4x9">${cells.join('')}</div>
       <div class="m-side" id="mSide">${relicSideHtml(sel)}</div>
     </div>`;
 }
+
+/* 圣物武器格 */
+function relicWeaponCell(cl, sel) {
+  const p = G.player;
+  const w = (DATA.RELIC_WEAPONS || []).find(x => x.cls === cl);
+  if (!w) return '<div class="m-cell empty">—</div>';
+  const okGold = p.gold >= w.price, okLv = p.level >= w.reqLv;
+  const own = (p.bag || []).some(x => x.relicKey === w.key) ||
+              (p.equip.weapon && p.equip.weapon.relicKey === w.key);
+  return `<div class="m-cell relic${sel === w.key ? ' sel' : ''}" data-relic="${w.key}">
+    ${iconTag('weapon', 34, w.wtype, w.key)}
+    <div class="m-nm relic-nm">${w.name.replace('圣物·', '')}</div>
+    <div class="m-price ${okLv && okGold ? 'ok' : 'no'}">${fmt(w.price)}</div></div>`;
+}
+
+/* 圣物套装件格 */
+function relicPieceCell(cl, sl, sel) {
+  const p = G.player;
+  const S = (DATA.RELIC_SETS || {})[cl];
+  if (!S || !S.pieces[sl]) return '<div class="m-cell empty">—</div>';
+  const piece = S.pieces[sl];
+  const key = 'set_' + cl + '_' + sl;
+  const item = relicPieceItem(cl, sl);
+  const name = item.name;
+  const okGold = p.gold >= S.price, okLv = p.level >= S.reqLv;
+  const own = (p.bag || []).some(x => x.relicPieceKey === key) ||
+              ['helm','chest','legs','boots','neck','ring','trinket'].some(s2 => p.equip[s2] && p.equip[s2].relicPieceKey === key);
+  return `<div class="m-cell relic${sel === key ? ' sel' : ''}" data-relic="${key}">
+    ${iconTag(sl, 30)}
+    <div class="m-nm relic-nm">${piece.slotName}</div>
+    <div class="m-price ${okLv && okGold ? 'ok' : 'no'}">${fmt(S.price)}</div></div>`;
+}
+
+/* 构造一件圣物套装装备（不入背包） */
+function relicPieceItem(cl, sl) {
+  const S = DATA.RELIC_SETS[cl];
+  const piece = S.pieces[sl];
+  return {
+    id: 'rp_' + cl + '_' + sl,
+    slot: sl, type: 'equip', quality: 'relic', qKey: 'relic',
+    name: '圣物·' + DATA.CLASSES[cl].name + '·' + S.name + '·' + piece.slotName,
+    color: S.color, ilvl: S.reqLv, reqLv: S.reqLv,
+    relicSet: cl, relicPieceKey: 'set_' + cl + '_' + sl,
+    setKey: null,
+    stats: Object.assign({}, piece.stats), enh: 0, locked: true
+  };
+}
+
 
 /* ---------------- 兑换员 / 铁匠 / 设置 ---------------- */
 function exchangeHtml() {
@@ -6653,6 +6803,66 @@ function warehouseHtml() {
   html += '</div>';
   html += '<div style="font-size:11px;color:#8f8570;margin-top:10px">左键点物品 → 详情页里选「移到背包」</div>';
   return html;
+}
+
+/* 圣物套装件的右侧详情 */
+function relicPieceSideHtml(key) {
+  const p = G.player;
+  const parts = key.split('_');          // set_cl_slot
+  const cl = parts[1], sl = parts[2];
+  const S = (DATA.RELIC_SETS || {})[cl];
+  if (!S) return relicSideHtml(null);
+  const it = relicPieceItem(cl, sl);
+  const piece = S.pieces[sl];
+  const okLv = p.level >= S.reqLv, okGold = p.gold >= S.price;
+  const own = (p.bag || []).some(x => x.relicPieceKey === key) ||
+              ['helm','chest','legs','boots','neck','ring','trinket'].some(s2 => p.equip[s2] && p.equip[s2].relicPieceKey === key);
+  const pct = ['crit','critDmg','lifesteal','hit','dodge','as'];
+  const lines = Object.keys(piece.stats).map(k => {
+    const v = piece.stats[k];
+    return `<div class="rl-stat"><span>${AFFIX_NAMES[k] || k}</span><b>+${pct.includes(k) ? (v*100).toFixed(1)+'%' : Math.round(v)}</b></div>`;
+  }).join('');
+
+  return `<div class="rl-box side">
+    <div class="rl-title" style="color:${S.color}">${it.name}</div>
+    <div class="rl-meta">圣物套装 · ${DATA.CLASSES[cl].name} · ${S.full} · 需要 Lv.${S.reqLv}</div>
+    <div class="rl-stats">${lines}</div>
+    <div class="rl-sets">
+      <div class="${'rl-set on'}">3 件：四维 +6%</div>
+      <div class="${'rl-set on'}">5 件：最终伤害 +6%</div>
+      <div class="${'rl-set on'}">7 件：经验/爆率/吸血 各 +6%</div>
+    </div>
+    <div class="rl-actions">
+      <button data-relic-cancel>取消</button>
+      <button data-buy-relic-piece="${cl}|${sl}" ${(okLv && okGold && !own) ? '' : 'disabled'}>
+        ${own ? '已拥有' : (okLv ? (okGold ? '兑换 ' + fmt(S.price) + ' 金' : '金币不足') : '等级不足 Lv.' + S.reqLv)}
+      </button>
+    </div>
+    <div class="msh-gold">当前金币 <b>${fmt(p.gold)}</b></div>
+  </div>`;
+}
+
+/* 购买圣物套装件 */
+function buyRelicPiece(cl, sl) {
+  const p = G.player;
+  const S = DATA.RELIC_SETS[cl];
+  if (!S || !S.pieces[sl]) return;
+  if (p.level < S.reqLv) { toast(`等级不足：需要 Lv.${S.reqLv}`); return; }
+  if (p.gold < S.price) { toast('金币不足'); return; }
+  const it = relicPieceItem(cl, sl);
+  if ((p.bag || []).some(x => x.relicPieceKey === it.relicPieceKey) ||
+      ['helm','chest','legs','boots','neck','ring','trinket'].some(s2 => p.equip[s2] && p.equip[s2].relicPieceKey === it.relicPieceKey)) {
+    toast('这件圣物你已经拥有了'); return;
+  }
+  p.gold -= S.price;
+  it.id = 'rp' + Math.random().toString(36).slice(2, 8);
+  if (!addToBag(p, it)) { p.gold += S.price; toast('背包已满'); return; }
+  if (typeof Sfx !== 'undefined') { Sfx.play('lvlup'); }
+  toast(`兑换成功：${it.name}`);
+  logMsg(`🎖 获得圣物 ${it.name}`, 'level');
+  G._relicSel = null;
+  saveGame();
+  openModal('merchant', '商人 · 赵帅帅', merchantHtml());
 }
 
 /* ---------------- 装备详情页 ---------------- */
@@ -7794,6 +8004,12 @@ function bindModal() {
     sideEl.addEventListener('click', ev => {
       const buy = ev.target.closest('[data-buy-relic]');
       if (buy) { buyRelic(buy.dataset.buyRelic); return; }
+      const buyP = ev.target.closest('[data-buy-relic-piece]');
+      if (buyP) {
+        const [c0, s0] = buyP.dataset.buyRelicPiece.split('|');
+        buyRelicPiece(c0, s0);
+        return;
+      }
       if (ev.target.closest('[data-relic-cancel]')) {
         G._relicSel = null;
         openModal('merchant', '商人 · 赵帅帅', merchantHtml());

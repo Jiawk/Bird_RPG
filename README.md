@@ -2057,3 +2057,40 @@ python3 build.py     # 重新打包成单文件 dist/兽人永不为奴.html
 - 去掉「公 告」小标题条，只保留 📢 图标 + 正文
 - 内容超长时板内滚动
 - **小屏（≤760px）**：回到左上角 `top:196px; left:10px`，宽度 132px，避免与右侧按钮重叠
+
+### v138 · 修复排行榜无数据（window.G 陷阱）
+**现象**：排行榜永远显示「暂无数据」，但云存档本身正常。
+
+**根因**：游戏里 `G` 是用 `const` 声明的：
+
+```js
+const G = { ... };          // js/core.js
+```
+
+`const` 在经典脚本顶层创建的是**词法全局绑定**，**不会成为 `window` 的属性**。
+而云存档桥里写的是：
+
+```js
+if (window.G && G.player && ...)   // window.G 永远是 undefined
+```
+
+→ `meta` 永远为 null → `PUT /api/save` 从不带战力 → `leaderboard` 表永远空。
+
+**同一个 bug 还影响**：服务端邮件拉取（`if (!window.G ...) return;`）
+→ 每晚 20 点奖励的邮件也拉不下来。
+
+**修复**：改用 `typeof` 安全访问
+
+```js
+window.__game = function () {
+  try { return (typeof G !== 'undefined' && G) ? G : null; } catch (e) { return null; }
+};
+```
+
+**验证**（Node 模拟浏览器执行 game.html 全部 14 个脚本块）：
+```
+meta: {"power":95,"cls":"warrior","weapon":"精铁阔剑","charName":"","level":48}  ✅
+PUT /api/save 带 meta  ✅
+上报 12345 → 榜单立刻出现 ✅
+再报 22222 → 立刻刷新 ✅
+```

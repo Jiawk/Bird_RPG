@@ -1013,133 +1013,79 @@ function interactNPC(target) {
   }
 }
 
+function relicSideHtml(key) {
+  const p = G.player;
+  if (!key) {
+    return `<div class="m-side-hint">
+      <div class="msh-ic">🛒</div>
+      <div>鼠标移到左侧圣物上可查看属性<br>点一下在右侧出现兑换按钮</div>
+      <div class="msh-gold">当前金币 <b>${fmt(p.gold)}</b></div>
+    </div>`;
+  }
+  const w = (DATA.RELIC_WEAPONS || []).find(x => x.key === key);
+  if (!w) return relicSideHtml(null);
+  const okLv = p.level >= w.reqLv, okGold = p.gold >= w.price;
+  const own = (p.bag || []).some(x => x.relicKey === key) ||
+              (p.equip.weapon && p.equip.weapon.relicKey === key);
+  const pct = ['crit','critDmg','lifesteal','hit','dodge'];
+  const lines = Object.keys(w.stats).map(k => {
+    const v = w.stats[k];
+    return `<div class="rl-stat"><span>${AFFIX_NAMES[k] || k}</span>`
+      + `<b>+${pct.includes(k) ? (v * 100).toFixed(1) + '%' : Math.round(v)}</b></div>`;
+  }).join('');
+
+  return `<div class="rl-box side">
+    <div class="rl-title" style="color:${w.color}">${w.name}</div>
+    <div class="rl-meta">圣物 · ${DATA.CLASSES[w.cls].name}专用 · 需要 Lv.${w.reqLv}</div>
+    <div class="rl-stats">${lines}
+      <div class="rl-stat"><span>圣物特效</span><b class="rlc">命中削 5% 最大生命</b></div>
+      <div class="rl-stat"><span>吸血</span><b class="rlc">+5.0%</b></div>
+    </div>
+    <div class="rl-tip">${w.desc}</div>
+    <div class="rl-actions">
+      <button data-relic-cancel>取消</button>
+      <button data-buy-relic="${w.key}" ${(okLv && okGold && !own) ? '' : 'disabled'}>
+        ${own ? '已拥有' : (okLv ? (okGold ? '兑换 ' + fmt(w.price) + ' 金' : '金币不足') : '等级不足 Lv.' + w.reqLv)}
+      </button>
+    </div>
+    <div class="msh-gold">当前金币 <b>${fmt(p.gold)}</b></div>
+  </div>`;
+}
+
 function merchantHtml() {
   const p = G.player;
-  const GOLD = fmt(p.gold);
   const sel = G._relicSel;
-  const COLS = 4, ROWS = 6, TOTAL = COLS * ROWS;
+  const COLS = 4, TOTAL = 24;
 
   let cells = [];
-  // 第一排：药水（4 格）
   DATA.POTIONS.forEach(po => {
     const ok = p.gold >= po.price;
     const pi = POTION_IDX[po.key] !== undefined ? POTION_IDX[po.key] : 18;
-    cells.push(`<div class="m-cell potion" data-buy-potion="${po.key}" style="${ok?'':'opacity:.5'}">
-      <span class="ic-sprite" style="width:34px;height:34px;background-size:${34*EQUIP_COUNT}px 34px;background-position:${-pi*34}px 0"></span>
+    cells.push(`<div class="m-cell potion" data-buy-potion="${po.key}" style="${ok ? '' : 'opacity:.5'}">
+      <span class="ic-sprite" style="width:34px;height:34px;background-size:${34 * EQUIP_COUNT}px 34px;background-position:${-pi * 34}px 0"></span>
       <div class="m-nm" style="color:${po.color}">${po.name}</div>
       <div class="m-sub">${po.hp ? '生命 +' + po.hp : '法力 +' + po.mp}</div>
       <div class="m-price">${fmt(po.price)} 金</div></div>`);
   });
   while (cells.length < COLS) cells.push('<div class="m-cell empty">—</div>');
 
-  // 第 2 排起：圣物武器（每职业一把）
-  const relics = DATA.RELIC_WEAPONS || [];
-  relics.forEach(w => {
-    const okLv = p.level >= w.reqLv;
-    const okGold = p.gold >= w.price;
-    const can = okLv && okGold;
+  (DATA.RELIC_WEAPONS || []).forEach(w => {
+    const okLv = p.level >= w.reqLv, okGold = p.gold >= w.price;
     const own = (p.bag || []).some(x => x.relicKey === w.key) ||
                 (p.equip.weapon && p.equip.weapon.relicKey === w.key);
     cells.push(`<div class="m-cell relic${sel === w.key ? ' sel' : ''}" data-relic="${w.key}">
       ${iconTag('weapon', 38, w.wtype, w.key)}
-      <div class="m-nm relic-nm">${w.name.replace('圣物·','')}</div>
-      <div class="m-sub">${DATA.CLASSES[w.cls].name}</div>
-      <div class="m-price ${can ? 'ok' : 'no'}">${fmt(w.price)} 金</div></div>`);
+      <div class="m-nm relic-nm">${w.name.replace('圣物·', '')}</div>
+      <div class="m-sub">${DATA.CLASSES[w.cls].name}${own ? ' · 已有' : ''}</div>
+      <div class="m-price ${okLv && okGold ? 'ok' : 'no'}">${fmt(w.price)} 金</div></div>`);
   });
   while (cells.length < TOTAL) cells.push('<div class="m-cell empty">—</div>');
 
-  let html = `<div class="m-head"><span>商人 · 赵帅帅</span><b>金币 ${GOLD}</b></div>`;
-  html += `<div class="m-grid">${cells.join('')}</div>`;
-
-  // 选中圣物 → 显示详情 + 兑换按钮
-  if (sel) {
-    const w = (DATA.RELIC_WEAPONS || []).find(x => x.key === sel);
-    if (w) {
-      const okLv = p.level >= w.reqLv, okGold = p.gold >= w.price;
-      const lines = Object.keys(w.stats).map(k => {
-        const v = w.stats[k];
-        const pct = ['crit','critDmg','lifesteal','hit','dodge'].includes(k);
-        return `<div class="rl-stat"><span>${AFFIX_NAMES[k] || k}</span><b>+${pct ? (v*100).toFixed(1)+'%' : Math.round(v)}</b></div>`;
-      }).join('');
-      html += `<div class="rl-box">
-        <div class="rl-title" style="color:${w.color}">${w.name}</div>
-        <div class="rl-meta">圣物 · ${DATA.CLASSES[w.cls].name}专用 · 需要 Lv.${w.reqLv}</div>
-        <div class="rl-stats">${lines}
-          <div class="rl-stat"><span>圣物特效</span><b class="rlc">命中削 5% 最大生命</b></div>
-          <div class="rl-stat"><span>吸血</span><b class="rlc">+5.0%</b></div>
-        </div>
-        <div class="rl-tip">${w.desc}</div>
-        <div class="rl-actions">
-          <button data-relic-cancel>取消</button>
-          <button data-buy-relic="${w.key}" ${okLv && okGold ? '' : 'disabled'}>
-            ${okLv ? (okGold ? `确认兑换（${fmt(w.price)} 金）` : '金币不足') : '等级不足 Lv.' + w.reqLv}
-          </button>
-        </div>
-      </div>`;
-    }
-  } else {
-    html += `<div style="margin-top:8px;font-size:11px;color:#8f8570">
-      点击圣物格子查看详情并兑换。圣物装备仅可用金币兑换，</div>
-      <div style="font-size:11px;color:#8f8570;margin-top:2px">当前金币：<b style="color:#ffd24a">${GOLD}</b></div>`;
-  }
-  return html;
-}
-
-
-function exchangeHtml() {
-  const p = G.player;
-  const mySkills = DATA.CLASSES[p.cls].skills;
-  let html = '<div class="npc-list">';
-  for (const k of mySkills) {
-    const sp = DATA.SKILLS[k], lv = p.skills[k] || 0;
-    const price = 220 + lv * 380;
-    const maxed = lv >= 5;
-    html += `<div class="npc-row"><div><div class="nr-name">${sp.name}
-      <span style="font-size:11px;color:#8f8570">${lv?'Lv.'+lv:'未学习'}</span></div>
-      <div class="nr-info">${sp.type==='active'?'主动':'被动'}　${maxed?'已满级':price+' 金'}</div></div>
-      <button data-buy-skill="${k}" ${maxed||p.gold<price?'disabled':''}>${maxed?'满级':'购买'}</button></div>`;
-  }
-  return html + `</div><div style="margin-top:10px;font-size:11px;color:#8f8570">金币：${fmt(p.gold)}</div>`;
-}
-
-function smithHtml() {
-  const p = G.player;
-  const enh = `<div class="npc-row" style="margin-bottom:10px"><div>
-    <div class="nr-name">装备强化</div>
-    <div class="nr-info">消耗金币 + 强化石提升装备，最高 +15</div></div>
-    <button data-act-enhance style="border-color:#d4af37;color:#ffd24a">打开</button></div>`;
-  const items = p.bag.filter(it => it.type !== 'potion');
-  if (!items.length) return enh + '<div style="color:#8f8570">背包里没有可出售的装备</div>';
-  let html = enh + '<div class="npc-list">';
-  items.forEach(it => {
-    const q = DATA.QUALITY.find(x => x.key === (it.qKey || it.quality))
-              || { name:'普通', color:'#c8c8c8', key:'common' };
-    const price = Math.round((20 + it.ilvl * 8) * Math.pow(2.2, DATA.QUALITY.indexOf(q)));
-    html += `<div class="npc-row"><div><div class="nr-name" style="color:${it.color}">${it.name}</div>
-      <div class="nr-info">物品等级 ${it.ilvl}　售价 ${price} 金</div></div>
-      <button data-sell="${it.id}">出售</button></div>`;
-  });
-  return html + '</div>';
-}
-
-function settingsHtml() {
-  const n = (G.chars || []).length;
-  return `<div class="npc-list">
-    <div class="npc-row"><div><div class="nr-name" style="color:#ffd24a">选择角色</div>
-      <div class="nr-info">当前存档已有 ${n} / ${MAX_CHARS} 个角色</div></div>
-      <button data-act-pick-char style="border-color:#d4af37;color:#ffd24a">打开</button></div>
-    <div class="npc-row"><div><div class="nr-name">创建角色</div>
-      <div class="nr-info">${n >= MAX_CHARS ? '角色已满，需先删除一个' : '再建一个新角色，进度互相独立'}</div></div>
-      <button data-act-new-char ${n >= MAX_CHARS ? 'disabled' : ''}>新建</button></div>
-
-    <div class="npc-row"><div><div class="nr-name">存档</div><div class="nr-info">手动保存</div></div>
-      <button data-act-save>保存</button></div>
-    <div class="npc-row"><div><div class="nr-name">导出存档</div><div class="nr-info">下载 json 备份</div></div>
-      <button data-act-export>导出</button></div>
-    <div class="npc-row"><div><div class="nr-name" style="color:#ff6b5a">重新开局</div>
-      <div class="nr-info">删除角色，不可恢复</div></div>
-      <button data-act-reset style="border-color:#6b2b2b;color:#ff8a7a">重开</button></div>
-  </div>`;
+  return `<div class="m-head"><span>商人 · 赵帅帅</span><b>金币 ${fmt(p.gold)}</b></div>
+    <div class="m-layout">
+      <div class="m-grid">${cells.join('')}</div>
+      <div class="m-side" id="mSide">${relicSideHtml(sel)}</div>
+    </div>`;
 }
 
 /* ---------------- 装备详情页 ---------------- */
@@ -2146,6 +2092,23 @@ function bindModal() {
     openModal('forge', '强化 · 铸造台', enhanceItemHtml(el.dataset.idtEnh));
   });
   body.querySelectorAll('[data-idt-close]').forEach(el => el.onclick = () => closeModal());
+  body.querySelectorAll('[data-relic]').forEach(el => {
+    el.onmouseenter = () => {
+      const side = document.getElementById('mSide');
+      if (side) side.innerHTML = relicSideHtml(el.dataset.relic);
+    };
+  });
+  const sideEl = document.getElementById('mSide');
+  if (sideEl) {
+    sideEl.addEventListener('click', ev => {
+      const buy = ev.target.closest('[data-buy-relic]');
+      if (buy) { buyRelic(buy.dataset.buyRelic); return; }
+      if (ev.target.closest('[data-relic-cancel]')) {
+        G._relicSel = null;
+        openModal('merchant', '商人 · 赵帅帅', merchantHtml());
+      }
+    });
+  }
   body.querySelectorAll('[data-relic]').forEach(el => el.onclick = () => {
     G._relicSel = (G._relicSel === el.dataset.relic) ? null : el.dataset.relic;
     if (typeof Sfx !== 'undefined') Sfx.play('click');
@@ -2352,9 +2315,10 @@ function showTooltip(it, x, y) {
         parts.push(`<div style="color:${set.color};font-size:11px;margin-top:2px">【${set.name}】职业套装（${n}/6）</div>`);
       }
     }
+    const _m = enhMul(it);
     for (const k in it.stats) {
-      const v = it.stats[k];
-      parts.push(`<div class="tt-stat">+${PCT_KEYS.includes(k) ? (v*100).toFixed(1)+'%' : v} ${AFFIX_NAMES[k]||k}</div>`);
+      const v = it.stats[k] * _m;
+      parts.push(`<div class="tt-stat">+${PCT_KEYS.includes(k) ? (v*100).toFixed(1)+'%' : Math.round(v)} ${AFFIX_NAMES[k]||k}</div>`);
     }
     if (it.reqLv > G.player.level) {
       parts.push(`<div class="tt-req" style="font-size:12px;font-weight:700">⛔ 等级不足：需要 Lv.${it.reqLv}（当前 Lv.${G.player.level}）</div>`);

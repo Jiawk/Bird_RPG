@@ -1266,3 +1266,21 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   .enh-rate-row b{font-size:26px}
   .ep-txt{font-size:12px}
 }
+
+/* ============ 商人：网格 + 右侧详情 ============ */
+.m-layout{display:grid;grid-template-columns:1fr 320px;gap:12px;align-items:start}
+.m-side{position:sticky;top:0}
+.m-side .rl-box{margin-top:0}
+.m-side-hint{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;padding:36px 16px;border-radius:4px;text-align:center;
+  font-size:11.5px;color:#8f8570;line-height:1.7;
+  background:linear-gradient(180deg,rgba(34,28,18,.75),rgba(10,8,4,.9));
+  border:1px dashed #4a3d28}
+.msh-ic{font-size:30px;opacity:.5}
+.msh-gold{margin-top:8px;font-size:11.5px;color:#9a907a}
+.msh-gold b{color:#ffd24a}
+@media (max-width:900px){
+  .m-layout{grid-template-columns:1fr}
+  .m-side{position:static}
+  .m-side-hint{padding:18px 12px}
+}

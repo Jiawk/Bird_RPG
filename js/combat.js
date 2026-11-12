@@ -139,6 +139,7 @@ function playerAttack() {
     if (!target) { /* 空放 */ }
   } else if (target) {
     // 近战：直接判定
+    if (p.cls === 'warrior' || p.cls === 'assassin') p.swingT = 0.26;   // 挥砍动作
     damageMonster(target, p.stats.power, 'melee');
     burst(target.x, target.y, '#ffd24a', 5, 120);
   }
@@ -218,6 +219,7 @@ function castSkillImpl(key) {
   p.cd[key] = (G.debug && G.debug.noCd) ? 1
       : sp.cd * _mods.cdMul * (1 - _cdr);                 // 层数 + 冷却缩减
   p.castAnim = 0.2;
+  if (p.cls === 'warrior' || p.cls === 'assassin') p.swingT = 0.3;   // 技能也挥刀
 
   const w = G.world;
   const ang = p.dir;

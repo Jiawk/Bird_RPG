@@ -192,6 +192,7 @@ function updatePlayer(dt) {
   if (p.attackCd > 0) p.attackCd -= dt;
   if (p.attackAnim > 0) p.attackAnim -= dt;
   if (p.castAnim > 0) p.castAnim -= dt;
+  if (p.swingT > 0) p.swingT -= dt;
 
   for (let i = p.buffs.length - 1; i >= 0; i--) {
     const b = p.buffs[i];

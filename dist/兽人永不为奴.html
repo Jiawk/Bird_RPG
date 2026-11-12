@@ -1841,6 +1841,7 @@ DATA.ENHANCE = {
 /* ---------------- 技能强化 ---------------- */
 /* 技能等级（Lv.1~5）金币升级费用：下标 = 当前等级-1，合计 100 万 */
 DATA.SKILL_LV_COST = [100000, 200000, 300000, 400000];
+DATA.SKILL_LV_KILLS = 2000;   // 靠打怪升 1 级技能所需击杀数
 
 DATA.SKILL_TIER = {
   maxTier: 5,
@@ -2983,6 +2984,28 @@ function isWorseThanEquipped(p, it) {
 }
 
 /* 一键出售劣质装备，返回卖出件数与金币 */
+/* 打怪升技能：每 2000 只怪升 1 级（可跨级，最多 Lv.5） */
+function gainSkillKill(p, amount) {
+  const cls = DATA.CLASSES[p.cls];
+  const keys = [cls.keymap.q, cls.keymap.w, cls.keymap.e, cls.keymap.r, cls.keymap.d];
+  if (!p.skillKills) p.skillKills = {};
+  const ups = [];
+  for (const k of keys) {
+    const lv = p.skills[k] || 1;
+    if (lv >= 5) continue;
+    let cur = (p.skillKills[k] || 0) + amount;
+    while (cur >= DATA.SKILL_LV_KILLS && (p.skills[k] || 1) < 5) {
+      cur -= DATA.SKILL_LV_KILLS;
+      p.skills[k] = (p.skills[k] || 1) + 1;
+      ups.push({ key: k, lv: p.skills[k] });
+    }
+    if ((p.skills[k] || 1) >= 5) cur = 0;   // 满级后不再累计
+    p.skillKills[k] = cur;
+  }
+  if (ups.length) recalcStats(p);
+  return ups;
+}
+
 /* 金币升级技能等级（Lv.1 → Lv.5） */
 function skillLvCost(lv) {
   const i = Math.max(0, (lv || 1) - 1);
@@ -2996,6 +3019,7 @@ function upgradeSkillGold(p, key) {
   if (p.gold < cost) return { ok:false, msg:`金币不足（需 ${fmt(cost)}）` };
   p.gold -= cost;
   p.skills[key] = lv + 1;
+  if (p.skillKills) p.skillKills[key] = 0;
   recalcStats(p);
   return { ok:true, lv: p.skills[key], cost };
 }
@@ -5540,6 +5564,12 @@ function onMonsterKilled(m) {
 
   // ---- 技能熟练度 ----
   gainSkillProf(p, DATA.SKILL_TIER.killProf * (m.isBoss ? 8 : (m.isElite ? 3 : 1)));
+  const _lvUp = gainSkillKill(p, m.isBoss ? 20 : (m.isElite ? 5 : 1));
+  if (_lvUp.length) {
+    const nm = _lvUp.map(x => DATA.SKILLS[x.key].name + ' Lv.' + x.lv).join('、');
+    bigAnnounce('📖 技能升级 · ' + nm, '#5fdc4a');
+    logMsg(`📖 打怪升级技能：${nm}`, 'level');
+  }
 
   // ---- 材料掉落 ----
   const rnd = Math.random();
@@ -6143,11 +6173,14 @@ function skillHtml() {
             ? `<button class="sk-btn" disabled>已满 5 层</button>`
             : `<button class="sk-btn" disabled>熟练度未满</button>`)}
       ${(function(){
-        const cost = skillLvCost(lv);
         if (lv >= 5) return `<button class="sk-btn" disabled>已满级 Lv.5</button>`;
+        const cost = skillLvCost(lv);
         const can = p.gold >= cost;
+        const kills = (p.skillKills && p.skillKills[k]) || 0;
+        const need = DATA.SKILL_LV_KILLS;
         return `<button class="sk-btn gold-up ${can ? '' : 'lack'}" data-gold-skill="${k}" ${can ? '' : 'disabled'}>
-          金币升级 Lv.${lv}→${lv+1}<br><small>${fmt(cost)} 金</small></button>`;
+          金币升级 Lv.${lv}→${lv+1}<br><small>${fmt(cost)} 金</small><br>
+          <small style="color:#8f8570">打怪 ${kills}/${need}</small></button>`;
       })()}
     </div>`;
   }

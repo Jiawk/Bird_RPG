@@ -316,6 +316,12 @@ function onMonsterKilled(m) {
 
   // ---- 技能熟练度 ----
   gainSkillProf(p, DATA.SKILL_TIER.killProf * (m.isBoss ? 8 : (m.isElite ? 3 : 1)));
+  const _lvUp = gainSkillKill(p, m.isBoss ? 20 : (m.isElite ? 5 : 1));
+  if (_lvUp.length) {
+    const nm = _lvUp.map(x => DATA.SKILLS[x.key].name + ' Lv.' + x.lv).join('、');
+    bigAnnounce('📖 技能升级 · ' + nm, '#5fdc4a');
+    logMsg(`📖 打怪升级技能：${nm}`, 'level');
+  }
 
   // ---- 材料掉落 ----
   const rnd = Math.random();
@@ -919,11 +925,14 @@ function skillHtml() {
             ? `<button class="sk-btn" disabled>已满 5 层</button>`
             : `<button class="sk-btn" disabled>熟练度未满</button>`)}
       ${(function(){
-        const cost = skillLvCost(lv);
         if (lv >= 5) return `<button class="sk-btn" disabled>已满级 Lv.5</button>`;
+        const cost = skillLvCost(lv);
         const can = p.gold >= cost;
+        const kills = (p.skillKills && p.skillKills[k]) || 0;
+        const need = DATA.SKILL_LV_KILLS;
         return `<button class="sk-btn gold-up ${can ? '' : 'lack'}" data-gold-skill="${k}" ${can ? '' : 'disabled'}>
-          金币升级 Lv.${lv}→${lv+1}<br><small>${fmt(cost)} 金</small></button>`;
+          金币升级 Lv.${lv}→${lv+1}<br><small>${fmt(cost)} 金</small><br>
+          <small style="color:#8f8570">打怪 ${kills}/${need}</small></button>`;
       })()}
     </div>`;
   }

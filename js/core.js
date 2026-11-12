@@ -283,7 +283,7 @@ function makeItem(slot, ilvl, forcedQuality, preferMagic) {
   return {
     id: 'i' + Math.random().toString(36).slice(2, 9),
     slot, qKey, qName: q.name, color: q.color,
-    name, ilvl, reqLv: Math.max(1, ilvl + q.lvl), stats, enh: 0,
+    name, ilvl, reqLv: Math.max(1, ilvl - 3), stats, enh: 0,   // 需求等级略低于物品等级，保证能穿
     ...(wtype ? { wtype } : {})
   };
 }

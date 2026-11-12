@@ -323,18 +323,41 @@ function onMonsterKilled(m) {
     floatText(m.x, m.y - 26, 'BOSS击杀凭证 +1', '#ff9a3c', 13);
   }
 
-  // ---- 材料掉落 ----
+  // ---- 材料掉落（四种打造材料每个副本都会掉）----
   const rnd = Math.random();
+  const roomId = (G.world && !G.world.isTown) ? (G.world.roomId || 0) : 0;
+  // 权重：低副本多铁/秘银，高副本多龙鳞/碎片，但四种全程都能出
+  const MAT_W = {
+    iron:    Math.max(6, 40 - roomId * 5),
+    mithril: 26,
+    scale:   Math.max(8, 14 + roomId * 5),
+    shard:   Math.max(4, 6 + roomId * 6)
+  };
+  const pickMat = () => {
+    let tot = 0; for (const k in MAT_W) tot += MAT_W[k];
+    let r = Math.random() * tot;
+    for (const k in MAT_W) { r -= MAT_W[k]; if (r <= 0) return k; }
+    return 'iron';
+  };
+  const addMat = (k, n) => {
+    p.materials[k] = (p.materials[k] || 0) + n;
+  };
+
   if (m.isBoss) {
+    // BOSS：四种材料各 1~2，外加强化石
+    for (const k of ['iron','mithril','scale','shard']) addMat(k, 1 + (Math.random() < 0.5 ? 1 : 0));
     p.materials.stone = (p.materials.stone || 0) + 2 + Math.floor(Math.random() * 3);
     if (Math.random() < 0.6) p.materials.skillT = (p.materials.skillT || 0) + 1;
     if (Math.random() < 0.25) p.materials.breakT = (p.materials.breakT || 0) + 1;
     if (Math.random() < 0.35) p.materials.protect = (p.materials.protect || 0) + 1;
   } else if (m.isElite) {
+    addMat(pickMat(), 1);
+    if (Math.random() < 0.35) addMat(pickMat(), 1);
     if (rnd < 0.45) p.materials.stone = (p.materials.stone || 0) + 1;
     if (rnd > 0.93) p.materials.skillT = (p.materials.skillT || 0) + 1;
-  } else if (rnd < 0.12) {
-    p.materials.stone = (p.materials.stone || 0) + 1;
+  } else {
+    if (rnd < 0.26) addMat(pickMat(), 1);              // 普通怪约 26% 掉 1 个打造材料
+    if (rnd < 0.12) p.materials.stone = (p.materials.stone || 0) + 1;
   }
 
   // ---- 收藏图鉴：累计 BOSS 击杀 + 记录当天击杀 ----
@@ -2299,6 +2322,8 @@ function doCraft(i) {
   const slot = pick(DATA.LOOT_SLOTS);
   const lvl = Math.max(1, p.level);   // 按当前角色等级打造
   const it = makeItem(slot, lvl, c.quality, p.stats.isMagic);
+  // 打造出的装备一定能穿：需求等级不超过当前等级
+  it.reqLv = Math.max(1, Math.min(it.reqLv || 1, p.level));
   if (!addToBag(p, it)) { p.gold += 30; }
   toast(`锻造出 ${it.name}`);
   logMsg(`⚒ 锻造：${it.name}`, 'loot');

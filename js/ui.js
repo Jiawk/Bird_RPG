@@ -977,7 +977,7 @@ function skillHtml() {
       ${lv?`<button class="sk-btn" data-equip-passive="${k}" ${eq>=0?'disabled':''}>${eq>=0?'已装备':'装备'}</button>`:''}
     </div>`;
   }
-  return html + '</div><div style="font-size:11px;color:#8f8570">技能书由怪物掉落，或在兑换员处购买</div>';
+  return html + '</div><div style="font-size:11px;color:#8f8570">技能书由怪物掉落，或在抽奖专员处抽奖获得</div>';
 }
 
 /* ---------------- 关卡 / 难度选择 ---------------- */
@@ -1062,7 +1062,7 @@ function interactNPC(target) {
   switch (n.kind) {
     case 'teleport': openTownMap(); break;
     case 'merchant': toggleModal('merchant', '商人 · 赵帅帅', merchantHtml); break;
-    case 'exchange': toggleModal('exchange', '兑换员 · 李准', exchangeHtml); break;
+    case 'exchange': toggleModal('exchange', '抽奖专员 · 李准', exchangeHtml); break;
     case 'blacksmith': toggleModal('smith', '铁匠 · 范在英', smithHtml); break;
     case 'save': saveGame() ? toast('进度已保存') : toast('保存失败'); break;
     case 'quest': toggleModal('quest', '任务官 · 黄仁勋', questHtml); break;
@@ -1199,13 +1199,81 @@ function relicPieceItem(cl, sl) {
 
 /* ---------------- 兑换员 / 铁匠 / 设置 ---------------- */
 function exchangeHtml() {
-  return `<div class="coming-soon">
-    <div class="cs-ic">⚒</div>
-    <div class="cs-title">开发中</div>
-    <div class="cs-sub">敬请期待</div>
-    <div class="cs-tip">技能升级已移至 <b>K 键 · 技能页</b></div>
+  const p = G.player;
+  const L = DATA.LOTTERY;
+  const tok = p.materials.bossToken || 0;
+  const can1 = tok >= L.cost1, can10 = tok >= L.cost10;
+
+  const cells = L.prizes.map((z, i) => `
+    <div class="lot-cell${z.id === 'relic' ? ' rare' : ''}" data-lot="${i}">
+      <div class="lc-name" style="color:${z.color}">${z.name}</div>
+      <div class="lc-prob">${(z.prob * 100).toFixed(0)}%</div>
+    </div>`).join('');
+
+  return `<div class="lot-box">
+    <div class="lot-head">
+      <span>🎰 抽奖转盘</span>
+      <span class="lot-tok">BOSS击杀凭证 <b>${fmt(tok)}</b></span>
+    </div>
+    <div class="lot-grid">${cells}</div>
+    <div class="lot-actions">
+      <button class="lot-btn one" data-lot-draw="1" ${can1 ? '' : 'disabled'}>
+        单抽<br><small>${L.cost1} 凭证</small></button>
+      <button class="lot-btn ten" data-lot-draw="10" ${can10 ? '' : 'disabled'}>
+        十连抽<br><small>${L.cost10} 凭证</small></button>
+    </div>
+    <div class="lot-result" id="lotResult">
+      <div class="lr-hint">凭证来自击杀 BOSS，每个 BOSS 掉 1 个</div>
+    </div>
   </div>`;
 }
+
+/* 抽奖：扣除凭证 → 按概率抽取 → 奖品直接发放 */
+function doLottery(times) {
+  const p = G.player;
+  const L = DATA.LOTTERY;
+  const cost = times === 10 ? L.cost10 : L.cost1;
+  if ((p.materials.bossToken || 0) < cost) {
+    toast(`BOSS击杀凭证不足（需 ${cost}，现有 ${p.materials.bossToken || 0}）`);
+    return null;
+  }
+  p.materials.bossToken -= cost;
+
+  const total = L.prizes.reduce((a, z) => a + z.prob, 0);
+  const roll = () => {
+    let r = Math.random() * total;
+    for (const z of L.prizes) { r -= z.prob; if (r <= 0) return z; }
+    return L.prizes[L.prizes.length - 1];
+  };
+
+  const got = [];
+  for (let i = 0; i < times; i++) {
+    const z = roll();
+    if (z.kind === 'mat') {
+      p.materials[z.key] = (p.materials[z.key] || 0) + z.amount;
+      got.push({ name: z.name, color: z.color, ok: true });
+    } else if (z.kind === 'relic') {
+      // 本职业 7 件套随机一件，直接进背包
+      const cls = p.cls || 'warrior';
+      const S = DATA.RELIC_SETS[cls] || DATA.RELIC_SETS.warrior;
+      const slots = Object.keys(S.pieces);
+      const sl = slots[Math.floor(Math.random() * slots.length)];
+      const it = relicPieceItem(S.cls, sl);
+      it.id = 'rp' + Math.random().toString(36).slice(2, 8);
+      if (addToBag(p, it)) {
+        got.push({ name: it.name, color: S.color, ok: true });
+        logMsg(`🎁 抽中圣物：${it.name}`, 'level');
+      } else {
+        p.materials.bossToken += L.cost1;
+        got.push({ name: '背包已满，已退还凭证', color: '#ff5a40', ok: false });
+      }
+    }
+  }
+  recalcStats(p);
+  saveGame();
+  return got;
+}
+
 
 function smithHtml() {
   const p = G.player;
@@ -2408,7 +2476,7 @@ function bindModal() {
       toast(`${DATA.SKILLS[k].name} 升级到 Lv.${r.lv}`);
     }
     saveGame();
-    openModal('exchange', '兑换员 · 李准', exchangeHtml());
+    openModal('exchange', '抽奖专员 · 李准', exchangeHtml());
   });
 
   body.querySelectorAll('[data-sell]').forEach(b => b.onclick = () => {
@@ -2611,6 +2679,30 @@ function bindModal() {
   });
   body.querySelectorAll('[data-buy-relic]').forEach(el => el.onclick = () => {
     buyRelic(el.dataset.buyRelic);
+  });
+  body.querySelectorAll('[data-lot-draw]').forEach(b => b.onclick = () => {
+    const n = +b.dataset.lotDraw;
+    const got = doLottery(n);
+    if (!got) return;
+    // 在转盘下方展示结果
+    const box = body.querySelector('#lotResult');
+    if (box) {
+      const rows = got.map(g => `<div class="lr-row" style="color:${g.color}">${g.ok ? '🎁' : '⚠'} ${g.name}</div>`).join('');
+      box.innerHTML = `<div class="lr-title">本次获得</div>${rows}`;
+      box.classList.add('got');
+    }
+    const best = got.find(g => g.name.indexOf('圣物') >= 0);
+    if (best) { bigAnnounce('🎉 抽中圣物：' + best.name, '#ffd24a'); if (typeof Sfx !== 'undefined') Sfx.play('lvlup'); }
+    else toast(`抽奖完成：${got.map(g => g.name).join('、')}`);
+    // 刷新按钮可用状态与凭证数
+    const tokEl = body.querySelector('.lot-tok b');
+    if (tokEl) tokEl.textContent = fmt(G.player.materials.bossToken || 0);
+    const L = DATA.LOTTERY, tok = G.player.materials.bossToken || 0;
+    body.querySelectorAll('[data-lot-draw]').forEach(x => {
+      const need = +x.dataset.lotDraw === 10 ? L.cost10 : L.cost1;
+      x.disabled = tok < need;
+    });
+    saveGame();
   });
   body.querySelectorAll('[data-mat-close]').forEach(b => b.onclick = () => closeModal());
   body.querySelectorAll('[data-mail-claim-all]').forEach(b => b.onclick = () => {

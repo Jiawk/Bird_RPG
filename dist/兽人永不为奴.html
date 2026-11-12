@@ -1487,6 +1487,38 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   color:#e8e0cc;border:1px solid #4a3d28;background:rgba(30,25,15,.9)}
 .md-actions button:hover{border-color:#d4af37;color:#ffd24a}
 
+/* ============ 抽奖转盘 ============ */
+.lot-box{padding:2px}
+.lot-head{display:flex;justify-content:space-between;align-items:center;
+  font-family:var(--serif);font-size:14px;color:#ffd98a;margin-bottom:10px}
+.lot-tok{font-size:12px;color:#9a907a}
+.lot-tok b{color:#ff9a3c;font-size:14px}
+.lot-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.lot-cell{aspect-ratio:1.35;border:1px solid #4a3d28;border-radius:3px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;padding:4px;text-align:center;
+  background:linear-gradient(180deg,rgba(40,33,20,.95),rgba(12,9,5,.98))}
+.lot-cell.rare{border-color:#d4af37;box-shadow:0 0 12px rgba(212,175,55,.35);
+  background:linear-gradient(180deg,rgba(70,54,18,.95),rgba(16,12,4,.98))}
+.lc-name{font-size:10.5px;line-height:1.25;font-weight:700}
+.lc-prob{font-size:10px;color:#8f8570}
+.lot-actions{display:flex;gap:10px;margin-top:12px}
+.lot-btn{flex:1;padding:10px 6px;font-size:13.5px;font-family:var(--serif);
+  border-radius:4px;cursor:pointer;color:#ffe6a8;border:1px solid #8a6d3f;
+  background:linear-gradient(180deg,rgba(90,70,24,.95),rgba(26,20,8,.98))}
+.lot-btn.ten{border-color:#d4af37;color:#fff2c4;
+  background:linear-gradient(180deg,rgba(120,92,26,.95),rgba(34,26,8,.98))}
+.lot-btn:hover:not([disabled]){box-shadow:0 0 14px rgba(255,210,74,.5)}
+.lot-btn[disabled]{opacity:.42;cursor:not-allowed}
+.lot-btn small{font-size:10.5px;color:#b9a882}
+.lot-result{margin-top:12px;padding:10px;border-radius:4px;min-height:44px;
+  background:rgba(20,16,10,.8);border:1px solid #3a3123}
+.lot-result.got{border-color:#8a6d3f;box-shadow:0 0 12px rgba(212,175,55,.18)}
+.lr-hint{font-size:11px;color:#6b6558;text-align:center}
+.lr-title{font-size:11.5px;color:#ffd98a;margin-bottom:6px;letter-spacing:.12em}
+.lr-row{font-size:12px;line-height:1.8}
+@media (max-width:560px){ .lot-grid{grid-template-columns:repeat(3,1fr)} }
+
 </style>
 <script id="orc-cfg" type="application/json">{}</script>
 </head>
@@ -2157,6 +2189,24 @@ DATA.MAIL = {
   cap: 1000,                 // 邮箱上限
   idleMinutes: 20,           // 每 20 分钟发一封
   idleReward: { gold: 10000, stone: 2, protect: 2, skillT: 2 }
+};
+
+/* 抽奖奖池：prob 为单抽概率，总和 = 1 */
+DATA.LOTTERY = {
+  cost1: 10,        // 单抽消耗 BOSS 击杀凭证
+  cost10: 100,      // 十连消耗
+  prizes: [
+    { id:'relic',  name:'圣物套装·随机一件', prob:0.01, color:'#ffd24a', kind:'relic',
+      desc:'本职业 7 件套中随机 1 件' },
+    { id:'token100', name:'BOSS击杀凭证 ×100', prob:0.05, color:'#ff9a3c', kind:'mat', key:'bossToken', amount:100 },
+    { id:'token10',  name:'BOSS击杀凭证 ×10',  prob:0.10, color:'#ff9a3c', kind:'mat', key:'bossToken', amount:10 },
+    { id:'scale10',  name:'龙鳞片 ×10',        prob:0.10, color:'#ff9a2e', kind:'mat', key:'scale',     amount:10 },
+    { id:'shard20',  name:'虚空碎片 ×20',      prob:0.10, color:'#b45cff', kind:'mat', key:'shard',     amount:20 },
+    { id:'stone10',  name:'强化石 ×10',        prob:0.25, color:'#9aa0a6', kind:'mat', key:'stone',     amount:10 },
+    { id:'protect10',name:'强化保护券 ×10',    prob:0.13, color:'#4a9eff', kind:'mat', key:'protect',   amount:10 },
+    { id:'skillT10', name:'技能强化券 ×10',    prob:0.13, color:'#3fd45a', kind:'mat', key:'skillT',    amount:10 },
+    { id:'breakT10', name:'技能突破券 ×10',    prob:0.13, color:'#b45cff', kind:'mat', key:'breakT',    amount:10 }
+  ]
 };
 
 DATA.RING_DROP_PCT = 0.5;   // BOSS 掉特戒基础概率（%）
@@ -4030,7 +4080,7 @@ function buildTown() {
   w.npcs = [
     { id: nextId(), kind: 'teleport', name: '传送员 · 岳跃冲', ...P(0.30, 0.30), r: 24, color: '#7fb3d5' },
     { id: nextId(), kind: 'merchant', name: '商人 · 赵帅帅',     ...P(0.50, 0.22), r: 24, color: '#e0c060' },
-    { id: nextId(), kind: 'exchange', name: '兑换员 · 李准',   ...P(0.70, 0.30), r: 24, color: '#b07de0' },
+    { id: nextId(), kind: 'exchange', name: '抽奖专员 · 李准',   ...P(0.70, 0.30), r: 24, color: '#b07de0' },
     { id: nextId(), kind: 'blacksmith',name:'铁匠 · 范在英',   ...P(0.38, 0.58), r: 24, color: '#d06a3a' },
     { id: nextId(), kind: 'save',     name: '存档石碑',        ...P(0.62, 0.58), r: 24, color: '#9fe6b8' },
     { id: nextId(), kind: 'quest',    name: '任务官 · 黄仁勋',    ...P(0.50, 0.42), r: 24, color: '#ff9a6b' },
@@ -6898,7 +6948,7 @@ function skillHtml() {
       ${lv?`<button class="sk-btn" data-equip-passive="${k}" ${eq>=0?'disabled':''}>${eq>=0?'已装备':'装备'}</button>`:''}
     </div>`;
   }
-  return html + '</div><div style="font-size:11px;color:#8f8570">技能书由怪物掉落，或在兑换员处购买</div>';
+  return html + '</div><div style="font-size:11px;color:#8f8570">技能书由怪物掉落，或在抽奖专员处抽奖获得</div>';
 }
 
 /* ---------------- 关卡 / 难度选择 ---------------- */
@@ -6983,7 +7033,7 @@ function interactNPC(target) {
   switch (n.kind) {
     case 'teleport': openTownMap(); break;
     case 'merchant': toggleModal('merchant', '商人 · 赵帅帅', merchantHtml); break;
-    case 'exchange': toggleModal('exchange', '兑换员 · 李准', exchangeHtml); break;
+    case 'exchange': toggleModal('exchange', '抽奖专员 · 李准', exchangeHtml); break;
     case 'blacksmith': toggleModal('smith', '铁匠 · 范在英', smithHtml); break;
     case 'save': saveGame() ? toast('进度已保存') : toast('保存失败'); break;
     case 'quest': toggleModal('quest', '任务官 · 黄仁勋', questHtml); break;
@@ -7120,13 +7170,81 @@ function relicPieceItem(cl, sl) {
 
 /* ---------------- 兑换员 / 铁匠 / 设置 ---------------- */
 function exchangeHtml() {
-  return `<div class="coming-soon">
-    <div class="cs-ic">⚒</div>
-    <div class="cs-title">开发中</div>
-    <div class="cs-sub">敬请期待</div>
-    <div class="cs-tip">技能升级已移至 <b>K 键 · 技能页</b></div>
+  const p = G.player;
+  const L = DATA.LOTTERY;
+  const tok = p.materials.bossToken || 0;
+  const can1 = tok >= L.cost1, can10 = tok >= L.cost10;
+
+  const cells = L.prizes.map((z, i) => `
+    <div class="lot-cell${z.id === 'relic' ? ' rare' : ''}" data-lot="${i}">
+      <div class="lc-name" style="color:${z.color}">${z.name}</div>
+      <div class="lc-prob">${(z.prob * 100).toFixed(0)}%</div>
+    </div>`).join('');
+
+  return `<div class="lot-box">
+    <div class="lot-head">
+      <span>🎰 抽奖转盘</span>
+      <span class="lot-tok">BOSS击杀凭证 <b>${fmt(tok)}</b></span>
+    </div>
+    <div class="lot-grid">${cells}</div>
+    <div class="lot-actions">
+      <button class="lot-btn one" data-lot-draw="1" ${can1 ? '' : 'disabled'}>
+        单抽<br><small>${L.cost1} 凭证</small></button>
+      <button class="lot-btn ten" data-lot-draw="10" ${can10 ? '' : 'disabled'}>
+        十连抽<br><small>${L.cost10} 凭证</small></button>
+    </div>
+    <div class="lot-result" id="lotResult">
+      <div class="lr-hint">凭证来自击杀 BOSS，每个 BOSS 掉 1 个</div>
+    </div>
   </div>`;
 }
+
+/* 抽奖：扣除凭证 → 按概率抽取 → 奖品直接发放 */
+function doLottery(times) {
+  const p = G.player;
+  const L = DATA.LOTTERY;
+  const cost = times === 10 ? L.cost10 : L.cost1;
+  if ((p.materials.bossToken || 0) < cost) {
+    toast(`BOSS击杀凭证不足（需 ${cost}，现有 ${p.materials.bossToken || 0}）`);
+    return null;
+  }
+  p.materials.bossToken -= cost;
+
+  const total = L.prizes.reduce((a, z) => a + z.prob, 0);
+  const roll = () => {
+    let r = Math.random() * total;
+    for (const z of L.prizes) { r -= z.prob; if (r <= 0) return z; }
+    return L.prizes[L.prizes.length - 1];
+  };
+
+  const got = [];
+  for (let i = 0; i < times; i++) {
+    const z = roll();
+    if (z.kind === 'mat') {
+      p.materials[z.key] = (p.materials[z.key] || 0) + z.amount;
+      got.push({ name: z.name, color: z.color, ok: true });
+    } else if (z.kind === 'relic') {
+      // 本职业 7 件套随机一件，直接进背包
+      const cls = p.cls || 'warrior';
+      const S = DATA.RELIC_SETS[cls] || DATA.RELIC_SETS.warrior;
+      const slots = Object.keys(S.pieces);
+      const sl = slots[Math.floor(Math.random() * slots.length)];
+      const it = relicPieceItem(S.cls, sl);
+      it.id = 'rp' + Math.random().toString(36).slice(2, 8);
+      if (addToBag(p, it)) {
+        got.push({ name: it.name, color: S.color, ok: true });
+        logMsg(`🎁 抽中圣物：${it.name}`, 'level');
+      } else {
+        p.materials.bossToken += L.cost1;
+        got.push({ name: '背包已满，已退还凭证', color: '#ff5a40', ok: false });
+      }
+    }
+  }
+  recalcStats(p);
+  saveGame();
+  return got;
+}
+
 
 function smithHtml() {
   const p = G.player;
@@ -8329,7 +8447,7 @@ function bindModal() {
       toast(`${DATA.SKILLS[k].name} 升级到 Lv.${r.lv}`);
     }
     saveGame();
-    openModal('exchange', '兑换员 · 李准', exchangeHtml());
+    openModal('exchange', '抽奖专员 · 李准', exchangeHtml());
   });
 
   body.querySelectorAll('[data-sell]').forEach(b => b.onclick = () => {
@@ -8532,6 +8650,30 @@ function bindModal() {
   });
   body.querySelectorAll('[data-buy-relic]').forEach(el => el.onclick = () => {
     buyRelic(el.dataset.buyRelic);
+  });
+  body.querySelectorAll('[data-lot-draw]').forEach(b => b.onclick = () => {
+    const n = +b.dataset.lotDraw;
+    const got = doLottery(n);
+    if (!got) return;
+    // 在转盘下方展示结果
+    const box = body.querySelector('#lotResult');
+    if (box) {
+      const rows = got.map(g => `<div class="lr-row" style="color:${g.color}">${g.ok ? '🎁' : '⚠'} ${g.name}</div>`).join('');
+      box.innerHTML = `<div class="lr-title">本次获得</div>${rows}`;
+      box.classList.add('got');
+    }
+    const best = got.find(g => g.name.indexOf('圣物') >= 0);
+    if (best) { bigAnnounce('🎉 抽中圣物：' + best.name, '#ffd24a'); if (typeof Sfx !== 'undefined') Sfx.play('lvlup'); }
+    else toast(`抽奖完成：${got.map(g => g.name).join('、')}`);
+    // 刷新按钮可用状态与凭证数
+    const tokEl = body.querySelector('.lot-tok b');
+    if (tokEl) tokEl.textContent = fmt(G.player.materials.bossToken || 0);
+    const L = DATA.LOTTERY, tok = G.player.materials.bossToken || 0;
+    body.querySelectorAll('[data-lot-draw]').forEach(x => {
+      const need = +x.dataset.lotDraw === 10 ? L.cost10 : L.cost1;
+      x.disabled = tok < need;
+    });
+    saveGame();
   });
   body.querySelectorAll('[data-mat-close]').forEach(b => b.onclick = () => closeModal());
   body.querySelectorAll('[data-mail-claim-all]').forEach(b => b.onclick = () => {

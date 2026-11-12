@@ -81,7 +81,7 @@ function buildTown() {
   w.npcs = [
     { id: nextId(), kind: 'teleport', name: '传送员 · 岳跃冲', ...P(0.30, 0.30), r: 24, color: '#7fb3d5' },
     { id: nextId(), kind: 'merchant', name: '商人 · 赵帅帅',     ...P(0.50, 0.22), r: 24, color: '#e0c060' },
-    { id: nextId(), kind: 'exchange', name: '兑换员 · 李准',   ...P(0.70, 0.30), r: 24, color: '#b07de0' },
+    { id: nextId(), kind: 'exchange', name: '抽奖专员 · 李准',   ...P(0.70, 0.30), r: 24, color: '#b07de0' },
     { id: nextId(), kind: 'blacksmith',name:'铁匠 · 范在英',   ...P(0.38, 0.58), r: 24, color: '#d06a3a' },
     { id: nextId(), kind: 'save',     name: '存档石碑',        ...P(0.62, 0.58), r: 24, color: '#9fe6b8' },
     { id: nextId(), kind: 'quest',    name: '任务官 · 黄仁勋',    ...P(0.50, 0.42), r: 24, color: '#ff9a6b' },

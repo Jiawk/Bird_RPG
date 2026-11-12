@@ -805,6 +805,23 @@ function isWorseThanEquipped(p, it) {
 }
 
 /* 一键出售劣质装备，返回卖出件数与金币 */
+/* 金币升级技能等级（Lv.1 → Lv.5） */
+function skillLvCost(lv) {
+  const i = Math.max(0, (lv || 1) - 1);
+  return DATA.SKILL_LV_COST[i] !== undefined ? DATA.SKILL_LV_COST[i] : null;
+}
+function upgradeSkillGold(p, key) {
+  const lv = p.skills[key] || 1;
+  if (lv >= 5) return { ok:false, msg:'该技能已满级 Lv.5' };
+  const cost = skillLvCost(lv);
+  if (cost === null) return { ok:false, msg:'已满级' };
+  if (p.gold < cost) return { ok:false, msg:`金币不足（需 ${fmt(cost)}）` };
+  p.gold -= cost;
+  p.skills[key] = lv + 1;
+  recalcStats(p);
+  return { ok:true, lv: p.skills[key], cost };
+}
+
 /* ---------------- 仓库（3 页 × 30 格）---------------- */
 const WH_PAGES = 3, WH_PAGE_SIZE = 30, WH_MAX = WH_PAGES * WH_PAGE_SIZE;
 

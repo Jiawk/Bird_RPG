@@ -676,10 +676,9 @@ function matCellsHtml(count) {
   let n = 0;
   for (const k in MAT_IDX) {
     const cnt = (p.materials && p.materials[k]) || 0;
-    if (!cnt) continue;
-    n++;
+    if (cnt) n++;
     const M = DATA.MATERIALS[k];
-    out += `<div class="bag-cell mat" data-mat="${k}">
+    out += `<div class="bag-cell mat${cnt ? '' : ' zero'}" data-mat="${k}">
       <span class="ic-sprite" style="width:34px;height:34px;background-size:${34*EQUIP_COUNT}px 34px;background-position:${-MAT_IDX[k]*34}px 0"></span>
       <div class="nm" style="color:${M.color}">${M.name}</div>
       <span class="stack">×${cnt}</span></div>`;
@@ -717,10 +716,8 @@ function bagHtml() {
 
   // ---- 材料区（堆叠）----
   const mc = matCellsHtml();
-  if (mc.n) {
-    html += `<div class="mat-title">材料　<span style="font-size:10px;color:#8f8570">共 ${mc.n} 种 · 可堆叠</span></div>`;
-    html += `<div class="mat-grid">${mc.html}</div>`;
-  }
+  html += `<div class="mat-title">材料　<span style="font-size:10px;color:#8f8570">已拥有 ${mc.n} 种 · 可堆叠</span></div>`;
+  html += `<div class="mat-grid">${mc.html}</div>`;
 
   html += '<div class="bag-grid">';
   for (let i = start; i < end; i++) {
@@ -921,6 +918,13 @@ function skillHtml() {
         : (pf.tier >= DATA.SKILL_TIER.maxTier
             ? `<button class="sk-btn" disabled>已满 5 层</button>`
             : `<button class="sk-btn" disabled>熟练度未满</button>`)}
+      ${(function(){
+        const cost = skillLvCost(lv);
+        if (lv >= 5) return `<button class="sk-btn" disabled>已满级 Lv.5</button>`;
+        const can = p.gold >= cost;
+        return `<button class="sk-btn gold-up ${can ? '' : 'lack'}" data-gold-skill="${k}" ${can ? '' : 'disabled'}>
+          金币升级 Lv.${lv}→${lv+1}<br><small>${fmt(cost)} 金</small></button>`;
+      })()}
     </div>`;
   }
   html += '</div><div class="skill-section"><h4>被动技能（最多 3 个）</h4>';
@@ -1111,14 +1115,14 @@ function exchangeHtml() {
   let html = '<div class="npc-list">';
   for (const k of mySkills) {
     const sp = DATA.SKILLS[k], lv = p.skills[k] || 0;
-    const price = 220 + lv * 380;
+    const price = skillLvCost(lv) || 0;
     const maxed = lv >= 5;
     html += `<div class="npc-row"><div><div class="nr-name">${sp.name}
       <span style="font-size:11px;color:#8f8570">${lv?'Lv.'+lv:'未学习'}</span></div>
       <div class="nr-info">${sp.type==='active'?'主动':'被动'}　${maxed?'已满级':price+' 金'}</div></div>
       <button data-buy-skill="${k}" ${maxed||p.gold<price?'disabled':''}>${maxed?'满级':'购买'}</button></div>`;
   }
-  return html + `</div><div style="margin-top:10px;font-size:11px;color:#8f8570">金币：${fmt(p.gold)}</div>`;
+  return html + `</div><div style="margin-top:10px;font-size:11px;color:#8f8570">金币：${fmt(p.gold)}　·　Lv.1→Lv.5 共需 100 万金币（也可在 K 键技能页升级）</div>`;
 }
 
 function smithHtml() {
@@ -2093,11 +2097,19 @@ function bindModal() {
 
   body.querySelectorAll('[data-buy-skill]').forEach(b => b.onclick = () => {
     const k = b.dataset.buySkill, p = G.player;
-    const lv = p.skills[k] || 0, price = 220 + lv * 380;
-    if (p.gold < price || lv >= 5) return;
-    p.gold -= price;
-    const r = learnSkill(p, k);
-    toast(r === 'new' ? `学会 ${DATA.SKILLS[k].name}` : `${DATA.SKILLS[k].name} 升级`);
+    const lv = p.skills[k] || 0;
+    if (lv < 1) {                       // 尚未学习 → 先学会
+      const cost = skillLvCost(1);
+      if (p.gold < cost) { toast('金币不足'); return; }
+      p.gold -= cost;
+      learnSkill(p, k);
+      toast(`学会 ${DATA.SKILLS[k].name}`);
+    } else {
+      const r = upgradeSkillGold(p, k);
+      if (!r.ok) { toast(r.msg); return; }
+      toast(`${DATA.SKILLS[k].name} 升级到 Lv.${r.lv}`);
+    }
+    saveGame();
     openModal('exchange', '兑换员 · 李准', exchangeHtml());
   });
 
@@ -2394,6 +2406,16 @@ function bindModal() {
     recalcStats(G.player);
     saveGame();
     openModal('enhance', '锻造台 · 强化', enhanceItemHtml(it.id));
+  });
+  body.querySelectorAll('[data-gold-skill]').forEach(b => b.onclick = () => {
+    const key = b.dataset.goldSkill;
+    const r = upgradeSkillGold(G.player, key);
+    if (!r.ok) { toast(r.msg); return; }
+    if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
+    toast(`${DATA.SKILLS[key].name} 升级到 Lv.${r.lv}（花费 ${fmt(r.cost)} 金）`);
+    logMsg(`💰 金币升级 ${DATA.SKILLS[key].name} → Lv.${r.lv}`, 'level');
+    saveGame();
+    openModal('skill', '技能', skillHtml());
   });
   body.querySelectorAll('[data-break-skill]').forEach(b => b.onclick = () => {
     const k = b.dataset.breakSkill;

@@ -76,7 +76,12 @@ function initInput() {
       case 't': handleCommand('tower'); break;   // 爬塔
       case 'j': handleCommand('quest'); break;   // 任务面板
       case 'x': useGatherRing(); break;          // 聚合之戒
-      case 'n': handleCommand('debug'); break;   // 调试面板
+      case 'n':                                  // 连按三次 N 才呼出调试面板
+        G._nCount = (G._nCount || 0) + 1;
+        clearTimeout(G._nTimer);
+        G._nTimer = setTimeout(() => { G._nCount = 0; }, 700);
+        if (G._nCount >= 3) { G._nCount = 0; clearTimeout(G._nTimer); handleCommand('debug'); }
+        break;
       case 'h': handleCommand('town'); break;   // H = 回城
       case 'escape':
         if (!$('modal').classList.contains('hidden')) closeModal();

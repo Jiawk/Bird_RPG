@@ -1474,9 +1474,14 @@ function debugTogglesHtml() {
       <button data-dbg-mats="1" style="border-color:#d4af37;color:#ffd24a">领取</button></div>
 
     <div class="npc-row"><div>
-      <div class="nr-name" style="color:#ff3b3b">获取特戒 ×2（每种）</div>
-      <div class="nr-info">6 种特戒各发 2 枚，用于测试特戒合成升星</div></div>
-      <button data-dbg-rings="2" style="border-color:#ff3b3b;color:#ff8a8a">发放</button></div>
+      <div class="nr-name" style="color:#ffd24a">发放金币 550k</div>
+      <div class="nr-info">直接加 550,000 金币</div></div>
+      <button data-dbg-gold="1" style="border-color:#d4af37;color:#ffd24a">领取</button></div>
+
+    <div class="npc-row"><div>
+      <div class="nr-name" style="color:#3fd45a">发放技能强化材料 ×100</div>
+      <div class="nr-info">技能强化券 ×100 + 技能突破券 ×100</div></div>
+      <button data-dbg-skillmat="1" style="border-color:#3fd45a;color:#b9ffb0">领取</button></div>
 
     <div class="npc-row"><div>
       <div class="nr-name" style="color:#ff3b3b">获取特戒 ×8（每种）</div>
@@ -2365,6 +2370,22 @@ function bindModal() {
   });
   body.querySelectorAll('[data-buy-relic]').forEach(el => el.onclick = () => {
     buyRelic(el.dataset.buyRelic);
+  });
+  body.querySelectorAll('[data-dbg-gold]').forEach(b => b.onclick = () => {
+    G.player.gold = (G.player.gold || 0) + 550000;
+    saveGame();
+    toast('已发放 550,000 金币');
+    logMsg('🛠 调试：发放 550,000 金币', 'loot');
+    openModal('debug', '调试面板 · N', debugHtml());
+  });
+  body.querySelectorAll('[data-dbg-skillmat]').forEach(b => b.onclick = () => {
+    const p = G.player;
+    p.materials.skillT = (p.materials.skillT || 0) + 100;
+    p.materials.breakT = (p.materials.breakT || 0) + 100;
+    saveGame();
+    toast('已发放：技能强化券 ×100 · 技能突破券 ×100');
+    logMsg('🛠 调试：发放技能材料 ×100', 'loot');
+    openModal('debug', '调试面板 · N', debugHtml());
   });
   body.querySelectorAll('[data-dbg-mats]').forEach(b => b.onclick = () => {
     const p = G.player;

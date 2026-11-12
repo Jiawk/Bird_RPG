@@ -127,11 +127,11 @@ DATA.QUALITY = [
   {key:'rare',     name:'精良', color:'#4a9eff', affixes:2, mult:1.80, lvl:4,  weight:1600},
   {key:'epic',     name:'史诗', color:'#b45cff', affixes:3, mult:2.40, lvl:9,  weight:520},
   {key:'legendary',name:'传说', color:'#ff9a2e', affixes:4, mult:3.20, lvl:16, weight:120},
-  {key:'mythic',   name:'神话', color:'#ff3b3b', affixes:5, mult:4.40, lvl:24, weight:16},
+  {key:'mythic',   name:'神话', color:'#ff3b3b', affixes:5, mult:4.40, lvl:24, weight:185},
   {key:'relic',    name:'圣物', color:'#ffe9a8', affixes:6, mult:5.60, lvl:34, weight:0}
 ];
 
-DATA.BOSS_WEIGHTS = {rare:3600, epic:3800, legendary:2100, mythic:500};
+DATA.BOSS_WEIGHTS = {rare:3600, epic:3800, legendary:2100, mythic:200};   // 神话 2%
 
 DATA.AFFIXES = [
   {key:'str',name:'力量',v:[2,6],scale:0.35}, {key:'agi',name:'敏捷',v:[2,6],scale:0.35},

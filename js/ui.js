@@ -326,7 +326,7 @@ function onMonsterKilled(m) {
   // ---- BOSS 掉特戒（难度越高爆率越高，仍是最低档）----
   if (m.isBoss) {
     const mul = G.diff === 'hell' ? 3 : G.diff === 'hard' ? 2 : 1;
-    if (Math.random() < 0.02 * mul) {
+    if (Math.random() < 0.005 * mul) {   // 基础 0.5%（困难×2，地狱×3）
       const keys = Object.keys(DATA.SPECIAL_RINGS);
       const k = keys[Math.floor(Math.random() * keys.length)];
       const ring = makeRing(DATA.SPECIAL_RINGS[k], k);

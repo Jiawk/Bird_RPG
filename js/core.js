@@ -713,6 +713,10 @@ function isWorseThanEquipped(p, it) {
   if (!it || it.type === 'potion') return false;
   normalizeSlot(it);
   if (it.ringKey) return false;            // 特戒永远保留
+  if (it.qKey === 'mythic') return false;  // 红色（神话）装备永远保留
+  // 本命武器（武器种类适配本职业）永远保留
+  if (it.slot === 'weapon' && it.wtype && DATA.WEAPON_KINDS[it.wtype]
+      && DATA.WEAPON_KINDS[it.wtype].cls.includes(p.cls)) return false;
   const cur = p.equip[it.slot];
   if (!cur) return false;                 // 空槽位别卖
   return equipDeltaPower(p, it) <= 0;

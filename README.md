@@ -1679,3 +1679,18 @@ python3 build.py     # 重新打包成单文件 dist/兽人永不为奴.html
    - 4 把武器词条：攻击/法强 · 主属性 · 暴伤 · 暴击 · **技能增伤 5%** · 命中
    - 吸血不再与特戒/套装重复
 3. `AFFIX_NAMES` / `PCT_KEYS` 新增「技能增伤」
+
+### v114 · 圣物武器技能增伤显示 0 + 旧存档不更新
+1. **商店详情显示「技能增伤 +0」**
+   - 原因：`relicSideHtml` / `relicPieceSideHtml` 里写死的百分比字段白名单
+     `['crit','critDmg','lifesteal','hit','dodge']` **没有 `skillDmg`**，
+     于是走了 `Math.round(0.05)` → 显示 `+0`
+   - 修复：两处白名单补上 `skillDmg` 与 `as`
+   - 现在显示 `技能增伤 +5.0%`
+2. **已购买的圣物属性没更新**
+   - 原因：装备是**购买时按当时的定义生成并写进存档**的固定副本，
+     之后我改了 `DATA.RELIC_WEAPONS` 的定义，**旧存档里的实例不会变**
+   - 修复：`migrateItemSlots` 增加圣物刷新逻辑
+     - `relicKey` 的武器：按最新定义重刷 `stats` / `relicPct` / 名称 / 武器类型（保留强化等级与星级）
+     - `relicPieceKey` 的套装件：按最新定义重刷 `stats` 与颜色
+   - 打开游戏即自动生效，不需要重新买

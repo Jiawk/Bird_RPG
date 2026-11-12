@@ -1063,7 +1063,7 @@ function relicSideHtml(key) {
   const okLv = p.level >= w.reqLv, okGold = p.gold >= w.price;
   const own = (p.bag || []).some(x => x.relicKey === key) ||
               (p.equip.weapon && p.equip.weapon.relicKey === key);
-  const pct = ['crit','critDmg','lifesteal','hit','dodge'];
+  const pct = ['crit','critDmg','lifesteal','hit','dodge','as','skillDmg'];
   const lines = Object.keys(w.stats).map(k => {
     const v = w.stats[k];
     return `<div class="rl-stat"><span>${AFFIX_NAMES[k] || k}</span>`
@@ -1344,7 +1344,7 @@ function relicPieceSideHtml(key) {
   const okLv = p.level >= S.reqLv, okGold = p.gold >= S.price;
   const own = (p.bag || []).some(x => x.relicPieceKey === key) ||
               ['helm','chest','legs','boots','neck','ring','trinket'].some(s2 => p.equip[s2] && p.equip[s2].relicPieceKey === key);
-  const pct = ['crit','critDmg','lifesteal','hit','dodge','as'];
+  const pct = ['crit','critDmg','lifesteal','hit','dodge','as','skillDmg'];
   const lines = Object.keys(piece.stats).map(k => {
     const v = piece.stats[k];
     return `<div class="rl-stat"><span>${AFFIX_NAMES[k] || k}</span><b>+${pct.includes(k) ? (v*100).toFixed(1)+'%' : Math.round(v)}</b></div>`;

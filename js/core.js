@@ -387,8 +387,32 @@ function normalizeSlot(it) {
 
 /* 迁移：把槽位已不存在的装备归位 */
 function migrateItemSlots(p) {
-  // 圣物补齐 qKey（旧存档里可能只有 quality）
-  const fixQ = x => { if (x && x.relicKey && !x.qKey) x.qKey = 'relic'; };
+  // 圣物补齐 qKey + 按最新定义刷新属性（解决旧存档属性不更新）
+  const fixQ = x => {
+    if (!x) return;
+    if (x.relicKey) {
+      x.qKey = 'relic';
+      const def = (DATA.RELIC_WEAPONS || []).find(w => w.key === x.relicKey);
+      if (def) {
+        x.stats = Object.assign({}, def.stats);   // 同步最新词条
+        x.relicPct = def.relicPct;
+        x.color = def.color;
+        x.name = x.star ? (def.name + ' ' + '★'.repeat(x.star)) : def.name;
+        x.wtype = def.wtype;
+      }
+    }
+    if (x.relicPieceKey) {
+      x.qKey = 'relic';
+      const m = /^set_(\w+)_(\w+)$/.exec(x.relicPieceKey);
+      if (m && DATA.RELIC_SETS[m[1]] && DATA.RELIC_SETS[m[1]].pieces[m[2]]) {
+        const S = DATA.RELIC_SETS[m[1]];
+        x.stats = Object.assign({}, S.pieces[m[2]].stats);
+        x.color = S.color;
+        x.relicSet = m[1];
+        x.slot = m[2];
+      }
+    }
+  };
   if (p.equip) for (const k in p.equip) fixQ(p.equip[k]);
   if (p.bag) p.bag.forEach(fixQ);
   const valid = sk => !!DATA.SLOTS[sk];

@@ -772,7 +772,7 @@ function charHtml() {
   const slotHtml = (sk, size) => {
     const it = p.equip[sk];
     const qi = it ? DATA.QUALITY.findIndex(q => q.key === it.qKey) : -1;
-    const ringCls = isRing(sk) ? (it ? ' relic-ring has' : ' relic-ring') : '';
+    const ringCls = isRing(sk) ? (it ? ' relic-ring has' : ' relic-ring empty') : '';
     return `<div class="eq-v ${it ? 'q-border-' + it.qKey : 'none'}${ringCls}" data-slot="${sk}" ${it ? `data-item="${it.id}"` : ''}>
       ${isRing(sk) && it ? '<span class="relic-star">✦</span>' : ''}
       <span class="eq-lv">${it ? it.ilvl : '—'}</span>

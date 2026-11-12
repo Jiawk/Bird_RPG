@@ -1224,6 +1224,21 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   .sr-eff{white-space:normal}
 }
 
+/* 未穿戴的特戒槽：明显置灰 */
+.relic-ring.empty{
+  border-color:#3a3328 !important;
+  background:linear-gradient(180deg,rgba(28,25,20,.92),rgba(9,8,6,.96)) !important;
+  box-shadow:inset 0 0 10px rgba(0,0,0,.75) !important;
+  animation:none !important;
+  opacity:.72;
+}
+.relic-ring.empty::after{display:none}              /* 去掉扫光 */
+.relic-ring.empty .relic-star{display:none}          /* 去掉星标 */
+.relic-ring.empty .ic-sprite{filter:grayscale(1) brightness(.55) contrast(.9);opacity:.65}
+.relic-ring.empty .eq-nm{color:#5f5a50 !important;font-weight:400 !important}
+.relic-ring.empty .eq-lv{color:#4a4640 !important}
+.relic-ring.empty:hover{border-color:#6b6558 !important;opacity:.9}
+
 </style>
 </head>
 <body>
@@ -5775,7 +5790,7 @@ function charHtml() {
   const slotHtml = (sk, size) => {
     const it = p.equip[sk];
     const qi = it ? DATA.QUALITY.findIndex(q => q.key === it.qKey) : -1;
-    const ringCls = isRing(sk) ? (it ? ' relic-ring has' : ' relic-ring') : '';
+    const ringCls = isRing(sk) ? (it ? ' relic-ring has' : ' relic-ring empty') : '';
     return `<div class="eq-v ${it ? 'q-border-' + it.qKey : 'none'}${ringCls}" data-slot="${sk}" ${it ? `data-item="${it.id}"` : ''}>
       ${isRing(sk) && it ? '<span class="relic-star">✦</span>' : ''}
       <span class="eq-lv">${it ? it.ilvl : '—'}</span>

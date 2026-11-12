@@ -53,6 +53,14 @@ function startGame() {
   enterRoom(p.room === undefined ? TOWN : p.room);
   updateHUD(1);
   autoSaveAcc = 0;
+  // 一次性福利邮件
+  try {
+    if (typeof mailEnsureWelfare === 'function') {
+      const m = mailEnsureWelfare(p);
+      if (m) setTimeout(() => toast('📮 收到版本福利邮件，去邮箱领取 1000 BOSS凭证'), 600);
+      if (typeof mailRefreshDot === 'function') mailRefreshDot();
+    }
+  } catch (e) { console.warn('welfare', e); }
 }
 
 /* ---------------- 输入 ---------------- */

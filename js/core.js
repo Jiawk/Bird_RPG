@@ -45,7 +45,7 @@ function createPlayer(raceKey, clsKey) {
     attrs: { str: 10, agi: 10, int: 10, vit: 10 },
     bonus: { str: 0, agi: 0, int: 0, vit: 0 },   // 属性书永久加成
     equip: {}, bag: [], warehouse: [], whPage: 0,
-    mails: [], mailSeq: 1, mailTimer: 0,
+    mails: [], mailSeq: 1, mailTimer: 0, welfareClaimed: false,
     skills: {}, active: [], passive: [],
     cd: {}, buffs: [], dots: [],
     hp: 0, mp: 0,

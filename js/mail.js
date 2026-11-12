@@ -6,6 +6,22 @@ function mailEnsure(p) {
   if (typeof p.mailSeq !== 'number') p.mailSeq = 1;
 }
 
+/* 一次性福利邮件：每个存档只能领一次 */
+function mailEnsureWelfare(p) {
+  mailEnsure(p);
+  if (p.welfareClaimed) return null;
+  if (p.mails.some(m => m.welfare)) return null;
+  const m = mailPush(p, {
+    title: '新版本福利 · BOSS击杀凭证 ×1000',
+    from: '运营团队',
+    body: '感谢你的支持！这是本版本的一次性福利，每个存档只能领取一次。凭证可在「抽奖专员 · 李准」处抽奖。',
+    items: [{ type:'mat', key:'bossToken', amount:1000 }]
+  });
+  m.welfare = true;
+  m.read = false;
+  return m;
+}
+
 /* 发一封邮件 */
 function mailPush(p, opt) {
   mailEnsure(p);
@@ -42,6 +58,7 @@ function mailClaimOne(p, m, silent) {
       if (addToBag(p, it.item)) n++;
     }
   });
+  if (m.welfare) p.welfareClaimed = true;
   m.claimed = true;
   m.read = true;
   if (!silent) { recalcStats(p); }

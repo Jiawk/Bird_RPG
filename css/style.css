@@ -1292,3 +1292,10 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .wh-grid{grid-template-columns:repeat(6,1fr) !important}
 @media (max-width:820px){ .wh-grid{grid-template-columns:repeat(5,1fr) !important} }
 @media (max-width:520px){ .wh-grid{grid-template-columns:repeat(4,1fr) !important} }
+
+/* 建角页：已创建的职业禁用 */
+.card.taken{opacity:.45;filter:grayscale(.75);cursor:not-allowed;position:relative}
+.card.taken:hover{transform:none;border-color:#4a3d28;box-shadow:none}
+.taken-mask{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-size:15px;letter-spacing:.2em;color:#ff8a8a;
+  background:rgba(10,8,6,.6);border-radius:3px;pointer-events:none}

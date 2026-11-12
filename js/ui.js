@@ -106,6 +106,13 @@ function showScreen(name) {
 
 /* ---------------- 建角 ---------------- */
 function buildCreateScreen() {
+  if (G.creatingNew && Array.isArray(G.chars)) {
+    const taken = G.chars.filter(Boolean).map(x => x.cls);
+    if (taken.includes(SEL.cls)) {
+      const free = Object.keys(DATA.CLASSES).find(k => !taken.includes(k));
+      if (free) SEL.cls = free;
+    }
+  }
   const rl = $('raceList'); rl.innerHTML = '';
   for (const k in DATA.RACES) {
     const r = DATA.RACES[k];
@@ -124,10 +131,13 @@ function buildCreateScreen() {
     rl.appendChild(el);
   }
   const cl = $('classList'); cl.innerHTML = '';
+  // 新建角色时，已存在的职业不可再建
+  const taken = (G.creatingNew && Array.isArray(G.chars)) ? G.chars.filter(Boolean).map(x => x.cls) : [];
   for (const k in DATA.CLASSES) {
     const c = DATA.CLASSES[k];
+    const isTaken = taken.includes(k);
     const el = document.createElement('div');
-    el.className = 'card' + (k === SEL.cls ? ' sel' : '');
+    el.className = 'card' + (k === SEL.cls ? ' sel' : '') + (isTaken ? ' taken' : '');
     const km = c.keymap;
     const ci = Object.keys(DATA.CLASSES).indexOf(k);
     el.innerHTML = `
@@ -141,7 +151,12 @@ function buildCreateScreen() {
       <div><span class="tag">主属性 ${statName(c.primary)}</span><span class="tag">${c.weapon}</span></div>
       <p style="margin-top:6px;color:#8f8570">Q ${DATA.SKILLS[km.q].name} · W ${DATA.SKILLS[km.w].name}</p>
       <p style="color:#8f8570">E ${DATA.SKILLS[km.e].name} · R ${DATA.SKILLS[km.r].name} · D ${DATA.SKILLS[km.d].name}</p>`;
-    el.onclick = () => { SEL.cls = k; buildCreateScreen(); };
+    if (isTaken) {
+      el.innerHTML = `<div class="taken-mask">已创建</div>` + el.innerHTML;
+      el.onclick = () => toast(`${c.name} 已存在，无法重复创建`);
+    } else {
+      el.onclick = () => { SEL.cls = k; buildCreateScreen(); };
+    }
     cl.appendChild(el);
   }
 }
@@ -1443,7 +1458,7 @@ function charListHtml() {
       html += `<div class="npc-row" style="opacity:.45"><div>
         <div class="nr-name" style="color:#5a5348">空位 ${i + 1}</div>
         <div class="nr-info">尚未创建角色</div></div>
-        <button disabled>空</button></div>`;
+        <button data-new-char style="border-color:#8a6d3f;color:#ffd98a">创建角色</button></div>`;
       continue;
     }
     const act = i === G.active;
@@ -2300,6 +2315,13 @@ function bindModal() {
     G.creatingNew = true;
     closeModal();
     SEL = { race: 'human', cls: 'warrior' };
+    buildCreateScreen();
+    showScreen('create');
+  });
+  body.querySelectorAll('[data-new-char]').forEach(b => b.onclick = () => {
+    G.creatingNew = true;
+    SEL = { race: 'human', cls: 'warrior' };
+    closeModal();
     buildCreateScreen();
     showScreen('create');
   });

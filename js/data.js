@@ -431,7 +431,7 @@ DATA.MAX_LEVEL = 60;
 /* 经验曲线：1~25 级沿用原版 100×lv^1.5；26 级起每级 ×2.4（25 级之后非常慢） */
 DATA.EXP_TAIL_FROM = 26;
 DATA.EXP_TAIL_MUL = 2.4;
-DATA.EXP_GEOM_MUL = 1.5;   // 30 级起每级相对上一级的倍率
+DATA.EXP_GEOM_MUL = 1.08447;   // 30 级起：每 5 级 ×1.5（等价每级 ×1.08447）
 DATA.expForLevel = (lv) => {
   if (lv < DATA.EXP_TAIL_FROM) return Math.floor(100 * Math.pow(lv, 1.5));
   if (lv < 30) {

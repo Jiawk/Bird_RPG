@@ -1251,3 +1251,18 @@ python3 build.py     # 重新打包成单文件 dist/兽人永不为奴.html
 - 发放走 `equipSpecialRing`，会自动处理「同槽已占用 → 进特戒仓库」
 - 方便测试「特戒强化」页面的合成升星
 - 实测：2 枚 0 星 → 1 星成功，剩余 1 枚时正确提示「需要 2 枚同款同星特戒」
+
+### v82 · 服务器部署包（Nginx + 登录鉴权）
+- 新增 `deploy/` 完整部署包：
+  | 文件 | 说明 |
+  |---|---|
+  | `app/server.js` | Express 后端：注册/登录/登出/me/云存档 |
+  | `public/login.html` | 登录注册页（移动端适配） |
+  | `public/game.html` | 游戏本体（登录后才可访问） |
+  | `nginx.conf` | 反向代理 + 限流 + 安全响应头 |
+  | `orc-arena.service` | systemd 沙箱单元 |
+  | `deploy.sh` | 一键部署脚本 |
+- **技术栈**：Node 22 + Express + `node:sqlite`（内置，零原生依赖）+ bcrypt(cost 12) + JWT(httpOnly Cookie)
+- **安全**：CSP / X-Frame-Options / nosniff / 限流（登录 12r·m Nginx + 20 次·10min 应用层）/ 统一错误信息防枚举 / systemd 沙箱 / UFW
+- **本地已跑通 11 项端到端测试**（注册、登录、鉴权拦截、登出、云存档读写、错误分支）
+- ⚠ 服务器 `8.136.45.66:22` 从当前环境 SSH 握手被阻断（TCP 可连、banner 可读到、SSH 客户端在标识交换阶段超时），未能实际部署

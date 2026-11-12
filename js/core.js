@@ -44,7 +44,7 @@ function createPlayer(raceKey, clsKey) {
     level: 1, exp: 0, gold: 0,
     attrs: { str: 10, agi: 10, int: 10, vit: 10 },
     bonus: { str: 0, agi: 0, int: 0, vit: 0 },   // 属性书永久加成
-    equip: {}, bag: [],
+    equip: {}, bag: [], warehouse: [], whPage: 0,
     skills: {}, active: [], passive: [],
     cd: {}, buffs: [], dots: [],
     hp: 0, mp: 0,
@@ -790,6 +790,34 @@ function isWorseThanEquipped(p, it) {
 }
 
 /* 一键出售劣质装备，返回卖出件数与金币 */
+/* ---------------- 仓库（3 页 × 30 格）---------------- */
+const WH_PAGES = 3, WH_PAGE_SIZE = 30, WH_MAX = WH_PAGES * WH_PAGE_SIZE;
+
+function whEnsure(p) {
+  if (!Array.isArray(p.warehouse)) p.warehouse = [];
+  if (typeof p.whPage !== 'number') p.whPage = 0;
+}
+
+function toWarehouse(p, item) {
+  whEnsure(p);
+  const i = p.bag.findIndex(x => x.id === item.id);
+  if (i < 0) return { ok:false, msg:'不在背包中' };
+  if (p.warehouse.length >= WH_MAX) return { ok:false, msg:`仓库已满（${WH_MAX} 格）` };
+  p.bag.splice(i, 1);
+  p.warehouse.push(item);
+  return { ok:true };
+}
+
+function toBag(p, item) {
+  whEnsure(p);
+  const i = p.warehouse.findIndex(x => x.id === item.id);
+  if (i < 0) return { ok:false, msg:'不在仓库中' };
+  if (p.bag.length >= BAG_MAX) return { ok:false, msg:'背包已满' };
+  p.warehouse.splice(i, 1);
+  p.bag.push(item);
+  return { ok:true };
+}
+
 /* 背包整理：按类型分组，组内按战力从高到低 */
 const BAG_TYPE_ORDER = ['weapon','helm','chest','legs','boots','neck','ring','trinket',
                         'ring_exp','ring_revive','ring_summon','ring_cleave','ring_drop','ring_gather'];

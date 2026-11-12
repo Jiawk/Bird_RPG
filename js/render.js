@@ -902,6 +902,35 @@ function drawNPC(n) {
       CTX.beginPath(); CTX.arc(gx, gy - 20, 52, 0, 6.283); CTX.fill();
       CTX.drawImage(IMG.stele, gx - sz / 2, gy - sz + 10, sz, sz);
       npcDrawn = true;
+    } else if (n.kind === 'warehouse') {
+      // 仓库：大木箱
+      const cy = gy - 4;
+      const glow = CTX.createRadialGradient(gx, cy - 16, 3, gx, cy - 16, 48);
+      glow.addColorStop(0, 'rgba(200,151,63,.35)');
+      glow.addColorStop(1, 'rgba(200,151,63,0)');
+      CTX.fillStyle = glow;
+      CTX.beginPath(); CTX.arc(gx, cy - 16, 48, 0, 6.283); CTX.fill();
+      // 箱体
+      CTX.fillStyle = '#6b4a24';
+      CTX.fillRect(gx - 30, cy - 34, 60, 36);
+      CTX.fillStyle = '#7d5a30';
+      CTX.fillRect(gx - 30, cy - 34, 60, 6);
+      // 箱盖
+      CTX.fillStyle = '#8a6636';
+      CTX.fillRect(gx - 32, cy - 42, 64, 12);
+      CTX.fillStyle = '#a07b44';
+      CTX.fillRect(gx - 32, cy - 42, 64, 4);
+      // 铁包边
+      CTX.fillStyle = '#c8973f';
+      CTX.fillRect(gx - 30, cy - 22, 60, 3);
+      CTX.fillRect(gx - 12, cy - 42, 5, 44);
+      CTX.fillRect(gx + 8, cy - 42, 5, 44);
+      // 锁扣
+      CTX.fillStyle = '#ffd98a';
+      CTX.fillRect(gx - 6, cy - 24, 12, 12);
+      CTX.fillStyle = '#8a6d3f';
+      CTX.fillRect(gx - 2, cy - 20, 4, 6);
+      npcDrawn = true;
     } else if (n.kind === 'craft') {
       // 锻造台：铁砧 + 火光
       const fy = gy - 6;

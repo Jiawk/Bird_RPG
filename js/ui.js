@@ -606,6 +606,7 @@ function handleCommand(act) {
     case 'town': goTown(); break;
     case 'quest': toggleModal('quest', '任务官 · 黄仁勋', questHtml); break;
     case 'craft': toggleModal('craft', '锻造台', craftHtml); break;
+    case 'warehouse': toggleModal('warehouse', '仓库 · 大木箱', warehouseHtml); break;
     case 'ringup': toggleModal('ringup', '特戒强化', ringUpHtml); break;
     case 'codexEquip': toggleModal('codexEquip', '装备图鉴', codexEquipHtml); break;
     case 'codexCollect': toggleModal('codexCollect', '收藏图鉴', codexCollectHtml); break;
@@ -1088,6 +1089,55 @@ function merchantHtml() {
     </div>`;
 }
 
+/* ---------------- 仓库 ---------------- */
+function warehouseHtml() {
+  const p = G.player;
+  whEnsure(p);
+  const page = clamp(p.whPage || 0, 0, WH_PAGES - 1);
+  const start = page * WH_PAGE_SIZE, end = start + WH_PAGE_SIZE;
+
+  let html = '<div class="warehouse-head">'
+    + `<span>仓库容量 <b>${p.warehouse.length} / ${WH_MAX}</b></span>`
+    + `<span>背包 ${p.bag.length} / ${BAG_MAX}</span></div>`;
+
+  html += '<div class="bag-pager">';
+  for (let i = 0; i < WH_PAGES; i++) {
+    html += `<button class="pg-btn ${i === page ? 'on' : ''}" data-wh-page="${i}">${i + 1}</button>`;
+  }
+  html += `<span class="pg-tip">共 ${WH_PAGES} 页 · 每页 ${WH_PAGE_SIZE} 格</span></div>`;
+
+  html += '<div class="bag-grid wh-grid">';
+  for (let i = start; i < end; i++) {
+    const it = p.warehouse[i];
+    if (!it) { html += '<div class="bag-cell empty">—</div>'; continue; }
+    if (it.ringKey) {
+      const st = it.star || 0;
+      html += `<div class="bag-cell relic-ring has" data-wh-item="${it.id}">
+        ${iconTag(it.ringSlot || 'ring_exp', 30)}
+        <div class="nm" style="color:#ff8a8a">${DATA.SPECIAL_RINGS[it.ringKey].name}${st ? ' ' + '★'.repeat(st) : ''}</div></div>`;
+    } else if (it.type === 'potion') {
+      const pi = POTION_IDX[it.key] !== undefined ? POTION_IDX[it.key] : 18;
+      html += `<div class="bag-cell potion" data-wh-item="${it.id}">
+        <span class="ic-sprite" style="width:34px;height:34px;background-size:${34 * EQUIP_COUNT}px 34px;background-position:${-pi * 34}px 0"></span>
+        <div class="nm" style="color:${it.color}">${it.name}</div>
+        <span class="stack">×${it.count || 1}</span></div>`;
+    } else if (it.type === 'book') {
+      html += `<div class="bag-cell book" data-wh-item="${it.id}">
+        <div class="ic" style="color:${it.color};font-family:var(--serif)">书</div>
+        <div class="nm" style="color:${it.color}">${it.name}</div>
+        <span class="stack">×${it.count || 1}</span></div>`;
+    } else {
+      html += `<div class="bag-cell" data-wh-item="${it.id}">
+        ${iconTag(it.slot, 30, it.wtype, it.relicKey)}
+        <div class="nm" style="color:${it.color}">${it.name}</div>
+        <span class="cp-mini">${Math.round(itemPower(it))}</span></div>`;
+    }
+  }
+  html += '</div>';
+  html += '<div style="font-size:11px;color:#8f8570;margin-top:10px">左键点物品 → 详情页里选「移到背包」</div>';
+  return html;
+}
+
 /* ---------------- 装备详情页 ---------------- */
 function itemDetailHtml(id, from) {
   const p = G.player;
@@ -1119,6 +1169,7 @@ function itemDetailHtml(id, from) {
   const equipped = !!equippedSlot;
   const locked = it.reqLv > p.level;
 
+  const inWarehouse = (p.warehouse || []).some(x => x.id === it.id);
   const isRingItem = !!it.ringKey;
   const enhBtn = isRingItem
     ? `<button data-idt-ringup="1">升星</button>`
@@ -1128,7 +1179,10 @@ function itemDetailHtml(id, from) {
     `<button class="primary" data-idt-equip="${it.id}" ${(equipped || locked) ? 'disabled' : ''}>` +
       (locked ? '需要 Lv.' + it.reqLv : '穿戴') + `</button>` +
     `<button class="danger" data-idt-unequip="${equippedSlot || it.slot}" ${equipped ? '' : 'disabled'}>卸下</button>` +
-    (equipped ? '' : `<button class="danger" data-idt-sell="${it.id}">出售</button>`);
+    (equipped ? '' : `<button class="danger" data-idt-sell="${it.id}">出售</button>`) +
+    (inWarehouse
+      ? `<button data-idt-tobag="${it.id}">移到背包</button>`
+      : `<button data-idt-towh="${it.id}">放入仓库</button>`);
 
   return `<div class="idt-wrap" style="border-color:${q.color}44">
     <div class="idt-head">
@@ -2091,6 +2145,37 @@ function bindModal() {
   body.querySelectorAll('[data-idt-enh]').forEach(el => el.onclick = () => {
     openModal('forge', '强化 · 铸造台', enhanceItemHtml(el.dataset.idtEnh));
   });
+  body.querySelectorAll('[data-idt-towh]').forEach(el => el.onclick = () => {
+    const it = findItem(el.dataset.idtTowh); if (!it) return;
+    const r = toWarehouse(G.player, it);
+    if (!r.ok) { toast(r.msg); return; }
+    toast('已放入仓库：' + it.name);
+    saveGame(); closeModal();
+  });
+  body.querySelectorAll('[data-idt-tobag]').forEach(el => el.onclick = () => {
+    const it = findItem(el.dataset.idtToBag); if (!it) return;
+    const r = toBag(G.player, it);
+    if (!r.ok) { toast(r.msg); return; }
+    toast('已移到背包：' + it.name);
+    saveGame(); closeModal();
+  });
+  body.querySelectorAll('[data-wh-item]').forEach(el => {
+    const p = G.player;
+    whEnsure(p);
+    const it = p.warehouse.find(x => x.id === el.dataset.whItem);
+    if (!it) return;
+    el.onmouseenter = e => showTooltip(it, e.clientX, e.clientY);
+    el.onmousemove = e => moveTooltip(e.clientX, e.clientY);
+    el.onmouseleave = hideTooltip;
+    el.onclick = () => {
+      hideTooltip();
+      openModal('item', it.name, itemDetailHtml(it.id, 'wh'));
+    };
+  });
+  body.querySelectorAll('[data-wh-page]').forEach(el => el.onclick = () => {
+    G.player.whPage = +el.dataset.whPage;
+    openModal('warehouse', '仓库 · 大木箱', warehouseHtml());
+  });
   body.querySelectorAll('[data-idt-close]').forEach(el => el.onclick = () => closeModal());
   body.querySelectorAll('[data-relic]').forEach(el => {
     el.onmouseenter = () => {
@@ -2268,7 +2353,9 @@ function bindModal() {
 function findItem(id) {
   const p = G.player;
   for (const s in p.equip) if (p.equip[s] && p.equip[s].id === id) return p.equip[s];
-  return p.bag.find(x => x.id === id);
+  const inBag = p.bag.find(x => x.id === id);
+  if (inBag) return inBag;
+  return (p.warehouse || []).find(x => x.id === id);   // 仓库里的也能查
 }
 
 /* ---------------- Tooltip ---------------- */

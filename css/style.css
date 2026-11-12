@@ -1284,3 +1284,11 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   .m-side{position:static}
   .m-side-hint{padding:18px 12px}
 }
+
+/* ============ 仓库 ============ */
+.warehouse-head{display:flex;justify-content:space-between;align-items:center;
+  padding:4px 2px 8px;font-size:12px;color:#9a907a}
+.warehouse-head b{color:#ffd24a}
+.wh-grid{grid-template-columns:repeat(6,1fr) !important}
+@media (max-width:820px){ .wh-grid{grid-template-columns:repeat(5,1fr) !important} }
+@media (max-width:520px){ .wh-grid{grid-template-columns:repeat(4,1fr) !important} }

@@ -313,7 +313,9 @@ DATA.MATERIALS = {
   stone:  {name:'强化石',     color:'#9aa0a6', icon:'◆'},
   protect:{name:'强化保护券', color:'#4a9eff', icon:'◇'},
   skillT: {name:'技能强化券', color:'#3fd45a', icon:'✦'},
-  breakT: {name:'技能突破券', color:'#b45cff', icon:'✧'}
+  breakT: {name:'技能突破券', color:'#b45cff', icon:'✧'},
+  bossToken:{name:'BOSS击杀凭证', color:'#ff9a3c', icon:'⬢',
+    desc:'击败 BOSS 获得。可用于兑换神秘物品（内容待定）'}
 };
 
 /* 合成配方：3 材料 + 金币 → 指定品质随机部位 */
@@ -449,6 +451,12 @@ DATA.MATS2 = {
 };
 
 /* ---------------- BOSS 首杀戒指 ---------------- */
+DATA.MAIL = {
+  cap: 1000,                 // 邮箱上限
+  idleMinutes: 20,           // 每 20 分钟发一封
+  idleReward: { gold: 10000, stone: 2, protect: 2, skillT: 2 }
+};
+
 DATA.RING_DROP_PCT = 0.5;   // BOSS 掉特戒基础概率（%）
 
 DATA.BOSS_RINGS = {

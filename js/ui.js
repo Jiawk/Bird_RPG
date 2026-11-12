@@ -20,8 +20,8 @@ const RING_IDX = {
   ring:20, ring_exp:21, ring_revive:22, ring_summon:23,
   ring_cleave:24, ring_drop:25, ring_gather:26
 };
-const MAT_IDX = { iron:27, mithril:28, scale:29, shard:30, stone:31, protect:32, skillT:33, breakT:34 };
-const EQUIP_COUNT = 35;
+const MAT_IDX = { iron:27, mithril:28, scale:29, shard:30, stone:31, protect:32, skillT:33, breakT:34, bossToken:35 };
+const EQUIP_COUNT = 36;
 const POTION_IDX  = { hp:18, mp:19 };
 
 function iconIdxOf(slot, wtype, relicKey) {
@@ -316,6 +316,12 @@ function onMonsterKilled(m) {
 
   // ---- 技能熟练度 ----
   gainSkillProf(p, DATA.SKILL_TIER.killProf * (m.isBoss ? 8 : (m.isElite ? 3 : 1)));
+
+  // ---- BOSS 击杀凭证 ----
+  if (m.isBoss) {
+    p.materials.bossToken = (p.materials.bossToken || 0) + 1;
+    floatText(m.x, m.y - 26, 'BOSS击杀凭证 +1', '#ff9a3c', 13);
+  }
 
   // ---- 材料掉落 ----
   const rnd = Math.random();
@@ -622,6 +628,7 @@ function handleCommand(act) {
     case 'quest': toggleModal('quest', '任务官 · 黄仁勋', questHtml); break;
     case 'craft': toggleModal('craft', '锻造台', craftHtml); break;
     case 'warehouse': toggleModal('warehouse', '仓库 · 大木箱', warehouseHtml); break;
+    case 'mail': toggleModal('mail', '邮箱', mailHtml); break;
     case 'ringup': toggleModal('ringup', '特戒强化', ringUpHtml); break;
     case 'codexEquip': toggleModal('codexEquip', '装备图鉴', codexEquipHtml); break;
     case 'codexCollect': toggleModal('codexCollect', '收藏图鉴', codexCollectHtml); break;
@@ -1036,6 +1043,7 @@ function interactNPC(target) {
     case 'quest': toggleModal('quest', '任务官 · 黄仁勋', questHtml); break;
     case 'craft': toggleModal('craft', '锻造台', craftHtml); break;
     case 'warehouse': toggleModal('warehouse', '仓库 · 大木箱', warehouseHtml); break;
+    case 'mail': toggleModal('mail', '邮箱', mailHtml); break;
     case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
   }
 }
@@ -1212,6 +1220,67 @@ function settingsHtml() {
       <div class="nr-info">删除角色，不可恢复</div></div>
       <button data-act-reset style="border-color:#6b2b2b;color:#ff8a7a">重开</button></div>
   </div>`;
+}
+
+/* ---------------- 邮箱 ---------------- */
+function mailHtml() {
+  const p = G.player;
+  mailEnsure(p);
+  const unclaimed = mailUnreadCount(p);
+  const readN = p.mails.filter(m => m.read).length;
+
+  let html = `<div class="mail-head">
+    <span>共 <b>${p.mails.length}</b> / ${DATA.MAIL.cap} 封</span>
+    <span>待领取 <b style="color:#ffd24a">${unclaimed}</b></span>
+    <span style="color:#8f8570">已读 ${readN}</span>
+  </div>
+  <div class="mail-actions">
+    <button data-mail-claim-all ${unclaimed ? '' : 'disabled'}>一键收取附件</button>
+    <button data-mail-del-read ${readN ? '' : 'disabled'}>一键删除已读</button>
+  </div>`;
+
+  if (!p.mails.length) {
+    html += '<div class="mail-empty">📭 暂无邮件</div>';
+    return html;
+  }
+
+  html += '<div class="mail-list">';
+  p.mails.slice(0, 200).forEach(m => {
+    const items = (m.items || []).map(it => {
+      if (it.type === 'gold') return `<span class="mi gold">金币 ×${fmt(it.amount)}</span>`;
+      if (it.type === 'mat') {
+        const M = DATA.MATERIALS[it.key] || { name: it.key, color: '#ccc' };
+        return `<span class="mi" style="color:${M.color}">${M.name} ×${it.amount}</span>`;
+      }
+      return '';
+    }).join('');
+    html += `<div class="mail-item${m.read ? '' : ' unread'}${m.claimed ? ' claimed' : ''}">
+      <div class="mi-top">
+        <span class="mi-title">${m.title}</span>
+        <span class="mi-state">${m.claimed ? '已领取' : (m.items && m.items.length ? '未领取' : '无附件')}</span>
+      </div>
+      <div class="mi-body">${m.body || ''}</div>
+      ${items ? `<div class="mi-items">${items}</div>` : ''}
+      <div class="mi-foot">
+        <button data-mail-claim="${m.id}" ${m.claimed || !m.items || !m.items.length ? 'disabled' : ''}>领取</button>
+        <button class="del" data-mail-del="${m.id}">删除</button>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  if (p.mails.length > 200) {
+    html += `<div style="text-align:center;font-size:11px;color:#8f8570;margin-top:8px">仅显示最近 200 封，更早的请先删除</div>`;
+  }
+  return html;
+}
+
+/* 刷新右上角红点 */
+function mailRefreshDot() {
+  const el = document.getElementById('mailDot');
+  if (!el) return;
+  const n = mailUnreadCount(G.player || {});
+  if (n > 0) { el.textContent = n > 99 ? '99+' : n; el.classList.remove('hidden'); }
+  else el.classList.add('hidden');
 }
 
 /* ---------------- 仓库 ---------------- */
@@ -2376,7 +2445,8 @@ function bindModal() {
       const k = el.dataset.mat;
       const M = DATA.MATERIALS[k];
       const cnt = (G.player.materials && G.player.materials[k]) || 0;
-      toast(`${M.name}：${cnt} 个（材料自动堆叠，不占背包格）`);
+      const extra = M.desc ? `\n${M.desc}` : '';
+      toast(`${M.name}：${cnt} 个${extra}`);
     };
   });
   body.querySelectorAll('[data-potion]').forEach(el => el.onclick = () => {
@@ -2485,6 +2555,33 @@ function bindModal() {
   });
   body.querySelectorAll('[data-buy-relic]').forEach(el => el.onclick = () => {
     buyRelic(el.dataset.buyRelic);
+  });
+  body.querySelectorAll('[data-mail-claim-all]').forEach(b => b.onclick = () => {
+    const r = mailClaimAll(G.player);
+    if (typeof Sfx !== 'undefined') Sfx.play('loot');
+    toast(r.mails ? `收取 ${r.mails} 封邮件，共 ${r.items} 项附件` : '没有可领取的附件');
+    saveGame(); mailRefreshDot();
+    openModal('mail', '邮箱', mailHtml());
+  });
+  body.querySelectorAll('[data-mail-del-read]').forEach(b => b.onclick = () => {
+    const n = mailDeleteRead(G.player);
+    toast(`已删除 ${n} 封已读邮件`);
+    saveGame(); mailRefreshDot();
+    openModal('mail', '邮箱', mailHtml());
+  });
+  body.querySelectorAll('[data-mail-claim]').forEach(b => b.onclick = () => {
+    const id = +b.dataset.mailClaim;
+    const m = (G.player.mails || []).find(x => x.id === id);
+    if (!m) return;
+    mailClaimOne(G.player, m);
+    toast('已领取：' + m.title);
+    saveGame(); mailRefreshDot();
+    openModal('mail', '邮箱', mailHtml());
+  });
+  body.querySelectorAll('[data-mail-del]').forEach(b => b.onclick = () => {
+    mailDelete(G.player, +b.dataset.mailDel);
+    saveGame(); mailRefreshDot();
+    openModal('mail', '邮箱', mailHtml());
   });
   body.querySelectorAll('[data-dbg-gold]').forEach(b => b.onclick = () => {
     G.player.gold = (G.player.gold || 0) + 550000;

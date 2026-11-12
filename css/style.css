@@ -1373,3 +1373,46 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .rl-sets{margin-top:8px;display:flex;flex-direction:column;gap:3px}
 .rl-set{font-size:10.5px;color:#5fdc4a;padding:2px 6px;border-radius:2px;
   background:rgba(95,220,74,.08);border-left:2px solid #5fdc4a}
+
+/* 右上角两列 */
+.topbar-right{flex-direction:row !important;align-items:flex-start !important;gap:8px !important}
+.tr-col{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.mail-btn{position:relative}
+.mail-dot{position:absolute;top:-5px;right:-5px;min-width:16px;height:16px;line-height:16px;
+  padding:0 4px;border-radius:9px;background:#ff3b3b;color:#fff;font-size:10px;
+  text-align:center;font-weight:700;box-shadow:0 0 8px rgba(255,59,59,.8)}
+@media (max-width:520px){
+  .topbar-right{gap:5px !important}
+  .tr-col{gap:3px}
+}
+
+/* ============ 邮箱 ============ */
+.mail-head{display:flex;gap:14px;font-size:12px;color:#9a907a;padding:2px 2px 10px}
+.mail-head b{color:#ffd24a}
+.mail-actions{display:flex;gap:8px;margin-bottom:10px}
+.mail-actions button{flex:1;padding:8px;font-size:12.5px;border-radius:3px;cursor:pointer;
+  color:#ffd98a;border:1px solid #8a6d3f;
+  background:linear-gradient(180deg,rgba(72,56,20,.95),rgba(20,15,6,.98))}
+.mail-actions button:hover:not([disabled]){box-shadow:0 0 10px rgba(255,210,74,.45)}
+.mail-actions button[disabled]{opacity:.4;cursor:not-allowed}
+.mail-empty{text-align:center;padding:40px;color:#6b6558;font-size:13px}
+.mail-list{display:flex;flex-direction:column;gap:8px;max-height:56vh;overflow:auto}
+.mail-item{padding:9px 11px;border-radius:4px;
+  background:linear-gradient(180deg,rgba(34,28,18,.92),rgba(10,8,4,.96));
+  border:1px solid #4a3d28}
+.mail-item.unread{border-color:#8a6d2f;box-shadow:0 0 10px rgba(212,175,55,.18)}
+.mail-item.claimed{opacity:.72}
+.mi-top{display:flex;justify-content:space-between;align-items:center}
+.mi-title{font-size:13px;color:#ffd98a;font-weight:700}
+.mail-item.unread .mi-title::before{content:"● ";color:#ffd24a}
+.mi-state{font-size:10.5px;color:#8f8570}
+.mi-body{font-size:11px;color:#9a907a;margin:4px 0}
+.mi-items{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 4px}
+.mi{font-size:11px;padding:2px 8px;border-radius:10px;background:rgba(255,255,255,.05)}
+.mi.gold{color:#ffd24a}
+.mi-foot{display:flex;gap:6px;justify-content:flex-end}
+.mi-foot button{padding:4px 12px;font-size:11px;border-radius:3px;cursor:pointer;
+  color:#e8e0cc;border:1px solid #4a3d28;background:rgba(30,25,15,.9)}
+.mi-foot button:hover:not([disabled]){border-color:#d4af37;color:#ffd24a}
+.mi-foot button[disabled]{opacity:.35;cursor:not-allowed}
+.mi-foot button.del{border-color:#6b2b3b;color:#ff8a9a}

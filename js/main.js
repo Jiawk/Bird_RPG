@@ -389,6 +389,7 @@ function loop(ts) {
     updateTimers(dt);
     updateCamera();
     perfTick(dt);
+    if (typeof mailIdleTick === 'function' && G.player) mailIdleTick(G.player, dt);
     updateHUD(dt);
     checkBossUnlock();
 

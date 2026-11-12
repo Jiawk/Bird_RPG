@@ -23,13 +23,18 @@
 
     <!-- 顶部右：资源 -->
     <div class="topbar-right">
-      <div class="res-box"><i class="ic-gold">金</i><b id="goldVal">0</b></div>
-      <div class="res-box"><i class="ic-cp">战</i><b id="cpVal">0</b></div>
-      <div class="res-box"><i class="ic-gear">装</i><b id="gearVal">未集齐</b></div>
-      <div class="res-box"><i class="ic-diff">难</i><b id="diffVal">简单</b></div>
-      <button class="codex-btn settings-btn" data-act="settings">⚙ 设置</button>
-      <button class="codex-btn" data-act="codexEquip">装备图鉴</button>
-      <button class="codex-btn" data-act="codexCollect">收藏图鉴</button>
+      <div class="tr-col">
+        <div class="res-box"><i class="ic-gold">金</i><b id="goldVal">0</b></div>
+        <div class="res-box"><i class="ic-cp">战</i><b id="cpVal">0</b></div>
+        <div class="res-box"><i class="ic-gear">装</i><b id="gearVal">未集齐</b></div>
+        <div class="res-box"><i class="ic-diff">难</i><b id="diffVal">简单</b></div>
+      </div>
+      <div class="tr-col">
+        <button class="codex-btn mail-btn" data-act="mail">📮 邮箱<span class="mail-dot hidden" id="mailDot">0</span></button>
+        <button class="codex-btn settings-btn" data-act="settings">⚙ 设置</button>
+        <button class="codex-btn" data-act="codexEquip">装备图鉴</button>
+        <button class="codex-btn" data-act="codexCollect">收藏图鉴</button>
+      </div>
     </div>
 
     <!-- BOSS 血条 -->
@@ -150,6 +155,7 @@
 <script src="js/data.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/cfg.js"></script>
+<script src="js/mail.js"></script>
 <script src="js/core.js"></script>
 <script src="js/world.js"></script>
 <script src="js/combat.js"></script>

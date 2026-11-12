@@ -1331,6 +1331,11 @@ function debugHtml() {
       <button data-dbg-toggle="fastSpawn" ${d.fastSpawn ? 'style="border-color:#5fdc4a;color:#b9ffb0"' : ''}>${d.fastSpawn ? '关闭' : '开启'}</button></div>
 
     <div class="npc-row"><div>
+      <div class="nr-name" style="color:#ffd24a">发放强化材料</div>
+      <div class="nr-info">强化石 ×100 + 强化保护券 ×100</div></div>
+      <button data-dbg-mats="1" style="border-color:#d4af37;color:#ffd24a">领取</button></div>
+
+    <div class="npc-row"><div>
       <div class="nr-name" style="color:#ff3b3b">获取特戒 ×2（每种）</div>
       <div class="nr-info">6 种特戒各发 2 枚，用于测试特戒合成升星</div></div>
       <button data-dbg-rings="2" style="border-color:#ff3b3b;color:#ff8a8a">发放</button></div>
@@ -2132,6 +2137,15 @@ function bindModal() {
   });
   body.querySelectorAll('[data-buy-relic]').forEach(el => el.onclick = () => {
     buyRelic(el.dataset.buyRelic);
+  });
+  body.querySelectorAll('[data-dbg-mats]').forEach(b => b.onclick = () => {
+    const p = G.player;
+    p.materials.stone = (p.materials.stone || 0) + 100;
+    p.materials.protect = (p.materials.protect || 0) + 100;
+    saveGame();
+    toast('已发放：强化石 ×100 · 强化保护券 ×100');
+    logMsg('🛠 调试：发放强化材料 ×100', 'loot');
+    openModal('debug', '调试面板 · N', debugHtml());
   });
   body.querySelectorAll('[data-dbg-rings]').forEach(b => b.onclick = () => {
     const n = +b.dataset.dbgRings || 1;

@@ -1433,7 +1433,7 @@ function itemDetailHtml(id, from) {
     `<button class="primary" data-idt-equip="${it.id}" ${(equipped || locked) ? 'disabled' : ''}>` +
       (locked ? '需要 Lv.' + it.reqLv : '穿戴') + `</button>` +
     `<button class="danger" data-idt-unequip="${equippedSlot || it.slot}" ${equipped ? '' : 'disabled'}>卸下</button>` +
-    (equipped ? '' : `<button class="danger" data-idt-sell="${it.id}">出售</button>`) +
+    ((equipped || it.relicKey || it.relicPieceKey) ? '' : `<button class="danger" data-idt-sell="${it.id}">出售</button>`) +
     (inWarehouse
       ? `<button data-idt-tobag="${it.id}">移到背包</button>`
       : `<button data-idt-towh="${it.id}">放入仓库</button>`);
@@ -1650,6 +1650,15 @@ function debugTogglesHtml() {
       <div class="nr-name" style="color:#ffd24a">发放强化材料</div>
       <div class="nr-info">强化石 ×100 + 强化保护券 ×100</div></div>
       <button data-dbg-mats="1" style="border-color:#d4af37;color:#ffd24a">领取</button></div>
+
+    <div class="npc-row" style="display:block">
+      <div class="nr-name" style="color:#b45cff;margin-bottom:6px">发放整套装备（4 职业 × 紫/红）</div>
+      <div class="dbg-gear-grid">
+        ${[['warrior','剑圣'],['mage','法师'],['archer','祭司'],['assassin','猎手']].map(([cl,nm]) => `
+          <button class="dbg-gear purple" data-dbg-gear="${cl}|epic">${nm}·紫</button>
+          <button class="dbg-gear red" data-dbg-gear="${cl}|mythic">${nm}·红</button>`).join('')}
+      </div>
+    </div>
 
     <div class="npc-row"><div>
       <div class="nr-name" style="color:#ffd24a">发放金币 550k</div>
@@ -2582,6 +2591,23 @@ function bindModal() {
     mailDelete(G.player, +b.dataset.mailDel);
     saveGame(); mailRefreshDot();
     openModal('mail', '邮箱', mailHtml());
+  });
+  body.querySelectorAll('[data-dbg-gear]').forEach(b => b.onclick = () => {
+    const [cl, q] = b.dataset.dbgGear.split('|');
+    const p = G.player;
+    const lv = Math.max(1, p.level);
+    let n = 0;
+    ['weapon','helm','chest','legs','boots','neck','ring','trinket'].forEach(sl => {
+      const it = makeItem(sl, lv, q, DATA.CLASSES[cl].primary === 'int');
+      it.reqLv = 1;
+      p.equip[sl] = it;
+      n++;
+    });
+    recalcStats(p);
+    saveGame();
+    toast(`已装备 ${DATA.CLASSES[cl].name} 整套 ${q === 'mythic' ? '红色' : '紫色'}装备（Lv.${lv}）`);
+    logMsg(`🛠 调试：发放 ${DATA.CLASSES[cl].name} ${q} 套装`, 'loot');
+    openModal('debug', '调试面板 · N', debugHtml());
   });
   body.querySelectorAll('[data-dbg-gold]').forEach(b => b.onclick = () => {
     G.player.gold = (G.player.gold || 0) + 550000;

@@ -874,6 +874,7 @@ function isWorseThanEquipped(p, it) {
   normalizeSlot(it);
   if (it.ringKey) return false;            // 特戒永远保留
   if (it.qKey === 'mythic') return false;  // 红色（神话）装备永远保留
+  if (it.relicKey || it.relicPieceKey) return false;   // 圣物武器/套装：禁止出售
   // 本命武器（武器种类适配本职业）永远保留
   if (it.slot === 'weapon' && it.wtype && DATA.WEAPON_KINDS[it.wtype]
       && DATA.WEAPON_KINDS[it.wtype].cls.includes(p.cls)) return false;
@@ -959,6 +960,7 @@ function sortBag(p) {
 function isLowPowerWeapon(p, it) {
   if (!it || it.slot !== 'weapon' || it.ringKey) return false;
   if (it.qKey === 'mythic') return false;                 // 红装不卖
+  if (it.relicKey || it.relicPieceKey) return false;      // 圣物不卖
   const cur = p.equip.weapon;
   if (!cur) return false;                                  // 身上没武器就留着
   return equipDeltaPower(p, it) <= 0;                      // 不比身上强 → 低战力

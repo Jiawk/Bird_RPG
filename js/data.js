@@ -181,49 +181,49 @@ DATA.RELIC_SETS = {
   warrior: {
     cls:'warrior', name:'破军', full:'破军·天罡', color:'#ffe9a8', price:300000, reqLv:20,
     pieces: {
-      helm:    { slotName:'战盔', stats:{ armor:220, str:70, vit:60, hp:900 } },
-      chest:   { slotName:'胸甲', stats:{ armor:320, str:90, vit:90, hp:1400 } },
-      legs:    { slotName:'腿铠', stats:{ armor:260, str:75, vit:70, hp:1100 } },
-      boots:   { slotName:'战靴', stats:{ armor:180, str:55, vit:50, hp:700 } },
-      neck:    { slotName:'项饰', stats:{ str:85, crit:0.06, critDmg:0.30 } },
-      ring:    { slotName:'指环', stats:{ str:80, crit:0.05, hit:0.06 } },
-      trinket: { slotName:'印记', stats:{ str:90, lifesteal:0.03, hp:600 } }
+      helm:    { slotName:'战盔', stats:{ armor:420, str:220, vit:200, hp:1600, crit:0.04 } },
+      chest:   { slotName:'胸甲', stats:{ armor:600, str:280, vit:260, hp:2200, crit:0.05 } },
+      legs:    { slotName:'腿铠', stats:{ armor:500, str:240, vit:220, hp:1800, crit:0.04 } },
+      boots:   { slotName:'战靴', stats:{ armor:380, str:190, vit:170, hp:1600, as:0.04 } },
+      neck:    { slotName:'项饰', stats:{ all:200, atk:500, hp:1600, crit:0.08, critDmg:0.40 } },
+      ring:    { slotName:'指环', stats:{ all:180, atk:450, hp:1700, crit:0.06, hit:0.06 } },
+      trinket: { slotName:'印记', stats:{ all:190, atk:480, hp:1500, lifesteal:0.03, critDmg:0.30 } }
     }
   },
   mage: {
     cls:'mage', name:'星穹', full:'星穹·霜语', color:'#ffe9a8', price:300000, reqLv:20,
     pieces: {
-      helm:    { slotName:'兜帽', stats:{ armor:160, int:80, vit:55, mp:400 } },
-      chest:   { slotName:'法袍', stats:{ armor:240, int:100, vit:80, hp:1000 } },
-      legs:    { slotName:'护腿', stats:{ armor:200, int:85, vit:65, hp:800 } },
-      boots:   { slotName:'布靴', stats:{ armor:140, int:60, vit:45, hp:500 } },
-      neck:    { slotName:'颈饰', stats:{ int:95, spell:220, crit:0.06 } },
-      ring:    { slotName:'指环', stats:{ int:90, spell:200, hit:0.06 } },
-      trinket: { slotName:'秘宝', stats:{ int:100, critDmg:0.35, mp:300 } }
+      helm:    { slotName:'兜帽', stats:{ armor:340, int:230, vit:190, hp:1500, crit:0.04 } },
+      chest:   { slotName:'法袍', stats:{ armor:500, int:290, vit:250, hp:2100, crit:0.05 } },
+      legs:    { slotName:'护腿', stats:{ armor:420, int:250, vit:210, hp:1700, crit:0.04 } },
+      boots:   { slotName:'布靴', stats:{ armor:320, int:200, vit:160, hp:1500, as:0.04 } },
+      neck:    { slotName:'颈饰', stats:{ all:200, spell:520, hp:1500, crit:0.08, critDmg:0.40 } },
+      ring:    { slotName:'指环', stats:{ all:180, spell:470, hp:1600, crit:0.06, hit:0.06 } },
+      trinket: { slotName:'秘宝', stats:{ all:190, spell:500, hp:1400, skillDmg:0.06, critDmg:0.35 } }
     }
   },
   archer: {
     cls:'archer', name:'月华', full:'月华·流光', color:'#ffe9a8', price:300000, reqLv:20,
     pieces: {
-      helm:    { slotName:'轻盔', stats:{ armor:170, agi:80, vit:50, as:0.05 } },
-      chest:   { slotName:'皮甲', stats:{ armor:250, agi:95, vit:75, as:0.06 } },
-      legs:    { slotName:'护腿', stats:{ armor:210, agi:85, vit:60, as:0.05 } },
-      boots:   { slotName:'疾行靴', stats:{ armor:150, agi:70, vit:40, as:0.08 } },
-      neck:    { slotName:'月链', stats:{ agi:90, crit:0.07, as:0.05 } },
-      ring:    { slotName:'月戒', stats:{ agi:85, critDmg:0.30, as:0.05 } },
-      trinket: { slotName:'月符', stats:{ agi:95, lifesteal:0.03, as:0.06 } }
+      helm:    { slotName:'轻盔', stats:{ armor:700, agi:450, atk:900, vit:350, as:0.05 } },
+      chest:   { slotName:'皮甲', stats:{ armor:900, agi:520, atk:1300, vit:430, as:0.06 } },
+      legs:    { slotName:'护腿', stats:{ armor:800, agi:480, atk:1100, vit:400, as:0.05 } },
+      boots:   { slotName:'疾行靴', stats:{ armor:650, agi:430, atk:850, vit:330, as:0.08 } },
+      neck:    { slotName:'月链', stats:{ all:210, atk:700, agi:300, crit:0.07, as:0.05 } },
+      ring:    { slotName:'月戒', stats:{ all:190, atk:660, agi:290, critDmg:0.35, as:0.05 } },
+      trinket: { slotName:'月符', stats:{ all:200, atk:680, agi:310, lifesteal:0.03, as:0.06 } }
     }
   },
   assassin: {
     cls:'assassin', name:'影煞', full:'影煞·噬魂', color:'#ffe9a8', price:300000, reqLv:20,
     pieces: {
-      helm:    { slotName:'面罩', stats:{ armor:150, agi:75, vit:45, hp:650 } },
-      chest:   { slotName:'影衣', stats:{ armor:230, agi:100, vit:70, hp:1000 } },
-      legs:    { slotName:'影裤', stats:{ armor:190, agi:90, vit:55, hp:850 } },
-      boots:   { slotName:'影靴', stats:{ armor:130, agi:72, vit:38, hp:550 } },
-      neck:    { slotName:'影链', stats:{ agi:95, crit:0.08, critDmg:0.20 } },
-      ring:    { slotName:'影戒', stats:{ agi:90, crit:0.06, hit:0.07 } },
-      trinket: { slotName:'影珠', stats:{ agi:100, lifesteal:0.04, critDmg:0.25 } }
+      helm:    { slotName:'面罩', stats:{ armor:360, agi:240, vit:180, hp:1500, crit:0.05 } },
+      chest:   { slotName:'影衣', stats:{ armor:520, agi:300, vit:240, hp:2000, crit:0.06 } },
+      legs:    { slotName:'影裤', stats:{ armor:440, agi:260, vit:200, hp:1700, crit:0.05 } },
+      boots:   { slotName:'影靴', stats:{ armor:340, agi:210, vit:160, hp:1500, as:0.05 } },
+      neck:    { slotName:'影链', stats:{ all:200, atk:520, hp:1500, crit:0.09, critDmg:0.40 } },
+      ring:    { slotName:'影戒', stats:{ all:180, atk:480, hp:1600, crit:0.07, hit:0.07 } },
+      trinket: { slotName:'影珠', stats:{ all:190, atk:500, hp:1400, lifesteal:0.04, critDmg:0.35 } }
     }
   }
 };

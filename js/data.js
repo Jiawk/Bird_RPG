@@ -274,7 +274,8 @@ DATA.BOSSES = {
   bossGrom:     {name:'格罗姆·地狱咆哮', title:'战歌氏族的酋长',  color:'#7a9b2e', hp:11500, atk:34,  spd:2.5, r:34, exp:1800, gold:[900,1500]},
   bossKel:      {name:'克尔苏加德',      title:'亡灵天灾的巫妖',  color:'#7fb3d5', hp:25000, atk:54,  spd:2.3, r:34, exp:3400, gold:[1600,2600]},
   bossMannoroth:{name:'玛诺洛斯',        title:'燃烧军团的毁灭者',color:'#a83232', hp:52000, atk:98,  spd:2.4, r:38, exp:6000, gold:[2800,4400]},
-  bossArchimonde:{name:'阿克蒙德',       title:'污染者',          color:'#5b2c6f', hp:95000, atk:145, spd:2.5, r:40, exp:10000,gold:[5000,8000]}
+  bossArchimonde:{name:'阿克蒙德',       title:'污染者',          color:'#5b2c6f', hp:95000, atk:145, spd:2.5, r:40, exp:10000,gold:[5000,8000]},
+  lichKing:     {name:'巫妖王 · 阿尔萨斯', title:'霜之哀伤的主人',  color:'#8fd8ff', hp:180000, atk:190, spd:2.2, r:44, exp:26000,gold:[9000,14000]}
 };
 
 /* ---------------- 房间 ---------------- */
@@ -284,7 +285,8 @@ DATA.ROOMS = [
   {id:2, name:'兽人营地',    lv:21, reqLv:21, mons:'grunt',     boss:'bossGrom',      count:50, elite:20, bosses:2, bg:'#241a14', accent:'#6b4a2a', desc:'战鼓声从未停歇'},
   {id:3, name:'亡灵墓穴',    lv:31, reqLv:31, mons:'skeleton',  boss:'bossKel',       count:50, elite:20, bosses:2, bg:'#1a1f26', accent:'#3f5568', desc:'死亡并非终点'},
   {id:4, name:'燃烧军团裂隙',lv:41, reqLv:41, mons:'doomguard', boss:'bossMannoroth', count:50, elite:20, bosses:2, bg:'#26141a', accent:'#6b2438', desc:'虚空在低语'},
-  {id:5, name:'深渊祭坛',    lv:51, reqLv:51, mons:'abyssal',   boss:'bossArchimonde',count:50, elite:20, bosses:2, bg:'#1c1226', accent:'#4a2a6b', desc:'污染者的王座'}
+  {id:5, name:'深渊祭坛',    lv:51, reqLv:51, mons:'abyssal',   boss:'bossArchimonde',count:50, elite:20, bosses:2, bg:'#1c1226', accent:'#4a2a6b', desc:'污染者的王座'},
+  {id:6, name:'冰冠堡垒 · 王座', lv:58, reqLv:1, mons:'skeleton', boss:'lichKing', count:0, elite:0, bosses:1, bg:'#101822', accent:'#2a4a6b', desc:'霜之哀伤在低语', challenge:true}
 ];
 
 DATA.POTIONS = [
@@ -697,6 +699,22 @@ DATA.LORE_SCENES = {
       { who:'l', text:'女妖。是我创造了你。你可以尽情哀嚎发泄痛苦，希尔瓦娜斯，这是别人得不到的优待。而你的哀嚎，也会带给别人痛苦。现在，你这个麻烦的游侠，必须侍奉我。' },
       { who:'s', text:'绝不。我永远不会侍奉你，屠夫！' },
       { who:'l', text:'你的游侠们，也会和你一样，加入我的天灾军团。' }
+    ]
+  },
+  lordaeron: {
+    title: '洛丹伦伏击',
+    sub: '希尔瓦娜斯挣脱控制后，伏击阿尔萨斯',
+    lines: [
+      { who:'n', text:'希尔瓦娜斯用特制毒箭偷袭阿尔萨斯，让他全身麻痹、无法行动。' },
+      { who:'l', text:'希尔瓦娜斯！' },
+      { who:'s', text:'你自投罗网了，阿尔萨斯。现在，该算总账了。' },
+      { who:'l', text:'叛徒！你对我做了什么？' },
+      { who:'s', text:'这是我专门为你炼制的毒箭。你现在感受到的麻痹，仅仅只是你施加给我的痛苦里微不足道的一小部分。' },
+      { who:'l', text:'那你干脆杀了我。' },
+      { who:'s', text:'痛快的死？就像你当初给我的那种？别想。你要像我一样，受尽折磨。' },
+      { who:'s', text:'替我向地狱问好，你这杂碎。' },
+      { who:'n', text:'就在她准备动手的时候，克尔苏加德带着亡灵大军赶到，救下阿尔萨斯。' },
+      { who:'s', text:'（撤退时）这事没完，阿尔萨斯！我会永不停歇地追杀你！' }
     ]
   }
 };

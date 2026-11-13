@@ -1899,6 +1899,28 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .dbg-hlt.own{opacity:.7}
 @media (max-width:560px){ .dbg-hlt-grid{grid-template-columns:repeat(2,1fr)} }
 
+/* ===== 巫妖王雕像菜单 ===== */
+.sm-wrap{padding:2px}
+.sm-head{display:flex;gap:14px;align-items:center;margin-bottom:14px;
+  padding-bottom:12px;border-bottom:1px solid #3a3226}
+.sm-art{width:76px;height:112px;flex:0 0 auto;border-radius:4px;
+  background-image:var(--statue-sheet);background-size:100% 100%;
+  background-color:#0d0a06;border:1px solid #3a4a5a;
+  box-shadow:inset 0 0 18px rgba(0,0,0,.8),0 0 14px rgba(120,200,255,.25)}
+.sm-title{font-family:var(--serif);font-size:16px;color:#8fd8ff;letter-spacing:.1em}
+.sm-sub{font-size:11px;color:#7d8a96;margin-top:4px}
+.sm-btn{display:block;width:100%;text-align:left;padding:12px 16px;margin-bottom:9px;
+  border-radius:4px;cursor:pointer;border:1px solid #4a3d28;
+  background:linear-gradient(180deg,rgba(38,32,20,.96),rgba(12,10,6,.98));
+  transition:all .14s}
+.sm-btn b{display:block;font-family:var(--serif);font-size:14px;color:#ffd98a;letter-spacing:.08em}
+.sm-btn span{display:block;font-size:11px;color:#8f8570;margin-top:4px}
+.sm-btn:hover{border-color:#d4af37;box-shadow:0 0 14px rgba(212,175,55,.4);transform:translateX(3px)}
+.sm-btn.danger b{color:#8fd8ff}
+.sm-btn.danger:hover{border-color:#8fd8ff;box-shadow:0 0 16px rgba(143,216,255,.45)}
+.sm-btn.lock{opacity:.45;cursor:not-allowed}
+.sm-btn.lock:hover{transform:none;border-color:#4a3d28;box-shadow:none}
+
 </style>
 <script id="orc-cfg" type="application/json">{}</script>
 </head>
@@ -2365,7 +2387,8 @@ DATA.BOSSES = {
   bossGrom:     {name:'格罗姆·地狱咆哮', title:'战歌氏族的酋长',  color:'#7a9b2e', hp:11500, atk:34,  spd:2.5, r:34, exp:1800, gold:[900,1500]},
   bossKel:      {name:'克尔苏加德',      title:'亡灵天灾的巫妖',  color:'#7fb3d5', hp:25000, atk:54,  spd:2.3, r:34, exp:3400, gold:[1600,2600]},
   bossMannoroth:{name:'玛诺洛斯',        title:'燃烧军团的毁灭者',color:'#a83232', hp:52000, atk:98,  spd:2.4, r:38, exp:6000, gold:[2800,4400]},
-  bossArchimonde:{name:'阿克蒙德',       title:'污染者',          color:'#5b2c6f', hp:95000, atk:145, spd:2.5, r:40, exp:10000,gold:[5000,8000]}
+  bossArchimonde:{name:'阿克蒙德',       title:'污染者',          color:'#5b2c6f', hp:95000, atk:145, spd:2.5, r:40, exp:10000,gold:[5000,8000]},
+  lichKing:     {name:'巫妖王 · 阿尔萨斯', title:'霜之哀伤的主人',  color:'#8fd8ff', hp:180000, atk:190, spd:2.2, r:44, exp:26000,gold:[9000,14000]}
 };
 
 /* ---------------- 房间 ---------------- */
@@ -2375,7 +2398,8 @@ DATA.ROOMS = [
   {id:2, name:'兽人营地',    lv:21, reqLv:21, mons:'grunt',     boss:'bossGrom',      count:50, elite:20, bosses:2, bg:'#241a14', accent:'#6b4a2a', desc:'战鼓声从未停歇'},
   {id:3, name:'亡灵墓穴',    lv:31, reqLv:31, mons:'skeleton',  boss:'bossKel',       count:50, elite:20, bosses:2, bg:'#1a1f26', accent:'#3f5568', desc:'死亡并非终点'},
   {id:4, name:'燃烧军团裂隙',lv:41, reqLv:41, mons:'doomguard', boss:'bossMannoroth', count:50, elite:20, bosses:2, bg:'#26141a', accent:'#6b2438', desc:'虚空在低语'},
-  {id:5, name:'深渊祭坛',    lv:51, reqLv:51, mons:'abyssal',   boss:'bossArchimonde',count:50, elite:20, bosses:2, bg:'#1c1226', accent:'#4a2a6b', desc:'污染者的王座'}
+  {id:5, name:'深渊祭坛',    lv:51, reqLv:51, mons:'abyssal',   boss:'bossArchimonde',count:50, elite:20, bosses:2, bg:'#1c1226', accent:'#4a2a6b', desc:'污染者的王座'},
+  {id:6, name:'冰冠堡垒 · 王座', lv:58, reqLv:1, mons:'skeleton', boss:'lichKing', count:0, elite:0, bosses:1, bg:'#101822', accent:'#2a4a6b', desc:'霜之哀伤在低语', challenge:true}
 ];
 
 DATA.POTIONS = [
@@ -2788,6 +2812,22 @@ DATA.LORE_SCENES = {
       { who:'l', text:'女妖。是我创造了你。你可以尽情哀嚎发泄痛苦，希尔瓦娜斯，这是别人得不到的优待。而你的哀嚎，也会带给别人痛苦。现在，你这个麻烦的游侠，必须侍奉我。' },
       { who:'s', text:'绝不。我永远不会侍奉你，屠夫！' },
       { who:'l', text:'你的游侠们，也会和你一样，加入我的天灾军团。' }
+    ]
+  },
+  lordaeron: {
+    title: '洛丹伦伏击',
+    sub: '希尔瓦娜斯挣脱控制后，伏击阿尔萨斯',
+    lines: [
+      { who:'n', text:'希尔瓦娜斯用特制毒箭偷袭阿尔萨斯，让他全身麻痹、无法行动。' },
+      { who:'l', text:'希尔瓦娜斯！' },
+      { who:'s', text:'你自投罗网了，阿尔萨斯。现在，该算总账了。' },
+      { who:'l', text:'叛徒！你对我做了什么？' },
+      { who:'s', text:'这是我专门为你炼制的毒箭。你现在感受到的麻痹，仅仅只是你施加给我的痛苦里微不足道的一小部分。' },
+      { who:'l', text:'那你干脆杀了我。' },
+      { who:'s', text:'痛快的死？就像你当初给我的那种？别想。你要像我一样，受尽折磨。' },
+      { who:'s', text:'替我向地狱问好，你这杂碎。' },
+      { who:'n', text:'就在她准备动手的时候，克尔苏加德带着亡灵大军赶到，救下阿尔萨斯。' },
+      { who:'s', text:'（撤退时）这事没完，阿尔萨斯！我会永不停歇地追杀你！' }
     ]
   }
 };
@@ -7076,6 +7116,7 @@ function uiInit() {
   if (ASSETS.classicons) document.documentElement.style.setProperty('--class-sheet', `url(${ASSETS.classicons})`);
   if (ASSETS.heirlooms) document.documentElement.style.setProperty('--hlt-sheet', `url(${ASSETS.heirlooms})`);
   if (ASSETS.lorePortraits) document.documentElement.style.setProperty('--lore-sheet', `url(${ASSETS.lorePortraits})`);
+  if (ASSETS.lichStatue) document.documentElement.style.setProperty('--statue-sheet', `url(${ASSETS.lichStatue})`);
   if (ASSETS.avatars) document.documentElement.style.setProperty('--avatar-sheet', `url(${ASSETS.avatars})`);
   bindSkillTips();
   // 任务追踪：事件委托（内容重建后依然可点）
@@ -7666,7 +7707,7 @@ function handleCommand(act) {
     case 'warehouse': toggleModal('warehouse', '仓库 · 大木箱', warehouseHtml); break;
     case 'notice': openModal('notice', '公告牌', noticeHtml()); break;
     case 'heirloom': G._hltPage = G._hltPage || 0; openModal('heirloom', '传家宝 · 古籍', heirloomHtml()); break;
-    case 'statue': loreStart('silvermoon'); break;
+    case 'statue': openModal('statueMenu', '巫妖王雕像', statueMenuHtml()); break;
     case 'tutorial': toggleModal('tutorial', '新手指引', tutorialHtml); break;
     case 'mail': toggleModal('mail', '邮箱', mailHtml); break;
     case 'ringup': toggleModal('ringup', '特戒强化', ringUpHtml); break;
@@ -8154,7 +8195,7 @@ function interactNPC(target) {
     case 'mail': toggleModal('mail', '邮箱', mailHtml); break;
     case 'notice': openModal('notice', '公告牌', noticeHtml()); break;
     case 'heirloom': G._hltPage = G._hltPage || 0; openModal('heirloom', '传家宝 · 古籍', heirloomHtml()); break;
-    case 'statue': loreStart('silvermoon'); break;
+    case 'statue': openModal('statueMenu', '巫妖王雕像', statueMenuHtml()); break;
     case 'tutorial': toggleModal('tutorial', '新手指引', tutorialHtml); break;
     case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
   }
@@ -8485,6 +8526,31 @@ function hltDetailHtml(key) {
         : `<button class="hb-b" data-hlt-pick="1">替换</button>`}
       <button class="hb-b" data-hlt-cancel-pick="1">关闭</button>
     </div>
+  </div>`;
+}
+
+/* ---------------- 巫妖王雕像：菜单 ---------------- */
+function statueMenuHtml() {
+  const p = G.player;
+  const lv = p ? p.level : 1;
+  const okLv = lv >= 50;
+  return `<div class="sm-wrap">
+    <div class="sm-head">
+      <div class="sm-art"></div>
+      <div class="sm-info">
+        <div class="sm-title">巫妖王 · 阿尔萨斯</div>
+        <div class="sm-sub">霜之哀伤的主人 · 冰封王座</div>
+      </div>
+    </div>
+    <button class="sm-btn" data-statue="silvermoon">
+      <b>银月城之战</b><span>回忆 · 阿尔萨斯杀死希尔瓦娜斯、把她变成女妖</span>
+    </button>
+    <button class="sm-btn" data-statue="lordaeron">
+      <b>洛丹伦伏击</b><span>回忆 · 希尔瓦娜斯用毒箭偷袭阿尔萨斯</span>
+    </button>
+    <button class="sm-btn danger ${okLv ? '' : 'lock'}" data-statue="fight">
+      <b>挑战巫妖王 · 阿尔萨斯</b><span>${okLv ? '单人挑战 · 击败可获得大量经验与金币' : '需要等级 50 级（当前 ' + lv + '）'}</span>
+    </button>
   </div>`;
 }
 
@@ -10295,6 +10361,20 @@ function bindModal() {
     mailDelete(G.player, +b.dataset.mailDel);
     saveGame(); mailRefreshDot();
     openModal('mail', '邮箱', mailHtml());
+  });
+  body.querySelectorAll('[data-statue]').forEach(b => b.onclick = () => {
+    const k = b.dataset.statue;
+    closeModal();
+    if (k === 'silvermoon' || k === 'lordaeron') { loreStart(k); return; }
+    if (k === 'fight') {
+      const p = G.player;
+      if (p.level < 50) { toast('需要等级 50 级才能挑战巫妖王'); return; }
+      if (p.dead) return;
+      p.hp = p.stats.hpMax; p.mp = p.stats.mpMax;
+      enterRoom(6);
+      bigAnnounce('❄ 巫妖王 · 阿尔萨斯 降临', '#8fd8ff');
+      logMsg('⚠ 你踏入了冰封王座，巫妖王正在等你', 'rare');
+    }
   });
   body.querySelectorAll('[data-dbg-hlt]').forEach(b => b.onclick = () => {
     const p = G.player;

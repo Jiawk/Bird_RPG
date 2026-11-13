@@ -112,6 +112,7 @@ function uiInit() {
   if (ASSETS.classicons) document.documentElement.style.setProperty('--class-sheet', `url(${ASSETS.classicons})`);
   if (ASSETS.heirlooms) document.documentElement.style.setProperty('--hlt-sheet', `url(${ASSETS.heirlooms})`);
   if (ASSETS.lorePortraits) document.documentElement.style.setProperty('--lore-sheet', `url(${ASSETS.lorePortraits})`);
+  if (ASSETS.lichStatue) document.documentElement.style.setProperty('--statue-sheet', `url(${ASSETS.lichStatue})`);
   if (ASSETS.avatars) document.documentElement.style.setProperty('--avatar-sheet', `url(${ASSETS.avatars})`);
   bindSkillTips();
   // 任务追踪：事件委托（内容重建后依然可点）
@@ -702,7 +703,7 @@ function handleCommand(act) {
     case 'warehouse': toggleModal('warehouse', '仓库 · 大木箱', warehouseHtml); break;
     case 'notice': openModal('notice', '公告牌', noticeHtml()); break;
     case 'heirloom': G._hltPage = G._hltPage || 0; openModal('heirloom', '传家宝 · 古籍', heirloomHtml()); break;
-    case 'statue': loreStart('silvermoon'); break;
+    case 'statue': openModal('statueMenu', '巫妖王雕像', statueMenuHtml()); break;
     case 'tutorial': toggleModal('tutorial', '新手指引', tutorialHtml); break;
     case 'mail': toggleModal('mail', '邮箱', mailHtml); break;
     case 'ringup': toggleModal('ringup', '特戒强化', ringUpHtml); break;
@@ -1190,7 +1191,7 @@ function interactNPC(target) {
     case 'mail': toggleModal('mail', '邮箱', mailHtml); break;
     case 'notice': openModal('notice', '公告牌', noticeHtml()); break;
     case 'heirloom': G._hltPage = G._hltPage || 0; openModal('heirloom', '传家宝 · 古籍', heirloomHtml()); break;
-    case 'statue': loreStart('silvermoon'); break;
+    case 'statue': openModal('statueMenu', '巫妖王雕像', statueMenuHtml()); break;
     case 'tutorial': toggleModal('tutorial', '新手指引', tutorialHtml); break;
     case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
   }
@@ -1521,6 +1522,31 @@ function hltDetailHtml(key) {
         : `<button class="hb-b" data-hlt-pick="1">替换</button>`}
       <button class="hb-b" data-hlt-cancel-pick="1">关闭</button>
     </div>
+  </div>`;
+}
+
+/* ---------------- 巫妖王雕像：菜单 ---------------- */
+function statueMenuHtml() {
+  const p = G.player;
+  const lv = p ? p.level : 1;
+  const okLv = lv >= 50;
+  return `<div class="sm-wrap">
+    <div class="sm-head">
+      <div class="sm-art"></div>
+      <div class="sm-info">
+        <div class="sm-title">巫妖王 · 阿尔萨斯</div>
+        <div class="sm-sub">霜之哀伤的主人 · 冰封王座</div>
+      </div>
+    </div>
+    <button class="sm-btn" data-statue="silvermoon">
+      <b>银月城之战</b><span>回忆 · 阿尔萨斯杀死希尔瓦娜斯、把她变成女妖</span>
+    </button>
+    <button class="sm-btn" data-statue="lordaeron">
+      <b>洛丹伦伏击</b><span>回忆 · 希尔瓦娜斯用毒箭偷袭阿尔萨斯</span>
+    </button>
+    <button class="sm-btn danger ${okLv ? '' : 'lock'}" data-statue="fight">
+      <b>挑战巫妖王 · 阿尔萨斯</b><span>${okLv ? '单人挑战 · 击败可获得大量经验与金币' : '需要等级 50 级（当前 ' + lv + '）'}</span>
+    </button>
   </div>`;
 }
 
@@ -3331,6 +3357,20 @@ function bindModal() {
     mailDelete(G.player, +b.dataset.mailDel);
     saveGame(); mailRefreshDot();
     openModal('mail', '邮箱', mailHtml());
+  });
+  body.querySelectorAll('[data-statue]').forEach(b => b.onclick = () => {
+    const k = b.dataset.statue;
+    closeModal();
+    if (k === 'silvermoon' || k === 'lordaeron') { loreStart(k); return; }
+    if (k === 'fight') {
+      const p = G.player;
+      if (p.level < 50) { toast('需要等级 50 级才能挑战巫妖王'); return; }
+      if (p.dead) return;
+      p.hp = p.stats.hpMax; p.mp = p.stats.mpMax;
+      enterRoom(6);
+      bigAnnounce('❄ 巫妖王 · 阿尔萨斯 降临', '#8fd8ff');
+      logMsg('⚠ 你踏入了冰封王座，巫妖王正在等你', 'rare');
+    }
   });
   body.querySelectorAll('[data-dbg-hlt]').forEach(b => b.onclick = () => {
     const p = G.player;

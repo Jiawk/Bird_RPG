@@ -1554,14 +1554,19 @@ function renderLore() {
         </div>
         <div class="lore-foot">
           <span class="lore-idx">${st.i + 1} / ${sc.lines.length}</span>
-          <span class="lore-hint">${last ? '点击此处关闭' : '点击继续 ▸'}</span>
+          <button class="lore-next" data-lore-next="1">${last ? '关闭对话' : '点击继续 ▸'}</button>
         </div>
       </div>
       <div class="lore-side ${isS ? 'act' : ''}">
-        <div class="lp-face" style="background-position:-0px -0px;background-position-x:-128px"></div>
+        <div class="lp-face" style="background-position:100% 0"></div>
         <div class="lp-name">希尔瓦娜斯</div>
       </div>
     </div>`;
+
+  // 每次都重新绑定，避免依赖 bindModal
+  box.onclick = () => loreNext();
+  const btn = box.querySelector('[data-lore-next]');
+  if (btn) btn.onclick = (e) => { e.stopPropagation(); loreNext(); };
 }
 
 function loreNext() {
@@ -3232,11 +3237,6 @@ function bindModal() {
   });
   /* ---------------- 传家宝 ---------------- */
   /* ---- 角色面板：特戒 / 传家宝 切换 ---- */
-  const loreB = document.getElementById('loreBox');
-  if (loreB && !loreB._bound) {
-    loreB._bound = true;
-    loreB.addEventListener('click', () => loreNext());
-  }
   body.querySelectorAll('[data-char-tab]').forEach(b => b.onclick = () => {
     G._charTab = b.dataset.charTab;
     if (typeof Sfx !== 'undefined') Sfx.play('click');

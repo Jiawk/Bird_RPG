@@ -2866,3 +2866,20 @@ background-size: 300% 300%;
 3. **选择页还是正方形**
    - 原因：`width:100%` + `aspect-ratio` 被 `max-height:210px` 压成了横向
    - 改为**固定 126×172 竖版**（居中），移动端 96×132
+
+### v175 · 剧情对话：修复点击无效 + 换希瓦头像
+1. **「点击继续」点了没反应**
+   - 根因：点击事件只在 `bindModal()` 里绑定，而 `bindModal` **只有打开模态框时才执行**；
+     点击雕像走的是 `interactNPC → loreStart`，**从未打开模态框** → 事件从未绑定
+   - 修复：改为在 `renderLore()` 里每次都重新绑定
+     ```js
+     box.onclick = () => loreNext();
+     box.querySelector('[data-lore-next]').onclick = e => { e.stopPropagation(); loreNext(); };
+     ```
+2. **按钮做大**
+   - 从文字提示改成真正的 `<button>`：`11px 40px` 内边距、`15px` 字号、最小宽 190px
+   - 金色渐变 + 呼吸光晕动画 + hover 提亮
+   - `z-index` 9000 → **9500**，确保盖在技能栏之上
+3. **希瓦头像换图**
+   - 换成 `希尔瓦娜斯22.jpeg`，**截取头部 + 上半身**（含兜帽、精灵耳、锈红甲）
+   - 头像图集右侧格更新，左侧阿尔萨斯不变

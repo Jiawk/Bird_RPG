@@ -1773,3 +1773,61 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .hb-stk{margin-top:6px;font-size:11px;color:#9fe6b8;padding:6px 10px;border-radius:3px;
   background:rgba(30,60,30,.35);border-left:2px solid #5fdc4a;line-height:1.6}
 .hb-stk b{color:#5fdc4a;font-size:13px}
+
+/* 特戒 / 传家宝 切换 */
+.socket-tabs{display:flex;gap:6px;margin-top:10px}
+.st-b{flex:1;padding:5px 8px;font-size:12px;font-family:var(--serif);border-radius:3px;
+  cursor:pointer;color:#b9b09a;border:1px solid #4a3d28;
+  background:linear-gradient(180deg,rgba(40,33,20,.95),rgba(12,9,5,.98))}
+.st-b:hover{border-color:#d4af37;color:#ffd24a}
+.st-b.on{border-color:#d4af37;color:#1a1206;font-weight:700;
+  background:linear-gradient(180deg,#e8c85e,#b8912f)}
+.hlt-row{justify-content:center}
+.hlt-slot{width:96px;height:128px;border-radius:4px;cursor:pointer;position:relative;
+  border:2px dashed #4a3d28;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:4px;overflow:hidden;
+  background:linear-gradient(180deg,rgba(30,25,15,.9),rgba(10,8,4,.96))}
+.hlt-slot:hover{border-color:#d4af37;box-shadow:0 0 14px rgba(212,175,55,.45)}
+.hlt-slot.filled{border-style:solid;border-color:#8a6d3f}
+.hlt-slot .hs-plus{font-size:30px;color:#5a5348;line-height:1}
+.hlt-slot .hs-art{width:78px;height:96px;background-repeat:no-repeat;
+  border-radius:3px;background-color:#0d0a06}
+.hlt-slot .hs-name{font-size:11px;color:#8f8570}
+
+/* 传家宝选择页 */
+.hp-wrap{padding:2px}
+.hp-tip{font-size:11px;color:#8f8570;margin-bottom:10px}
+.hp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.hp-cell{padding:8px;border-radius:4px;text-align:center;border:1px solid #4a3d28;
+  background:linear-gradient(180deg,rgba(32,26,16,.95),rgba(10,8,4,.98));
+  transition:all .12s}
+.hp-cell.own{cursor:pointer}
+.hp-cell.own:hover{border-color:#d4af37;box-shadow:0 0 14px rgba(212,175,55,.45);transform:translateY(-2px)}
+.hp-cell.act{border-color:#5fdc4a;box-shadow:0 0 14px rgba(95,220,74,.4)}
+.hp-cell.lock{opacity:.45}
+.hp-art{width:100%;height:104px;border-radius:3px;background-repeat:no-repeat;
+  background-color:#0d0a06;margin-bottom:6px}
+.hp-nm{font-size:12px;font-family:var(--serif)}
+.hp-st{font-size:10.5px;color:#8f8570;margin-top:2px}
+.hp-cell.act .hp-st{color:#5fdc4a}
+.hp-foot{display:flex;justify-content:flex-end;margin-top:12px}
+.hp-foot button{padding:7px 22px;font-size:12.5px;border-radius:3px;cursor:pointer;
+  color:#e8e0cc;border:1px solid #4a3d28;background:rgba(30,25,15,.9)}
+.hp-foot button:hover{border-color:#d4af37;color:#ffd24a}
+
+/* 传家宝详情 */
+.hd-box{padding:2px}
+.hd-head{display:flex;gap:14px;margin-bottom:12px;align-items:center}
+.hd-art{width:120px;height:160px;border-radius:4px;background-repeat:no-repeat;
+  background-color:#0d0a06;border:1px solid #4a3d28;flex:0 0 auto;
+  box-shadow:inset 0 0 24px rgba(0,0,0,.8)}
+.hd-alias{font-size:11px;color:#8f8570;letter-spacing:.16em}
+.hd-name{font-family:var(--serif);font-size:16px;margin:4px 0}
+.hd-cls{font-size:10.5px;color:#7d8f6a}
+.hd-btns{display:flex;gap:8px;margin-top:12px}
+.hd-btns button{flex:1}
+@media (max-width:700px){
+  .hp-grid{grid-template-columns:repeat(2,1fr)}
+  .hlt-slot{width:84px;height:112px}
+  .hlt-slot .hs-art{width:66px;height:80px}
+}

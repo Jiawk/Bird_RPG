@@ -937,12 +937,36 @@ function charHtml() {
     <div class="cp-sub">装备总评分 <b>${fmt(gp)}</b></div>
     <div class="cp-sub">装备达成 <b style="color:${gt.filled>=8?DATA.QUALITY[Math.max(0,gt.minIdx)].color:'#b8ad93'}">${gt.tierName}</b></div>
   </div>`;
-  mid += `<div class="socket-row">
-    <div class="socket-label">特戒</div>
-    <div class="socket-grid">
-      ${DATA.RING_SLOTS.map(r => slotHtml(r.slot, 32)).join('')}
-    </div>
+  const tab = G._charTab === 'hlt' ? 'hlt' : 'ring';
+  const hAct = hltEnsure(p).active;
+  const hIdx = hAct ? DATA.HEIRLOOMS.findIndex(x => x.key === hAct) : -1;
+  const hW = hIdx >= 0 ? DATA.HEIRLOOMS[hIdx] : null;
+
+  mid += `<div class="socket-tabs">
+    <button class="st-b ${tab === 'ring' ? 'on' : ''}" data-char-tab="ring">特戒</button>
+    <button class="st-b ${tab === 'hlt' ? 'on' : ''}" data-char-tab="hlt">传家宝</button>
   </div>`;
+
+  if (tab === 'ring') {
+    mid += `<div class="socket-row">
+      <div class="socket-grid">
+        ${DATA.RING_SLOTS.map(r => slotHtml(r.slot, 32)).join('')}
+      </div>
+    </div>`;
+  } else {
+    mid += `<div class="socket-row hlt-row">
+      ${hW
+        ? `<div class="hlt-slot filled" data-hlt-open="${hW.key}">
+             <div class="hs-art" style="background-size:300% 300%;
+               background-position:${(hIdx % 3) * 50}% ${Math.floor(hIdx / 3) * 50}%"></div>
+             <div class="hs-name" style="color:${hW.color}">${hW.alias}</div>
+           </div>`
+        : `<div class="hlt-slot empty" data-hlt-open="">
+             <div class="hs-plus">+</div>
+             <div class="hs-name">未装备</div>
+           </div>`}
+    </div>`;
+  }
   mid += '</div>';
 
   // ---- 属性列 ----
@@ -1430,6 +1454,64 @@ function settingsHtml() {
     <div class="npc-row"><div><div class="nr-name" style="color:#ff6b5a">重新开局</div>
       <div class="nr-info">删除角色，不可恢复</div></div>
       <button data-act-reset style="border-color:#6b2b2b;color:#ff8a7a">重开</button></div>
+  </div>`;
+}
+
+/* ---------------- 角色面板 · 传家宝选择/详情 ---------------- */
+function hltPickHtml() {
+  const p = G.player;
+  const h = hltEnsure(p);
+  const cells = DATA.HEIRLOOMS.map((w, i) => {
+    const owned = h.owned.includes(w.key);
+    const active = h.active === w.key;
+    const days = h.sign[w.key] || 0;
+    return `<div class="hp-cell ${owned ? 'own' : 'lock'} ${active ? 'act' : ''}"
+        ${owned ? `data-hlt-equip="${w.key}"` : ''}>
+      <div class="hp-art" style="background-size:300% 300%;
+        background-position:${(i % 3) * 50}% ${Math.floor(i / 3) * 50}%"></div>
+      <div class="hp-nm" style="color:${w.color}">${w.alias}</div>
+      <div class="hp-st">${active ? '✔ 使用中' : (owned ? '已拥有' : `未拥有 ${days}/7`)}</div>
+    </div>`;
+  }).join('');
+  return `<div class="hp-wrap">
+    <div class="hp-tip">点击已拥有的传家宝即可装备（同时只能装备 1 件）</div>
+    <div class="hp-grid">${cells}</div>
+    <div class="hp-foot"><button data-hlt-cancel-pick="1">关闭</button></div>
+  </div>`;
+}
+
+function hltDetailHtml(key) {
+  const p = G.player;
+  const h = hltEnsure(p);
+  const i = DATA.HEIRLOOMS.findIndex(x => x.key === key);
+  const w = DATA.HEIRLOOMS[i];
+  if (!w) return '<div style="padding:20px">未知传家宝</div>';
+  const owned = h.owned.includes(key);
+  const active = h.active === key;
+  const pctKeys = ['crit','critDmg','as','hit','cdr','skillDmg','dr','lifesteal'];
+  const stats = Object.keys(w.stats).map(k => {
+    const nm = (typeof AFFIX_NAMES !== 'undefined' && AFFIX_NAMES[k]) ? AFFIX_NAMES[k] : k;
+    const v = w.stats[k];
+    return `<span class="hb-stat"><i>${nm}</i><b>${pctKeys.includes(k) ? '+' + (v*100).toFixed(0) + '%' : '+' + Math.round(v)}</b></span>`;
+  }).join('');
+  return `<div class="hd-box">
+    <div class="hd-head">
+      <div class="hd-art" style="background-size:300% 300%;
+        background-position:${(i % 3) * 50}% ${Math.floor(i / 3) * 50}%"></div>
+      <div>
+        <div class="hd-alias">「${w.alias}」</div>
+        <div class="hd-name" style="color:${w.color}">${w.name}</div>
+        <div class="hd-cls">${(w.cls||[]).map(c => DATA.CLASSES[c] ? DATA.CLASSES[c].name : c).join(' / ') || '通用'}</div>
+      </div>
+    </div>
+    <div class="hb-stats">${stats}</div>
+    <div class="hb-fx">✦ ${w.fx}</div>
+    <div class="hd-btns">
+      ${active
+        ? `<button class="hb-b danger" data-hlt-unequip="1">卸下</button>`
+        : `<button class="hb-b" data-hlt-pick="1">替换</button>`}
+      <button class="hb-b" data-hlt-cancel-pick="1">关闭</button>
+    </div>
   </div>`;
 }
 
@@ -3074,6 +3156,38 @@ function bindModal() {
     setTimeout(render, 2300);
   });
   /* ---------------- 传家宝 ---------------- */
+  /* ---- 角色面板：特戒 / 传家宝 切换 ---- */
+  body.querySelectorAll('[data-char-tab]').forEach(b => b.onclick = () => {
+    G._charTab = b.dataset.charTab;
+    if (typeof Sfx !== 'undefined') Sfx.play('click');
+    openModal('char', '角色', charHtml());
+  });
+  body.querySelectorAll('[data-hlt-open]').forEach(b => b.onclick = () => {
+    const k = b.dataset.hltOpen;
+    if (k) openModal('hltDetail', '传家宝 · 详情', hltDetailHtml(k));
+    else openModal('hltPick', '选择传家宝', hltPickHtml());
+  });
+  body.querySelectorAll('[data-hlt-pick]').forEach(b => b.onclick = () => {
+    openModal('hltPick', '选择传家宝', hltPickHtml());
+  });
+  body.querySelectorAll('[data-hlt-equip]').forEach(b => b.onclick = () => {
+    const r = hltSelect(G.player, b.dataset.hltEquip);
+    if (!r.ok) { toast(r.msg); return; }
+    if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
+    toast('已装备传家宝');
+    saveGame();
+    openModal('char', '角色', charHtml());
+  });
+  body.querySelectorAll('[data-hlt-unequip]').forEach(b => b.onclick = () => {
+    hltDrop(G.player);
+    toast('已卸下传家宝');
+    saveGame();
+    openModal('char', '角色', charHtml());
+  });
+  body.querySelectorAll('[data-hlt-cancel-pick]').forEach(b => b.onclick = () => {
+    openModal('char', '角色', charHtml());
+  });
+
   bindHeirloomControls(body);
 
   body.querySelectorAll('[data-quest-nav]').forEach(b => b.onclick = () => {

@@ -110,8 +110,10 @@ function makeMonster(kindKey, x, y, isBoss, level, diff, isElite) {
   // 精英
   if (isElite) { hpMul *= 2.6; atkMul *= 1.6; expMul *= 3; }
   // 全局强度倍率：小怪 +30% 血、BOSS +50% 血、全体 +20% 伤害
-  let hpGlobal = isBoss ? (DATA.BOSS_HP_MUL || 1) : (DATA.MON_HP_MUL || 1);
-  let atkGlobal = DATA.MON_ATK_MUL || 1;
+  // 普通难度还原为原始数值（不吃全局倍率）
+  let hpGlobal = (diff === 'normal') ? 1
+    : (isBoss ? (DATA.BOSS_HP_MUL || 1) : (DATA.MON_HP_MUL || 1));
+  let atkGlobal = (diff === 'normal') ? 1 : (DATA.MON_ATK_MUL || 1);
   // 地狱难度额外加成
   if (diff === 'hell') {
     hpGlobal  *= isBoss ? (DATA.HELL_BOSS_HP_MUL  || 1) : (DATA.HELL_MON_HP_MUL  || 1);

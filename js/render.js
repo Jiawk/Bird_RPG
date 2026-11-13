@@ -976,6 +976,53 @@ function drawNPC(n) {
       CTX.beginPath(); CTX.arc(gx, gy - 20, 52, 0, 6.283); CTX.fill();
       CTX.drawImage(IMG.stele, gx - sz / 2, gy - sz + 10, sz, sz);
       npcDrawn = true;
+    } else if (n.kind === 'statue') {
+      // 巫妖王浮雕石碑：石框 + 浮雕 + 底座 + 冷光
+      const cy = gy - 2;
+      const IW = 104, IH = 142;
+      const bx = gx - IW/2, by = cy - IH - 30;
+
+      // 外发光
+      const glow = CTX.createRadialGradient(gx, by + IH/2, 6, gx, by + IH/2, 96);
+      glow.addColorStop(0, 'rgba(120,200,255,.22)');
+      glow.addColorStop(1, 'rgba(120,200,255,0)');
+      CTX.fillStyle = glow;
+      CTX.beginPath(); CTX.arc(gx, by + IH/2, 96, 0, 6.283); CTX.fill();
+
+      // 石框
+      CTX.fillStyle = '#2f353d';
+      CTX.fillRect(bx - 7, by - 7, IW + 14, IH + 14);
+      CTX.fillStyle = '#434b56';
+      CTX.fillRect(bx - 7, by - 7, IW + 14, 4);
+      CTX.fillStyle = '#1e232a';
+      CTX.fillRect(bx - 7, by + IH + 3, IW + 14, 4);
+      // 铆钉
+      CTX.fillStyle = '#7d8794';
+      [[bx-4,by-4],[bx+IW+1,by-4],[bx-4,by+IH-1],[bx+IW+1,by+IH-1]].forEach(([px2,py2]) => {
+        CTX.beginPath(); CTX.arc(px2, py2, 2.2, 0, 6.283); CTX.fill();
+      });
+
+      // 浮雕图
+      if (imgReady('lichStatue')) {
+        CTX.save();
+        CTX.globalAlpha = 0.98;
+        CTX.drawImage(IMG.lichStatue, bx, by, IW, IH);
+        CTX.restore();
+      } else {
+        CTX.fillStyle = '#4a525c'; CTX.fillRect(bx, by, IW, IH);
+      }
+
+      // 底座
+      CTX.fillStyle = '#353b44';
+      CTX.beginPath(); CTX.ellipse(gx, cy + 2, 40, 14, 0, 0, 6.283); CTX.fill();
+      CTX.fillStyle = '#4a525c';
+      CTX.fillRect(bx - 6, cy - 18, IW + 12, 20);
+      CTX.fillStyle = '#5e6672';
+      CTX.fillRect(bx - 10, cy - 2, IW + 20, 6);
+      CTX.fillStyle = '#262b32';
+      CTX.fillRect(bx - 6, cy - 18, IW + 12, 3);
+
+      npcDrawn = true;
     } else if (n.kind === 'heirloom') {
       // 传家宝：漂浮的金色古书
       const cy = gy - 4 + Math.sin(G.time * 2) * 4;

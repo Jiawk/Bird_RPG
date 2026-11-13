@@ -111,6 +111,7 @@ function uiInit() {
   if (ASSETS.units) document.documentElement.style.setProperty('--units-sheet', `url(${ASSETS.units})`);
   if (ASSETS.classicons) document.documentElement.style.setProperty('--class-sheet', `url(${ASSETS.classicons})`);
   if (ASSETS.heirlooms) document.documentElement.style.setProperty('--hlt-sheet', `url(${ASSETS.heirlooms})`);
+  if (ASSETS.lorePortraits) document.documentElement.style.setProperty('--lore-sheet', `url(${ASSETS.lorePortraits})`);
   if (ASSETS.avatars) document.documentElement.style.setProperty('--avatar-sheet', `url(${ASSETS.avatars})`);
   bindSkillTips();
   // 任务追踪：事件委托（内容重建后依然可点）
@@ -701,6 +702,7 @@ function handleCommand(act) {
     case 'warehouse': toggleModal('warehouse', '仓库 · 大木箱', warehouseHtml); break;
     case 'notice': openModal('notice', '公告牌', noticeHtml()); break;
     case 'heirloom': G._hltPage = G._hltPage || 0; openModal('heirloom', '传家宝 · 古籍', heirloomHtml()); break;
+    case 'statue': loreStart('silvermoon'); break;
     case 'tutorial': toggleModal('tutorial', '新手指引', tutorialHtml); break;
     case 'mail': toggleModal('mail', '邮箱', mailHtml); break;
     case 'ringup': toggleModal('ringup', '特戒强化', ringUpHtml); break;
@@ -1182,6 +1184,7 @@ function interactNPC(target) {
     case 'mail': toggleModal('mail', '邮箱', mailHtml); break;
     case 'notice': openModal('notice', '公告牌', noticeHtml()); break;
     case 'heirloom': G._hltPage = G._hltPage || 0; openModal('heirloom', '传家宝 · 古籍', heirloomHtml()); break;
+    case 'statue': loreStart('silvermoon'); break;
     case 'tutorial': toggleModal('tutorial', '新手指引', tutorialHtml); break;
     case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
   }
@@ -1513,6 +1516,62 @@ function hltDetailHtml(key) {
       <button class="hb-b" data-hlt-cancel-pick="1">关闭</button>
     </div>
   </div>`;
+}
+
+/* ---------------- 剧情对话（屏幕下部 1/3）---------------- */
+function loreStart(key) {
+  G._lore = { key, i: 0 };
+  const sc = DATA.LORE_SCENES[key];
+  if (!sc) return;
+  renderLore();
+}
+
+function renderLore() {
+  const box = document.getElementById('loreBox');
+  if (!box) return;
+  const st = G._lore;
+  if (!st) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+  const sc = DATA.LORE_SCENES[st.key];
+  if (!sc) { box.classList.add('hidden'); return; }
+  const line = sc.lines[st.i] || sc.lines[sc.lines.length - 1];
+  const last = st.i >= sc.lines.length - 1;
+
+  const who = line.who === 'l' ? '阿尔萨斯' : (line.who === 's' ? '希尔瓦娜斯' : '');
+  const isL = line.who === 'l', isS = line.who === 's';
+
+  box.classList.remove('hidden');
+  box.innerHTML = `
+    <div class="lore-dim"></div>
+    <div class="lore-panel">
+      <div class="lore-side ${isL ? 'act' : ''}">
+        <div class="lp-face" style="background-position:0 0"></div>
+        <div class="lp-name">阿尔萨斯</div>
+      </div>
+      <div class="lore-main">
+        <div class="lore-title">${sc.title}<span class="lore-sub">${sc.sub}</span></div>
+        <div class="lore-text ${isL ? 'l' : (isS ? 's' : 'n')}">
+          ${who ? `<b>${who}：</b>` : ''}${line.text}
+        </div>
+        <div class="lore-foot">
+          <span class="lore-idx">${st.i + 1} / ${sc.lines.length}</span>
+          <span class="lore-hint">${last ? '点击此处关闭' : '点击继续 ▸'}</span>
+        </div>
+      </div>
+      <div class="lore-side ${isS ? 'act' : ''}">
+        <div class="lp-face" style="background-position:-0px -0px;background-position-x:-128px"></div>
+        <div class="lp-name">希尔瓦娜斯</div>
+      </div>
+    </div>`;
+}
+
+function loreNext() {
+  const st = G._lore;
+  if (!st) return;
+  const sc = DATA.LORE_SCENES[st.key];
+  if (st.i >= sc.lines.length - 1) { G._lore = null; renderLore(); return; }
+  st.i++;
+  if (typeof Sfx !== 'undefined') Sfx.play('click');
+  renderLore();
 }
 
 /* ---------------- 传家宝（古籍）---------------- */
@@ -3161,6 +3220,11 @@ function bindModal() {
   });
   /* ---------------- 传家宝 ---------------- */
   /* ---- 角色面板：特戒 / 传家宝 切换 ---- */
+  const loreB = document.getElementById('loreBox');
+  if (loreB && !loreB._bound) {
+    loreB._bound = true;
+    loreB.addEventListener('click', () => loreNext());
+  }
   body.querySelectorAll('[data-char-tab]').forEach(b => b.onclick = () => {
     G._charTab = b.dataset.charTab;
     if (typeof Sfx !== 'undefined') Sfx.play('click');

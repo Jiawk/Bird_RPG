@@ -8787,12 +8787,6 @@ function bindModal() {
     openModal('warehouse', '仓库 · 大木箱', warehouseHtml());
   });
   body.querySelectorAll('[data-idt-close]').forEach(el => el.onclick = () => closeModal());
-  body.querySelectorAll('[data-relic]').forEach(el => {
-    el.onmouseenter = () => {
-      const side = document.getElementById('mSide');
-      if (side) side.innerHTML = relicSideHtml(el.dataset.relic);
-    };
-  });
   const sideEl = document.getElementById('mSide');
   if (sideEl) {
     sideEl.addEventListener('click', ev => {

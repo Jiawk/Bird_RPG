@@ -699,6 +699,7 @@ function handleCommand(act) {
     case 'craft': toggleModal('craft', '锻造台', craftHtml); break;
     case 'warehouse': toggleModal('warehouse', '仓库 · 大木箱', warehouseHtml); break;
     case 'notice': openModal('notice', '公告牌', noticeHtml()); break;
+    case 'heirloom': G._hltPage = G._hltPage || 0; openModal('heirloom', '传家宝 · 古籍', heirloomHtml()); break;
     case 'tutorial': toggleModal('tutorial', '新手指引', tutorialHtml); break;
     case 'mail': toggleModal('mail', '邮箱', mailHtml); break;
     case 'ringup': toggleModal('ringup', '特戒强化', ringUpHtml); break;
@@ -1428,6 +1429,89 @@ function settingsHtml() {
       <div class="nr-info">删除角色，不可恢复</div></div>
       <button data-act-reset style="border-color:#6b2b2b;color:#ff8a7a">重开</button></div>
   </div>`;
+}
+
+/* ---------------- 传家宝（古籍）---------------- */
+function hltPagesHtml() {
+  const p = G.player;
+  const h = hltEnsure(p);
+  const idx = clamp(G._hltPage || 0, 0, DATA.HEIRLOOMS.length - 1);
+  const w = DATA.HEIRLOOMS[idx];
+  const owned = h.owned.includes(w.key);
+  const active = h.active === w.key;
+  const days = h.sign[w.key] || 0;
+  const signedToday = h.lastDay[w.key] === todayKey();
+  const need = w.days || 7;
+  const pct = Math.min(100, days / need * 100);
+  const clsName = (w.cls || []).map(c => DATA.CLASSES[c] ? DATA.CLASSES[c].name : c).join(' / ');
+
+  const statLine = (k, v) => {
+    const pctKeys = ['crit','critDmg','as','hit','cdr','skillDmg','dr','lifesteal'];
+    const nm = (typeof AFFIX_NAMES !== 'undefined' && AFFIX_NAMES[k]) ? AFFIX_NAMES[k] : k;
+    return `<span class="hb-stat"><i>${nm}</i><b>${pctKeys.includes(k) ? '+' + (v*100).toFixed(0) + '%' : '+' + Math.round(v)}</b></span>`;
+  };
+  const statHtml = Object.keys(w.stats).map(k => statLine(k, w.stats[k])).join('');
+
+  return `<div class="hb-book">
+    <div class="hb-page left">
+      <div class="hb-alias">「${w.alias}」</div>
+      <div class="hb-name" style="color:${w.color}">${w.name}</div>
+      <div class="hb-cls">适用职业：${clsName || '通用'}</div>
+      <div class="hb-hr"></div>
+      <div class="hb-sec-t">前世今生</div>
+      <div class="hb-lore">${w.lore}</div>
+      <div class="hb-sec-t">牛逼之处</div>
+      <div class="hb-fame">${w.fame}</div>
+    </div>
+
+    <div class="hb-page right">
+      <div class="hb-sec-t">传家宝属性（常驻，不占装备位）</div>
+      <div class="hb-stats">${statHtml}</div>
+      <div class="hb-fx">✦ ${w.fx}</div>
+
+      <div class="hb-hr"></div>
+      <div class="hb-sec-t">签到进度　${days} / ${need} 天</div>
+      <div class="hb-bar"><i style="width:${pct}%"></i></div>
+      <div class="hb-note">${owned ? '✅ 已获得此传家宝' : (signedToday ? '今天已签到，明天再来' : '每天可签到 1 次，累计 7 天获得')}</div>
+
+      <div class="hb-btns">
+        ${owned
+          ? `<button class="hb-b ${active ? 'on' : ''}" data-hlt-select="${w.key}" ${active ? 'disabled' : ''}>${active ? '✔ 使用中' : '选择此传家宝'}</button>
+             <button class="hb-b danger" data-hlt-drop="1" ${active ? '' : 'disabled'}>放弃此传家宝</button>`
+          : `<button class="hb-b" data-hlt-sign="${w.key}" ${signedToday ? 'disabled' : ''}>${signedToday ? '今日已签到' : '签到（' + days + '/' + need + '）'}</button>
+             <button class="hb-b danger" data-hlt-cancel="${w.key}" ${days ? '' : 'disabled'}>取消签到进度</button>`}
+      </div>
+      <div class="hb-foot">获取方式：签到累计 ${need} 天</div>
+    </div>
+
+    <div class="hb-flip left" data-hlt-page="${idx-1}" ${idx <= 0 ? 'style="display:none"' : ''}>‹</div>
+    <div class="hb-flip right" data-hlt-page="${idx+1}" ${idx >= DATA.HEIRLOOMS.length-1 ? 'style="display:none"' : ''}>›</div>
+    <div class="hb-idx">${idx+1} / ${DATA.HEIRLOOMS.length}</div>
+  </div>`;
+}
+
+function heirloomHtml() {
+  hltEnsure(G.player);
+  return `<div class="hb-wrap" id="hbWrap">${hltPagesHtml()}</div>`;
+}
+
+/* 翻页（带翻书动画 + 音效） */
+function hltGoPage(dir) {
+  const next = clamp((G._hltPage || 0) + dir, 0, DATA.HEIRLOOMS.length - 1);
+  if (next === (G._hltPage || 0)) return;
+  G._hltPage = next;
+  const wrap = document.getElementById('hbWrap');
+  if (typeof Sfx !== 'undefined') Sfx.page(dir > 0);
+  if (wrap) {
+    wrap.classList.remove('flip-fwd', 'flip-back');
+    void wrap.offsetWidth;
+    wrap.classList.add(dir > 0 ? 'flip-fwd' : 'flip-back');
+  }
+  setTimeout(() => {
+    const el = document.getElementById('hbWrap');
+    if (el) el.innerHTML = hltPagesHtml();
+    else openModal('heirloom', '传家宝 · 古籍', heirloomHtml());
+  }, 260);
 }
 
 /* ---------------- 新手指引 ---------------- */
@@ -2927,6 +3011,46 @@ function bindModal() {
     if (box) box.innerHTML = '<div class="lr-hint">转盘旋转中…</div>';
     setTimeout(render, 2300);
   });
+  /* ---------------- 传家宝 ---------------- */
+  body.querySelectorAll('[data-hlt-page]').forEach(b => b.onclick = () => {
+    hltGoPage(+b.dataset.hltPage - (G._hltPage || 0));
+  });
+  body.querySelectorAll('[data-hlt-sign]').forEach(b => b.onclick = () => {
+    const r = hltSign(G.player, b.dataset.hltSign);
+    if (!r.ok) { toast(r.msg); return; }
+    if (r.got) {
+      if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
+      bigAnnounce('📜 获得传家宝：' + (hltByKey(b.dataset.hltSign) || {}).name, '#ffd24a');
+      toast('🎉 签到满 7 天，获得传家宝！');
+    } else {
+      if (typeof Sfx !== 'undefined') Sfx.play('loot');
+      toast(`签到成功：${r.days} / ${r.need} 天`);
+    }
+    saveGame();
+    openModal('heirloom', '传家宝 · 古籍', heirloomHtml());
+  });
+  body.querySelectorAll('[data-hlt-cancel]').forEach(b => b.onclick = () => {
+    if (!confirm('确定取消签到进度吗？已累计的天数会清零。')) return;
+    hltCancelSign(G.player, b.dataset.hltCancel);
+    toast('已取消，进度清零');
+    saveGame();
+    openModal('heirloom', '传家宝 · 古籍', heirloomHtml());
+  });
+  body.querySelectorAll('[data-hlt-select]').forEach(b => b.onclick = () => {
+    const r = hltSelect(G.player, b.dataset.hltSelect);
+    if (!r.ok) { toast(r.msg); return; }
+    if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
+    toast('已装备传家宝');
+    saveGame();
+    openModal('heirloom', '传家宝 · 古籍', heirloomHtml());
+  });
+  body.querySelectorAll('[data-hlt-drop]').forEach(b => b.onclick = () => {
+    hltDrop(G.player);
+    toast('已放回书架（属性加成暂时失效）');
+    saveGame();
+    openModal('heirloom', '传家宝 · 古籍', heirloomHtml());
+  });
+
   body.querySelectorAll('[data-quest-nav]').forEach(b => b.onclick = () => {
     const rid = +b.dataset.questNav;
     const p = G.player, r = DATA.ROOMS[rid];

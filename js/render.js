@@ -976,6 +976,31 @@ function drawNPC(n) {
       CTX.beginPath(); CTX.arc(gx, gy - 20, 52, 0, 6.283); CTX.fill();
       CTX.drawImage(IMG.stele, gx - sz / 2, gy - sz + 10, sz, sz);
       npcDrawn = true;
+    } else if (n.kind === 'heirloom') {
+      // 传家宝：漂浮的金色古书
+      const cy = gy - 4 + Math.sin(G.time * 2) * 4;
+      const glow = CTX.createRadialGradient(gx, cy - 22, 3, gx, cy - 22, 50);
+      glow.addColorStop(0, 'rgba(255,210,74,.4)');
+      glow.addColorStop(1, 'rgba(255,210,74,0)');
+      CTX.fillStyle = glow;
+      CTX.beginPath(); CTX.arc(gx, cy - 22, 50, 0, 6.283); CTX.fill();
+      // 书体
+      CTX.fillStyle = '#6b3a1e';
+      CTX.fillRect(gx - 24, cy - 46, 48, 40);
+      CTX.fillStyle = '#8a4a26';
+      CTX.fillRect(gx - 24, cy - 46, 48, 5);
+      CTX.fillStyle = '#e8dcc0';
+      CTX.fillRect(gx - 19, cy - 41, 38, 30);
+      // 书页线
+      CTX.fillStyle = '#c8b89a';
+      for (let i = 0; i < 5; i++) CTX.fillRect(gx - 15, cy - 36 + i * 5, 30, 1);
+      // 书脊
+      CTX.fillStyle = '#c8973f';
+      CTX.fillRect(gx - 3, cy - 46, 6, 40);
+      // 书签
+      CTX.fillStyle = '#ffd24a';
+      CTX.fillRect(gx + 12, cy - 12, 6, 16);
+      npcDrawn = true;
     } else if (n.kind === 'tutorial') {
       // 新手指引：绿色光晕 + 书卷
       const cy = gy - 4;

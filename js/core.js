@@ -47,6 +47,7 @@ function createPlayer(raceKey, clsKey) {
     equip: {}, bag: [], warehouse: [], whPage: 0,
     mails: [], mailSeq: 1, mailTimer: 0, welfareClaimed: false,
     tutorial: { done: {}, seen: false },
+    heirloom: { active: null, sign: {}, days: {}, owned: [] },
     skills: {}, active: [], passive: [],
     cd: {}, buffs: [], dots: [],
     hp: 0, mp: 0,
@@ -159,7 +160,14 @@ function recalcStats(p) {
     if (p.hp / hpMaxTmp < 0.3) berserk = bonus.berserk;
   }
 
-  const armor = cls.base.armor + (p.level - 1) * cls.growth.armor + eq.armor;
+  // 传家宝加成（常驻，不占装备位）
+  const HL = (typeof hltBonus === 'function') ? hltBonus(p) : {};
+  if (HL.str) { A.str += HL.str; }
+  if (HL.agi) { A.agi += HL.agi; }
+  if (HL.int) { A.int += HL.int; }
+  if (HL.vit) { A.vit += HL.vit; }
+
+  const armor = cls.base.armor + (p.level - 1) * cls.growth.armor + eq.armor + (HL.armor || 0);
   const dr = armor / (armor + 1000 + p.level * 50) + (bonus.dr || 0);
 
   const baseHp = cls.base.hp + (p.level - 1) * cls.growth.hp + A.vit * 6 + p.level * 10;
@@ -167,23 +175,24 @@ function recalcStats(p) {
 
   p.stats = {
     A,
-    hpMax: Math.floor(baseHp * (1 + pas.hpPct) + eq.hp),
-    mpMax: Math.floor(baseMp + eq.mp),
-    power: power * (1 + berserk),
+    hpMax: Math.floor(baseHp * (1 + pas.hpPct) + eq.hp + (HL.hp || 0)),
+    mpMax: Math.floor(baseMp + eq.mp + (HL.mp || 0)),
+    power: (power + (HL.atk || 0) + (isMagic ? (HL.spell || 0) : 0)) * (1 + berserk),
     isMagic,
     skillMul: 1 + SB.skillDmg,
     weaponBonus, weaponFx, wtype: wpn ? wpn.wtype : null,
     setBonus: SB,
-    as: cls.base.as * (1 + A.agi / 500) * (1 + pas.asPct + bf.asPct),
-    crit: clamp(0.05 + A.agi / 2000 + eq.crit + pas.crit + (bonus.crit || 0), 0, 0.6),
-    critDmg: 1.5 + eq.critDmg + pas.critDmg + RFX.critDmg,
+    as: cls.base.as * (1 + A.agi / 500) * (1 + pas.asPct + bf.asPct + (HL.as || 0)),
+    crit: clamp(0.05 + A.agi / 2000 + eq.crit + pas.crit + (bonus.crit || 0) + (HL.crit || 0), 0, 0.6),
+    critDmg: 1.5 + eq.critDmg + pas.critDmg + RFX.critDmg + (HL.critDmg || 0),
     dodge: clamp(A.agi / 3000 + eq.dodge, 0, 0.3),
     armor,
-    dr: clamp(dr + bf.dr + (eq.dr || 0), 0, 0.85),
-    lifesteal: (eq.lifesteal || 0) + RFX.lifesteal + (RSET.lifesteal || 0),
+    dr: clamp(dr + bf.dr + (eq.dr || 0) + (HL.dr || 0), 0, 0.85),
+    lifesteal: (eq.lifesteal || 0) + RFX.lifesteal + (RSET.lifesteal || 0) + (HL.lifesteal || 0),
     finalDmg: (RSET.finalDmg || 0),
-    skillDmg: (eq.skillDmg || 0),
-    cdr: Math.min(0.6, eq.cdr || 0),
+    skillDmg: (eq.skillDmg || 0) + (HL.skillDmg || 0),
+    cdr: Math.min(0.6, (eq.cdr || 0) + (HL.cdr || 0)),
+    heirloom: p.heirloom && p.heirloom.active ? p.heirloom.active : null,
     relicSetCount: RSET.count,
     relicPct,
     mpRegen: (0.02 * (1 + (bonus.mpRegen || 0))),
@@ -806,6 +815,76 @@ function claimFirstKillRing(p, bossKey) {
   if (!ok) { p.ringClaimed[bossKey] = false; return { ok:false, msg:'背包已满' }; }
   recalcStats(p);
   return { ok:true, ring };
+}
+
+/* ---------------- 传家宝 ---------------- */
+function hltEnsure(p) {
+  if (!p.heirloom) p.heirloom = {};
+  const h = p.heirloom;
+  if (!h.sign) h.sign = {};        // key -> 已签到天数
+  if (!h.owned) h.owned = [];      // 已获得的 key
+  if (h.active === undefined) h.active = null;
+  if (!h.lastDay) h.lastDay = {};  // key -> 最后签到日期
+  return h;
+}
+function todayKey() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function hltByKey(k) { return DATA.HEIRLOOMS.find(x => x.key === k) || null; }
+
+/* 签到一天：返回 {ok, days, got} */
+function hltSign(p, key) {
+  const h = hltEnsure(p);
+  const w = hltByKey(key);
+  if (!w) return { ok:false, msg:'未知传家宝' };
+  if (h.owned.includes(key)) return { ok:false, msg:'你已经拥有这件传家宝了' };
+  const today = todayKey();
+  if (h.lastDay[key] === today) return { ok:false, msg:'今天已经签到过了，明天再来' };
+  h.lastDay[key] = today;
+  h.sign[key] = (h.sign[key] || 0) + 1;
+  let got = false;
+  if (h.sign[key] >= (w.days || 7)) {
+    h.sign[key] = 0;
+    if (!h.owned.includes(key)) h.owned.push(key);
+    got = true;
+  }
+  return { ok:true, days: h.sign[key], got, need: w.days || 7 };
+}
+
+/* 取消签到进度（清零） */
+function hltCancelSign(p, key) {
+  const h = hltEnsure(p);
+  h.sign[key] = 0;
+  delete h.lastDay[key];
+  return true;
+}
+
+/* 选择 / 放弃 */
+function hltSelect(p, key) {
+  const h = hltEnsure(p);
+  if (!h.owned.includes(key)) return { ok:false, msg:'还没有获得这件传家宝' };
+  h.active = key;
+  recalcStats(p);
+  return { ok:true };
+}
+function hltDrop(p) {
+  const h = hltEnsure(p);
+  h.active = null;
+  recalcStats(p);
+  return { ok:true };
+}
+
+/* 当前传家宝加成（供 recalcStats 调用） */
+function hltBonus(p) {
+  const out = { atk:0, spell:0, str:0, agi:0, int:0, vit:0, hp:0, mp:0,
+                crit:0, critDmg:0, as:0, hit:0, cdr:0, skillDmg:0, dr:0, lifesteal:0 };
+  const h = p.heirloom;
+  if (!h || !h.active) return out;
+  const w = hltByKey(h.active);
+  if (!w || !h.owned || !h.owned.includes(h.active)) return out;
+  for (const k in w.stats) out[k] = (out[k] || 0) + w.stats[k];
+  return out;
 }
 
 /* ---------------- 新手指引 ---------------- */

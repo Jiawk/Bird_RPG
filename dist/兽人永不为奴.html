@@ -1671,6 +1671,81 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 #questTracker .qt-head{cursor:grab}
 #questTracker.dragging .qt-head{cursor:grabbing}
 
+/* ============ 传家宝 · 古籍 ============ */
+.hb-wrap{perspective:1400px}
+.hb-book{display:grid;grid-template-columns:1fr 1fr;gap:0;position:relative;
+  background:linear-gradient(180deg,#2a1f12,#150f08);
+  border:3px solid #6b4a24;border-radius:5px;
+  box-shadow:inset 0 0 40px rgba(0,0,0,.7),0 10px 30px rgba(0,0,0,.6)}
+.hb-book::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:10px;
+  transform:translateX(-50%);background:linear-gradient(90deg,rgba(0,0,0,.55),rgba(120,90,40,.5),rgba(0,0,0,.55));
+  pointer-events:none;z-index:2}
+.hb-page{padding:16px 18px;font-size:12px;line-height:1.85;color:#d8cfb8;
+  min-height:420px;max-height:60vh;overflow:auto}
+.hb-page.left{background:linear-gradient(90deg,rgba(232,220,192,.06),rgba(0,0,0,.15));
+  border-right:1px solid rgba(0,0,0,.4)}
+.hb-page.right{background:linear-gradient(270deg,rgba(232,220,192,.05),rgba(0,0,0,.15))}
+.hb-alias{font-size:11px;color:#8f8570;letter-spacing:.2em}
+.hb-name{font-family:var(--serif);font-size:17px;line-height:1.4;margin:4px 0 6px;
+  letter-spacing:.04em;text-shadow:0 0 14px rgba(255,210,74,.35)}
+.hb-cls{font-size:10.5px;color:#7d8f6a;margin-bottom:8px}
+.hb-hr{height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,.5),transparent);
+  margin:10px 0}
+.hb-sec-t{font-family:var(--serif);font-size:12.5px;color:#ffd98a;letter-spacing:.14em;margin-bottom:6px}
+.hb-lore,.hb-fame{font-size:11.5px;line-height:1.95;color:#c8bfa8;text-align:justify}
+.hb-fame{margin-top:8px;padding:8px 10px;border-left:2px solid #8a6d3b;
+  background:rgba(72,56,20,.22);border-radius:2px;color:#e0d6bc}
+.hb-stats{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-bottom:8px}
+.hb-stat{display:flex;justify-content:space-between;font-size:11.5px;
+  padding:3px 6px;border-radius:2px;background:rgba(255,255,255,.03)}
+.hb-stat i{color:#8f8570;font-style:normal}
+.hb-stat b{color:#5fdc4a}
+.hb-fx{font-size:11.5px;color:#ffd24a;padding:7px 10px;border-radius:3px;
+  background:rgba(90,70,24,.35);border:1px dashed #8a6d3f;line-height:1.7}
+.hb-bar{height:9px;border-radius:5px;background:rgba(0,0,0,.5);overflow:hidden;
+  border:1px solid #4a3d28;margin:4px 0 6px}
+.hb-bar i{display:block;height:100%;background:linear-gradient(90deg,#8a6d2f,#ffd24a);
+  transition:width .3s}
+.hb-note{font-size:10.5px;color:#8f8570}
+.hb-btns{display:flex;flex-direction:column;gap:7px;margin-top:12px}
+.hb-b{padding:9px 10px;font-size:12.5px;font-family:var(--serif);border-radius:3px;cursor:pointer;
+  color:#ffd98a;border:1px solid #8a6d3f;
+  background:linear-gradient(180deg,rgba(72,56,20,.95),rgba(20,15,6,.98))}
+.hb-b:hover:not([disabled]){box-shadow:0 0 12px rgba(255,210,74,.5)}
+.hb-b[disabled]{opacity:.4;cursor:not-allowed}
+.hb-b.on{border-color:#5fdc4a;color:#b9ffb0;
+  background:linear-gradient(180deg,rgba(30,72,26,.95),rgba(8,20,8,.98))}
+.hb-b.danger{border-color:#6b2b3b;color:#ff8a9a;
+  background:linear-gradient(180deg,rgba(70,26,34,.95),rgba(20,8,10,.98))}
+.hb-foot{margin-top:10px;font-size:10.5px;color:#6b6558;text-align:center}
+.hb-flip{position:absolute;top:50%;transform:translateY(-50%);z-index:5;
+  width:34px;height:64px;line-height:60px;text-align:center;cursor:pointer;
+  font-size:26px;color:#ffd24a;user-select:none;border-radius:4px;
+  background:linear-gradient(180deg,rgba(60,48,28,.95),rgba(14,10,6,.98));
+  border:1px solid #8a6d3f;box-shadow:0 2px 10px rgba(0,0,0,.6)}
+.hb-flip:hover{box-shadow:0 0 14px rgba(255,210,74,.6);color:#fff2c4}
+.hb-flip.left{left:-14px}
+.hb-flip.right{right:-14px}
+.hb-idx{position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);
+  font-size:10.5px;color:#8f8570;letter-spacing:.1em}
+
+/* 翻页动画 */
+@keyframes hbFwd{from{transform:rotateY(0) scale(1);opacity:1}
+  50%{transform:rotateY(-22deg) scale(.97);opacity:.55}
+  to{transform:rotateY(0) scale(1);opacity:1}}
+@keyframes hbBack{from{transform:rotateY(0) scale(1);opacity:1}
+  50%{transform:rotateY(22deg) scale(.97);opacity:.55}
+  to{transform:rotateY(0) scale(1);opacity:1}}
+.hb-wrap.flip-fwd .hb-book{animation:hbFwd .26s ease-out;transform-origin:left center}
+.hb-wrap.flip-back .hb-book{animation:hbBack .26s ease-out;transform-origin:right center}
+@media (max-width:700px){
+  .hb-book{grid-template-columns:1fr}
+  .hb-page{min-height:0;max-height:none}
+  .hb-page.left{border-right:none;border-bottom:1px solid rgba(0,0,0,.4)}
+  .hb-book::before{display:none}
+  .hb-stats{grid-template-columns:1fr}
+}
+
 </style>
 <script id="orc-cfg" type="application/json">{}</script>
 </head>
@@ -2453,6 +2528,17 @@ BOSS击杀凭证 ×10　10%<br>
 <b>白嫖途径</b>：<br>
 · 邮箱里有一封<b>一次性福利</b>（1000 凭证）<br>
 · <b>每晚 20 点</b>在线，邮箱自动发 <b>100 抽</b>` },
+  { key:'heirloom', title:'如何获得传家宝', reward:'gold',
+    body:`主城找 <b>传家宝 · 古籍</b>（新手指引左边），打开一本可以翻页的古书。<br><br>
+每一页记载一件魔兽经典武器：<b>风剑、橙锤、鸡腿杖、蛋刀、橙弓、奶橙锤、橙斧、CTM 橙杖、霜之哀伤</b>。<br><br>
+<b>获取方式：签到</b><br>
+· 每件武器独立签到，<b>每天 1 次</b><br>
+· 累计 <b>7 天</b>即可获得该传家宝<br>
+· 「取消签到进度」会把已累计天数<b>清零</b><br><br>
+<b>获得之后</b><br>
+· 「选择此传家宝」→ 属性加成生效（<b>同时只能选一件</b>）<br>
+· 「放弃此传家宝」→ 收回加成，下次再选<br>
+· 传家宝加成<b>常驻，不占装备位</b>，和装备叠加` },
   { key:'shop', title:'如何在商店买东西', reward:'gold',
     body:`主城找 <b>商人 · 赵帅帅</b>。<br><br>
 <b>第一行</b>：红药 / 蓝药<br>
@@ -2461,6 +2547,75 @@ BOSS击杀凭证 ×10　10%<br>
 点格子才会在右侧显示详情和兑换按钮（不是悬停）。<br>
 圣物单件属性强于红装，集齐 3/5/7 件还有套装效果。<br><br>
 <b>抽奖专员 · 李准</b> 那里可以用 BOSS击杀凭证抽奖。` }
+];
+
+
+/* ---------------- 传家宝（Heirloom）----------------
+   9 件，数据来自《传家宝武器.xlsx》
+   stats 为常驻加成（不替换装备，独立叠加）；fx 为特效说明 */
+DATA.HEIRLOOMS = [
+  { key:'thunderfury', name:'雷霆之怒，逐风者的祝福之剑', alias:'风剑', cls:['warrior','assassin'],
+    color:'#7fd4ff', days:7,
+    lore:`风元素领主桑德兰王子被炎魔拉格纳罗斯偷袭封印，灵魂被拆成左右两半，禁锢在熔火之心的加尔与迦顿男爵身上。玩家集齐左右两半脸，完成漫长任务释放王子灵魂，才铸成此剑——魔兽世界第一把真正"出圈"的橙武。`,
+    fame:`击中时触发连锁闪电，并降低目标 25% 攻速。当年防战的群拉神器，仇恨极强；自带蓝色闪电特效，颜值天花板。它的台词至今被反复引用：「英雄，愿你有一份不悔的爱情。」`,
+    stats:{ atk:520, str:180, agi:120, crit:0.08, hit:0.06, as:0.05 },
+    fx:'连锁闪电：普攻 20% 概率追加一次雷电伤害' },
+
+  { key:'sulfuras', name:'萨弗拉斯，炎魔拉格纳罗斯之手', alias:'橙锤', cls:['warrior','assassin'],
+    color:'#ff7a2a', days:7,
+    lore:`炎魔之王拉格纳罗斯本人的武器，出自熔火之心。玩家要先锻造出萨弗隆战锤，再用大螺丝掉落的「萨弗拉斯之眼」合成，是魔兽最早的橙色武器之一。`,
+    fame:`当年版本伤害上限最高的双手武器。命中触发火球灼烧，近战反伤火焰伤害；造型就是大螺丝手里的熔岩巨锤，辨识度拉满。萨满配合风怒图腾，伤害爆炸。`,
+    stats:{ atk:680, str:260, vit:120, critDmg:0.35, hp:1200 },
+    fx:'熔岩灼烧：命中附加持续火焰伤害' },
+
+  { key:'atiesh', name:'埃提耶什，守护者的传说之杖', alias:'鸡腿杖', cls:['mage'],
+    color:'#b48cff', days:7,
+    lore:`提瑞斯法守护者麦迪文的法杖，正是它打开了黑暗之门。要在纳克萨玛斯收集 40 块碎片，历经多轮任务才能合成。TBC 上线后永久绝版，如今再无获取途径。`,
+    fame:`给小队高额法强、法爆与回蓝光环；自带「卡拉赞传送门」，全队一键直达。不同职业的杖尾飘带颜色不同，是全游戏最稀有的橙武之一。`,
+    stats:{ spell:760, int:260, mp:1500, crit:0.10, cdr:0.06, skillDmg:0.06 },
+    fx:'守护者光环：提升全队法术强度与回蓝' },
+
+  { key:'warglaive', name:'埃辛诺斯战刃', alias:'蛋刀', cls:['assassin'],
+    color:'#5fdc4a', days:7,
+    lore:`上古之战中，伊利丹击杀恶魔指挥官埃辛诺斯，夺取了这对恶魔战刃。黑暗神殿尾王伊利丹掉落，分主手副手，必须凑齐一整套才算毕业。`,
+    fame:`套装特效：对恶魔攻强 +200，攻击有概率触发高额急速。TBC 物理 DPS 的毕业天花板，绿邪能弯刃，幻化人气第一。当年流传一句话：「蛋刀一出，再无兄弟。」`,
+    stats:{ atk:600, agi:240, crit:0.12, as:0.10, critDmg:0.40 },
+    fx:'邪能急速：攻击 25% 概率触发急速' },
+
+  { key:'thori', name:'索利达尔，群星之怒', alias:'橙弓', cls:['archer'],
+    color:'#ffd24a', days:7,
+    lore:`太阳井高地的基尔加丹掉落，由太阳井能量灌注而成的精灵风格星辰长弓，是猎人专属的传说武器。`,
+    fame:`不需要携带箭矢，自动生成魔法箭，省去背包位置。面板伤害远超同期所有远程武器，稳固射击收益巨大——猎人信仰武器。`,
+    stats:{ atk:540, agi:260, as:0.12, crit:0.09, hit:0.08 },
+    fx:'星辰之箭：无需箭矢，攻击附带星辉伤害' },
+
+  { key:'valanyr', name:'瓦兰奈尔，远古王者之锤', alias:'奶橙锤', cls:['archer','mage'],
+    color:'#ffd98a', days:7,
+    lore:`泰坦铸造，赐予初代土灵之王。洛肯被腐化后打碎了这把锤子，碎片散落奥杜尔；玩家集齐 30 块碎片，在尤格萨隆体内重铸修复。`,
+    fame:`魔兽唯一一把治疗向橙武。治疗法术触发护盾，吸收本次治疗量 15% 的伤害，抬血之后还给队友保命盾，开荒神器，金色泰坦风格。`,
+    stats:{ hp:2600, vit:220, spell:420, dr:0.06, lifesteal:0.05 },
+    fx:'泰坦护盾：治疗时为目标附加吸收盾' },
+
+  { key:'shadowmourne', name:'影之哀伤', alias:'橙斧', cls:['warrior','assassin'],
+    color:'#8fd8ff', days:7,
+    lore:`ICC 冰冠堡垒中，灰烬审判军为对抗巫妖王、对抗霜之哀伤而打造。任务漫长，需要吸收上千亡魂，用萨隆邪铁与冰封王座碎片铸造，与霜之哀伤同源相抗。`,
+    fame:`攻击吸取灵魂碎片，叠满 10 层释放 AOE 暗影伤害，同时给自己巨额力量 buff。冰蓝色符文巨斧，WLK 版本物理输出天花板，配套还有玩具与坐骑奖励。`,
+    stats:{ atk:720, str:300, crit:0.10, critDmg:0.50, hp:1000 },
+    fx:'噬魂：叠满 10 层释放暗影 AOE' },
+
+  { key:'dragonwrath', name:'巨龙之怒，泰蕾苟萨的寄魂杖', alias:'CTM 橙杖', cls:['mage'],
+    color:'#4ad4ff', days:7,
+    lore:`蓝龙泰蕾苟萨为阻止死亡之翼的阴谋而牺牲，灵魂被封进世界树枝条做成的法杖。火焰之地任务线逐步升级，做完全公会都能拿到小泰蕾苟萨宠物。`,
+    fame:`伤害法术有概率复制一次伤害（含 DOT 与爆发法术）；使用可以变身蓝龙高速飞行，全图飞驰，是 CTM 版本的法系毕业武器。`,
+    stats:{ spell:820, int:280, crit:0.11, critDmg:0.45, skillDmg:0.10, cdr:0.04 },
+    fx:'法术复制：伤害法术 15% 概率复制一次' },
+
+  { key:'frostmourne', name:'霜之哀伤', alias:'孝子剑', cls:['warrior','assassin'],
+    color:'#a8d8ff', days:7,
+    lore:`恐惧魔王奉基尔加丹之命锻造，用来囚禁巫妖王耐奥祖的意志——一个精心布置的陷阱，封在诺森德的冰穴中，专门引诱强大的战士前来拾取。洛丹伦王子阿尔萨斯为对抗瘟疫、为复仇，不顾警告拔出了它，灵魂当场被吞噬，堕落为死亡骑士。他持剑屠戮洛丹伦、复活克尔苏加德，最终登上冰封王座与耐奥祖融合，成为新的巫妖王。ICC 决战中，弗丁举起灰烬使者将霜之哀伤劈碎，剑内囚禁的万千亡魂终于得到释放——原版霜之哀伤就此毁灭，玩家永远无法获取，也无法幻化。`,
+    fame:`噬魂诅咒：击杀目标即吞噬其灵魂，不断壮大自身，同时缓慢侵蚀持有者的灵魂；寒冰符文：自带冰霜瘟疫与死灵法术，挥剑便能召唤亡灵；灵魂连通：巫妖王可以透过剑看到持有者所见所闻，远程操控其意志。魔兽剧情第一神器，悲剧故事的天花板，名气甚至超过绝大多数橙武。`,
+    stats:{ atk:900, str:380, crit:0.15, critDmg:0.60, lifesteal:0.08, hp:1500 },
+    fx:'噬魂诅咒：击杀回复生命，但持续侵蚀灵魂' }
 ];
 
 DATA.RING_DROP_PCT = 0.5;   // BOSS 掉特戒基础概率（%）
@@ -3058,6 +3213,7 @@ function createPlayer(raceKey, clsKey) {
     equip: {}, bag: [], warehouse: [], whPage: 0,
     mails: [], mailSeq: 1, mailTimer: 0, welfareClaimed: false,
     tutorial: { done: {}, seen: false },
+    heirloom: { active: null, sign: {}, days: {}, owned: [] },
     skills: {}, active: [], passive: [],
     cd: {}, buffs: [], dots: [],
     hp: 0, mp: 0,
@@ -3170,7 +3326,14 @@ function recalcStats(p) {
     if (p.hp / hpMaxTmp < 0.3) berserk = bonus.berserk;
   }
 
-  const armor = cls.base.armor + (p.level - 1) * cls.growth.armor + eq.armor;
+  // 传家宝加成（常驻，不占装备位）
+  const HL = (typeof hltBonus === 'function') ? hltBonus(p) : {};
+  if (HL.str) { A.str += HL.str; }
+  if (HL.agi) { A.agi += HL.agi; }
+  if (HL.int) { A.int += HL.int; }
+  if (HL.vit) { A.vit += HL.vit; }
+
+  const armor = cls.base.armor + (p.level - 1) * cls.growth.armor + eq.armor + (HL.armor || 0);
   const dr = armor / (armor + 1000 + p.level * 50) + (bonus.dr || 0);
 
   const baseHp = cls.base.hp + (p.level - 1) * cls.growth.hp + A.vit * 6 + p.level * 10;
@@ -3178,23 +3341,24 @@ function recalcStats(p) {
 
   p.stats = {
     A,
-    hpMax: Math.floor(baseHp * (1 + pas.hpPct) + eq.hp),
-    mpMax: Math.floor(baseMp + eq.mp),
-    power: power * (1 + berserk),
+    hpMax: Math.floor(baseHp * (1 + pas.hpPct) + eq.hp + (HL.hp || 0)),
+    mpMax: Math.floor(baseMp + eq.mp + (HL.mp || 0)),
+    power: (power + (HL.atk || 0) + (isMagic ? (HL.spell || 0) : 0)) * (1 + berserk),
     isMagic,
     skillMul: 1 + SB.skillDmg,
     weaponBonus, weaponFx, wtype: wpn ? wpn.wtype : null,
     setBonus: SB,
-    as: cls.base.as * (1 + A.agi / 500) * (1 + pas.asPct + bf.asPct),
-    crit: clamp(0.05 + A.agi / 2000 + eq.crit + pas.crit + (bonus.crit || 0), 0, 0.6),
-    critDmg: 1.5 + eq.critDmg + pas.critDmg + RFX.critDmg,
+    as: cls.base.as * (1 + A.agi / 500) * (1 + pas.asPct + bf.asPct + (HL.as || 0)),
+    crit: clamp(0.05 + A.agi / 2000 + eq.crit + pas.crit + (bonus.crit || 0) + (HL.crit || 0), 0, 0.6),
+    critDmg: 1.5 + eq.critDmg + pas.critDmg + RFX.critDmg + (HL.critDmg || 0),
     dodge: clamp(A.agi / 3000 + eq.dodge, 0, 0.3),
     armor,
-    dr: clamp(dr + bf.dr + (eq.dr || 0), 0, 0.85),
-    lifesteal: (eq.lifesteal || 0) + RFX.lifesteal + (RSET.lifesteal || 0),
+    dr: clamp(dr + bf.dr + (eq.dr || 0) + (HL.dr || 0), 0, 0.85),
+    lifesteal: (eq.lifesteal || 0) + RFX.lifesteal + (RSET.lifesteal || 0) + (HL.lifesteal || 0),
     finalDmg: (RSET.finalDmg || 0),
-    skillDmg: (eq.skillDmg || 0),
-    cdr: Math.min(0.6, eq.cdr || 0),
+    skillDmg: (eq.skillDmg || 0) + (HL.skillDmg || 0),
+    cdr: Math.min(0.6, (eq.cdr || 0) + (HL.cdr || 0)),
+    heirloom: p.heirloom && p.heirloom.active ? p.heirloom.active : null,
     relicSetCount: RSET.count,
     relicPct,
     mpRegen: (0.02 * (1 + (bonus.mpRegen || 0))),
@@ -3819,6 +3983,76 @@ function claimFirstKillRing(p, bossKey) {
   return { ok:true, ring };
 }
 
+/* ---------------- 传家宝 ---------------- */
+function hltEnsure(p) {
+  if (!p.heirloom) p.heirloom = {};
+  const h = p.heirloom;
+  if (!h.sign) h.sign = {};        // key -> 已签到天数
+  if (!h.owned) h.owned = [];      // 已获得的 key
+  if (h.active === undefined) h.active = null;
+  if (!h.lastDay) h.lastDay = {};  // key -> 最后签到日期
+  return h;
+}
+function todayKey() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function hltByKey(k) { return DATA.HEIRLOOMS.find(x => x.key === k) || null; }
+
+/* 签到一天：返回 {ok, days, got} */
+function hltSign(p, key) {
+  const h = hltEnsure(p);
+  const w = hltByKey(key);
+  if (!w) return { ok:false, msg:'未知传家宝' };
+  if (h.owned.includes(key)) return { ok:false, msg:'你已经拥有这件传家宝了' };
+  const today = todayKey();
+  if (h.lastDay[key] === today) return { ok:false, msg:'今天已经签到过了，明天再来' };
+  h.lastDay[key] = today;
+  h.sign[key] = (h.sign[key] || 0) + 1;
+  let got = false;
+  if (h.sign[key] >= (w.days || 7)) {
+    h.sign[key] = 0;
+    if (!h.owned.includes(key)) h.owned.push(key);
+    got = true;
+  }
+  return { ok:true, days: h.sign[key], got, need: w.days || 7 };
+}
+
+/* 取消签到进度（清零） */
+function hltCancelSign(p, key) {
+  const h = hltEnsure(p);
+  h.sign[key] = 0;
+  delete h.lastDay[key];
+  return true;
+}
+
+/* 选择 / 放弃 */
+function hltSelect(p, key) {
+  const h = hltEnsure(p);
+  if (!h.owned.includes(key)) return { ok:false, msg:'还没有获得这件传家宝' };
+  h.active = key;
+  recalcStats(p);
+  return { ok:true };
+}
+function hltDrop(p) {
+  const h = hltEnsure(p);
+  h.active = null;
+  recalcStats(p);
+  return { ok:true };
+}
+
+/* 当前传家宝加成（供 recalcStats 调用） */
+function hltBonus(p) {
+  const out = { atk:0, spell:0, str:0, agi:0, int:0, vit:0, hp:0, mp:0,
+                crit:0, critDmg:0, as:0, hit:0, cdr:0, skillDmg:0, dr:0, lifesteal:0 };
+  const h = p.heirloom;
+  if (!h || !h.active) return out;
+  const w = hltByKey(h.active);
+  if (!w || !h.owned || !h.owned.includes(h.active)) return out;
+  for (const k in w.stats) out[k] = (out[k] || 0) + w.stats[k];
+  return out;
+}
+
 /* ---------------- 新手指引 ---------------- */
 function tutEnsure(p) {
   if (!p.tutorial) p.tutorial = { done: {}, seen: false };
@@ -4434,7 +4668,8 @@ function buildTown() {
     { id: nextId(), kind: 'tower',    name: '试炼之塔 · 入口',  ...P(0.30, 0.62), r: 26, color: '#b45cff' },
     { id: nextId(), kind: 'warehouse',name: '仓库 · 大木箱',      ...P(0.62, 0.32), r: 26, color: '#c8973f' },
     { id: nextId(), kind: 'notice',   name: '公告牌',           ...P(0.80, 0.46), r: 26, color: '#ffd24a' },
-    { id: nextId(), kind: 'tutorial', name: '新手指引',         ...P(0.62, 0.74), r: 24, color: '#5fd45f' }
+    { id: nextId(), kind: 'tutorial', name: '新手指引',         ...P(0.62, 0.74), r: 24, color: '#5fd45f' },
+    { id: nextId(), kind: 'heirloom', name: '传家宝 · 古籍',    ...P(0.44, 0.72), r: 26, color: '#ffd24a' }
   ];
 }
 
@@ -6171,6 +6406,31 @@ function drawNPC(n) {
       CTX.beginPath(); CTX.arc(gx, gy - 20, 52, 0, 6.283); CTX.fill();
       CTX.drawImage(IMG.stele, gx - sz / 2, gy - sz + 10, sz, sz);
       npcDrawn = true;
+    } else if (n.kind === 'heirloom') {
+      // 传家宝：漂浮的金色古书
+      const cy = gy - 4 + Math.sin(G.time * 2) * 4;
+      const glow = CTX.createRadialGradient(gx, cy - 22, 3, gx, cy - 22, 50);
+      glow.addColorStop(0, 'rgba(255,210,74,.4)');
+      glow.addColorStop(1, 'rgba(255,210,74,0)');
+      CTX.fillStyle = glow;
+      CTX.beginPath(); CTX.arc(gx, cy - 22, 50, 0, 6.283); CTX.fill();
+      // 书体
+      CTX.fillStyle = '#6b3a1e';
+      CTX.fillRect(gx - 24, cy - 46, 48, 40);
+      CTX.fillStyle = '#8a4a26';
+      CTX.fillRect(gx - 24, cy - 46, 48, 5);
+      CTX.fillStyle = '#e8dcc0';
+      CTX.fillRect(gx - 19, cy - 41, 38, 30);
+      // 书页线
+      CTX.fillStyle = '#c8b89a';
+      for (let i = 0; i < 5; i++) CTX.fillRect(gx - 15, cy - 36 + i * 5, 30, 1);
+      // 书脊
+      CTX.fillStyle = '#c8973f';
+      CTX.fillRect(gx - 3, cy - 46, 6, 40);
+      // 书签
+      CTX.fillStyle = '#ffd24a';
+      CTX.fillRect(gx + 12, cy - 12, 6, 16);
+      npcDrawn = true;
     } else if (n.kind === 'tutorial') {
       // 新手指引：绿色光晕 + 书卷
       const cy = gy - 4;
@@ -7078,6 +7338,7 @@ function handleCommand(act) {
     case 'craft': toggleModal('craft', '锻造台', craftHtml); break;
     case 'warehouse': toggleModal('warehouse', '仓库 · 大木箱', warehouseHtml); break;
     case 'notice': openModal('notice', '公告牌', noticeHtml()); break;
+    case 'heirloom': G._hltPage = G._hltPage || 0; openModal('heirloom', '传家宝 · 古籍', heirloomHtml()); break;
     case 'tutorial': toggleModal('tutorial', '新手指引', tutorialHtml); break;
     case 'mail': toggleModal('mail', '邮箱', mailHtml); break;
     case 'ringup': toggleModal('ringup', '特戒强化', ringUpHtml); break;
@@ -7807,6 +8068,89 @@ function settingsHtml() {
       <div class="nr-info">删除角色，不可恢复</div></div>
       <button data-act-reset style="border-color:#6b2b2b;color:#ff8a7a">重开</button></div>
   </div>`;
+}
+
+/* ---------------- 传家宝（古籍）---------------- */
+function hltPagesHtml() {
+  const p = G.player;
+  const h = hltEnsure(p);
+  const idx = clamp(G._hltPage || 0, 0, DATA.HEIRLOOMS.length - 1);
+  const w = DATA.HEIRLOOMS[idx];
+  const owned = h.owned.includes(w.key);
+  const active = h.active === w.key;
+  const days = h.sign[w.key] || 0;
+  const signedToday = h.lastDay[w.key] === todayKey();
+  const need = w.days || 7;
+  const pct = Math.min(100, days / need * 100);
+  const clsName = (w.cls || []).map(c => DATA.CLASSES[c] ? DATA.CLASSES[c].name : c).join(' / ');
+
+  const statLine = (k, v) => {
+    const pctKeys = ['crit','critDmg','as','hit','cdr','skillDmg','dr','lifesteal'];
+    const nm = (typeof AFFIX_NAMES !== 'undefined' && AFFIX_NAMES[k]) ? AFFIX_NAMES[k] : k;
+    return `<span class="hb-stat"><i>${nm}</i><b>${pctKeys.includes(k) ? '+' + (v*100).toFixed(0) + '%' : '+' + Math.round(v)}</b></span>`;
+  };
+  const statHtml = Object.keys(w.stats).map(k => statLine(k, w.stats[k])).join('');
+
+  return `<div class="hb-book">
+    <div class="hb-page left">
+      <div class="hb-alias">「${w.alias}」</div>
+      <div class="hb-name" style="color:${w.color}">${w.name}</div>
+      <div class="hb-cls">适用职业：${clsName || '通用'}</div>
+      <div class="hb-hr"></div>
+      <div class="hb-sec-t">前世今生</div>
+      <div class="hb-lore">${w.lore}</div>
+      <div class="hb-sec-t">牛逼之处</div>
+      <div class="hb-fame">${w.fame}</div>
+    </div>
+
+    <div class="hb-page right">
+      <div class="hb-sec-t">传家宝属性（常驻，不占装备位）</div>
+      <div class="hb-stats">${statHtml}</div>
+      <div class="hb-fx">✦ ${w.fx}</div>
+
+      <div class="hb-hr"></div>
+      <div class="hb-sec-t">签到进度　${days} / ${need} 天</div>
+      <div class="hb-bar"><i style="width:${pct}%"></i></div>
+      <div class="hb-note">${owned ? '✅ 已获得此传家宝' : (signedToday ? '今天已签到，明天再来' : '每天可签到 1 次，累计 7 天获得')}</div>
+
+      <div class="hb-btns">
+        ${owned
+          ? `<button class="hb-b ${active ? 'on' : ''}" data-hlt-select="${w.key}" ${active ? 'disabled' : ''}>${active ? '✔ 使用中' : '选择此传家宝'}</button>
+             <button class="hb-b danger" data-hlt-drop="1" ${active ? '' : 'disabled'}>放弃此传家宝</button>`
+          : `<button class="hb-b" data-hlt-sign="${w.key}" ${signedToday ? 'disabled' : ''}>${signedToday ? '今日已签到' : '签到（' + days + '/' + need + '）'}</button>
+             <button class="hb-b danger" data-hlt-cancel="${w.key}" ${days ? '' : 'disabled'}>取消签到进度</button>`}
+      </div>
+      <div class="hb-foot">获取方式：签到累计 ${need} 天</div>
+    </div>
+
+    <div class="hb-flip left" data-hlt-page="${idx-1}" ${idx <= 0 ? 'style="display:none"' : ''}>‹</div>
+    <div class="hb-flip right" data-hlt-page="${idx+1}" ${idx >= DATA.HEIRLOOMS.length-1 ? 'style="display:none"' : ''}>›</div>
+    <div class="hb-idx">${idx+1} / ${DATA.HEIRLOOMS.length}</div>
+  </div>`;
+}
+
+function heirloomHtml() {
+  hltEnsure(G.player);
+  return `<div class="hb-wrap" id="hbWrap">${hltPagesHtml()}</div>`;
+}
+
+/* 翻页（带翻书动画 + 音效） */
+function hltGoPage(dir) {
+  const next = clamp((G._hltPage || 0) + dir, 0, DATA.HEIRLOOMS.length - 1);
+  if (next === (G._hltPage || 0)) return;
+  G._hltPage = next;
+  const wrap = document.getElementById('hbWrap');
+  if (typeof Sfx !== 'undefined') Sfx.page(dir > 0);
+  if (wrap) {
+    wrap.classList.remove('flip-fwd', 'flip-back');
+    void wrap.offsetWidth;
+    wrap.classList.add(dir > 0 ? 'flip-fwd' : 'flip-back');
+  }
+  setTimeout(() => {
+    const el = document.getElementById('hbWrap');
+    if (el) el.innerHTML = hltPagesHtml();
+    else openModal('heirloom', '传家宝 · 古籍', heirloomHtml());
+  }, 260);
 }
 
 /* ---------------- 新手指引 ---------------- */
@@ -9306,6 +9650,46 @@ function bindModal() {
     if (box) box.innerHTML = '<div class="lr-hint">转盘旋转中…</div>';
     setTimeout(render, 2300);
   });
+  /* ---------------- 传家宝 ---------------- */
+  body.querySelectorAll('[data-hlt-page]').forEach(b => b.onclick = () => {
+    hltGoPage(+b.dataset.hltPage - (G._hltPage || 0));
+  });
+  body.querySelectorAll('[data-hlt-sign]').forEach(b => b.onclick = () => {
+    const r = hltSign(G.player, b.dataset.hltSign);
+    if (!r.ok) { toast(r.msg); return; }
+    if (r.got) {
+      if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
+      bigAnnounce('📜 获得传家宝：' + (hltByKey(b.dataset.hltSign) || {}).name, '#ffd24a');
+      toast('🎉 签到满 7 天，获得传家宝！');
+    } else {
+      if (typeof Sfx !== 'undefined') Sfx.play('loot');
+      toast(`签到成功：${r.days} / ${r.need} 天`);
+    }
+    saveGame();
+    openModal('heirloom', '传家宝 · 古籍', heirloomHtml());
+  });
+  body.querySelectorAll('[data-hlt-cancel]').forEach(b => b.onclick = () => {
+    if (!confirm('确定取消签到进度吗？已累计的天数会清零。')) return;
+    hltCancelSign(G.player, b.dataset.hltCancel);
+    toast('已取消，进度清零');
+    saveGame();
+    openModal('heirloom', '传家宝 · 古籍', heirloomHtml());
+  });
+  body.querySelectorAll('[data-hlt-select]').forEach(b => b.onclick = () => {
+    const r = hltSelect(G.player, b.dataset.hltSelect);
+    if (!r.ok) { toast(r.msg); return; }
+    if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
+    toast('已装备传家宝');
+    saveGame();
+    openModal('heirloom', '传家宝 · 古籍', heirloomHtml());
+  });
+  body.querySelectorAll('[data-hlt-drop]').forEach(b => b.onclick = () => {
+    hltDrop(G.player);
+    toast('已放回书架（属性加成暂时失效）');
+    saveGame();
+    openModal('heirloom', '传家宝 · 古籍', heirloomHtml());
+  });
+
   body.querySelectorAll('[data-quest-nav]').forEach(b => b.onclick = () => {
     const rid = +b.dataset.questNav;
     const p = G.player, r = DATA.ROOMS[rid];

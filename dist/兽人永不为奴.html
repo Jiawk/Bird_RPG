@@ -6508,7 +6508,7 @@ function uiInit() {
       if (e.target.closest('[data-qt-claim-all]')) { claimAllQuests(); return; }
       if (e.target.closest('[data-qt-accept-all]')) { acceptAllQuests(); QT_SIG = ''; return; }
     });
-
+  }
     /* ---- 拖动：按住标题栏任意位置移动 ---- */
     const QT_POS_KEY = 'orc_qt_pos';
     const applyPos = (x, y) => {
@@ -6568,7 +6568,44 @@ function uiInit() {
     qt.addEventListener('click', e => {
       if (qt._suppressClick) { e.stopPropagation(); e.preventDefault(); }
     }, true);
-  }
+
+  bindSfxUI();
+  bindTooltipDismiss();
+
+  // 功能按钮图标（固定映射）
+  const UICON = { autoAtk:0, autoSkill:1, potion:2, bag:3, char:4, skill:5, map:6 };
+  document.querySelectorAll('.cc-btn .sk-ic.util').forEach(ic => {
+    const act = ic.parentElement.dataset.act;
+    const i = UICON[act];
+    if (i === undefined) return;
+    ic.style.backgroundImage = `url(${ASSETS.uicons})`;
+    ic.style.backgroundSize = '280px 40px';
+    ic.style.backgroundPosition = `${-i * 40}px 0`;
+    ic.style.backgroundRepeat = 'no-repeat';
+  });
+
+  document.querySelectorAll('.cc-btn, .codex-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.skill) castSkillKey(btn.dataset.skill);
+      else if (btn.dataset.act) handleCommand(btn.dataset.act);
+    });
+  });
+  $('modalClose').addEventListener('click', closeModal);
+  $('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+
+  $('btnNew').addEventListener('click', () => { SEL = { race: 'human', cls: 'warrior' }; showScreen('create'); });
+  $('btnContinue').addEventListener('click', () => { if (loadGame()) startGame(); else toast('没有存档'); });
+  $('btnImport').addEventListener('click', () => {
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = '.json';
+    inp.onchange = e => { if (e.target.files[0]) importSave(e.target.files[0]); };
+    inp.click();
+  });
+  $('btnBackTitle').addEventListener('click', () => showScreen('title'));
+  $('btnStart').addEventListener('click', confirmCreate);
+
+  buildCreateScreen();
+  $('btnContinue').disabled = !hasSave();
 }
 
 const statName = k => ({ str:'力量', agi:'敏捷', int:'智力', vit:'体质' }[k] || k);

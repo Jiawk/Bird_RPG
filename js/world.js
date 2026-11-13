@@ -87,7 +87,8 @@ function buildTown() {
     { id: nextId(), kind: 'quest',    name: '任务官 · 黄仁勋',    ...P(0.50, 0.42), r: 24, color: '#ff9a6b' },
     { id: nextId(), kind: 'craft',    name: '锻造台',          ...P(0.72, 0.60), r: 24, color: '#c9a24a' },
     { id: nextId(), kind: 'tower',    name: '试炼之塔 · 入口',  ...P(0.30, 0.62), r: 26, color: '#b45cff' },
-    { id: nextId(), kind: 'warehouse',name: '仓库 · 大木箱',      ...P(0.62, 0.32), r: 26, color: '#c8973f' }
+    { id: nextId(), kind: 'warehouse',name: '仓库 · 大木箱',      ...P(0.62, 0.32), r: 26, color: '#c8973f' },
+    { id: nextId(), kind: 'notice',   name: '公告牌',           ...P(0.80, 0.46), r: 26, color: '#ffd24a' }
   ];
 }
 

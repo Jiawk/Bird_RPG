@@ -630,6 +630,7 @@ function handleCommand(act) {
     case 'quest': toggleModal('quest', '任务官 · 黄仁勋', questHtml); break;
     case 'craft': toggleModal('craft', '锻造台', craftHtml); break;
     case 'warehouse': toggleModal('warehouse', '仓库 · 大木箱', warehouseHtml); break;
+    case 'notice': openModal('notice', '公告牌', noticeHtml()); break;
     case 'mail': toggleModal('mail', '邮箱', mailHtml); break;
     case 'ringup': toggleModal('ringup', '特戒强化', ringUpHtml); break;
     case 'codexEquip': toggleModal('codexEquip', '装备图鉴', codexEquipHtml); break;
@@ -1082,6 +1083,7 @@ function interactNPC(target) {
     case 'craft': toggleModal('craft', '锻造台', craftHtml); break;
     case 'warehouse': toggleModal('warehouse', '仓库 · 大木箱', warehouseHtml); break;
     case 'mail': toggleModal('mail', '邮箱', mailHtml); break;
+    case 'notice': openModal('notice', '公告牌', noticeHtml()); break;
     case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
   }
 }
@@ -1354,6 +1356,42 @@ function settingsHtml() {
       <div class="nr-info">删除角色，不可恢复</div></div>
       <button data-act-reset style="border-color:#6b2b2b;color:#ff8a7a">重开</button></div>
   </div>`;
+}
+
+/* ---------------- 公告牌 ---------------- */
+function noticeHtml() {
+  const txt = (G.announceText || '').trim();
+  const head = `<div class="nb-head">
+    <span class="nb-ic">📜</span>
+    <span class="nb-title">公 告 牌</span>
+  </div>`;
+  if (!txt) {
+    return `<div class="nb-box">${head}
+      <div class="nb-body nb-empty">暂无公告<br><small>管理员可在地图上的公告牌旁发布</small></div>
+      <div class="nb-foot"><button data-notice-close="1">关闭</button></div></div>`;
+  }
+  return `<div class="nb-box">${head}
+    <div class="nb-body">${txt.replace(/\n/g, '<br>')}</div>
+    <div class="nb-foot">
+      <span class="nb-tip">每晚 20 点在线送 100 抽</span>
+      <button data-notice-close="1">关闭</button>
+    </div></div>`;
+}
+
+/* 拉取公告文本（缓存到 G.announceText） */
+function noticeLoad() {
+  try {
+    const x = new XMLHttpRequest();
+    x.open('GET', '/api/announce', true);
+    x.onreadystatechange = () => {
+      if (x.readyState !== 4 || x.status !== 200) return;
+      try {
+        const d = JSON.parse(x.responseText);
+        if (d && d.ok) G.announceText = d.text || '';
+      } catch (e) {}
+    };
+    x.send();
+  } catch (e) {}
 }
 
 /* ---------------- 材料详情 ---------------- */
@@ -2772,6 +2810,7 @@ function bindModal() {
     if (box) box.innerHTML = '<div class="lr-hint">转盘旋转中…</div>';
     setTimeout(render, 2300);
   });
+  body.querySelectorAll('[data-notice-close]').forEach(b => b.onclick = () => closeModal());
   body.querySelectorAll('[data-mat-close]').forEach(b => b.onclick = () => closeModal());
   body.querySelectorAll('[data-mail-claim-all]').forEach(b => b.onclick = () => {
     const r = mailClaimAll(G.player);

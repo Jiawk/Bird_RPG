@@ -1587,3 +1587,19 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   background:linear-gradient(180deg,rgba(70,26,34,.95),rgba(20,8,10,.98))}
 .sm-btn.salvage:hover{border-color:#ff5a40;color:#ffd0d0;
   box-shadow:0 0 10px rgba(255,90,64,.45)}
+
+/* ============ 公告牌 ============ */
+.nb-box{padding:2px}
+.nb-head{display:flex;align-items:center;gap:8px;padding-bottom:10px;
+  border-bottom:1px solid rgba(212,175,55,.25);margin-bottom:12px}
+.nb-ic{font-size:20px}
+.nb-title{font-family:var(--serif);font-size:16px;color:#ffd98a;letter-spacing:.28em}
+.nb-body{font-size:13px;line-height:2;color:#e8dcc0;min-height:80px;
+  padding:6px 4px;white-space:pre-wrap}
+.nb-body.nb-empty{text-align:center;color:#6b6558;line-height:1.9;padding-top:24px}
+.nb-foot{display:flex;justify-content:space-between;align-items:center;margin-top:14px;
+  padding-top:10px;border-top:1px solid rgba(212,175,55,.18)}
+.nb-tip{font-size:10.5px;color:#8f8570}
+.nb-foot button{padding:7px 26px;font-size:12.5px;border-radius:3px;cursor:pointer;
+  color:#e8e0cc;border:1px solid #4a3d28;background:rgba(30,25,15,.9)}
+.nb-foot button:hover{border-color:#d4af37;color:#ffd24a}

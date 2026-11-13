@@ -53,6 +53,7 @@ function startGame() {
   enterRoom(p.room === undefined ? TOWN : p.room);
   updateHUD(1);
   autoSaveAcc = 0;
+  try { if (typeof noticeLoad === 'function') noticeLoad(); } catch (e) {}
   // 一次性福利邮件
   try {
     if (typeof mailEnsureWelfare === 'function') {

@@ -976,6 +976,41 @@ function drawNPC(n) {
       CTX.beginPath(); CTX.arc(gx, gy - 20, 52, 0, 6.283); CTX.fill();
       CTX.drawImage(IMG.stele, gx - sz / 2, gy - sz + 10, sz, sz);
       npcDrawn = true;
+    } else if (n.kind === 'notice') {
+      // 公告牌：木柱 + 木板 + 纸张
+      const cy = gy - 4;
+      const glow = CTX.createRadialGradient(gx, cy - 30, 3, gx, cy - 30, 46);
+      glow.addColorStop(0, 'rgba(255,210,74,.28)');
+      glow.addColorStop(1, 'rgba(255,210,74,0)');
+      CTX.fillStyle = glow;
+      CTX.beginPath(); CTX.arc(gx, cy - 30, 46, 0, 6.283); CTX.fill();
+
+      // 立柱
+      CTX.fillStyle = '#5a3d1e';
+      CTX.fillRect(gx - 5, cy - 22, 10, 26);
+      // 板面
+      CTX.fillStyle = '#7a5528';
+      CTX.fillRect(gx - 30, cy - 58, 60, 40);
+      CTX.fillStyle = '#8a6330';
+      CTX.fillRect(gx - 30, cy - 58, 60, 5);
+      CTX.strokeStyle = '#c8973f';
+      CTX.lineWidth = 2;
+      CTX.strokeRect(gx - 30, cy - 58, 60, 40);
+      // 纸张
+      CTX.fillStyle = '#e8dcc0';
+      CTX.fillRect(gx - 23, cy - 51, 18, 24);
+      CTX.fillRect(gx - 2, cy - 51, 18, 12);
+      CTX.fillStyle = '#b8a888';
+      for (let i = 0; i < 4; i++) CTX.fillRect(gx - 21, cy - 47 + i * 4, 14, 1);
+      CTX.fillStyle = '#d24a3a';
+      CTX.fillRect(gx - 6, cy - 36, 18, 1);
+      CTX.fillRect(gx - 6, cy - 32, 14, 1);
+      // 顶部小旗
+      CTX.fillStyle = '#ffd24a';
+      CTX.beginPath();
+      CTX.moveTo(gx, cy - 58); CTX.lineTo(gx + 14, cy - 64); CTX.lineTo(gx, cy - 68);
+      CTX.closePath(); CTX.fill();
+      npcDrawn = true;
     } else if (n.kind === 'warehouse') {
       // 仓库：大木箱
       const cy = gy - 4;

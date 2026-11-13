@@ -6418,6 +6418,72 @@ function iconTag(slot, size, wtype, relicKey) {
   return `<span class="ic-sprite" data-i="${i}" style="width:${sz}px;height:${sz}px;background-size:${sz*EQUIP_COUNT}px ${sz}px;background-position:${-i*sz}px 0"></span>`;
 }
 
+function showScreen(name) {
+  $('screen-title').classList.toggle('hidden', name !== 'title');
+  $('screen-create').classList.toggle('hidden', name !== 'create');
+  $('hud').classList.toggle('hidden', name !== 'game');
+  G.screen = name;
+  if (name === 'title') $('btnContinue').disabled = !hasSave();
+}
+
+/* ---------------- 建角 ---------------- */
+function buildCreateScreen() {
+  if (G.creatingNew && Array.isArray(G.chars)) {
+    const taken = G.chars.filter(Boolean).map(x => x.cls);
+    if (taken.includes(SEL.cls)) {
+      const free = Object.keys(DATA.CLASSES).find(k => !taken.includes(k));
+      if (free) SEL.cls = free;
+    }
+  }
+  const rl = $('raceList'); rl.innerHTML = '';
+  for (const k in DATA.RACES) {
+    const r = DATA.RACES[k];
+    const el = document.createElement('div');
+    el.className = 'card' + (k === SEL.race ? ' sel' : '');
+    const rai = DATA.RACE_AVATAR[k] !== undefined ? DATA.RACE_AVATAR[k] : 0;
+    el.innerHTML = `<div class="race-portrait" style="--ai:${rai}">
+        <span class="av-img"></span>
+      </div>
+      <h3 style="color:${r.color}">${r.name}</h3>
+      <p>${r.desc}</p>
+      <div><span class="tag">力 ${fmtMod(r.mod.str)}</span><span class="tag">敏 ${fmtMod(r.mod.agi)}</span>
+      <span class="tag">智 ${fmtMod(r.mod.int)}</span><span class="tag">体 ${fmtMod(r.mod.vit)}</span></div>
+      <p style="margin-top:6px;color:#8f8570">${r.talent}</p>`;
+    el.onclick = () => { SEL.race = k; buildCreateScreen(); };
+    rl.appendChild(el);
+  }
+  const cl = $('classList'); cl.innerHTML = '';
+  // 新建角色时，已存在的职业不可再建
+  const taken = (G.creatingNew && Array.isArray(G.chars)) ? G.chars.filter(Boolean).map(x => x.cls) : [];
+  for (const k in DATA.CLASSES) {
+    const c = DATA.CLASSES[k];
+    const isTaken = taken.includes(k);
+    const el = document.createElement('div');
+    el.className = 'card' + (k === SEL.cls ? ' sel' : '') + (isTaken ? ' taken' : '');
+    const km = c.keymap;
+    const ci = Object.keys(DATA.CLASSES).indexOf(k);
+    el.innerHTML = `
+      <div class="cls-portrait" style="--ai:${DATA.CLASS_AVATAR[k] !== undefined ? DATA.CLASS_AVATAR[k] : 0}">
+        <span class="av-img big"></span>
+        <span class="cls-badge" style="background-position:${-ci * 64}px 0"></span>
+        <span class="cls-name-plate">${c.name}</span>
+      </div>
+      <h3 style="color:${c.color}">${c.name}</h3>
+      <p>${c.desc}</p>
+      <div><span class="tag">主属性 ${statName(c.primary)}</span><span class="tag">${c.weapon}</span></div>
+      <p style="margin-top:6px;color:#8f8570">Q ${DATA.SKILLS[km.q].name} · W ${DATA.SKILLS[km.w].name}</p>
+      <p style="color:#8f8570">E ${DATA.SKILLS[km.e].name} · R ${DATA.SKILLS[km.r].name} · D ${DATA.SKILLS[km.d].name}</p>`;
+    if (isTaken) {
+      el.innerHTML = `<div class="taken-mask">已创建</div>` + el.innerHTML;
+      el.onclick = () => toast(`${c.name} 已存在，无法重复创建`);
+    } else {
+      el.onclick = () => { SEL.cls = k; buildCreateScreen(); };
+    }
+    cl.appendChild(el);
+  }
+}
+
+
 function uiInit() {
   document.documentElement.style.setProperty('--icon-sheet', `url(${ASSETS.equip || ASSETS.icons})`);
   document.documentElement.style.setProperty('--skill-sheet', `url(${ASSETS.skills})`);

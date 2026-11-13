@@ -2439,3 +2439,27 @@ str: (base + eq.str) * (1 + 0.06)     // → 61.480000000000004
 - 体质 `44.52` → **45**
 
 顺带把气血上限 / 法力上限等所有数字型行也一并取整；百分比行仍保留一位小数（如 `32.5%`）。
+
+### v156 · 紧急修复 showScreen is not defined
+**现象**：v155 之后点「继续游戏」报 `Uncaught ReferenceError: showScreen is not defined`。
+
+**根因**：v154 加任务栏拖动时，我用「按行号/标记区间替换」的方式改 `ui.js`，
+区间选错，**把 `showScreen()` 和 `buildCreateScreen()` 两个函数整体删掉了**
+（后来又把它们插进了 `iconIdxOf` 内部，语法通过但作用域是局部的）。
+
+**修复过程**
+1. 从 v153 提交（`263cce0`）取回 `showScreen` + `buildCreateScreen` 原文
+2. 补回被误删的 `iconIdxOf` 收尾括号
+3. 把两个函数移到**顶层**（`uiInit` 之前）
+
+**校验**
+```
+旧函数 90 个 / 新函数 90 个 → 无缺失
+typeof showScreen        = function ✅
+typeof buildCreateScreen = function ✅
+typeof iconIdxOf         = function ✅
+标题页无报错横幅 ✅
+```
+
+**教训**：同类错误已经第 4 次（仓库按钮、分解按钮绑定、
+`exchangeHtml` 被删）。**以后一律用大括号配平提取函数，不再按行号区间替换。**

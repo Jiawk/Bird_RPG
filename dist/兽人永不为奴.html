@@ -10335,17 +10335,28 @@ function bgAudioStop() {
   bgAudio = null;
 }
 
+/* 后台按「固定小步长」推进：
+   游戏里很多逻辑是「每帧调用一次」（自动攻击 playerAttack()、技能轮转），
+   如果后台一秒只调用 2 次，攻击/技能次数就比前台少得多 → 经验变慢。
+   这里用 1/60 秒的小步长循环，让后台的逻辑调用频率和前台 60fps 完全一致。*/
+const BG_STEP = 1 / 60;        // 逻辑步长
+const BG_MAX_SEC = 10;         // 单次最多补 10 秒（防长时间卡顿后暴冲）
+const BG_MAX_STEPS = 600;      // 单次最多 600 步，保护性能
+
 function bgEnter() {
   if (bgTimer) return;
   bgAudioStart();
   bgLast = Date.now();
   bgTimer = setInterval(() => {
     const now = Date.now();
-    let dt = (now - bgLast) / 1000;
+    let elapsed = (now - bgLast) / 1000;
     bgLast = now;
-    if (dt > 5) dt = 5;                // 一次最多补 5 秒，避免长时间卡顿后暴冲
-    stepGame(dt);
-  }, 500);
+    if (elapsed <= 0) return;
+    if (elapsed > BG_MAX_SEC) elapsed = BG_MAX_SEC;
+    let steps = Math.round(elapsed / BG_STEP);
+    if (steps > BG_MAX_STEPS) steps = BG_MAX_STEPS;
+    for (let i = 0; i < steps; i++) stepGame(BG_STEP);
+  }, 250);
 }
 
 function bgLeave() {

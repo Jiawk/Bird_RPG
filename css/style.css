@@ -1643,3 +1643,6 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .tut-claim{border-color:#8a6d2f !important;color:#ffd24a !important;
   background:linear-gradient(180deg,rgba(90,70,24,.95),rgba(26,20,8,.98)) !important}
 .tut-claim[disabled]{opacity:.4;cursor:not-allowed}
+
+/* 调试菜单单入口 */
+.dbg-menu.single{grid-template-columns:1fr}

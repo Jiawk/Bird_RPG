@@ -1823,20 +1823,15 @@ function debugHtml() {
     return `<div class="dbg-return"><button data-dbg-back="1">← 返回入口</button></div>`
       + debugTogglesHtml().replace(/^<div style="font-size:11.5px/, '<div style="font-size:11.5px');
   }
-  return `<div class="dbg-menu">
+  return `<div class="dbg-menu single">
     <div class="dbg-card" data-dbg-go="toggles">
       <div class="dc-ic">🛠</div>
       <div class="dc-name">调试开关</div>
       <div class="dc-sub">刷怪 / 攻速 / 免CD / 无敌 / 无限蓝<br>发放材料 / 发放特戒</div>
     </div>
-    <div class="dbg-card cfg" data-dbg-go="cfg">
-      <div class="dc-ic">⚙</div>
-      <div class="dc-name">数值修改</div>
-      <div class="dc-sub">经验 / 掉落 / 强化 / 技能 / 爬塔 / 任务 / 圣物<br>改完保存 → 可导出定制版 HTML</div>
-    </div>
   </div>
   <div style="font-size:11px;color:#8f8570;margin-top:12px;text-align:center">
-    调试开关只影响当前会话；「数值修改」保存后会写入存档与本文件
+    调试开关只影响当前会话，刷新页面即恢复
   </div>`;
 }
 

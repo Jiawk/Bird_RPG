@@ -4097,11 +4097,27 @@ function todayKey() {
 function hltByKey(k) { return DATA.HEIRLOOMS.find(x => x.key === k) || null; }
 
 /* 签到一天：返回 {ok, days, got} */
+/* 当前正在签到的传家宝 key（同一时间只能有一件） */
+function hltSigningKey(p) {
+  const h = hltEnsure(p);
+  for (const k in h.sign) {
+    if ((h.sign[k] || 0) > 0 && !h.owned.includes(k)) return k;
+  }
+  return null;
+}
+
 function hltSign(p, key) {
   const h = hltEnsure(p);
   const w = hltByKey(key);
   if (!w) return { ok:false, msg:'未知传家宝' };
   if (h.owned.includes(key)) return { ok:false, msg:'你已经拥有这件传家宝了' };
+
+  // 只能选择一种传家宝签到
+  const cur = hltSigningKey(p);
+  if (cur && cur !== key) {
+    const cw = hltByKey(cur);
+    return { ok:false, msg:`你正在签到【${cw ? cw.alias : cur}】，请先取消或完成它` };
+  }
   const today = todayKey();
   if (h.lastDay[key] === today) return { ok:false, msg:'今天已经签到过了，明天再来' };
   h.lastDay[key] = today;
@@ -8336,6 +8352,8 @@ function hltPagesHtml() {
   const active = h.active === w.key;
   const days = h.sign[w.key] || 0;
   const signedToday = h.lastDay[w.key] === todayKey();
+  const signKey = hltSigningKey(p);
+  const lockedBy = (signKey && signKey !== w.key) ? hltByKey(signKey) : null;
   const need = w.days || 7;
   const pct = Math.min(100, days / need * 100);
   const clsName = (w.cls || []).map(c => DATA.CLASSES[c] ? DATA.CLASSES[c].name : c).join(' / ');
@@ -8379,13 +8397,15 @@ function hltPagesHtml() {
       <div class="hb-hr"></div>
       <div class="hb-sec-t">签到进度　${days} / ${need} 天</div>
       <div class="hb-bar"><i style="width:${pct}%"></i></div>
-      <div class="hb-note">${owned ? '✅ 已获得此传家宝' : (signedToday ? '今天已签到，明天再来' : '每天可签到 1 次，累计 7 天获得')}</div>
+      <div class="hb-note">${owned ? '✅ 已获得此传家宝'
+        : lockedBy ? `⛔ 你正在签到【${lockedBy.alias}】，同一时间只能签到一件`
+        : (signedToday ? '今天已签到，明天再来' : '每天可签到 1 次，累计 7 天获得')}</div>
 
       <div class="hb-btns">
         ${owned
           ? `<button class="hb-b ${active ? 'on' : ''}" data-hlt-select="${w.key}" ${active ? 'disabled' : ''}>${active ? '✔ 使用中' : '选择此传家宝'}</button>
              <button class="hb-b danger" data-hlt-drop="1" ${active ? '' : 'disabled'}>放弃此传家宝</button>`
-          : `<button class="hb-b" data-hlt-sign="${w.key}" ${signedToday ? 'disabled' : ''}>${signedToday ? '今日已签到' : '签到（' + days + '/' + need + '）'}</button>
+          : `<button class="hb-b" data-hlt-sign="${w.key}" ${(signedToday || lockedBy) ? 'disabled' : ''}>${signedToday ? '今日已签到' : (lockedBy ? '已被其它传家宝锁定' : '签到（' + days + '/' + need + '）')}</button>
              <button class="hb-b danger" data-hlt-cancel="${w.key}" ${days ? '' : 'disabled'}>取消签到进度</button>`}
       </div>
       <div class="hb-foot">获取方式：签到累计 ${need} 天</div>

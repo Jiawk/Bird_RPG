@@ -837,11 +837,27 @@ function todayKey() {
 function hltByKey(k) { return DATA.HEIRLOOMS.find(x => x.key === k) || null; }
 
 /* 签到一天：返回 {ok, days, got} */
+/* 当前正在签到的传家宝 key（同一时间只能有一件） */
+function hltSigningKey(p) {
+  const h = hltEnsure(p);
+  for (const k in h.sign) {
+    if ((h.sign[k] || 0) > 0 && !h.owned.includes(k)) return k;
+  }
+  return null;
+}
+
 function hltSign(p, key) {
   const h = hltEnsure(p);
   const w = hltByKey(key);
   if (!w) return { ok:false, msg:'未知传家宝' };
   if (h.owned.includes(key)) return { ok:false, msg:'你已经拥有这件传家宝了' };
+
+  // 只能选择一种传家宝签到
+  const cur = hltSigningKey(p);
+  if (cur && cur !== key) {
+    const cw = hltByKey(cur);
+    return { ok:false, msg:`你正在签到【${cw ? cw.alias : cur}】，请先取消或完成它` };
+  }
   const today = todayKey();
   if (h.lastDay[key] === today) return { ok:false, msg:'今天已经签到过了，明天再来' };
   h.lastDay[key] = today;

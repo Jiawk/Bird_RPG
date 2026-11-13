@@ -3,8 +3,8 @@
    ============================================================ */
 'use strict';
 
-const RESPAWN_NORMAL = 15;    // 秒（本次减半）
-const RESPAWN_BOSS = 300;     // 秒
+const RESPAWN_NORMAL = 7;     // 秒（刷新更快）
+const RESPAWN_BOSS = 90;      // 秒（BOSS 刷新缩短）
 
 let ENTITY_ID = 1;
 const nextId = () => ENTITY_ID++;
@@ -110,8 +110,13 @@ function makeMonster(kindKey, x, y, isBoss, level, diff, isElite) {
   // 精英
   if (isElite) { hpMul *= 2.6; atkMul *= 1.6; expMul *= 3; }
   // 全局强度倍率：小怪 +30% 血、BOSS +50% 血、全体 +20% 伤害
-  const hpGlobal = isBoss ? (DATA.BOSS_HP_MUL || 1) : (DATA.MON_HP_MUL || 1);
-  const atkGlobal = DATA.MON_ATK_MUL || 1;
+  let hpGlobal = isBoss ? (DATA.BOSS_HP_MUL || 1) : (DATA.MON_HP_MUL || 1);
+  let atkGlobal = DATA.MON_ATK_MUL || 1;
+  // 地狱难度额外加成
+  if (diff === 'hell') {
+    hpGlobal  *= isBoss ? (DATA.HELL_BOSS_HP_MUL  || 1) : (DATA.HELL_MON_HP_MUL  || 1);
+    atkGlobal *= isBoss ? (DATA.HELL_BOSS_ATK_MUL || 1) : (DATA.HELL_MON_ATK_MUL || 1);
+  }
   const hp = Math.round(tpl.hp * hpMul * hpGlobal);
   const atk = Math.round(tpl.atk * atkMul * atkGlobal);
   return {

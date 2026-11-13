@@ -2387,6 +2387,14 @@ DATA.MON_HP_MUL  = 1.30;   // 小怪血量 +30%
 DATA.BOSS_HP_MUL = 1.50;   // BOSS 血量 +50%
 DATA.MON_ATK_MUL = 1.20;   // 所有怪物伤害 +20%
 
+/* 地狱难度额外倍率（在难度倍率之上再叠乘）
+   小怪：血量 +300% → ×4    伤害 +300% → ×4
+   BOSS：血量 +500% → ×6    伤害 +500% → ×6 */
+DATA.HELL_MON_HP_MUL  = 4.0;
+DATA.HELL_MON_ATK_MUL = 4.0;
+DATA.HELL_BOSS_HP_MUL  = 6.0;
+DATA.HELL_BOSS_ATK_MUL = 6.0;
+
 DATA.BOSSES = {
   bossWolf:     {name:'基尔加丹',        title:'燃烧军团的欺诈者',  color:'#c09a70', hp:1500, atk:12,  spd:2.6, r:30, exp:320,  gold:[200,400]},
   bossKobold:   {name:'拉格纳罗斯',      title:'炎魔之王',    color:'#c97b2e', hp:4200, atk:15,  spd:2.3, r:32, exp:800,  gold:[450,800]},
@@ -4878,8 +4886,8 @@ function logMsg(text, type) {
    ============================================================ */
 'use strict';
 
-const RESPAWN_NORMAL = 15;    // 秒（本次减半）
-const RESPAWN_BOSS = 300;     // 秒
+const RESPAWN_NORMAL = 7;     // 秒（刷新更快）
+const RESPAWN_BOSS = 90;      // 秒（BOSS 刷新缩短）
 
 let ENTITY_ID = 1;
 const nextId = () => ENTITY_ID++;
@@ -4985,8 +4993,13 @@ function makeMonster(kindKey, x, y, isBoss, level, diff, isElite) {
   // 精英
   if (isElite) { hpMul *= 2.6; atkMul *= 1.6; expMul *= 3; }
   // 全局强度倍率：小怪 +30% 血、BOSS +50% 血、全体 +20% 伤害
-  const hpGlobal = isBoss ? (DATA.BOSS_HP_MUL || 1) : (DATA.MON_HP_MUL || 1);
-  const atkGlobal = DATA.MON_ATK_MUL || 1;
+  let hpGlobal = isBoss ? (DATA.BOSS_HP_MUL || 1) : (DATA.MON_HP_MUL || 1);
+  let atkGlobal = DATA.MON_ATK_MUL || 1;
+  // 地狱难度额外加成
+  if (diff === 'hell') {
+    hpGlobal  *= isBoss ? (DATA.HELL_BOSS_HP_MUL  || 1) : (DATA.HELL_MON_HP_MUL  || 1);
+    atkGlobal *= isBoss ? (DATA.HELL_BOSS_ATK_MUL || 1) : (DATA.HELL_MON_ATK_MUL || 1);
+  }
   const hp = Math.round(tpl.hp * hpMul * hpGlobal);
   const atk = Math.round(tpl.atk * atkMul * atkGlobal);
   return {

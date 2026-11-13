@@ -273,6 +273,14 @@ DATA.MON_HP_MUL  = 1.30;   // 小怪血量 +30%
 DATA.BOSS_HP_MUL = 1.50;   // BOSS 血量 +50%
 DATA.MON_ATK_MUL = 1.20;   // 所有怪物伤害 +20%
 
+/* 地狱难度额外倍率（在难度倍率之上再叠乘）
+   小怪：血量 +300% → ×4    伤害 +300% → ×4
+   BOSS：血量 +500% → ×6    伤害 +500% → ×6 */
+DATA.HELL_MON_HP_MUL  = 4.0;
+DATA.HELL_MON_ATK_MUL = 4.0;
+DATA.HELL_BOSS_HP_MUL  = 6.0;
+DATA.HELL_BOSS_ATK_MUL = 6.0;
+
 DATA.BOSSES = {
   bossWolf:     {name:'基尔加丹',        title:'燃烧军团的欺诈者',  color:'#c09a70', hp:1500, atk:12,  spd:2.6, r:30, exp:320,  gold:[200,400]},
   bossKobold:   {name:'拉格纳罗斯',      title:'炎魔之王',    color:'#c97b2e', hp:4200, atk:15,  spd:2.3, r:32, exp:800,  gold:[450,800]},

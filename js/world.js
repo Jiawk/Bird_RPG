@@ -109,8 +109,11 @@ function makeMonster(kindKey, x, y, isBoss, level, diff, isElite) {
   }
   // 精英
   if (isElite) { hpMul *= 2.6; atkMul *= 1.6; expMul *= 3; }
-  const hp = Math.round(tpl.hp * hpMul);
-  const atk = Math.round(tpl.atk * atkMul);
+  // 全局强度倍率：小怪 +30% 血、BOSS +50% 血、全体 +20% 伤害
+  const hpGlobal = isBoss ? (DATA.BOSS_HP_MUL || 1) : (DATA.MON_HP_MUL || 1);
+  const atkGlobal = DATA.MON_ATK_MUL || 1;
+  const hp = Math.round(tpl.hp * hpMul * hpGlobal);
+  const atk = Math.round(tpl.atk * atkMul * atkGlobal);
   return {
     id: nextId(), kind: kindKey, name: (isElite ? '精英·' : '') + tpl.name,
     isBoss: !!isBoss, isElite: !!isElite, title: tpl.title || '',

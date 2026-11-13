@@ -2975,3 +2975,26 @@ if (n.kind === 'statue') {
 3. 背包工具栏补 `white-space:nowrap` + 收紧内边距，保证**一行放得下**
 
 **验证**：工具栏 7 个元素全部在同一行，高度约 34px。
+
+### v182 · 怪物整体加强
+| 项目 | 倍率 |
+|---|---|
+| 小怪血量 | **×1.30** |
+| BOSS 血量 | **×1.50** |
+| 所有怪物伤害 | **×1.20** |
+
+实现：新增全局常量，在 `makeMonster()` 里统一叠乘
+```js
+const hpGlobal  = isBoss ? DATA.BOSS_HP_MUL : DATA.MON_HP_MUL;
+const atkGlobal = DATA.MON_ATK_MUL;
+hp  = round(tpl.hp  * diff.hpMul  * hpGlobal);
+atk = round(tpl.atk * diff.atkMul * atkGlobal);
+```
+难度倍率（普通/噩梦/地狱）与精英倍率在**此基础上再叠乘**，不影响原有难度曲线。
+
+已验证：
+```
+centaur   60 HP  → 78    6 攻 → 7
+bossWolf  1500 HP → 2250  12 攻 → 14
+```
+同步更新 `数值配置表.txt` 新增 **[2.11] 怪物全局强度倍率**。

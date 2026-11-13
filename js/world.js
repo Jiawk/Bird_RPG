@@ -91,7 +91,7 @@ function buildTown() {
     { id: nextId(), kind: 'notice',   name: '公告牌',           ...P(0.80, 0.46), r: 26, color: '#ffd24a' },
     { id: nextId(), kind: 'tutorial', name: '新手指引',         ...P(0.62, 0.74), r: 24, color: '#5fd45f' },
     { id: nextId(), kind: 'heirloom', name: '传家宝 · 古籍',    ...P(0.44, 0.72), r: 26, color: '#ffd24a' },
-    { id: nextId(), kind: 'statue',   name: '巫妖王雕像',       ...P(0.30, 0.42), r: 34, color: '#8fd8ff' }
+    { id: nextId(), kind: 'statue',   name: '巫妖王雕像',       ...P(0.15, 0.50), r: 34, color: '#8fd8ff' }
   ];
 }
 

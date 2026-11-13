@@ -977,50 +977,56 @@ function drawNPC(n) {
       CTX.drawImage(IMG.stele, gx - sz / 2, gy - sz + 10, sz, sz);
       npcDrawn = true;
     } else if (n.kind === 'statue') {
-      // 巫妖王浮雕石碑：石框 + 浮雕 + 底座 + 冷光
-      const cy = gy - 2;
-      const IW = 104, IH = 142;
-      const bx = gx - IW/2, by = cy - IH - 30;
+      // 巫妖王拱形石碑：拱顶浮雕 + 基座 + 冷光
+      const IW = 92, IH = 138;
+      const bx = gx - IW / 2, by = gy - IH - 26;
 
       // 外发光
-      const glow = CTX.createRadialGradient(gx, by + IH/2, 6, gx, by + IH/2, 96);
-      glow.addColorStop(0, 'rgba(120,200,255,.22)');
+      const glow = CTX.createRadialGradient(gx, by + IH * 0.55, 6, gx, by + IH * 0.55, 92);
+      glow.addColorStop(0, 'rgba(120,200,255,.20)');
       glow.addColorStop(1, 'rgba(120,200,255,0)');
       CTX.fillStyle = glow;
-      CTX.beginPath(); CTX.arc(gx, by + IH/2, 96, 0, 6.283); CTX.fill();
+      CTX.beginPath(); CTX.arc(gx, by + IH * 0.55, 92, 0, 6.283); CTX.fill();
 
-      // 石框
-      CTX.fillStyle = '#2f353d';
-      CTX.fillRect(bx - 7, by - 7, IW + 14, IH + 14);
-      CTX.fillStyle = '#434b56';
-      CTX.fillRect(bx - 7, by - 7, IW + 14, 4);
-      CTX.fillStyle = '#1e232a';
-      CTX.fillRect(bx - 7, by + IH + 3, IW + 14, 4);
-      // 铆钉
-      CTX.fillStyle = '#7d8794';
-      [[bx-4,by-4],[bx+IW+1,by-4],[bx-4,by+IH-1],[bx+IW+1,by+IH-1]].forEach(([px2,py2]) => {
-        CTX.beginPath(); CTX.arc(px2, py2, 2.2, 0, 6.283); CTX.fill();
-      });
+      // 拱形石碑背板（比贴图略大一圈，形成石边）
+      const archPath = (x, y, w, h, pad) => {
+        const r = w / 2;
+        CTX.beginPath();
+        CTX.moveTo(x - pad, y + h + pad);
+        CTX.lineTo(x - pad, y + r);
+        CTX.arc(x + r, y + r, r + pad, Math.PI, 0);
+        CTX.lineTo(x + w + pad, y + h + pad);
+        CTX.closePath();
+      };
+      CTX.fillStyle = '#2b3138';
+      archPath(bx, by, IW, IH, 5); CTX.fill();
+      CTX.strokeStyle = '#4e5763'; CTX.lineWidth = 2;
+      archPath(bx, by, IW, IH, 5); CTX.stroke();
 
-      // 浮雕图
+      // 浮雕贴图（自带拱形 alpha）
       if (imgReady('lichStatue')) {
         CTX.save();
         CTX.globalAlpha = 0.98;
         CTX.drawImage(IMG.lichStatue, bx, by, IW, IH);
         CTX.restore();
-      } else {
-        CTX.fillStyle = '#4a525c'; CTX.fillRect(bx, by, IW, IH);
       }
 
-      // 底座
-      CTX.fillStyle = '#353b44';
-      CTX.beginPath(); CTX.ellipse(gx, cy + 2, 40, 14, 0, 0, 6.283); CTX.fill();
-      CTX.fillStyle = '#4a525c';
-      CTX.fillRect(bx - 6, cy - 18, IW + 12, 20);
-      CTX.fillStyle = '#5e6672';
-      CTX.fillRect(bx - 10, cy - 2, IW + 20, 6);
-      CTX.fillStyle = '#262b32';
-      CTX.fillRect(bx - 6, cy - 18, IW + 12, 3);
+      // 拱心石
+      CTX.fillStyle = '#5a6472';
+      CTX.beginPath();
+      CTX.moveTo(gx - 6, by - 3); CTX.lineTo(gx + 6, by - 3); CTX.lineTo(gx + 4, by + 8); CTX.lineTo(gx - 4, by + 8);
+      CTX.closePath(); CTX.fill();
+
+      // 基座
+      const py = by + IH + 5;
+      CTX.fillStyle = '#3a4149';
+      CTX.fillRect(bx - 8, py, IW + 16, 12);
+      CTX.fillStyle = '#4d5561';
+      CTX.fillRect(bx - 12, py + 12, IW + 24, 7);
+      CTX.fillStyle = '#22272d';
+      CTX.fillRect(bx - 12, py + 19, IW + 24, 3);
+      CTX.fillStyle = '#5e6875';
+      CTX.fillRect(bx - 8, py, IW + 16, 2);
 
       npcDrawn = true;
     } else if (n.kind === 'heirloom') {

@@ -1538,13 +1538,13 @@ function statueMenuHtml() {
         <div class="sm-sub">霜之哀伤的主人 · 冰封王座</div>
       </div>
     </div>
-    <button class="sm-btn" data-statue="silvermoon">
+    <button class="sm-opt" data-statue="silvermoon">
       <b>银月城之战</b><span>回忆 · 阿尔萨斯杀死希尔瓦娜斯、把她变成女妖</span>
     </button>
-    <button class="sm-btn" data-statue="lordaeron">
+    <button class="sm-opt" data-statue="lordaeron">
       <b>洛丹伦伏击</b><span>回忆 · 希尔瓦娜斯用毒箭偷袭阿尔萨斯</span>
     </button>
-    <button class="sm-btn danger ${okLv ? '' : 'lock'}" data-statue="fight">
+    <button class="sm-opt danger ${okLv ? '' : 'lock'}" data-statue="fight">
       <b>挑战巫妖王 · 阿尔萨斯</b><span>${okLv ? '单人挑战 · 击败可获得大量经验与金币' : '需要等级 50 级（当前 ' + lv + '）'}</span>
     </button>
   </div>`;

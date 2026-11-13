@@ -841,7 +841,9 @@ function charHtml() {
   mid += '</div>';
 
   // ---- 属性列 ----
-  const row = (n, v, c2) => `<div class="s-row"><span>${n}</span><b class="${c2 || ''}">${v}</b></div>`;
+  // 数字一律显示为整数（避免 61.480000000000004 这种浮点尾巴）
+  const num = v => (typeof v === 'number' && !Number.isInteger(v)) ? Math.round(v) : v;
+  const row = (n, v, c2) => `<div class="s-row"><span>${n}</span><b class="${c2 || ''}">${num(v)}</b></div>`;
   let stats = '<div class="cp-col char-right">';
   stats += '<div class="s-group"><div class="s-title">核心属性</div>';
   stats += row(st.isMagic ? '内功攻击' : '外功攻击', Math.round(st.power), 'hot');
@@ -863,8 +865,8 @@ function charHtml() {
   stats += row('闪避率', (st.dodge * 100).toFixed(1) + '%');
   stats += '</div>';
   stats += '<div class="s-group"><div class="s-title">主属性</div>';
-  stats += row('力量', A.str); stats += row('敏捷', A.agi);
-  stats += row('智力', A.int); stats += row('体质', A.vit);
+  stats += row('力量', Math.round(A.str)); stats += row('敏捷', Math.round(A.agi));
+  stats += row('智力', Math.round(A.int)); stats += row('体质', Math.round(A.vit));
   stats += '</div>';
 
   // 套装

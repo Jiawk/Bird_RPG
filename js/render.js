@@ -1164,12 +1164,15 @@ function drawNPC(n) {
     }
   }
 
-  CTX.font = '700 12px "KaiTi",serif';
-  CTX.textAlign = 'center';
-  CTX.lineWidth = 3.5; CTX.strokeStyle = 'rgba(0,0,0,.92)';
-  CTX.strokeText(n.name, gx, y - n.r - 9);
-  CTX.fillStyle = '#ffe6a8';
-  CTX.fillText(n.name, gx, y - n.r - 9);
+  // 雕像不显示名字（本身是地标，文字会盖住浮雕）
+  if (n.kind !== 'statue') {
+    CTX.font = '700 12px "KaiTi",serif';
+    CTX.textAlign = 'center';
+    CTX.lineWidth = 3.5; CTX.strokeStyle = 'rgba(0,0,0,.92)';
+    CTX.strokeText(n.name, gx, y - n.r - 9);
+    CTX.fillStyle = '#ffe6a8';
+    CTX.fillText(n.name, gx, y - n.r - 9);
+  }
 }
 
 /* ---------------- 通用 ---------------- */

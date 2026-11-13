@@ -91,7 +91,8 @@ function initInput() {
       case 'c': handleCommand('char'); break;
       case 'k': handleCommand('skill'); break;
       case 'm': handleCommand('map'); break;
-      case 't': handleCommand('tower'); break;   // 爬塔
+      case 't': handleCommand('craft'); break;   // T = 锻造台（打造 / 强化 / 升星）
+      case 'v': handleCommand('tower'); break;   // V = 爬塔
       case 'j':
       case 'l': handleCommand('quest'); break;   // 任务面板（J / L 都可以）
       case 'x': useGatherRing(); break;          // 聚合之戒

@@ -1129,6 +1129,18 @@ function diffPickHtml(roomId) {
     const need = requiredCP(roomId, k);
     const v = cpVerdict(myCP, need);
     const pct = Math.min(100, myCP / need * 100);
+    const open = diffUnlocked(p, k);
+    const lockTxt = diffLockText(p, k);
+    if (!open) {
+      html += `<div class="diff-card locked" data-pick-diff="${k}" data-room="${roomId}"
+          style="border-color:#3a3226">
+        <div class="dc-name" style="color:#6b6558">${d.name} 🔒</div>
+        <div class="dc-info">怪物生命 ×${d.hpMul}<br>攻击 ×${d.atkMul}<br>掉落 ×${d.dropMul}</div>
+        <div class="cp-line">推荐战力 <b style="color:#6b6558">${fmt(need)}</b></div>
+        <div class="dc-req" style="color:#ff9a5a;background:#ff9a5a22">${lockTxt}</div>
+      </div>`;
+      return;
+    }
     html += `<div class="diff-card" data-pick-diff="${k}" data-room="${roomId}"
         style="border-color:${v.color}55">
       <div class="dc-name" style="color:${d.color}">${d.name}</div>
@@ -2977,7 +2989,9 @@ function bindModal() {
   body.querySelectorAll('[data-pick-diff]').forEach(b => b.onclick = () => {
     const diff = b.dataset.pickDiff, room = +b.dataset.room;
     if (!G.player.unlocked.includes(room)) { toast('尚未解锁'); return; }
-    const r = DATA.ROOMS[room], p = G.player;
+    const p = G.player;
+    if (!diffUnlocked(p, diff)) { toast('🔒 ' + diffLockText(p, diff)); return; }
+    const r = DATA.ROOMS[room];
     // 等级不足 → 警告
     if (p.level < r.lv) {
       openModal('warn', '⚠ 等级警告', warnHtml(room, diff));

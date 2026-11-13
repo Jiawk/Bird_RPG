@@ -1922,6 +1922,10 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .sm-opt.lock{opacity:.45;cursor:not-allowed}
 .sm-opt.lock:hover{transform:none;border-color:#4a3d28;box-shadow:none}
 
+/* 难度锁定卡片 */
+.diff-card.locked{opacity:.5;cursor:not-allowed;filter:grayscale(.7)}
+.diff-card.locked:hover{transform:none;box-shadow:none;border-color:#3a3226}
+
 </style>
 <script id="orc-cfg" type="application/json">{}</script>
 </head>
@@ -2436,6 +2440,13 @@ DATA.DIFFICULTY = {
   hell:  {key:'hell',   name:'地狱', hpMul:4.60, atkMul:2.60, dropMul:1.80, expMul:2.40, color:'#ff5a40', req:'紫装'}
 };
 DATA.DIFF_ORDER = ['normal', 'hard', 'hell'];
+/* 难度解锁：需要先击杀上一难度的 BOSS
+   normal 无限制；hard 需击杀普通BOSS；hell 需击杀困难BOSS */
+DATA.DIFF_UNLOCK = {
+  normal: { need: null,   desc: '无限制' },
+  hard:   { need: 'normal', desc: '需先击杀「普通」难度 BOSS' },
+  hell:   { need: 'hard',   desc: '需先击杀「困难」难度 BOSS' }
+};
 
 /* ---------------- 材料（合成史诗装备用） ---------------- */
 DATA.MATERIALS = {
@@ -2876,10 +2887,12 @@ DATA.SPECIAL_RINGS = {
   gather: {name:'聚合之戒', color:'#ff3b3b', effect:{gather:1}}
 };
 
-/* 每图「简单」难度的推荐战力（按各档装备实测值标定） */
-DATA.ROOM_CP = [2600, 4200, 7200, 9200, 12200, 16800];
-/* 难度对战力的要求倍率 */
-DATA.DIFF_CP_MUL = { normal: 1.00, hard: 1.55, hell: 2.35 };
+/* 每图「普通」难度的推荐战力
+   标定依据：该图 BOSS 血量 × 期望击杀 40 秒 → 所需 DPS，再折算成战力
+   普通难度 BOSS 血：1500 / 4200 / 11500 / 25000 / 52000 / 95000 / 180000 */
+DATA.ROOM_CP = [1800, 3600, 7800, 15000, 27000, 46000, 82000];
+/* 难度对战力的要求倍率（困难/地狱的怪强度提升远大于血量线性成长） */
+DATA.DIFF_CP_MUL = { normal: 1.00, hard: 1.75, hell: 3.20 };
 
 /* ---------------- 收藏图鉴（每个 BOSS 一条线，10 级） ---------------- */
 DATA.CODEX_LEVELS = [
@@ -3450,7 +3463,7 @@ function createPlayer(raceKey, clsKey) {
     materials: { iron:0, mithril:0, scale:0, shard:0, stone:0, protect:0, skillT:0, breakT:0 },
     skillProf: {}, firstKills: {}, codex: {}, ringDropAt: {},
     quests: [], questDone: 0,
-    kills: 0, bossKills: 0,
+    kills: 0, bossKills: 0, bossKillsByDiff: {},
     stats: {}
   };
   for (const k in race.mod) p.attrs[k] += race.mod[k];
@@ -4651,6 +4664,23 @@ function currentCodex(p) {
 }
 
 /* ---------------- 推荐战力 ---------------- */
+/* 该难度是否已解锁 */
+function diffUnlocked(p, diff) {
+  const cfg = DATA.DIFF_UNLOCK[diff];
+  if (!cfg || !cfg.need) return true;
+  const byDiff = (p && p.bossKillsByDiff) || {};
+  return (byDiff[cfg.need] || 0) > 0;
+}
+
+/* 解锁进度文案 */
+function diffLockText(p, diff) {
+  const cfg = DATA.DIFF_UNLOCK[diff];
+  if (!cfg || !cfg.need) return '';
+  const byDiff = (p && p.bossKillsByDiff) || {};
+  if ((byDiff[cfg.need] || 0) > 0) return '';
+  return cfg.desc + '（当前 ' + (byDiff[cfg.need] || 0) + ' 次）';
+}
+
 function requiredCP(room, diff) {
   const base = DATA.ROOM_CP[room] || 3000;
   const mul = DATA.DIFF_CP_MUL[diff] || 1;
@@ -5640,6 +5670,20 @@ function monsterDie(m) {
   p.kills++;
   if (m.isBoss) {
     p.bossKills++;
+    // 记录「哪个难度的 BOSS」→ 解锁更高难度
+    p.bossKillsByDiff = p.bossKillsByDiff || {};
+    const _d = G.diff || 'normal';
+    const _was = p.bossKillsByDiff[_d] || 0;
+    p.bossKillsByDiff[_d] = _was + 1;
+    if (_was === 0) {
+      if (_d === 'normal' && DATA.DIFF_UNLOCK.hell) {
+        logMsg('🔓 已解锁「困难」难度', 'rare');
+        toast('🔓 已解锁 困难难度！');
+      } else if (_d === 'hard') {
+        logMsg('🔓 已解锁「地狱」难度', 'rare');
+        toast('🔓 已解锁 地狱难度！');
+      }
+    }
     logMsg(`★ 击杀 BOSS：${m.name}`, 'boss');
     toast(`击杀 ${m.name}！`);
   }
@@ -8157,6 +8201,18 @@ function diffPickHtml(roomId) {
     const need = requiredCP(roomId, k);
     const v = cpVerdict(myCP, need);
     const pct = Math.min(100, myCP / need * 100);
+    const open = diffUnlocked(p, k);
+    const lockTxt = diffLockText(p, k);
+    if (!open) {
+      html += `<div class="diff-card locked" data-pick-diff="${k}" data-room="${roomId}"
+          style="border-color:#3a3226">
+        <div class="dc-name" style="color:#6b6558">${d.name} 🔒</div>
+        <div class="dc-info">怪物生命 ×${d.hpMul}<br>攻击 ×${d.atkMul}<br>掉落 ×${d.dropMul}</div>
+        <div class="cp-line">推荐战力 <b style="color:#6b6558">${fmt(need)}</b></div>
+        <div class="dc-req" style="color:#ff9a5a;background:#ff9a5a22">${lockTxt}</div>
+      </div>`;
+      return;
+    }
     html += `<div class="diff-card" data-pick-diff="${k}" data-room="${roomId}"
         style="border-color:${v.color}55">
       <div class="dc-name" style="color:${d.color}">${d.name}</div>
@@ -10005,7 +10061,9 @@ function bindModal() {
   body.querySelectorAll('[data-pick-diff]').forEach(b => b.onclick = () => {
     const diff = b.dataset.pickDiff, room = +b.dataset.room;
     if (!G.player.unlocked.includes(room)) { toast('尚未解锁'); return; }
-    const r = DATA.ROOMS[room], p = G.player;
+    const p = G.player;
+    if (!diffUnlocked(p, diff)) { toast('🔒 ' + diffLockText(p, diff)); return; }
+    const r = DATA.ROOMS[room];
     // 等级不足 → 警告
     if (p.level < r.lv) {
       openModal('warn', '⚠ 等级警告', warnHtml(room, diff));

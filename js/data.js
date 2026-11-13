@@ -322,6 +322,13 @@ DATA.DIFFICULTY = {
   hell:  {key:'hell',   name:'地狱', hpMul:4.60, atkMul:2.60, dropMul:1.80, expMul:2.40, color:'#ff5a40', req:'紫装'}
 };
 DATA.DIFF_ORDER = ['normal', 'hard', 'hell'];
+/* 难度解锁：需要先击杀上一难度的 BOSS
+   normal 无限制；hard 需击杀普通BOSS；hell 需击杀困难BOSS */
+DATA.DIFF_UNLOCK = {
+  normal: { need: null,   desc: '无限制' },
+  hard:   { need: 'normal', desc: '需先击杀「普通」难度 BOSS' },
+  hell:   { need: 'hard',   desc: '需先击杀「困难」难度 BOSS' }
+};
 
 /* ---------------- 材料（合成史诗装备用） ---------------- */
 DATA.MATERIALS = {
@@ -762,10 +769,12 @@ DATA.SPECIAL_RINGS = {
   gather: {name:'聚合之戒', color:'#ff3b3b', effect:{gather:1}}
 };
 
-/* 每图「简单」难度的推荐战力（按各档装备实测值标定） */
-DATA.ROOM_CP = [2600, 4200, 7200, 9200, 12200, 16800];
-/* 难度对战力的要求倍率 */
-DATA.DIFF_CP_MUL = { normal: 1.00, hard: 1.55, hell: 2.35 };
+/* 每图「普通」难度的推荐战力
+   标定依据：该图 BOSS 血量 × 期望击杀 40 秒 → 所需 DPS，再折算成战力
+   普通难度 BOSS 血：1500 / 4200 / 11500 / 25000 / 52000 / 95000 / 180000 */
+DATA.ROOM_CP = [1800, 3600, 7800, 15000, 27000, 46000, 82000];
+/* 难度对战力的要求倍率（困难/地狱的怪强度提升远大于血量线性成长） */
+DATA.DIFF_CP_MUL = { normal: 1.00, hard: 1.75, hell: 3.20 };
 
 /* ---------------- 收藏图鉴（每个 BOSS 一条线，10 级） ---------------- */
 DATA.CODEX_LEVELS = [

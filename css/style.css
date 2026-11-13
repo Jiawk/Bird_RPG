@@ -1914,3 +1914,7 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .sm-opt.danger:hover{border-color:#8fd8ff;box-shadow:0 0 16px rgba(143,216,255,.45)}
 .sm-opt.lock{opacity:.45;cursor:not-allowed}
 .sm-opt.lock:hover{transform:none;border-color:#4a3d28;box-shadow:none}
+
+/* 难度锁定卡片 */
+.diff-card.locked{opacity:.5;cursor:not-allowed;filter:grayscale(.7)}
+.diff-card.locked:hover{transform:none;box-shadow:none;border-color:#3a3226}

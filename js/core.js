@@ -56,7 +56,7 @@ function createPlayer(raceKey, clsKey) {
     materials: { iron:0, mithril:0, scale:0, shard:0, stone:0, protect:0, skillT:0, breakT:0 },
     skillProf: {}, firstKills: {}, codex: {}, ringDropAt: {},
     quests: [], questDone: 0,
-    kills: 0, bossKills: 0,
+    kills: 0, bossKills: 0, bossKillsByDiff: {},
     stats: {}
   };
   for (const k in race.mod) p.attrs[k] += race.mod[k];
@@ -1257,6 +1257,23 @@ function currentCodex(p) {
 }
 
 /* ---------------- 推荐战力 ---------------- */
+/* 该难度是否已解锁 */
+function diffUnlocked(p, diff) {
+  const cfg = DATA.DIFF_UNLOCK[diff];
+  if (!cfg || !cfg.need) return true;
+  const byDiff = (p && p.bossKillsByDiff) || {};
+  return (byDiff[cfg.need] || 0) > 0;
+}
+
+/* 解锁进度文案 */
+function diffLockText(p, diff) {
+  const cfg = DATA.DIFF_UNLOCK[diff];
+  if (!cfg || !cfg.need) return '';
+  const byDiff = (p && p.bossKillsByDiff) || {};
+  if ((byDiff[cfg.need] || 0) > 0) return '';
+  return cfg.desc + '（当前 ' + (byDiff[cfg.need] || 0) + ' 次）';
+}
+
 function requiredCP(room, diff) {
   const base = DATA.ROOM_CP[room] || 3000;
   const mul = DATA.DIFF_CP_MUL[diff] || 1;

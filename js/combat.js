@@ -372,6 +372,20 @@ function monsterDie(m) {
   p.kills++;
   if (m.isBoss) {
     p.bossKills++;
+    // 记录「哪个难度的 BOSS」→ 解锁更高难度
+    p.bossKillsByDiff = p.bossKillsByDiff || {};
+    const _d = G.diff || 'normal';
+    const _was = p.bossKillsByDiff[_d] || 0;
+    p.bossKillsByDiff[_d] = _was + 1;
+    if (_was === 0) {
+      if (_d === 'normal' && DATA.DIFF_UNLOCK.hell) {
+        logMsg('🔓 已解锁「困难」难度', 'rare');
+        toast('🔓 已解锁 困难难度！');
+      } else if (_d === 'hard') {
+        logMsg('🔓 已解锁「地狱」难度', 'rare');
+        toast('🔓 已解锁 地狱难度！');
+      }
+    }
     logMsg(`★ 击杀 BOSS：${m.name}`, 'boss');
     toast(`击杀 ${m.name}！`);
   }

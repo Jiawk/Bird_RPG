@@ -1156,6 +1156,7 @@ function interactNPC(target) {
     case 'warehouse': toggleModal('warehouse', '仓库 · 大木箱', warehouseHtml); break;
     case 'mail': toggleModal('mail', '邮箱', mailHtml); break;
     case 'notice': openModal('notice', '公告牌', noticeHtml()); break;
+    case 'heirloom': G._hltPage = G._hltPage || 0; openModal('heirloom', '传家宝 · 古籍', heirloomHtml()); break;
     case 'tutorial': toggleModal('tutorial', '新手指引', tutorialHtml); break;
     case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
   }
@@ -1454,6 +1455,10 @@ function hltPagesHtml() {
 
   return `<div class="hb-book">
     <div class="hb-page left">
+      <div class="hb-art" style="background-size:300% 300%;
+        background-position:${(idx % 3) * 50}% ${Math.floor(idx / 3) * 50}%">
+        ${idx === 0 ? '<span class="hb-noart">暂无插图</span>' : ''}
+      </div>
       <div class="hb-alias">「${w.alias}」</div>
       <div class="hb-name" style="color:${w.color}">${w.name}</div>
       <div class="hb-cls">适用职业：${clsName || '通用'}</div>

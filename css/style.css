@@ -1646,3 +1646,10 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 
 /* 调试菜单单入口 */
 .dbg-menu.single{grid-template-columns:1fr}
+
+/* 任务导航按钮 */
+.q-btns{display:flex;flex-direction:column;gap:6px;flex:0 0 auto}
+.q-btns button{min-width:64px}
+.q-nav{border-color:#4a7fa8 !important;color:#8ecdff !important;
+  background:linear-gradient(180deg,rgba(24,44,66,.95),rgba(8,14,22,.98)) !important}
+.q-nav:hover{box-shadow:0 0 10px rgba(74,160,255,.5) !important}

@@ -1654,6 +1654,13 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 /* 调试菜单单入口 */
 .dbg-menu.single{grid-template-columns:1fr}
 
+/* 任务导航按钮 */
+.q-btns{display:flex;flex-direction:column;gap:6px;flex:0 0 auto}
+.q-btns button{min-width:64px}
+.q-nav{border-color:#4a7fa8 !important;color:#8ecdff !important;
+  background:linear-gradient(180deg,rgba(24,44,66,.95),rgba(8,14,22,.98)) !important}
+.q-nav:hover{box-shadow:0 0 10px rgba(74,160,255,.5) !important}
+
 </style>
 <script id="orc-cfg" type="application/json">{}</script>
 </head>
@@ -8745,9 +8752,12 @@ function questHtml() {
         <div class="q-bar"><i style="width:${pct}%;background:${done?'#5fdc4a':'#c9a24a'}"></i></div>
         <div class="nr-info" style="color:#ffd98a">${q.exp} 经验 · ${q.gold} 金 · 打造材料（铁${DATA.QUEST_MATS.iron} 秘银${DATA.QUEST_MATS.mithril} 龙鳞${DATA.QUEST_MATS.scale} 碎片${DATA.QUEST_MATS.shard}）</div>
         </div>
-        ${done
-          ? `<button data-quest-claim="${q.id}" style="border-color:#6b8a4a;color:#b9ffb0">领取</button>`
-          : `<button data-quest-drop="${q.id}" style="border-color:#6b2b3b;color:#ff8a9a">放弃</button>`}
+        <div class="q-btns">
+          <button class="q-nav" data-quest-nav="${q.room}" title="打开【${DATA.ROOMS[q.room].name}】地图">🧭 导航</button>
+          ${done
+            ? `<button data-quest-claim="${q.id}" style="border-color:#6b8a4a;color:#b9ffb0">领取</button>`
+            : `<button data-quest-drop="${q.id}" style="border-color:#6b2b3b;color:#ff8a9a">放弃</button>`}
+        </div>
       </div>`;
     });
     html += '</div>';
@@ -9215,6 +9225,15 @@ function bindModal() {
 
     if (box) box.innerHTML = '<div class="lr-hint">转盘旋转中…</div>';
     setTimeout(render, 2300);
+  });
+  body.querySelectorAll('[data-quest-nav]').forEach(b => b.onclick = () => {
+    const rid = +b.dataset.questNav;
+    const p = G.player, r = DATA.ROOMS[rid];
+    if (!r) return;
+    if (!p.unlocked.includes(rid)) { toast(`【${r.name}】尚未解锁，先通关前面的副本`); return; }
+    if (p.level < (r.lv || 1)) { toast(`等级不足：进入【${r.name}】需要 Lv.${r.lv}`); return; }
+    if (typeof Sfx !== 'undefined') Sfx.play('click');
+    openModal('map', `导航 · ${r.name}`, diffPickHtml(rid));
   });
   body.querySelectorAll('[data-tut-open]').forEach(b => b.onclick = () => {
     G._tutSel = b.dataset.tutOpen;

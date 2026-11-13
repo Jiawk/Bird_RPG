@@ -502,6 +502,9 @@ DATA.LOTTERY = {
   ]
 };
 
+/* 装备掉落倍率（1 = 原版；0.2 = 五分之一） */
+DATA.EQ_DROP_MUL = 0.2;
+
 DATA.RING_DROP_PCT = 0.5;   // BOSS 掉特戒基础概率（%）
 
 DATA.BOSS_RINGS = {

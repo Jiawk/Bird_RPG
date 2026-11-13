@@ -391,7 +391,7 @@ function dropLoot(m) {
     push({ type: 'gold', gold: g, color: '#ffd24a', label: `${g} 金` });
   }
   // 装备
-  const eqChance = (m.isBoss ? 1 : 0.35) * dropMul;
+  const eqChance = (m.isBoss ? 1 : 0.35) * dropMul * (DATA.EQ_DROP_MUL != null ? DATA.EQ_DROP_MUL : 1);
   if (Math.random() < eqChance) {
     const slot = pick(DATA.LOOT_SLOTS);
     const q = m.isBoss

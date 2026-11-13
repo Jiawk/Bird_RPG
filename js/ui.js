@@ -2258,6 +2258,18 @@ function debugTogglesHtml() {
       </div>
     </div>
 
+    <div class="npc-row" style="display:block">
+      <div class="nr-name" style="color:#ffd24a;margin-bottom:6px">发放传家宝（9 件）</div>
+      <div class="dbg-hlt-grid">
+        ${DATA.HEIRLOOMS.map(w => {
+          const own = (G.player.heirloom && (G.player.heirloom.owned || []).includes(w.key));
+          return `<button class="dbg-hlt ${own ? 'own' : ''}" data-dbg-hlt="${w.key}"
+            style="color:${w.color};border-color:${own ? '#3a6b32' : w.color}">
+            ${w.alias}${own ? ' ✓' : ''}</button>`;
+        }).join('')}
+      </div>
+    </div>
+
     <div class="npc-row"><div>
       <div class="nr-name" style="color:#ff9a3c">发放 BOSS击杀凭证 ×1000</div>
       <div class="nr-info">用于抽奖转盘（10 抽/次，100 十连）</div></div>
@@ -3313,6 +3325,20 @@ function bindModal() {
     mailDelete(G.player, +b.dataset.mailDel);
     saveGame(); mailRefreshDot();
     openModal('mail', '邮箱', mailHtml());
+  });
+  body.querySelectorAll('[data-dbg-hlt]').forEach(b => b.onclick = () => {
+    const p = G.player;
+    const h = hltEnsure(p);
+    const k = b.dataset.dbgHlt;
+    const w = hltByKey(k);
+    if (!w) return;
+    if (h.owned.includes(k)) { toast(`已拥有【${w.alias}】`); return; }
+    h.owned.push(k);
+    recalcStats(p);
+    saveGame();
+    toast(`已发放传家宝【${w.alias}】`);
+    logMsg(`🛠 调试：发放传家宝 ${w.alias}`, 'loot');
+    openModal('debug', '调试面板 · N', debugHtml());
   });
   body.querySelectorAll('[data-dbg-token]').forEach(b => b.onclick = () => {
     const p = G.player;

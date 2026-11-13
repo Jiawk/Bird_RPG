@@ -1163,6 +1163,12 @@ function npcAt(wx, wy) {
   const w = G.world;
   if (!w) return null;
   for (const n of w.npcs) {
+    // 雕像是「向上生长」的拱形石碑，点击范围要覆盖整块碑体
+    if (n.kind === 'statue') {
+      const dx = Math.abs(n.x - wx), dy = wy - n.y;   // dy<0 表示在石碑上方
+      if (dx < 62 && dy > -80 && dy < 26) return n;
+      continue;
+    }
     if (Math.hypot(n.x - wx, (n.y - wy) * 0.9) < 46) return n;
   }
   return null;

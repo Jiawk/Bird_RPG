@@ -1754,6 +1754,10 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .hb-noart{font-size:11px;color:#5a5348;letter-spacing:.16em}
 @media (max-width:700px){ .hb-art{height:120px} }
 
+.hb-stk{margin-top:6px;font-size:11px;color:#9fe6b8;padding:6px 10px;border-radius:3px;
+  background:rgba(30,60,30,.35);border-left:2px solid #5fdc4a;line-height:1.6}
+.hb-stk b{color:#5fdc4a;font-size:13px}
+
 </style>
 <script id="orc-cfg" type="application/json">{}</script>
 </head>
@@ -2567,64 +2571,64 @@ DATA.HEIRLOOMS = [
     color:'#7fd4ff', days:7,
     lore:`风元素领主桑德兰王子被炎魔拉格纳罗斯偷袭封印，灵魂被拆成左右两半，禁锢在熔火之心的加尔与迦顿男爵身上。玩家集齐左右两半脸，完成漫长任务释放王子灵魂，才铸成此剑——魔兽世界第一把真正"出圈"的橙武。`,
     fame:`击中时触发连锁闪电，并降低目标 25% 攻速。当年防战的群拉神器，仇恨极强；自带蓝色闪电特效，颜值天花板。它的台词至今被反复引用：「英雄，愿你有一份不悔的爱情。」`,
-    stats:{ atk:520, str:180, agi:120, crit:0.08, hit:0.06, as:0.05 },
-    fx:'连锁闪电：普攻 20% 概率追加一次雷电伤害' },
+    stats:{ atk:520, str:180, agi:120, crit:0.08, hit:0.06 },
+    fx:'每次攻击叠加 10% 攻速，上限 100%；5 秒不攻击则清零', stack:{ as:0.10, cap:1.0 } },
 
   { key:'sulfuras', name:'萨弗拉斯，炎魔拉格纳罗斯之手', alias:'橙锤', cls:['warrior','assassin'],
     color:'#ff7a2a', days:7,
     lore:`炎魔之王拉格纳罗斯本人的武器，出自熔火之心。玩家要先锻造出萨弗隆战锤，再用大螺丝掉落的「萨弗拉斯之眼」合成，是魔兽最早的橙色武器之一。`,
     fame:`当年版本伤害上限最高的双手武器。命中触发火球灼烧，近战反伤火焰伤害；造型就是大螺丝手里的熔岩巨锤，辨识度拉满。萨满配合风怒图腾，伤害爆炸。`,
     stats:{ atk:680, str:260, vit:120, critDmg:0.35, hp:1200 },
-    fx:'熔岩灼烧：命中附加持续火焰伤害' },
+    fx:'每次攻击叠加 10% 攻击力，上限 100%；5 秒不攻击则清零', stack:{ atkPct:0.10, cap:1.0 } },
 
   { key:'atiesh', name:'埃提耶什，守护者的传说之杖', alias:'鸡腿杖', cls:['mage'],
     color:'#b48cff', days:7,
     lore:`提瑞斯法守护者麦迪文的法杖，正是它打开了黑暗之门。要在纳克萨玛斯收集 40 块碎片，历经多轮任务才能合成。TBC 上线后永久绝版，如今再无获取途径。`,
     fame:`给小队高额法强、法爆与回蓝光环；自带「卡拉赞传送门」，全队一键直达。不同职业的杖尾飘带颜色不同，是全游戏最稀有的橙武之一。`,
-    stats:{ spell:760, int:260, mp:1500, crit:0.10, cdr:0.06, skillDmg:0.06 },
-    fx:'守护者光环：提升全队法术强度与回蓝' },
+    stats:{ spell:760, int:260, mp:1500, crit:0.10, cdr:0.06 },
+    fx:'每次攻击叠加 10% 法强，上限 100%；5 秒不攻击则清零', stack:{ spellPct:0.10, cap:1.0 } },
 
   { key:'warglaive', name:'埃辛诺斯战刃', alias:'蛋刀', cls:['assassin'],
     color:'#5fdc4a', days:7,
     lore:`上古之战中，伊利丹击杀恶魔指挥官埃辛诺斯，夺取了这对恶魔战刃。黑暗神殿尾王伊利丹掉落，分主手副手，必须凑齐一整套才算毕业。`,
     fame:`套装特效：对恶魔攻强 +200，攻击有概率触发高额急速。TBC 物理 DPS 的毕业天花板，绿邪能弯刃，幻化人气第一。当年流传一句话：「蛋刀一出，再无兄弟。」`,
-    stats:{ atk:600, agi:240, crit:0.12, as:0.10, critDmg:0.40 },
-    fx:'邪能急速：攻击 25% 概率触发急速' },
+    stats:{ atk:600, agi:240, crit:0.12, as:0.10 },
+    fx:'每次攻击叠加 10% 吸血，上限 50%；5 秒不攻击则清零', stack:{ lifesteal:0.10, cap:0.5 } },
 
   { key:'thori', name:'索利达尔，群星之怒', alias:'橙弓', cls:['archer'],
     color:'#ffd24a', days:7,
     lore:`太阳井高地的基尔加丹掉落，由太阳井能量灌注而成的精灵风格星辰长弓，是猎人专属的传说武器。`,
     fame:`不需要携带箭矢，自动生成魔法箭，省去背包位置。面板伤害远超同期所有远程武器，稳固射击收益巨大——猎人信仰武器。`,
-    stats:{ atk:540, agi:260, as:0.12, crit:0.09, hit:0.08 },
-    fx:'星辰之箭：无需箭矢，攻击附带星辉伤害' },
+    stats:{ atk:540, agi:260, as:0.50, hit:0.08 },
+    fx:'分裂箭：普通攻击同时射出 3 支箭，攻击 3 个不同敌人', split:3 },
 
   { key:'valanyr', name:'瓦兰奈尔，远古王者之锤', alias:'奶橙锤', cls:['archer','mage'],
     color:'#ffd98a', days:7,
     lore:`泰坦铸造，赐予初代土灵之王。洛肯被腐化后打碎了这把锤子，碎片散落奥杜尔；玩家集齐 30 块碎片，在尤格萨隆体内重铸修复。`,
     fame:`魔兽唯一一把治疗向橙武。治疗法术触发护盾，吸收本次治疗量 15% 的伤害，抬血之后还给队友保命盾，开荒神器，金色泰坦风格。`,
-    stats:{ hp:2600, vit:220, spell:420, dr:0.06, lifesteal:0.05 },
-    fx:'泰坦护盾：治疗时为目标附加吸收盾' },
+    stats:{ hp:2600, vit:220, dr:0.06 },
+    fx:'回蓝速度 +100%；所有技能冷却 -50%', mpRegen:1.0, cdrExtra:0.5 },
 
   { key:'shadowmourne', name:'影之哀伤', alias:'橙斧', cls:['warrior','assassin'],
     color:'#8fd8ff', days:7,
     lore:`ICC 冰冠堡垒中，灰烬审判军为对抗巫妖王、对抗霜之哀伤而打造。任务漫长，需要吸收上千亡魂，用萨隆邪铁与冰封王座碎片铸造，与霜之哀伤同源相抗。`,
     fame:`攻击吸取灵魂碎片，叠满 10 层释放 AOE 暗影伤害，同时给自己巨额力量 buff。冰蓝色符文巨斧，WLK 版本物理输出天花板，配套还有玩具与坐骑奖励。`,
-    stats:{ atk:720, str:300, crit:0.10, critDmg:0.50, hp:1000 },
-    fx:'噬魂：叠满 10 层释放暗影 AOE' },
+    stats:{ atk:720, str:300, critDmg:0.50, hp:1000 },
+    fx:'每次攻击叠加 10% 减伤，上限 50%；5 秒不攻击则清零', stack:{ dr:0.10, cap:0.5 } },
 
   { key:'dragonwrath', name:'巨龙之怒，泰蕾苟萨的寄魂杖', alias:'CTM 橙杖', cls:['mage'],
     color:'#4ad4ff', days:7,
     lore:`蓝龙泰蕾苟萨为阻止死亡之翼的阴谋而牺牲，灵魂被封进世界树枝条做成的法杖。火焰之地任务线逐步升级，做完全公会都能拿到小泰蕾苟萨宠物。`,
     fame:`伤害法术有概率复制一次伤害（含 DOT 与爆发法术）；使用可以变身蓝龙高速飞行，全图飞驰，是 CTM 版本的法系毕业武器。`,
-    stats:{ spell:820, int:280, crit:0.11, critDmg:0.45, skillDmg:0.10, cdr:0.04 },
-    fx:'法术复制：伤害法术 15% 概率复制一次' },
+    stats:{ spell:820, int:280, crit:0.11, skillDmg:0.10 },
+    fx:'技能增伤 +30%；所有技能冷却 -50%', skillDmgExtra:0.30, cdrExtra:0.5 },
 
   { key:'frostmourne', name:'霜之哀伤', alias:'孝子剑', cls:['warrior','assassin'],
     color:'#a8d8ff', days:7,
     lore:`恐惧魔王奉基尔加丹之命锻造，用来囚禁巫妖王耐奥祖的意志——一个精心布置的陷阱，封在诺森德的冰穴中，专门引诱强大的战士前来拾取。洛丹伦王子阿尔萨斯为对抗瘟疫、为复仇，不顾警告拔出了它，灵魂当场被吞噬，堕落为死亡骑士。他持剑屠戮洛丹伦、复活克尔苏加德，最终登上冰封王座与耐奥祖融合，成为新的巫妖王。ICC 决战中，弗丁举起灰烬使者将霜之哀伤劈碎，剑内囚禁的万千亡魂终于得到释放——原版霜之哀伤就此毁灭，玩家永远无法获取，也无法幻化。`,
     fame:`噬魂诅咒：击杀目标即吞噬其灵魂，不断壮大自身，同时缓慢侵蚀持有者的灵魂；寒冰符文：自带冰霜瘟疫与死灵法术，挥剑便能召唤亡灵；灵魂连通：巫妖王可以透过剑看到持有者所见所闻，远程操控其意志。魔兽剧情第一神器，悲剧故事的天花板，名气甚至超过绝大多数橙武。`,
-    stats:{ atk:900, str:380, crit:0.15, critDmg:0.60, lifesteal:0.08, hp:1500 },
-    fx:'噬魂诅咒：击杀回复生命，但持续侵蚀灵魂' }
+    stats:{ atk:900, str:380, critDmg:0.60, lifesteal:0.08, hp:1500 },
+    fx:'每次攻击叠加 5% 攻速与 5% 攻击力，上限 50%；5 秒不攻击则清零', stack:{ as:0.05, atkPct:0.05, cap:0.5 } }
 ];
 
 DATA.RING_DROP_PCT = 0.5;   // BOSS 掉特戒基础概率（%）
@@ -3365,12 +3369,15 @@ function recalcStats(p) {
     dr: clamp(dr + bf.dr + (eq.dr || 0) + (HL.dr || 0), 0, 0.85),
     lifesteal: (eq.lifesteal || 0) + RFX.lifesteal + (RSET.lifesteal || 0) + (HL.lifesteal || 0),
     finalDmg: (RSET.finalDmg || 0),
-    skillDmg: (eq.skillDmg || 0) + (HL.skillDmg || 0),
+    skillDmg: (eq.skillDmg || 0) + (HL.skillDmg || 0) + ((hltActive(p) && hltActive(p).skillDmgExtra) || 0),
     cdr: Math.min(0.6, (eq.cdr || 0) + (HL.cdr || 0)),
     heirloom: p.heirloom && p.heirloom.active ? p.heirloom.active : null,
     relicSetCount: RSET.count,
     relicPct,
-    mpRegen: (0.02 * (1 + (bonus.mpRegen || 0))),
+    mpRegen: (0.02 * (1 + (bonus.mpRegen || 0) + (hltActive(p) && hltActive(p).mpRegen || 0))),
+    hltCdrExtra: (hltActive(p) && hltActive(p).cdrExtra) || 0,
+    hltSkillDmgExtra: (hltActive(p) && hltActive(p).skillDmgExtra) || 0,
+    hltSplit: (hltActive(p) && hltActive(p).split) || 0,
     goldBonus: (bonus.goldBonus || 0) + RFX.goldBonus,
     expBonus: (race.expBonus || 0) + RFX.expBonus + (RSET.expBonus || 0),
     cleave: RFX.cleave,
@@ -4062,6 +4069,63 @@ function hltBonus(p) {
   return out;
 }
 
+/* ---------------- 传家宝：动态叠加与特效 ---------------- */
+const HLT_STACK_TIMEOUT = 5;      // 未攻击多少秒后清零
+
+function hltActive(p) {
+  const h = p.heirloom;
+  if (!h || !h.active || !h.owned || !h.owned.includes(h.active)) return null;
+  return hltByKey(h.active);
+}
+
+/* 每次攻击调用：叠层 + 刷新计时 */
+function hltOnAttack(p) {
+  const w = hltActive(p);
+  if (!w || !w.stack) return;
+  if (!p.hltStk) p.hltStk = 0;
+  p.hltStk += 1;
+  const capCount = Math.round(w.stack.cap / (w.stack.as || w.stack.atkPct || w.stack.spellPct || w.stack.dr || w.stack.lifesteal || 0.1));
+  if (p.hltStk > capCount) p.hltStk = capCount;
+  p.hltStkAt = G ? G.time : 0;
+}
+
+/* 每帧调用：5 秒不攻击则清零 */
+function hltTickStacks(p) {
+  if (!p || !p.hltStk) return;
+  const w = hltActive(p);
+  if (!w || !w.stack) { p.hltStk = 0; return; }
+  if ((G ? G.time : 0) - (p.hltStkAt || 0) > HLT_STACK_TIMEOUT) p.hltStk = 0;
+}
+
+/* 当前叠加提供的动态加成 */
+function hltDyn(p) {
+  const out = { as:0, atkPct:0, spellPct:0, lifesteal:0, dr:0, stacks:0 };
+  const w = hltActive(p);
+  if (!w || !w.stack) return out;
+  const n = p.hltStk || 0;
+  if (n <= 0) return out;
+  out.stacks = n;
+  const st = w.stack;
+  if (st.as) out.as = Math.min(st.cap, st.as * n);
+  if (st.atkPct) out.atkPct = Math.min(st.cap, st.atkPct * n);
+  if (st.spellPct) out.spellPct = Math.min(st.cap, st.spellPct * n);
+  if (st.lifesteal) out.lifesteal = Math.min(st.cap, st.lifesteal * n);
+  if (st.dr) out.dr = Math.min(st.cap, st.dr * n);
+  return out;
+}
+
+/* 传家宝提供的战力（用于排行榜 / 面板） */
+function hltPower(p) {
+  const w = hltActive(p);
+  if (!w) return 0;
+  let v = 0;
+  for (const k in w.stats) {
+    const s = w.stats[k];
+    v += (PCT_AFFIX.includes(k) || k === 'cdr' || k === 'skillDmg') ? s * 600 : s * 1.6;
+  }
+  return Math.round(v);
+}
+
 /* ---------------- 新手指引 ---------------- */
 function tutEnsure(p) {
   if (!p.tutorial) p.tutorial = { done: {}, seen: false };
@@ -4192,7 +4256,7 @@ function combatPower(p) {
   let sp = 0;
   for (const k in p.skills) sp += (p.skills[k] || 0) * 26;
   const book = (p.bonus.str + p.bonus.agi + p.bonus.int + p.bonus.vit) * 12;
-  return Math.round(gearPower(p) + sp + p.level * 18 + book);
+  return Math.round(gearPower(p) + sp + p.level * 18 + book + (typeof hltPower === 'function' ? hltPower(p) : 0));
 }
 
 /* 换装后的战力变化（正数=更强） */
@@ -5005,8 +5069,9 @@ function damageMonster(m, amount, type, isDot) {
       crit ? '#ffd24a' : (type === 'skill' ? '#7fd4ff' : '#ffffff'),
       crit ? 22 : 16);
   }
-  if (p.stats.lifesteal > 0 && !isDot) {
-    const heal = Math.round(dmg * p.stats.lifesteal);
+  const _hls = (typeof hltDyn === 'function') ? hltDyn(p).lifesteal : 0;
+  if (p.stats.lifesteal + _hls > 0 && !isDot) {
+    const heal = Math.round(dmg * (p.stats.lifesteal + _hls));
     if (heal > 0) { p.hp = Math.min(p.stats.hpMax, p.hp + heal); floatText(p.x, p.y - 30, '+' + heal, '#5fd45f', 14); }
   }
   if (m.hp <= 0) monsterDie(m);
@@ -5022,7 +5087,8 @@ function damagePlayer(amount, source) {
     floatText(p.x, p.y - 34, '闪避', '#9fe6b8', 15);
     return;
   }
-  const dmg = Math.max(1, Math.round(amount * (1 - p.stats.dr)));
+  const _hdr = ((typeof hltDyn === 'function') ? hltDyn(p).dr : 0);
+  const dmg = Math.max(1, Math.round(amount * (1 - Math.min(0.85, p.stats.dr + _hdr))));
   p.hp -= dmg;
   floatText(p.x, p.y - 34, '-' + dmg, '#ff5a40', 17);
   burst(p.x, p.y, '#ff5a40', 4, 90);
@@ -5062,8 +5128,10 @@ function playerAttack() {
   const p = G.player;
   if (!p || p.attackCd > 0) return;
   const fast = G.debug && G.debug.fastAtk;
-  const atkSpeed = p.stats.as * (fast ? 6 : 1);      // 调试：攻速 ×6
+  const HD = (typeof hltDyn === 'function') ? hltDyn(p) : { as:0, atkPct:0 };
+  const atkSpeed = p.stats.as * (1 + HD.as) * (fast ? 6 : 1);   // 传家宝叠攻速
   p.attackCd = 1 / atkSpeed;
+  if (typeof hltOnAttack === 'function') hltOnAttack(p);
   p.attackAnim = fast ? 0.06 : 0.18;
 
   const w = G.world;
@@ -5083,26 +5151,39 @@ function playerAttack() {
   }
 
   if (p.stats.isMagic || p.cls === 'archer') {
-    // 远程：发射投射物
-    w.projectiles.push({
-      x: p.x + Math.cos(ang) * 22, y: p.y + Math.sin(ang) * 22,
-      vx: Math.cos(ang) * 520, vy: Math.sin(ang) * 520,
-      life: 0.9, dead: false, pierce: false, dmg: p.stats.power,
-      color: (p.cls === 'mage') ? '#ff7a2a'
-           : (p.stats.weaponFx === 'arrow' ? '#d8f0ff'
-           : (p.stats.weaponFx === 'spell' ? '#9f7fff' : '#ffe08a')),
-      shape: (p.cls === 'archer') ? 'arrow'
-           : (p.cls === 'mage') ? 'fireball'          // 法师平A = 火球
-           : (p.stats.weaponFx === 'arrow' ? 'arrow'
-           : (p.stats.weaponFx === 'spell' ? 'orb'
-           : (p.stats.weaponFx === 'stab' ? 'blade' : 'bolt'))),
-      hitSet: new Set(), isSkill: false
-    });
-    if (!target) { /* 空放 */ }
+    // 远程：发射投射物（橙弓「分裂箭」一次打 3 个不同目标）
+    const shoot = (tgt, a2) => {
+      const dmg = p.stats.power * (1 + ((typeof hltDyn === 'function') ? hltDyn(p).atkPct : 0));
+      w.projectiles.push({
+        x: p.x + Math.cos(a2) * 22, y: p.y + Math.sin(a2) * 22,
+        vx: Math.cos(a2) * 520, vy: Math.sin(a2) * 520,
+        life: 0.9, dead: false, pierce: false, dmg,
+        color: (p.cls === 'mage') ? '#ff7a2a'
+             : (p.stats.weaponFx === 'arrow' ? '#d8f0ff'
+             : (p.stats.weaponFx === 'spell' ? '#9f7fff' : '#ffe08a')),
+        shape: (p.cls === 'archer') ? 'arrow'
+             : (p.cls === 'mage') ? 'fireball'
+             : (p.stats.weaponFx === 'arrow' ? 'arrow'
+             : (p.stats.weaponFx === 'spell' ? 'orb'
+             : (p.stats.weaponFx === 'stab' ? 'blade' : 'bolt'))),
+        hitSet: new Set(), isSkill: false, target: tgt || null
+      });
+    };
+    const nSplit = (p.stats.hltSplit || 0);
+    if (nSplit > 1) {
+      // 找出最近的 nSplit 个不同敌人
+      const cand = w.monsters.filter(m => m.alive).map(m => ({ m, d: dist(p, m) }))
+        .sort((x, y) => x.d - y.d).slice(0, nSplit);
+      if (cand.length) {
+        cand.forEach(c => shoot(c.m, Math.atan2(c.m.y - p.y, c.m.x - p.x)));
+      } else shoot(null, ang);
+    } else {
+      shoot(target, ang);
+    }
   } else if (target) {
     // 近战：直接判定
     if (p.cls === 'warrior' || p.cls === 'assassin') p.swingT = 0.26;   // 挥砍动作
-    damageMonster(target, p.stats.power, 'melee');
+    damageMonster(target, p.stats.power * (1 + ((typeof hltDyn === 'function') ? hltDyn(p).atkPct : 0)), 'melee');
     burst(target.x, target.y, '#ffd24a', 5, 120);
   }
 }
@@ -5178,8 +5259,9 @@ function castSkillImpl(key) {
   if (p.mp < _cost) { toast('法力不足'); return; }
   p.mp -= _cost;
   const _cdr = Math.min(0.6, p.stats.cdr || 0);           // 装备/词条的冷却缩减
+  const _hltCdr = Math.min(0.5, p.stats.hltCdrExtra || 0);   // 传家宝：技能冷却 -50%
   p.cd[key] = (G.debug && G.debug.noCd) ? 1
-      : sp.cd * _mods.cdMul * (1 - _cdr);                 // 层数 + 冷却缩减
+      : sp.cd * _mods.cdMul * (1 - _cdr) * (1 - _hltCdr);     // 层数 + 冷却缩减 + 传家宝
   p.castAnim = 0.2;
   if (p.cls === 'warrior' || p.cls === 'assassin') p.swingT = 0.3;   // 技能也挥刀
 
@@ -5198,7 +5280,7 @@ function castSkillImpl(key) {
           for (const m of w.monsters) {
             if (!m.alive) continue;
             if (Math.hypot(m.x - ax, m.y - ay) <= sp.radius * 42 * _mods.radiusMul + m.r) {
-              damageMonster(m, p.stats.power * (p.stats.skillMul || 1) * (1 + (p.stats.skillDmg || 0)) * sp.dmg * mul * _mods.dmgMul, 'skill');
+              damageMonster(m, p.stats.power * (p.stats.skillMul || 1) * (1 + (p.stats.skillDmg || 0)) * (1 + ((typeof hltDyn === 'function') ? hltDyn(p).spellPct : 0)) * sp.dmg * mul * _mods.dmgMul, 'skill');
               if (sp.freeze) m.frozen = Math.max(m.frozen, sp.freeze * _mods.ctrlMul);
               if (sp.root) m.root = Math.max(m.root, sp.root * _mods.ctrlMul);
             }
@@ -5214,7 +5296,7 @@ function castSkillImpl(key) {
         if (d > sp.range * 32 + m.r) continue;
         const a = Math.atan2(m.y - p.y, m.x - p.x);
         if (Math.abs(normalizeAngle(a - ang)) > sp.arc / 2) continue;
-        damageMonster(m, p.stats.power * (p.stats.skillMul || 1) * (1 + (p.stats.skillDmg || 0)) * sp.dmg * mul * _mods.dmgMul, 'skill');
+        damageMonster(m, p.stats.power * (p.stats.skillMul || 1) * (1 + (p.stats.skillDmg || 0)) * (1 + ((typeof hltDyn === 'function') ? hltDyn(p).spellPct : 0)) * sp.dmg * mul * _mods.dmgMul, 'skill');
         if (sp.poison) m.poison = { dps: sp.poison.dps * mul, t: sp.poison.dur };
       }
       burst(p.x + Math.cos(ang) * 40, p.y + Math.sin(ang) * 40, '#b45cff', 10, 180);
@@ -8121,6 +8203,14 @@ function hltPagesHtml() {
       <div class="hb-sec-t">传家宝属性（常驻，不占装备位）</div>
       <div class="hb-stats">${statHtml}</div>
       <div class="hb-fx">✦ ${w.fx}</div>
+      ${w.stack ? `<div class="hb-stk">当前叠加 <b>${(p.hltStk || 0)}</b> 层　
+        ${(() => { const d = hltDyn(p); const parts = [];
+          if (d.as) parts.push('攻速 +' + Math.round(d.as*100) + '%');
+          if (d.atkPct) parts.push('攻击 +' + Math.round(d.atkPct*100) + '%');
+          if (d.spellPct) parts.push('法强 +' + Math.round(d.spellPct*100) + '%');
+          if (d.lifesteal) parts.push('吸血 +' + Math.round(d.lifesteal*100) + '%');
+          if (d.dr) parts.push('减伤 +' + Math.round(d.dr*100) + '%');
+          return parts.join(' · ') || '（未叠层）'; })()}</div>` : ''}
 
       <div class="hb-hr"></div>
       <div class="hb-sec-t">签到进度　${days} / ${need} 天</div>
@@ -10697,6 +10787,7 @@ function stepGame(dt) {
   updateWorld(dt);
   updatePet(dt);
   updateTimers(dt);
+  if (typeof hltTickStacks === 'function') hltTickStacks(G.player);
   updateCamera();
   perfTick(dt);
   if (typeof mailIdleTick === 'function' && G.player) mailIdleTick(G.player, dt);

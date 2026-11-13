@@ -190,12 +190,15 @@ function recalcStats(p) {
     dr: clamp(dr + bf.dr + (eq.dr || 0) + (HL.dr || 0), 0, 0.85),
     lifesteal: (eq.lifesteal || 0) + RFX.lifesteal + (RSET.lifesteal || 0) + (HL.lifesteal || 0),
     finalDmg: (RSET.finalDmg || 0),
-    skillDmg: (eq.skillDmg || 0) + (HL.skillDmg || 0),
+    skillDmg: (eq.skillDmg || 0) + (HL.skillDmg || 0) + ((hltActive(p) && hltActive(p).skillDmgExtra) || 0),
     cdr: Math.min(0.6, (eq.cdr || 0) + (HL.cdr || 0)),
     heirloom: p.heirloom && p.heirloom.active ? p.heirloom.active : null,
     relicSetCount: RSET.count,
     relicPct,
-    mpRegen: (0.02 * (1 + (bonus.mpRegen || 0))),
+    mpRegen: (0.02 * (1 + (bonus.mpRegen || 0) + (hltActive(p) && hltActive(p).mpRegen || 0))),
+    hltCdrExtra: (hltActive(p) && hltActive(p).cdrExtra) || 0,
+    hltSkillDmgExtra: (hltActive(p) && hltActive(p).skillDmgExtra) || 0,
+    hltSplit: (hltActive(p) && hltActive(p).split) || 0,
     goldBonus: (bonus.goldBonus || 0) + RFX.goldBonus,
     expBonus: (race.expBonus || 0) + RFX.expBonus + (RSET.expBonus || 0),
     cleave: RFX.cleave,
@@ -887,6 +890,63 @@ function hltBonus(p) {
   return out;
 }
 
+/* ---------------- 传家宝：动态叠加与特效 ---------------- */
+const HLT_STACK_TIMEOUT = 5;      // 未攻击多少秒后清零
+
+function hltActive(p) {
+  const h = p.heirloom;
+  if (!h || !h.active || !h.owned || !h.owned.includes(h.active)) return null;
+  return hltByKey(h.active);
+}
+
+/* 每次攻击调用：叠层 + 刷新计时 */
+function hltOnAttack(p) {
+  const w = hltActive(p);
+  if (!w || !w.stack) return;
+  if (!p.hltStk) p.hltStk = 0;
+  p.hltStk += 1;
+  const capCount = Math.round(w.stack.cap / (w.stack.as || w.stack.atkPct || w.stack.spellPct || w.stack.dr || w.stack.lifesteal || 0.1));
+  if (p.hltStk > capCount) p.hltStk = capCount;
+  p.hltStkAt = G ? G.time : 0;
+}
+
+/* 每帧调用：5 秒不攻击则清零 */
+function hltTickStacks(p) {
+  if (!p || !p.hltStk) return;
+  const w = hltActive(p);
+  if (!w || !w.stack) { p.hltStk = 0; return; }
+  if ((G ? G.time : 0) - (p.hltStkAt || 0) > HLT_STACK_TIMEOUT) p.hltStk = 0;
+}
+
+/* 当前叠加提供的动态加成 */
+function hltDyn(p) {
+  const out = { as:0, atkPct:0, spellPct:0, lifesteal:0, dr:0, stacks:0 };
+  const w = hltActive(p);
+  if (!w || !w.stack) return out;
+  const n = p.hltStk || 0;
+  if (n <= 0) return out;
+  out.stacks = n;
+  const st = w.stack;
+  if (st.as) out.as = Math.min(st.cap, st.as * n);
+  if (st.atkPct) out.atkPct = Math.min(st.cap, st.atkPct * n);
+  if (st.spellPct) out.spellPct = Math.min(st.cap, st.spellPct * n);
+  if (st.lifesteal) out.lifesteal = Math.min(st.cap, st.lifesteal * n);
+  if (st.dr) out.dr = Math.min(st.cap, st.dr * n);
+  return out;
+}
+
+/* 传家宝提供的战力（用于排行榜 / 面板） */
+function hltPower(p) {
+  const w = hltActive(p);
+  if (!w) return 0;
+  let v = 0;
+  for (const k in w.stats) {
+    const s = w.stats[k];
+    v += (PCT_AFFIX.includes(k) || k === 'cdr' || k === 'skillDmg') ? s * 600 : s * 1.6;
+  }
+  return Math.round(v);
+}
+
 /* ---------------- 新手指引 ---------------- */
 function tutEnsure(p) {
   if (!p.tutorial) p.tutorial = { done: {}, seen: false };
@@ -1017,7 +1077,7 @@ function combatPower(p) {
   let sp = 0;
   for (const k in p.skills) sp += (p.skills[k] || 0) * 26;
   const book = (p.bonus.str + p.bonus.agi + p.bonus.int + p.bonus.vit) * 12;
-  return Math.round(gearPower(p) + sp + p.level * 18 + book);
+  return Math.round(gearPower(p) + sp + p.level * 18 + book + (typeof hltPower === 'function' ? hltPower(p) : 0));
 }
 
 /* 换装后的战力变化（正数=更强） */

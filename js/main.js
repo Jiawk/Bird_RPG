@@ -452,6 +452,7 @@ function stepGame(dt) {
   updateWorld(dt);
   updatePet(dt);
   updateTimers(dt);
+  if (typeof hltTickStacks === 'function') hltTickStacks(G.player);
   updateCamera();
   perfTick(dt);
   if (typeof mailIdleTick === 'function' && G.player) mailIdleTick(G.player, dt);

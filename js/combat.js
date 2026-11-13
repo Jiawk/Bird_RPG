@@ -43,8 +43,9 @@ function damageMonster(m, amount, type, isDot) {
       crit ? '#ffd24a' : (type === 'skill' ? '#7fd4ff' : '#ffffff'),
       crit ? 22 : 16);
   }
-  if (p.stats.lifesteal > 0 && !isDot) {
-    const heal = Math.round(dmg * p.stats.lifesteal);
+  const _hls = (typeof hltDyn === 'function') ? hltDyn(p).lifesteal : 0;
+  if (p.stats.lifesteal + _hls > 0 && !isDot) {
+    const heal = Math.round(dmg * (p.stats.lifesteal + _hls));
     if (heal > 0) { p.hp = Math.min(p.stats.hpMax, p.hp + heal); floatText(p.x, p.y - 30, '+' + heal, '#5fd45f', 14); }
   }
   if (m.hp <= 0) monsterDie(m);
@@ -60,7 +61,8 @@ function damagePlayer(amount, source) {
     floatText(p.x, p.y - 34, '闪避', '#9fe6b8', 15);
     return;
   }
-  const dmg = Math.max(1, Math.round(amount * (1 - p.stats.dr)));
+  const _hdr = ((typeof hltDyn === 'function') ? hltDyn(p).dr : 0);
+  const dmg = Math.max(1, Math.round(amount * (1 - Math.min(0.85, p.stats.dr + _hdr))));
   p.hp -= dmg;
   floatText(p.x, p.y - 34, '-' + dmg, '#ff5a40', 17);
   burst(p.x, p.y, '#ff5a40', 4, 90);
@@ -100,8 +102,10 @@ function playerAttack() {
   const p = G.player;
   if (!p || p.attackCd > 0) return;
   const fast = G.debug && G.debug.fastAtk;
-  const atkSpeed = p.stats.as * (fast ? 6 : 1);      // 调试：攻速 ×6
+  const HD = (typeof hltDyn === 'function') ? hltDyn(p) : { as:0, atkPct:0 };
+  const atkSpeed = p.stats.as * (1 + HD.as) * (fast ? 6 : 1);   // 传家宝叠攻速
   p.attackCd = 1 / atkSpeed;
+  if (typeof hltOnAttack === 'function') hltOnAttack(p);
   p.attackAnim = fast ? 0.06 : 0.18;
 
   const w = G.world;
@@ -121,26 +125,39 @@ function playerAttack() {
   }
 
   if (p.stats.isMagic || p.cls === 'archer') {
-    // 远程：发射投射物
-    w.projectiles.push({
-      x: p.x + Math.cos(ang) * 22, y: p.y + Math.sin(ang) * 22,
-      vx: Math.cos(ang) * 520, vy: Math.sin(ang) * 520,
-      life: 0.9, dead: false, pierce: false, dmg: p.stats.power,
-      color: (p.cls === 'mage') ? '#ff7a2a'
-           : (p.stats.weaponFx === 'arrow' ? '#d8f0ff'
-           : (p.stats.weaponFx === 'spell' ? '#9f7fff' : '#ffe08a')),
-      shape: (p.cls === 'archer') ? 'arrow'
-           : (p.cls === 'mage') ? 'fireball'          // 法师平A = 火球
-           : (p.stats.weaponFx === 'arrow' ? 'arrow'
-           : (p.stats.weaponFx === 'spell' ? 'orb'
-           : (p.stats.weaponFx === 'stab' ? 'blade' : 'bolt'))),
-      hitSet: new Set(), isSkill: false
-    });
-    if (!target) { /* 空放 */ }
+    // 远程：发射投射物（橙弓「分裂箭」一次打 3 个不同目标）
+    const shoot = (tgt, a2) => {
+      const dmg = p.stats.power * (1 + ((typeof hltDyn === 'function') ? hltDyn(p).atkPct : 0));
+      w.projectiles.push({
+        x: p.x + Math.cos(a2) * 22, y: p.y + Math.sin(a2) * 22,
+        vx: Math.cos(a2) * 520, vy: Math.sin(a2) * 520,
+        life: 0.9, dead: false, pierce: false, dmg,
+        color: (p.cls === 'mage') ? '#ff7a2a'
+             : (p.stats.weaponFx === 'arrow' ? '#d8f0ff'
+             : (p.stats.weaponFx === 'spell' ? '#9f7fff' : '#ffe08a')),
+        shape: (p.cls === 'archer') ? 'arrow'
+             : (p.cls === 'mage') ? 'fireball'
+             : (p.stats.weaponFx === 'arrow' ? 'arrow'
+             : (p.stats.weaponFx === 'spell' ? 'orb'
+             : (p.stats.weaponFx === 'stab' ? 'blade' : 'bolt'))),
+        hitSet: new Set(), isSkill: false, target: tgt || null
+      });
+    };
+    const nSplit = (p.stats.hltSplit || 0);
+    if (nSplit > 1) {
+      // 找出最近的 nSplit 个不同敌人
+      const cand = w.monsters.filter(m => m.alive).map(m => ({ m, d: dist(p, m) }))
+        .sort((x, y) => x.d - y.d).slice(0, nSplit);
+      if (cand.length) {
+        cand.forEach(c => shoot(c.m, Math.atan2(c.m.y - p.y, c.m.x - p.x)));
+      } else shoot(null, ang);
+    } else {
+      shoot(target, ang);
+    }
   } else if (target) {
     // 近战：直接判定
     if (p.cls === 'warrior' || p.cls === 'assassin') p.swingT = 0.26;   // 挥砍动作
-    damageMonster(target, p.stats.power, 'melee');
+    damageMonster(target, p.stats.power * (1 + ((typeof hltDyn === 'function') ? hltDyn(p).atkPct : 0)), 'melee');
     burst(target.x, target.y, '#ffd24a', 5, 120);
   }
 }
@@ -216,8 +233,9 @@ function castSkillImpl(key) {
   if (p.mp < _cost) { toast('法力不足'); return; }
   p.mp -= _cost;
   const _cdr = Math.min(0.6, p.stats.cdr || 0);           // 装备/词条的冷却缩减
+  const _hltCdr = Math.min(0.5, p.stats.hltCdrExtra || 0);   // 传家宝：技能冷却 -50%
   p.cd[key] = (G.debug && G.debug.noCd) ? 1
-      : sp.cd * _mods.cdMul * (1 - _cdr);                 // 层数 + 冷却缩减
+      : sp.cd * _mods.cdMul * (1 - _cdr) * (1 - _hltCdr);     // 层数 + 冷却缩减 + 传家宝
   p.castAnim = 0.2;
   if (p.cls === 'warrior' || p.cls === 'assassin') p.swingT = 0.3;   // 技能也挥刀
 
@@ -236,7 +254,7 @@ function castSkillImpl(key) {
           for (const m of w.monsters) {
             if (!m.alive) continue;
             if (Math.hypot(m.x - ax, m.y - ay) <= sp.radius * 42 * _mods.radiusMul + m.r) {
-              damageMonster(m, p.stats.power * (p.stats.skillMul || 1) * (1 + (p.stats.skillDmg || 0)) * sp.dmg * mul * _mods.dmgMul, 'skill');
+              damageMonster(m, p.stats.power * (p.stats.skillMul || 1) * (1 + (p.stats.skillDmg || 0)) * (1 + ((typeof hltDyn === 'function') ? hltDyn(p).spellPct : 0)) * sp.dmg * mul * _mods.dmgMul, 'skill');
               if (sp.freeze) m.frozen = Math.max(m.frozen, sp.freeze * _mods.ctrlMul);
               if (sp.root) m.root = Math.max(m.root, sp.root * _mods.ctrlMul);
             }
@@ -252,7 +270,7 @@ function castSkillImpl(key) {
         if (d > sp.range * 32 + m.r) continue;
         const a = Math.atan2(m.y - p.y, m.x - p.x);
         if (Math.abs(normalizeAngle(a - ang)) > sp.arc / 2) continue;
-        damageMonster(m, p.stats.power * (p.stats.skillMul || 1) * (1 + (p.stats.skillDmg || 0)) * sp.dmg * mul * _mods.dmgMul, 'skill');
+        damageMonster(m, p.stats.power * (p.stats.skillMul || 1) * (1 + (p.stats.skillDmg || 0)) * (1 + ((typeof hltDyn === 'function') ? hltDyn(p).spellPct : 0)) * sp.dmg * mul * _mods.dmgMul, 'skill');
         if (sp.poison) m.poison = { dps: sp.poison.dps * mul, t: sp.poison.dur };
       }
       burst(p.x + Math.cos(ang) * 40, p.y + Math.sin(ang) * 40, '#b45cff', 10, 180);

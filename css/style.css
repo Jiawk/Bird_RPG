@@ -1746,3 +1746,7 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   display:flex;align-items:center;justify-content:center}
 .hb-noart{font-size:11px;color:#5a5348;letter-spacing:.16em}
 @media (max-width:700px){ .hb-art{height:120px} }
+
+.hb-stk{margin-top:6px;font-size:11px;color:#9fe6b8;padding:6px 10px;border-radius:3px;
+  background:rgba(30,60,30,.35);border-left:2px solid #5fdc4a;line-height:1.6}
+.hb-stk b{color:#5fdc4a;font-size:13px}

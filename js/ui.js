@@ -1473,6 +1473,14 @@ function hltPagesHtml() {
       <div class="hb-sec-t">传家宝属性（常驻，不占装备位）</div>
       <div class="hb-stats">${statHtml}</div>
       <div class="hb-fx">✦ ${w.fx}</div>
+      ${w.stack ? `<div class="hb-stk">当前叠加 <b>${(p.hltStk || 0)}</b> 层　
+        ${(() => { const d = hltDyn(p); const parts = [];
+          if (d.as) parts.push('攻速 +' + Math.round(d.as*100) + '%');
+          if (d.atkPct) parts.push('攻击 +' + Math.round(d.atkPct*100) + '%');
+          if (d.spellPct) parts.push('法强 +' + Math.round(d.spellPct*100) + '%');
+          if (d.lifesteal) parts.push('吸血 +' + Math.round(d.lifesteal*100) + '%');
+          if (d.dr) parts.push('减伤 +' + Math.round(d.dr*100) + '%');
+          return parts.join(' · ') || '（未叠层）'; })()}</div>` : ''}
 
       <div class="hb-hr"></div>
       <div class="hb-sec-t">签到进度　${days} / ${need} 天</div>

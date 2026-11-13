@@ -50,6 +50,12 @@ function uiInit() {
   const qt = $('questTracker');
   if (qt) {
     qt.addEventListener('click', e => {
+      if (e.target.closest('[data-qt-open]')) {
+        e.stopPropagation();
+        if (typeof Sfx !== 'undefined') Sfx.play('click');
+        handleCommand('quest');
+        return;
+      }
       const head = e.target.closest('.qt-head');
       if (head) { G.qtCollapsed = !G.qtCollapsed; QT_SIG = ''; return; }
       const claim = e.target.closest('[data-qt-claim]');
@@ -57,108 +63,66 @@ function uiInit() {
       if (e.target.closest('[data-qt-claim-all]')) { claimAllQuests(); return; }
       if (e.target.closest('[data-qt-accept-all]')) { acceptAllQuests(); QT_SIG = ''; return; }
     });
-  }
-  bindSfxUI();
-  bindTooltipDismiss();
 
-  // 功能按钮图标（固定映射）
-  const UICON = { autoAtk:0, autoSkill:1, potion:2, bag:3, char:4, skill:5, map:6 };
-  document.querySelectorAll('.cc-btn .sk-ic.util').forEach(ic => {
-    const act = ic.parentElement.dataset.act;
-    const i = UICON[act];
-    if (i === undefined) return;
-    ic.style.backgroundImage = `url(${ASSETS.uicons})`;
-    ic.style.backgroundSize = '280px 40px';
-    ic.style.backgroundPosition = `${-i * 40}px 0`;
-    ic.style.backgroundRepeat = 'no-repeat';
-  });
+    /* ---- 拖动：按住标题栏任意位置移动 ---- */
+    const QT_POS_KEY = 'orc_qt_pos';
+    const applyPos = (x, y) => {
+      const r = qt.getBoundingClientRect();
+      const maxX = window.innerWidth - r.width - 4;
+      const maxY = window.innerHeight - r.height - 4;
+      x = Math.max(4, Math.min(maxX, x));
+      y = Math.max(4, Math.min(maxY, y));
+      qt.style.left = x + 'px';
+      qt.style.top = y + 'px';
+      qt.style.right = 'auto';
+      qt.style.transform = 'none';
+      return { x, y };
+    };
+    // 恢复上次位置
+    try {
+      const saved = JSON.parse(localStorage.getItem(QT_POS_KEY) || 'null');
+      if (saved && typeof saved.x === 'number') applyPos(saved.x, saved.y);
+    } catch (e) {}
 
-  document.querySelectorAll('.cc-btn, .codex-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (btn.dataset.skill) castSkillKey(btn.dataset.skill);
-      else if (btn.dataset.act) handleCommand(btn.dataset.act);
+    let drag = null;
+    qt.addEventListener('pointerdown', e => {
+      if (e.button !== 0) return;
+      if (e.target.closest('[data-qt-open]')) return;      // 按钮不触发拖动
+      if (!e.target.closest('.qt-head')) return;
+      const r = qt.getBoundingClientRect();
+      drag = { dx: e.clientX - r.left, dy: e.clientY - r.top, moved: false,
+               sx: e.clientX, sy: e.clientY };
+      qt.classList.add('dragging');
+      try { qt.setPointerCapture(e.pointerId); } catch (err) {}
     });
-  });
-  $('modalClose').addEventListener('click', closeModal);
-  $('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
 
-  $('btnNew').addEventListener('click', () => { SEL = { race: 'human', cls: 'warrior' }; showScreen('create'); });
-  $('btnContinue').addEventListener('click', () => { if (loadGame()) startGame(); else toast('没有存档'); });
-  $('btnImport').addEventListener('click', () => {
-    const inp = document.createElement('input');
-    inp.type = 'file'; inp.accept = '.json';
-    inp.onchange = e => { if (e.target.files[0]) importSave(e.target.files[0]); };
-    inp.click();
-  });
-  $('btnBackTitle').addEventListener('click', () => showScreen('title'));
-  $('btnStart').addEventListener('click', confirmCreate);
+    qt.addEventListener('pointermove', e => {
+      if (!drag) return;
+      if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 4) return;
+      drag.moved = true;
+      applyPos(e.clientX - drag.dx, e.clientY - drag.dy);
+    });
 
-  buildCreateScreen();
-  $('btnContinue').disabled = !hasSave();
-}
+    const endDrag = () => {
+      if (!drag) return;
+      const moved = drag.moved;
+      drag = null;
+      qt.classList.remove('dragging');
+      if (moved) {
+        const r = qt.getBoundingClientRect();
+        try {
+          localStorage.setItem(QT_POS_KEY, JSON.stringify({ x: Math.round(r.left), y: Math.round(r.top) }));
+        } catch (err) {}
+        qt._suppressClick = true;      // 拖动结束后吞掉这一次 click
+        setTimeout(() => { qt._suppressClick = false; }, 60);
+      }
+    };
+    qt.addEventListener('pointerup', endDrag);
+    qt.addEventListener('pointercancel', endDrag);
 
-function showScreen(name) {
-  $('screen-title').classList.toggle('hidden', name !== 'title');
-  $('screen-create').classList.toggle('hidden', name !== 'create');
-  $('hud').classList.toggle('hidden', name !== 'game');
-  G.screen = name;
-  if (name === 'title') $('btnContinue').disabled = !hasSave();
-}
-
-/* ---------------- 建角 ---------------- */
-function buildCreateScreen() {
-  if (G.creatingNew && Array.isArray(G.chars)) {
-    const taken = G.chars.filter(Boolean).map(x => x.cls);
-    if (taken.includes(SEL.cls)) {
-      const free = Object.keys(DATA.CLASSES).find(k => !taken.includes(k));
-      if (free) SEL.cls = free;
-    }
-  }
-  const rl = $('raceList'); rl.innerHTML = '';
-  for (const k in DATA.RACES) {
-    const r = DATA.RACES[k];
-    const el = document.createElement('div');
-    el.className = 'card' + (k === SEL.race ? ' sel' : '');
-    const rai = DATA.RACE_AVATAR[k] !== undefined ? DATA.RACE_AVATAR[k] : 0;
-    el.innerHTML = `<div class="race-portrait" style="--ai:${rai}">
-        <span class="av-img"></span>
-      </div>
-      <h3 style="color:${r.color}">${r.name}</h3>
-      <p>${r.desc}</p>
-      <div><span class="tag">力 ${fmtMod(r.mod.str)}</span><span class="tag">敏 ${fmtMod(r.mod.agi)}</span>
-      <span class="tag">智 ${fmtMod(r.mod.int)}</span><span class="tag">体 ${fmtMod(r.mod.vit)}</span></div>
-      <p style="margin-top:6px;color:#8f8570">${r.talent}</p>`;
-    el.onclick = () => { SEL.race = k; buildCreateScreen(); };
-    rl.appendChild(el);
-  }
-  const cl = $('classList'); cl.innerHTML = '';
-  // 新建角色时，已存在的职业不可再建
-  const taken = (G.creatingNew && Array.isArray(G.chars)) ? G.chars.filter(Boolean).map(x => x.cls) : [];
-  for (const k in DATA.CLASSES) {
-    const c = DATA.CLASSES[k];
-    const isTaken = taken.includes(k);
-    const el = document.createElement('div');
-    el.className = 'card' + (k === SEL.cls ? ' sel' : '') + (isTaken ? ' taken' : '');
-    const km = c.keymap;
-    const ci = Object.keys(DATA.CLASSES).indexOf(k);
-    el.innerHTML = `
-      <div class="cls-portrait" style="--ai:${DATA.CLASS_AVATAR[k] !== undefined ? DATA.CLASS_AVATAR[k] : 0}">
-        <span class="av-img big"></span>
-        <span class="cls-badge" style="background-position:${-ci * 64}px 0"></span>
-        <span class="cls-name-plate">${c.name}</span>
-      </div>
-      <h3 style="color:${c.color}">${c.name}</h3>
-      <p>${c.desc}</p>
-      <div><span class="tag">主属性 ${statName(c.primary)}</span><span class="tag">${c.weapon}</span></div>
-      <p style="margin-top:6px;color:#8f8570">Q ${DATA.SKILLS[km.q].name} · W ${DATA.SKILLS[km.w].name}</p>
-      <p style="color:#8f8570">E ${DATA.SKILLS[km.e].name} · R ${DATA.SKILLS[km.r].name} · D ${DATA.SKILLS[km.d].name}</p>`;
-    if (isTaken) {
-      el.innerHTML = `<div class="taken-mask">已创建</div>` + el.innerHTML;
-      el.onclick = () => toast(`${c.name} 已存在，无法重复创建`);
-    } else {
-      el.onclick = () => { SEL.cls = k; buildCreateScreen(); };
-    }
-    cl.appendChild(el);
+    qt.addEventListener('click', e => {
+      if (qt._suppressClick) { e.stopPropagation(); e.preventDefault(); }
+    }, true);
   }
 }
 
@@ -415,6 +379,7 @@ function updateQuestTracker() {
   let html = `<div class="qt-head">任务
     <b>${qs.length}</b>
     ${doneN ? `<span style="color:#5fdc4a;font-size:11px">· ${doneN} 可交</span>` : ''}
+    <span class="qt-open" data-qt-open="1" title="打开完整任务面板（L）">📋</span>
     <span class="qt-arr">▾</span></div><div class="qt-body">`;
 
   if (!qs.length) {

@@ -1653,3 +1653,13 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .q-nav{border-color:#4a7fa8 !important;color:#8ecdff !important;
   background:linear-gradient(180deg,rgba(24,44,66,.95),rgba(8,14,22,.98)) !important}
 .q-nav:hover{box-shadow:0 0 10px rgba(74,160,255,.5) !important}
+
+/* 任务追踪：打开面板按钮 + 拖动 */
+.qt-open{margin-left:2px;font-size:12px;opacity:.72;cursor:pointer;
+  padding:0 3px;border-radius:2px;transition:all .12s}
+.qt-open:hover{opacity:1;transform:scale(1.18);color:#ffd24a;
+  background:rgba(212,175,55,.18)}
+#questTracker.dragging{opacity:.92;box-shadow:0 8px 28px rgba(0,0,0,.9),0 0 0 1px var(--gold);
+  cursor:grabbing}
+#questTracker .qt-head{cursor:grab}
+#questTracker.dragging .qt-head{cursor:grabbing}

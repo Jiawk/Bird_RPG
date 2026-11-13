@@ -2830,3 +2830,26 @@ CTM 杖 → skillDmg 0.40 + cdrExtra 0.5 ✅
 - 点击 → 直接加入 `p.heirloom.owned` → 可去 C 面板穿戴
 - 已拥有的按钮显示 **✓** 且边框变绿，重复点只提示不重复发放
 - 发放后自动 `recalcStats` 并刷新面板
+
+### v173 · 修复「选择传家宝」格子没有照片
+**现象**：C 面板 → 传家宝 → 点空槽，选择页 9 个格子全是黑的，只有名字。
+
+**根因**：`var(--hlt-sheet)` 只加到了古籍的 `.hb-art` 上，
+另外三个传家宝图片容器**都只写了 `background-repeat` 和 `background-color`，漏了 `background-image`**：
+
+| 类名 | 位置 | 修复前 |
+|---|---|---|
+| `.hp-art` | 选择页格子 | ❌ 无图 |
+| `.hs-art` | 已装备小槽 | ❌ 无图 |
+| `.hd-art` | 详情页大图 | ❌ 无图 |
+
+**修复**：三处统一补上
+```css
+background-image: var(--hlt-sheet);
+background-size: 300% 300%;
+```
+
+**同时改竖版**：
+- `.hp-art`：`width:100%; aspect-ratio: 220/300`（原来是固定高 104px 的横条）
+- `.hs-art`：78×106（原 78×96）
+- `.hd-art`：132×180（原 120×160）

@@ -1824,15 +1824,26 @@ function noticeHtml() {
     <span class="nb-ic">📜</span>
     <span class="nb-title">公 告 牌</span>
   </div>`;
+  const defaultBody = `<div class="nb-sec">
+      <div class="nb-h">🎁 在线奖励</div>
+      <div class="nb-l">· <b>每小时第 1 分钟</b>（如 19:01、20:01）在线，送 <b>10 抽</b>（100 张 BOSS 击杀凭证）</div>
+      <div class="nb-l">· 每晚 <b>20:00</b> 在线，送 <b>100 抽</b></div>
+      <div class="nb-l">· 奖励通过<b>邮箱</b>发放，记得领取</div>
+    </div>`;
   if (!txt) {
     return `<div class="nb-box">${head}
-      <div class="nb-body nb-empty">暂无公告<br><small>管理员可在地图上的公告牌旁发布</small></div>
-      <div class="nb-foot"><button data-notice-close="1">关闭</button></div></div>`;
+      <div class="nb-body">${defaultBody}</div>
+      <div class="nb-foot">
+        <span class="nb-tip">整点在线，福利不断</span>
+        <button data-notice-close="1">关闭</button>
+      </div></div>`;
   }
   return `<div class="nb-box">${head}
-    <div class="nb-body">${txt.replace(/\n/g, '<br>')}</div>
+    <div class="nb-body">${txt.replace(/\n/g, '<br>')}
+      ${defaultBody}
+    </div>
     <div class="nb-foot">
-      <span class="nb-tip">每晚 20 点在线送 100 抽</span>
+      <span class="nb-tip">每小时第 1 分钟在线送 10 抽 · 每晚 20 点送 100 抽</span>
       <button data-notice-close="1">关闭</button>
     </div></div>`;
 }

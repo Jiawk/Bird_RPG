@@ -2604,3 +2604,30 @@ for (let i = 0; i < steps; i++) stepGame(BG_STEP);
 3. **书页左侧新增插图区**（150px 高），CSS 用 `background-size:300% 300%` 定位
    - 风剑无图 → 显示「暂无插图」占位
 4. 包体 1.5M → **1.9M**（图集 274KB → base64 365KB）
+
+### v162 · 修复传家宝只能翻一页
+**现象**：打开古籍，第一次翻页正常，之后点击左右翻页没反应。
+
+**根因**：翻页动画结束后用 `wrap.innerHTML = hltPagesHtml()` **整体重建了 DOM**，
+新生成的 `‹ ›` 按钮没有绑定事件 —— 而绑定只在 `bindModal（打开模态框时）` 执行过一次。
+
+```js
+setTimeout(() => {
+  el.innerHTML = hltPagesHtml();   // ← 新按钮没有 onclick
+}, 260);
+```
+
+**修复**
+1. 把传家宝面板的所有按钮绑定抽成独立函数 `bindHeirloomControls(body)`
+2. `bindModal` 打开时调用一次
+3. **翻页重建 DOM 后再调用一次**
+
+```js
+el.innerHTML = hltPagesHtml();
+bindHeirloomControls(el);   // ← 重新绑定
+```
+
+**同类隐患一并修掉**：签到 / 取消进度 / 选择 / 放弃 四个按钮
+在翻页后同样会失效，现在统一由 helper 重绑。
+
+**验证**：连续翻页 4 次 → 页码 4；回翻 1 次 → 3；再翻 → 4 ✅

@@ -1501,6 +1501,50 @@ function heirloomHtml() {
 }
 
 /* 翻页（带翻书动画 + 音效） */
+/* 传家宝面板的所有按钮绑定（翻页后会重建 DOM，必须能重复调用） */
+function bindHeirloomControls(body) {
+  if (!body || !body.querySelectorAll) return;
+  body.querySelectorAll('[data-hlt-page]').forEach(b => b.onclick = () => {
+    hltGoPage((+b.dataset.hltPage) - (G._hltPage || 0));
+  });
+  body.querySelectorAll('[data-hlt-sign]').forEach(b => b.onclick = () => {
+    const r = hltSign(G.player, b.dataset.hltSign);
+    if (!r.ok) { toast(r.msg); return; }
+    if (r.got) {
+      if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
+      bigAnnounce('📜 获得传家宝：' + (hltByKey(b.dataset.hltSign) || {}).name, '#ffd24a');
+      toast('🎉 签到满 7 天，获得传家宝！');
+    } else {
+      if (typeof Sfx !== 'undefined') Sfx.play('loot');
+      toast(`签到成功：${r.days} / ${r.need} 天`);
+    }
+    saveGame();
+    openModal('heirloom', '传家宝 · 古籍', heirloomHtml());
+  });
+  body.querySelectorAll('[data-hlt-cancel]').forEach(b => b.onclick = () => {
+    if (!confirm('确定取消签到进度吗？已累计的天数会清零。')) return;
+    hltCancelSign(G.player, b.dataset.hltCancel);
+    toast('已取消，进度清零');
+    saveGame();
+    openModal('heirloom', '传家宝 · 古籍', heirloomHtml());
+  });
+  body.querySelectorAll('[data-hlt-select]').forEach(b => b.onclick = () => {
+    const r = hltSelect(G.player, b.dataset.hltSelect);
+    if (!r.ok) { toast(r.msg); return; }
+    if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
+    toast('已装备传家宝');
+    saveGame();
+    openModal('heirloom', '传家宝 · 古籍', heirloomHtml());
+  });
+  body.querySelectorAll('[data-hlt-drop]').forEach(b => b.onclick = () => {
+    hltDrop(G.player);
+    toast('已放回书架（属性加成暂时失效）');
+    saveGame();
+    openModal('heirloom', '传家宝 · 古籍', heirloomHtml());
+  });
+
+}
+
 function hltGoPage(dir) {
   const next = clamp((G._hltPage || 0) + dir, 0, DATA.HEIRLOOMS.length - 1);
   if (next === (G._hltPage || 0)) return;
@@ -1514,8 +1558,13 @@ function hltGoPage(dir) {
   }
   setTimeout(() => {
     const el = document.getElementById('hbWrap');
-    if (el) el.innerHTML = hltPagesHtml();
-    else openModal('heirloom', '传家宝 · 古籍', heirloomHtml());
+    if (el) {
+      el.innerHTML = hltPagesHtml();
+      // 内容重建后必须重新绑定，否则翻页/签到按钮全部失效
+      bindHeirloomControls(el);
+    } else {
+      openModal('heirloom', '传家宝 · 古籍', heirloomHtml());
+    }
   }, 260);
 }
 
@@ -3017,44 +3066,7 @@ function bindModal() {
     setTimeout(render, 2300);
   });
   /* ---------------- 传家宝 ---------------- */
-  body.querySelectorAll('[data-hlt-page]').forEach(b => b.onclick = () => {
-    hltGoPage(+b.dataset.hltPage - (G._hltPage || 0));
-  });
-  body.querySelectorAll('[data-hlt-sign]').forEach(b => b.onclick = () => {
-    const r = hltSign(G.player, b.dataset.hltSign);
-    if (!r.ok) { toast(r.msg); return; }
-    if (r.got) {
-      if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
-      bigAnnounce('📜 获得传家宝：' + (hltByKey(b.dataset.hltSign) || {}).name, '#ffd24a');
-      toast('🎉 签到满 7 天，获得传家宝！');
-    } else {
-      if (typeof Sfx !== 'undefined') Sfx.play('loot');
-      toast(`签到成功：${r.days} / ${r.need} 天`);
-    }
-    saveGame();
-    openModal('heirloom', '传家宝 · 古籍', heirloomHtml());
-  });
-  body.querySelectorAll('[data-hlt-cancel]').forEach(b => b.onclick = () => {
-    if (!confirm('确定取消签到进度吗？已累计的天数会清零。')) return;
-    hltCancelSign(G.player, b.dataset.hltCancel);
-    toast('已取消，进度清零');
-    saveGame();
-    openModal('heirloom', '传家宝 · 古籍', heirloomHtml());
-  });
-  body.querySelectorAll('[data-hlt-select]').forEach(b => b.onclick = () => {
-    const r = hltSelect(G.player, b.dataset.hltSelect);
-    if (!r.ok) { toast(r.msg); return; }
-    if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
-    toast('已装备传家宝');
-    saveGame();
-    openModal('heirloom', '传家宝 · 古籍', heirloomHtml());
-  });
-  body.querySelectorAll('[data-hlt-drop]').forEach(b => b.onclick = () => {
-    hltDrop(G.player);
-    toast('已放回书架（属性加成暂时失效）');
-    saveGame();
-    openModal('heirloom', '传家宝 · 古籍', heirloomHtml());
-  });
+  bindHeirloomControls(body);
 
   body.querySelectorAll('[data-quest-nav]').forEach(b => b.onclick = () => {
     const rid = +b.dataset.questNav;

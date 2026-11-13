@@ -444,30 +444,88 @@ function checkBossUnlock() {
 }
 
 /* ---------------- 主循环 ---------------- */
+/* 游戏逻辑推进一步（渲染与逻辑分离，便于后台挂机） */
+function stepGame(dt) {
+  if (G.screen !== 'game') return;
+  G.time += dt;
+  updatePlayer(dt);
+  updateWorld(dt);
+  updatePet(dt);
+  updateTimers(dt);
+  updateCamera();
+  perfTick(dt);
+  if (typeof mailIdleTick === 'function' && G.player) mailIdleTick(G.player, dt);
+  updateHUD(dt);
+  checkBossUnlock();
+
+  autoSaveAcc += dt;
+  if (autoSaveAcc > 5) { autoSaveAcc = 0; saveGame(); }   // 每 5 秒自动存档
+}
+
 function loop(ts) {
   requestAnimationFrame(loop);
   if (!G.lastTs) G.lastTs = ts;
   let dt = (ts - G.lastTs) / 1000;
   G.lastTs = ts;
   dt = Math.min(dt, 0.05);
-
-  if (G.screen === 'game') {
-    G.time += dt;
-    updatePlayer(dt);
-    updateWorld(dt);
-    updatePet(dt);
-    updateTimers(dt);
-    updateCamera();
-    perfTick(dt);
-    if (typeof mailIdleTick === 'function' && G.player) mailIdleTick(G.player, dt);
-    updateHUD(dt);
-    checkBossUnlock();
-
-    autoSaveAcc += dt;
-    if (autoSaveAcc > 5) { autoSaveAcc = 0; saveGame(); }   // 每 5 秒自动存档
-  }
+  stepGame(dt);
   render();
 }
+
+/* ---------------- 后台挂机 ----------------
+   浏览器切到别的标签页时 requestAnimationFrame 会停掉，
+   导致不自动打怪。这里用 setInterval 继续推进逻辑（不渲染），
+   并用一段静音音频避免 Chrome 的「密集节流」（后台定时器降到 1 次/分钟）。*/
+let bgTimer = null, bgLast = 0, bgAudio = null;
+
+function bgAudioStart() {
+  if (bgAudio) return;
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    bgAudio = new AC();
+    const osc = bgAudio.createOscillator();
+    const gain = bgAudio.createGain();
+    gain.gain.value = 0.0001;          // 几乎无声，但足够让浏览器认为在播音频
+    osc.frequency.value = 30;
+    osc.connect(gain); gain.connect(bgAudio.destination);
+    osc.start();
+    bgAudio._osc = osc; bgAudio._gain = gain;
+  } catch (e) { bgAudio = null; }
+}
+
+function bgAudioStop() {
+  if (!bgAudio) return;
+  try { bgAudio._osc.stop(); bgAudio.close(); } catch (e) {}
+  bgAudio = null;
+}
+
+function bgEnter() {
+  if (bgTimer) return;
+  bgAudioStart();
+  bgLast = Date.now();
+  bgTimer = setInterval(() => {
+    const now = Date.now();
+    let dt = (now - bgLast) / 1000;
+    bgLast = now;
+    if (dt > 5) dt = 5;                // 一次最多补 5 秒，避免长时间卡顿后暴冲
+    stepGame(dt);
+  }, 500);
+}
+
+function bgLeave() {
+  if (bgTimer) { clearInterval(bgTimer); bgTimer = null; }
+  bgAudioStop();
+  G.lastTs = 0;                        // 重置，避免回前台时 dt 巨大
+  bgLast = Date.now();
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) bgEnter();
+  else bgLeave();
+});
+window.addEventListener('blur', () => { if (document.hidden) bgEnter(); });
+window.addEventListener('focus', () => { if (!document.hidden) bgLeave(); });
 
 /* ---------------- 启动 ---------------- */
 window.addEventListener('error', e => {

@@ -1603,3 +1603,43 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .nb-foot button{padding:7px 26px;font-size:12.5px;border-radius:3px;cursor:pointer;
   color:#e8e0cc;border:1px solid #4a3d28;background:rgba(30,25,15,.9)}
 .nb-foot button:hover{border-color:#d4af37;color:#ffd24a}
+
+/* ============ 新手指引 ============ */
+.tut-box{padding:2px}
+.tut-head{display:flex;gap:10px;align-items:center;padding-bottom:12px;
+  border-bottom:1px solid rgba(212,175,55,.25);margin-bottom:12px}
+.tut-ic{font-size:24px}
+.tut-title{font-family:var(--serif);font-size:16px;color:#ffd98a;letter-spacing:.18em}
+.tut-sub{font-size:11px;color:#8f8570;margin-top:4px}
+.tut-sub b{color:#5fd45f}
+.tut-list{display:flex;flex-direction:column;gap:6px}
+.tut-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:4px;
+  cursor:pointer;background:linear-gradient(180deg,rgba(34,28,18,.92),rgba(10,8,4,.96));
+  border:1px solid #4a3d28;transition:all .12s}
+.tut-row:hover{border-color:#d4af37;box-shadow:0 0 12px rgba(212,175,55,.25);transform:translateX(2px)}
+.tut-row.done{opacity:.62;border-color:#3a6b32}
+.tut-no{flex:0 0 22px;text-align:center;font-size:12px;color:#8f8570;font-weight:700}
+.tut-row.done .tut-no{color:#5fd45f}
+.tut-name{flex:1;font-size:13px;color:#e8dcc0}
+.tut-row.done .tut-name{color:#8f9a80}
+.tut-state{font-size:10.5px;color:#8f8570}
+.tut-row.done .tut-state{color:#5fd45f}
+.tut-all{margin-top:10px;text-align:center;font-size:12px;color:#ffd24a;
+  padding:8px;border-radius:4px;background:rgba(90,70,24,.4);border:1px solid #8a6d3f}
+
+/* 指引详情 */
+.tut-detail{padding:2px}
+.tut-dtitle{font-family:var(--serif);font-size:16px;color:#ffd98a;letter-spacing:.14em;
+  padding-bottom:10px;border-bottom:1px solid rgba(212,175,55,.2)}
+.tut-dbody{font-size:12.5px;line-height:2;color:#d8cfb8;padding:12px 2px}
+.tut-dbody b{color:#ffd24a}
+.tut-reward{font-size:12px;color:#c8bfa8;padding:9px 12px;border-radius:4px;
+  background:rgba(60,48,28,.4);border-left:2px solid #8a6d3b}
+.tut-reward b{color:#5fdc4a}
+.tut-dfoot{display:flex;justify-content:space-between;gap:10px;margin-top:14px}
+.tut-dfoot button{padding:8px 22px;font-size:12.5px;border-radius:3px;cursor:pointer;
+  color:#e8e0cc;border:1px solid #4a3d28;background:rgba(30,25,15,.9)}
+.tut-dfoot button:hover:not([disabled]){border-color:#d4af37;color:#ffd24a}
+.tut-claim{border-color:#8a6d2f !important;color:#ffd24a !important;
+  background:linear-gradient(180deg,rgba(90,70,24,.95),rgba(26,20,8,.98)) !important}
+.tut-claim[disabled]{opacity:.4;cursor:not-allowed}

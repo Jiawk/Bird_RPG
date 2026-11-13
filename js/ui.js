@@ -631,6 +631,7 @@ function handleCommand(act) {
     case 'craft': toggleModal('craft', '锻造台', craftHtml); break;
     case 'warehouse': toggleModal('warehouse', '仓库 · 大木箱', warehouseHtml); break;
     case 'notice': openModal('notice', '公告牌', noticeHtml()); break;
+    case 'tutorial': toggleModal('tutorial', '新手指引', tutorialHtml); break;
     case 'mail': toggleModal('mail', '邮箱', mailHtml); break;
     case 'ringup': toggleModal('ringup', '特戒强化', ringUpHtml); break;
     case 'codexEquip': toggleModal('codexEquip', '装备图鉴', codexEquipHtml); break;
@@ -1084,6 +1085,7 @@ function interactNPC(target) {
     case 'warehouse': toggleModal('warehouse', '仓库 · 大木箱', warehouseHtml); break;
     case 'mail': toggleModal('mail', '邮箱', mailHtml); break;
     case 'notice': openModal('notice', '公告牌', noticeHtml()); break;
+    case 'tutorial': toggleModal('tutorial', '新手指引', tutorialHtml); break;
     case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
   }
 }
@@ -1355,6 +1357,53 @@ function settingsHtml() {
     <div class="npc-row"><div><div class="nr-name" style="color:#ff6b5a">重新开局</div>
       <div class="nr-info">删除角色，不可恢复</div></div>
       <button data-act-reset style="border-color:#6b2b2b;color:#ff8a7a">重开</button></div>
+  </div>`;
+}
+
+/* ---------------- 新手指引 ---------------- */
+function tutorialHtml() {
+  const p = G.player;
+  const t = tutEnsure(p);
+  const done = tutDoneCount(p);
+  const sel = G._tutSel;
+
+  if (sel) {
+    const item = DATA.TUTORIAL.find(x => x.key === sel);
+    if (item) {
+      const got = !!t.done[item.key];
+      const rw = item.reward === 'starter' ? '一套 1 级初始装备 + 小型红药 ×10'
+               : item.reward === 'stone' ? '强化石 ×2 + 技能强化券 ×2'
+               : '1,000 金币';
+      return `<div class="tut-detail">
+        <div class="tut-dtitle">${item.title}</div>
+        <div class="tut-dbody">${item.body}</div>
+        <div class="tut-reward">🎁 完成奖励：<b>${rw}</b></div>
+        <div class="tut-dfoot">
+          <button class="tut-back" data-tut-back="1">← 返回</button>
+          <button class="tut-claim" data-tut-claim="${item.key}" ${got ? 'disabled' : ''}>
+            ${got ? '已领取' : '完成并领取'}</button>
+        </div>
+      </div>`;
+    }
+  }
+
+  const rows = DATA.TUTORIAL.map((x, i) => `
+    <div class="tut-row${t.done[x.key] ? ' done' : ''}" data-tut-open="${x.key}">
+      <span class="tut-no">${t.done[x.key] ? '✓' : (i + 1)}</span>
+      <span class="tut-name">${x.title}</span>
+      <span class="tut-state">${t.done[x.key] ? '已完成' : '未完成'}</span>
+    </div>`).join('');
+
+  return `<div class="tut-box">
+    <div class="tut-head">
+      <span class="tut-ic">🎓</span>
+      <div>
+        <div class="tut-title">新手指引</div>
+        <div class="tut-sub">已完成 <b>${done}</b> / ${DATA.TUTORIAL.length}　点击条目查看内容并领取奖励</div>
+      </div>
+    </div>
+    <div class="tut-list">${rows}</div>
+    ${tutAllDone(p) ? '<div class="tut-all">🎉 全部指引已完成，祝你冒险顺利！</div>' : ''}
   </div>`;
 }
 
@@ -2809,6 +2858,24 @@ function bindModal() {
 
     if (box) box.innerHTML = '<div class="lr-hint">转盘旋转中…</div>';
     setTimeout(render, 2300);
+  });
+  body.querySelectorAll('[data-tut-open]').forEach(b => b.onclick = () => {
+    G._tutSel = b.dataset.tutOpen;
+    openModal('tutorial', '新手指引', tutorialHtml());
+  });
+  body.querySelectorAll('[data-tut-back]').forEach(b => b.onclick = () => {
+    G._tutSel = null;
+    openModal('tutorial', '新手指引', tutorialHtml());
+  });
+  body.querySelectorAll('[data-tut-claim]').forEach(b => b.onclick = () => {
+    const r = tutComplete(G.player, b.dataset.tutClaim);
+    if (!r.ok) { toast(r.msg); return; }
+    if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
+    toast(`✅ ${r.title} 完成：${r.msg}`);
+    logMsg(`🎓 新手指引「${r.title}」已完成`, 'level');
+    saveGame();
+    G._tutSel = null;
+    openModal('tutorial', '新手指引', tutorialHtml());
   });
   body.querySelectorAll('[data-notice-close]').forEach(b => b.onclick = () => closeModal());
   body.querySelectorAll('[data-mat-close]').forEach(b => b.onclick = () => closeModal());

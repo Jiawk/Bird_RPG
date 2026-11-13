@@ -976,6 +976,29 @@ function drawNPC(n) {
       CTX.beginPath(); CTX.arc(gx, gy - 20, 52, 0, 6.283); CTX.fill();
       CTX.drawImage(IMG.stele, gx - sz / 2, gy - sz + 10, sz, sz);
       npcDrawn = true;
+    } else if (n.kind === 'tutorial') {
+      // 新手指引：绿色光晕 + 书卷
+      const cy = gy - 4;
+      const glow = CTX.createRadialGradient(gx, cy - 20, 3, gx, cy - 20, 44);
+      glow.addColorStop(0, 'rgba(95,212,95,.35)');
+      glow.addColorStop(1, 'rgba(95,212,95,0)');
+      CTX.fillStyle = glow;
+      CTX.beginPath(); CTX.arc(gx, cy - 20, 44, 0, 6.283); CTX.fill();
+      // 底座
+      CTX.fillStyle = '#3a5a30';
+      CTX.beginPath(); CTX.ellipse(gx, cy, 20, 7, 0, 0, 6.283); CTX.fill();
+      // 书卷
+      CTX.fillStyle = '#d8e8c8';
+      CTX.fillRect(gx - 14, cy - 34, 28, 32);
+      CTX.strokeStyle = '#7aa86a'; CTX.lineWidth = 2;
+      CTX.strokeRect(gx - 14, cy - 34, 28, 32);
+      CTX.fillStyle = '#a8c898';
+      for (let i = 0; i < 4; i++) CTX.fillRect(gx - 10, cy - 29 + i * 7, 20, 1.5);
+      // 感叹号
+      CTX.fillStyle = '#2e6b28';
+      CTX.fillRect(gx - 3, cy - 30, 6, 12);
+      CTX.beginPath(); CTX.arc(gx, cy - 15, 3.5, 0, 6.283); CTX.fill();
+      npcDrawn = true;
     } else if (n.kind === 'notice') {
       // 公告牌：木柱 + 木板 + 纸张
       const cy = gy - 4;

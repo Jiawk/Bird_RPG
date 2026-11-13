@@ -54,6 +54,15 @@ function startGame() {
   updateHUD(1);
   autoSaveAcc = 0;
   try { if (typeof noticeLoad === 'function') noticeLoad(); } catch (e) {}
+
+  // 新角色自动弹出新手指引（仅 1 级 + 没看过）
+  try {
+    const t = (typeof tutEnsure === 'function') ? tutEnsure(p) : null;
+    if (t && !t.seen && p.level <= 1 && typeof tutAllDone === 'function' && !tutAllDone(p)) {
+      t.seen = true;
+      setTimeout(() => { if (typeof toggleModal === 'function') toggleModal('tutorial', '新手指引', tutorialHtml); }, 700);
+    }
+  } catch (e) {}
   // 一次性福利邮件
   try {
     if (typeof mailEnsureWelfare === 'function') {

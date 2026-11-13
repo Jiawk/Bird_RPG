@@ -1611,6 +1611,46 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   color:#e8e0cc;border:1px solid #4a3d28;background:rgba(30,25,15,.9)}
 .nb-foot button:hover{border-color:#d4af37;color:#ffd24a}
 
+/* ============ 新手指引 ============ */
+.tut-box{padding:2px}
+.tut-head{display:flex;gap:10px;align-items:center;padding-bottom:12px;
+  border-bottom:1px solid rgba(212,175,55,.25);margin-bottom:12px}
+.tut-ic{font-size:24px}
+.tut-title{font-family:var(--serif);font-size:16px;color:#ffd98a;letter-spacing:.18em}
+.tut-sub{font-size:11px;color:#8f8570;margin-top:4px}
+.tut-sub b{color:#5fd45f}
+.tut-list{display:flex;flex-direction:column;gap:6px}
+.tut-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:4px;
+  cursor:pointer;background:linear-gradient(180deg,rgba(34,28,18,.92),rgba(10,8,4,.96));
+  border:1px solid #4a3d28;transition:all .12s}
+.tut-row:hover{border-color:#d4af37;box-shadow:0 0 12px rgba(212,175,55,.25);transform:translateX(2px)}
+.tut-row.done{opacity:.62;border-color:#3a6b32}
+.tut-no{flex:0 0 22px;text-align:center;font-size:12px;color:#8f8570;font-weight:700}
+.tut-row.done .tut-no{color:#5fd45f}
+.tut-name{flex:1;font-size:13px;color:#e8dcc0}
+.tut-row.done .tut-name{color:#8f9a80}
+.tut-state{font-size:10.5px;color:#8f8570}
+.tut-row.done .tut-state{color:#5fd45f}
+.tut-all{margin-top:10px;text-align:center;font-size:12px;color:#ffd24a;
+  padding:8px;border-radius:4px;background:rgba(90,70,24,.4);border:1px solid #8a6d3f}
+
+/* 指引详情 */
+.tut-detail{padding:2px}
+.tut-dtitle{font-family:var(--serif);font-size:16px;color:#ffd98a;letter-spacing:.14em;
+  padding-bottom:10px;border-bottom:1px solid rgba(212,175,55,.2)}
+.tut-dbody{font-size:12.5px;line-height:2;color:#d8cfb8;padding:12px 2px}
+.tut-dbody b{color:#ffd24a}
+.tut-reward{font-size:12px;color:#c8bfa8;padding:9px 12px;border-radius:4px;
+  background:rgba(60,48,28,.4);border-left:2px solid #8a6d3b}
+.tut-reward b{color:#5fdc4a}
+.tut-dfoot{display:flex;justify-content:space-between;gap:10px;margin-top:14px}
+.tut-dfoot button{padding:8px 22px;font-size:12.5px;border-radius:3px;cursor:pointer;
+  color:#e8e0cc;border:1px solid #4a3d28;background:rgba(30,25,15,.9)}
+.tut-dfoot button:hover:not([disabled]){border-color:#d4af37;color:#ffd24a}
+.tut-claim{border-color:#8a6d2f !important;color:#ffd24a !important;
+  background:linear-gradient(180deg,rgba(90,70,24,.95),rgba(26,20,8,.98)) !important}
+.tut-claim[disabled]{opacity:.4;cursor:not-allowed}
+
 </style>
 <script id="orc-cfg" type="application/json">{}</script>
 </head>
@@ -2305,6 +2345,85 @@ DATA.LOTTERY = {
 /* 装备掉落倍率（1 = 原版；0.2 = 五分之一） */
 DATA.EQ_DROP_MUL = 0.2;
 
+
+/* ---------------- 新手指引 ---------------- */
+DATA.TUTORIAL = [
+  { key:'keys', title:'常用按键', reward:'gold',
+    body:`<b>移动</b>：W A S D 或 方向键<br>
+<b>普通攻击</b>：鼠标左键点怪物，或按 <b>空格</b><br>
+<b>技能</b>：Q / W / E / R / D 五个技能键<br>
+<b>自动战斗</b>：<b>A</b> 自动攻击 · <b>S</b> 自动技能<br>
+<b>喝药</b>：<b>F</b> 使用药水<br>
+<b>面板</b>：<b>B</b> 背包 · <b>C</b> 角色 · <b>K</b> 技能 · <b>J/L</b> 任务<br>
+<b>地图</b>：<b>M</b> 选择关卡 · <b>T</b> 锻造台 · 鼠标右键与 NPC 交互<br>
+<b>提示</b>：点右上角「设置」可以调整音效和画质` },
+
+  { key:'level', title:'如何打怪升级', reward:'starter',
+    body:`<b>第一步</b>：点「传送员」选一张副本，走进去<br>
+<b>第二步</b>：按 <b>A</b> 开自动攻击，按 <b>S</b> 开自动技能<br>
+<b>第三步</b>：站在怪堆里挂机，经验会自动累积<br><br>
+升级会提升四维属性、解锁新技能槽。<br>
+<b>小技巧</b>：装备越好、清怪越快，升级越效率。<br>
+高级副本的单只怪经验远高于低级副本。` },
+
+  { key:'dungeon', title:'如何进副本', reward:'gold',
+    body:`点主城的 <b>传送员 · 岳跃冲</b>，或按 <b>M</b> 打开关卡列表。<br><br>
+共 6 张副本，等级要求依次为：<br>
+Lv.1 / 11 / 21 / 31 / 41 / 51<br><br>
+每个副本只掉落<b>对应等级段</b>的装备：<br>
+第 1 张最高 10 级，第 2 张最高 20 级，以此类推。<br><br>
+<b>难度</b>分简单 / 困难 / 地狱，越难掉落越好、经验越多。` },
+
+  { key:'equip', title:'如何操作装备', reward:'gold',
+    body:`按 <b>B</b> 打开背包，点任意装备会弹出详情：<br><br>
+<b>穿戴</b>：换到身上对应部位<br>
+<b>强化</b>：进锻造台消耗强化石提升等级<br>
+<b>出售</b>：换金币（红装出售返还龙鳞片和碎片）<br>
+<b>放入仓库</b>：仓库在三页 90 格，可长期存放<br><br>
+<b>背包工具栏</b>：整理背包 / 一键分解红装 / 一键出售低战力<br>
+<b>小技巧</b>：点「整理背包」会按类型和战力自动重排。` },
+
+  { key:'enhance', title:'如何强化技能和装备', reward:'stone',
+    body:`<b>装备强化</b>：按 <b>T</b> 打开锻造台 → 装备强化<br>
+消耗强化石，等级越高消耗越多，成功率越低。<br>
+勾选「使用保护券」失败不会掉级，成功率翻倍。<br><br>
+<b>技能等级</b>：按 <b>K</b> 打开技能页，花金币升级 Lv.1→Lv.5<br>
+<b>技能突破</b>：打怪攒满熟练度 + 消耗突破券，突破到 6 层<br>
+突破会重置技能等级，需要重新升级。<br><br>
+层数效果：减冷却 + 强控制　等级效果：加伤害 + 减耗蓝 + 增范围` },
+
+  { key:'quest', title:'如何完成任务', reward:'gold',
+    body:`按 <b>J</b> 或 <b>L</b> 打开任务面板，也能去主城找 <b>任务官 · 黄仁勋</b>。<br><br>
+最多同时接 3 条悬赏任务，每条要求击杀 80 只怪。<br>
+打够之后回任务官处交任务。<br><br>
+<b>奖励</b>：经验 + 金币 + <b>四种打造材料</b><br>
+（魔铁锭 / 秘银矿 / 龙鳞片 / 虚空碎片）<br><br>
+打造成装备的材料<b>只能靠任务获得</b>，别漏交。` },
+
+  { key:'tower', title:'如何爬塔', reward:'gold',
+    body:`主城左侧有 <b>试炼之塔 · 入口</b>。<br><br>
+共 20 层，每天 2 次挑战机会。<br>
+层数越高，怪物血量和攻击越强，但经验和奖励也越好。<br><br>
+塔内怪物等级 = 你的等级 + 层数，所以越往上越硬。<br>
+<b>建议</b>：装备成型、血瓶充足后再往上冲。` },
+
+  { key:'codex', title:'如何收集图鉴', reward:'gold',
+    body:`右上角有两个图鉴按钮：<br><br>
+<b>装备图鉴</b>：收集各种品质的装备，集齐有属性加成<br>
+<b>收藏图鉴</b>：记录你击败过的怪物，BOSS 首杀还能领特戒<br><br>
+首杀奖励需要<b>手动点「领取」</b>才会发到背包，别忘了领。<br>
+特戒领到后会进背包，需要自己穿上才生效。` },
+
+  { key:'shop', title:'如何在商店买东西', reward:'gold',
+    body:`主城找 <b>商人 · 赵帅帅</b>。<br><br>
+<b>第一行</b>：红药 / 蓝药<br>
+<b>第二行</b>：4 个职业的圣物武器（500,000 金）<br>
+<b>第三行往下</b>：每个职业竖着一列，7 件圣物套装<br><br>
+点格子才会在右侧显示详情和兑换按钮（不是悬停）。<br>
+圣物单件属性强于红装，集齐 3/5/7 件还有套装效果。<br><br>
+<b>抽奖专员 · 李准</b> 那里可以用 BOSS击杀凭证抽奖。` }
+];
+
 DATA.RING_DROP_PCT = 0.5;   // BOSS 掉特戒基础概率（%）
 
 DATA.BOSS_RINGS = {
@@ -2899,6 +3018,7 @@ function createPlayer(raceKey, clsKey) {
     bonus: { str: 0, agi: 0, int: 0, vit: 0 },   // 属性书永久加成
     equip: {}, bag: [], warehouse: [], whPage: 0,
     mails: [], mailSeq: 1, mailTimer: 0, welfareClaimed: false,
+    tutorial: { done: {}, seen: false },
     skills: {}, active: [], passive: [],
     cd: {}, buffs: [], dots: [],
     hp: 0, mp: 0,
@@ -3660,6 +3780,51 @@ function claimFirstKillRing(p, bossKey) {
   return { ok:true, ring };
 }
 
+/* ---------------- 新手指引 ---------------- */
+function tutEnsure(p) {
+  if (!p.tutorial) p.tutorial = { done: {}, seen: false };
+  if (!p.tutorial.done) p.tutorial.done = {};
+  return p.tutorial;
+}
+function tutDoneCount(p) {
+  const t = tutEnsure(p);
+  return DATA.TUTORIAL.filter(x => t.done[x.key]).length;
+}
+function tutAllDone(p) { return tutDoneCount(p) >= DATA.TUTORIAL.length; }
+
+/* 完成一条指引并发放奖励 */
+function tutComplete(p, key) {
+  const t = tutEnsure(p);
+  const item = DATA.TUTORIAL.find(x => x.key === key);
+  if (!item) return { ok: false, msg: '未知指引' };
+  if (t.done[key]) return { ok: false, msg: '这条已经领过了' };
+  t.done[key] = true;
+
+  let msg = '';
+  if (item.reward === 'starter') {
+    // 一套 1 级初始装备 + 血瓶
+    ['weapon','helm','chest','legs','boots','neck','ring','trinket'].forEach(sl => {
+      const it = makeItem(sl, 1, 'uncommon', DATA.CLASSES[p.cls].primary === 'int');
+      it.reqLv = 1;
+      if (!addToBag(p, it)) p.gold += 50;
+    });
+    p.materials.potion0 = (p.materials.potion0 || 0);
+    const potion = { ...DATA.POTIONS[0], type:'potion', count: 10,
+      id: 'p' + Math.random().toString(36).slice(2, 8) };
+    if (!addToBag(p, potion)) p.gold += 100;
+    msg = '获得 8 件初始装备 + 小型红药 ×10';
+  } else if (item.reward === 'stone') {
+    p.materials.stone = (p.materials.stone || 0) + 2;
+    p.materials.skillT = (p.materials.skillT || 0) + 2;
+    msg = '获得 强化石 ×2 + 技能强化券 ×2';
+  } else {
+    p.gold += 1000;
+    msg = '获得 1,000 金币';
+  }
+  recalcStats(p);
+  return { ok: true, msg, title: item.title };
+}
+
 /* ---------------- 圣物套装 ---------------- */
 function relicSetCount(p) {
   let n = 0, cls = null;
@@ -4229,7 +4394,8 @@ function buildTown() {
     { id: nextId(), kind: 'craft',    name: '锻造台',          ...P(0.72, 0.60), r: 24, color: '#c9a24a' },
     { id: nextId(), kind: 'tower',    name: '试炼之塔 · 入口',  ...P(0.30, 0.62), r: 26, color: '#b45cff' },
     { id: nextId(), kind: 'warehouse',name: '仓库 · 大木箱',      ...P(0.62, 0.32), r: 26, color: '#c8973f' },
-    { id: nextId(), kind: 'notice',   name: '公告牌',           ...P(0.80, 0.46), r: 26, color: '#ffd24a' }
+    { id: nextId(), kind: 'notice',   name: '公告牌',           ...P(0.80, 0.46), r: 26, color: '#ffd24a' },
+    { id: nextId(), kind: 'tutorial', name: '新手指引',         ...P(0.62, 0.74), r: 24, color: '#5fd45f' }
   ];
 }
 
@@ -5966,6 +6132,29 @@ function drawNPC(n) {
       CTX.beginPath(); CTX.arc(gx, gy - 20, 52, 0, 6.283); CTX.fill();
       CTX.drawImage(IMG.stele, gx - sz / 2, gy - sz + 10, sz, sz);
       npcDrawn = true;
+    } else if (n.kind === 'tutorial') {
+      // 新手指引：绿色光晕 + 书卷
+      const cy = gy - 4;
+      const glow = CTX.createRadialGradient(gx, cy - 20, 3, gx, cy - 20, 44);
+      glow.addColorStop(0, 'rgba(95,212,95,.35)');
+      glow.addColorStop(1, 'rgba(95,212,95,0)');
+      CTX.fillStyle = glow;
+      CTX.beginPath(); CTX.arc(gx, cy - 20, 44, 0, 6.283); CTX.fill();
+      // 底座
+      CTX.fillStyle = '#3a5a30';
+      CTX.beginPath(); CTX.ellipse(gx, cy, 20, 7, 0, 0, 6.283); CTX.fill();
+      // 书卷
+      CTX.fillStyle = '#d8e8c8';
+      CTX.fillRect(gx - 14, cy - 34, 28, 32);
+      CTX.strokeStyle = '#7aa86a'; CTX.lineWidth = 2;
+      CTX.strokeRect(gx - 14, cy - 34, 28, 32);
+      CTX.fillStyle = '#a8c898';
+      for (let i = 0; i < 4; i++) CTX.fillRect(gx - 10, cy - 29 + i * 7, 20, 1.5);
+      // 感叹号
+      CTX.fillStyle = '#2e6b28';
+      CTX.fillRect(gx - 3, cy - 30, 6, 12);
+      CTX.beginPath(); CTX.arc(gx, cy - 15, 3.5, 0, 6.283); CTX.fill();
+      npcDrawn = true;
     } else if (n.kind === 'notice') {
       // 公告牌：木柱 + 木板 + 纸张
       const cy = gy - 4;
@@ -6782,6 +6971,7 @@ function handleCommand(act) {
     case 'craft': toggleModal('craft', '锻造台', craftHtml); break;
     case 'warehouse': toggleModal('warehouse', '仓库 · 大木箱', warehouseHtml); break;
     case 'notice': openModal('notice', '公告牌', noticeHtml()); break;
+    case 'tutorial': toggleModal('tutorial', '新手指引', tutorialHtml); break;
     case 'mail': toggleModal('mail', '邮箱', mailHtml); break;
     case 'ringup': toggleModal('ringup', '特戒强化', ringUpHtml); break;
     case 'codexEquip': toggleModal('codexEquip', '装备图鉴', codexEquipHtml); break;
@@ -7235,6 +7425,7 @@ function interactNPC(target) {
     case 'warehouse': toggleModal('warehouse', '仓库 · 大木箱', warehouseHtml); break;
     case 'mail': toggleModal('mail', '邮箱', mailHtml); break;
     case 'notice': openModal('notice', '公告牌', noticeHtml()); break;
+    case 'tutorial': toggleModal('tutorial', '新手指引', tutorialHtml); break;
     case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
   }
 }
@@ -7506,6 +7697,53 @@ function settingsHtml() {
     <div class="npc-row"><div><div class="nr-name" style="color:#ff6b5a">重新开局</div>
       <div class="nr-info">删除角色，不可恢复</div></div>
       <button data-act-reset style="border-color:#6b2b2b;color:#ff8a7a">重开</button></div>
+  </div>`;
+}
+
+/* ---------------- 新手指引 ---------------- */
+function tutorialHtml() {
+  const p = G.player;
+  const t = tutEnsure(p);
+  const done = tutDoneCount(p);
+  const sel = G._tutSel;
+
+  if (sel) {
+    const item = DATA.TUTORIAL.find(x => x.key === sel);
+    if (item) {
+      const got = !!t.done[item.key];
+      const rw = item.reward === 'starter' ? '一套 1 级初始装备 + 小型红药 ×10'
+               : item.reward === 'stone' ? '强化石 ×2 + 技能强化券 ×2'
+               : '1,000 金币';
+      return `<div class="tut-detail">
+        <div class="tut-dtitle">${item.title}</div>
+        <div class="tut-dbody">${item.body}</div>
+        <div class="tut-reward">🎁 完成奖励：<b>${rw}</b></div>
+        <div class="tut-dfoot">
+          <button class="tut-back" data-tut-back="1">← 返回</button>
+          <button class="tut-claim" data-tut-claim="${item.key}" ${got ? 'disabled' : ''}>
+            ${got ? '已领取' : '完成并领取'}</button>
+        </div>
+      </div>`;
+    }
+  }
+
+  const rows = DATA.TUTORIAL.map((x, i) => `
+    <div class="tut-row${t.done[x.key] ? ' done' : ''}" data-tut-open="${x.key}">
+      <span class="tut-no">${t.done[x.key] ? '✓' : (i + 1)}</span>
+      <span class="tut-name">${x.title}</span>
+      <span class="tut-state">${t.done[x.key] ? '已完成' : '未完成'}</span>
+    </div>`).join('');
+
+  return `<div class="tut-box">
+    <div class="tut-head">
+      <span class="tut-ic">🎓</span>
+      <div>
+        <div class="tut-title">新手指引</div>
+        <div class="tut-sub">已完成 <b>${done}</b> / ${DATA.TUTORIAL.length}　点击条目查看内容并领取奖励</div>
+      </div>
+    </div>
+    <div class="tut-list">${rows}</div>
+    ${tutAllDone(p) ? '<div class="tut-all">🎉 全部指引已完成，祝你冒险顺利！</div>' : ''}
   </div>`;
 }
 
@@ -8961,6 +9199,24 @@ function bindModal() {
     if (box) box.innerHTML = '<div class="lr-hint">转盘旋转中…</div>';
     setTimeout(render, 2300);
   });
+  body.querySelectorAll('[data-tut-open]').forEach(b => b.onclick = () => {
+    G._tutSel = b.dataset.tutOpen;
+    openModal('tutorial', '新手指引', tutorialHtml());
+  });
+  body.querySelectorAll('[data-tut-back]').forEach(b => b.onclick = () => {
+    G._tutSel = null;
+    openModal('tutorial', '新手指引', tutorialHtml());
+  });
+  body.querySelectorAll('[data-tut-claim]').forEach(b => b.onclick = () => {
+    const r = tutComplete(G.player, b.dataset.tutClaim);
+    if (!r.ok) { toast(r.msg); return; }
+    if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
+    toast(`✅ ${r.title} 完成：${r.msg}`);
+    logMsg(`🎓 新手指引「${r.title}」已完成`, 'level');
+    saveGame();
+    G._tutSel = null;
+    openModal('tutorial', '新手指引', tutorialHtml());
+  });
   body.querySelectorAll('[data-notice-close]').forEach(b => b.onclick = () => closeModal());
   body.querySelectorAll('[data-mat-close]').forEach(b => b.onclick = () => closeModal());
   body.querySelectorAll('[data-mail-claim-all]').forEach(b => b.onclick = () => {
@@ -9517,6 +9773,15 @@ function startGame() {
   updateHUD(1);
   autoSaveAcc = 0;
   try { if (typeof noticeLoad === 'function') noticeLoad(); } catch (e) {}
+
+  // 新角色自动弹出新手指引（仅 1 级 + 没看过）
+  try {
+    const t = (typeof tutEnsure === 'function') ? tutEnsure(p) : null;
+    if (t && !t.seen && p.level <= 1 && typeof tutAllDone === 'function' && !tutAllDone(p)) {
+      t.seen = true;
+      setTimeout(() => { if (typeof toggleModal === 'function') toggleModal('tutorial', '新手指引', tutorialHtml); }, 700);
+    }
+  } catch (e) {}
   // 一次性福利邮件
   try {
     if (typeof mailEnsureWelfare === 'function') {

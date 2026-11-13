@@ -46,6 +46,7 @@ function createPlayer(raceKey, clsKey) {
     bonus: { str: 0, agi: 0, int: 0, vit: 0 },   // 属性书永久加成
     equip: {}, bag: [], warehouse: [], whPage: 0,
     mails: [], mailSeq: 1, mailTimer: 0, welfareClaimed: false,
+    tutorial: { done: {}, seen: false },
     skills: {}, active: [], passive: [],
     cd: {}, buffs: [], dots: [],
     hp: 0, mp: 0,
@@ -805,6 +806,51 @@ function claimFirstKillRing(p, bossKey) {
   if (!ok) { p.ringClaimed[bossKey] = false; return { ok:false, msg:'背包已满' }; }
   recalcStats(p);
   return { ok:true, ring };
+}
+
+/* ---------------- 新手指引 ---------------- */
+function tutEnsure(p) {
+  if (!p.tutorial) p.tutorial = { done: {}, seen: false };
+  if (!p.tutorial.done) p.tutorial.done = {};
+  return p.tutorial;
+}
+function tutDoneCount(p) {
+  const t = tutEnsure(p);
+  return DATA.TUTORIAL.filter(x => t.done[x.key]).length;
+}
+function tutAllDone(p) { return tutDoneCount(p) >= DATA.TUTORIAL.length; }
+
+/* 完成一条指引并发放奖励 */
+function tutComplete(p, key) {
+  const t = tutEnsure(p);
+  const item = DATA.TUTORIAL.find(x => x.key === key);
+  if (!item) return { ok: false, msg: '未知指引' };
+  if (t.done[key]) return { ok: false, msg: '这条已经领过了' };
+  t.done[key] = true;
+
+  let msg = '';
+  if (item.reward === 'starter') {
+    // 一套 1 级初始装备 + 血瓶
+    ['weapon','helm','chest','legs','boots','neck','ring','trinket'].forEach(sl => {
+      const it = makeItem(sl, 1, 'uncommon', DATA.CLASSES[p.cls].primary === 'int');
+      it.reqLv = 1;
+      if (!addToBag(p, it)) p.gold += 50;
+    });
+    p.materials.potion0 = (p.materials.potion0 || 0);
+    const potion = { ...DATA.POTIONS[0], type:'potion', count: 10,
+      id: 'p' + Math.random().toString(36).slice(2, 8) };
+    if (!addToBag(p, potion)) p.gold += 100;
+    msg = '获得 8 件初始装备 + 小型红药 ×10';
+  } else if (item.reward === 'stone') {
+    p.materials.stone = (p.materials.stone || 0) + 2;
+    p.materials.skillT = (p.materials.skillT || 0) + 2;
+    msg = '获得 强化石 ×2 + 技能强化券 ×2';
+  } else {
+    p.gold += 1000;
+    msg = '获得 1,000 金币';
+  }
+  recalcStats(p);
+  return { ok: true, msg, title: item.title };
 }
 
 /* ---------------- 圣物套装 ---------------- */

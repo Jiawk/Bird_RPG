@@ -110,6 +110,7 @@ function uiInit() {
   document.documentElement.style.setProperty('--skill-sheet', `url(${ASSETS.skills})`);
   if (ASSETS.units) document.documentElement.style.setProperty('--units-sheet', `url(${ASSETS.units})`);
   if (ASSETS.classicons) document.documentElement.style.setProperty('--class-sheet', `url(${ASSETS.classicons})`);
+  if (ASSETS.heirlooms) document.documentElement.style.setProperty('--hlt-sheet', `url(${ASSETS.heirlooms})`);
   if (ASSETS.avatars) document.documentElement.style.setProperty('--avatar-sheet', `url(${ASSETS.avatars})`);
   bindSkillTips();
   // 任务追踪：事件委托（内容重建后依然可点）
@@ -1455,7 +1456,7 @@ function hltPagesHtml() {
 
   return `<div class="hb-book">
     <div class="hb-page left">
-      <div class="hb-art" style="background-size:300% 300%;
+      <div class="hb-art ${G._hltZoom || ''}" style="background-size:300% 300%;
         background-position:${(idx % 3) * 50}% ${Math.floor(idx / 3) * 50}%">
         ${idx === 0 ? '<span class="hb-noart">暂无插图</span>' : ''}
       </div>
@@ -1564,16 +1565,15 @@ function hltGoPage(dir) {
     void wrap.offsetWidth;
     wrap.classList.add(dir > 0 ? 'flip-fwd' : 'flip-back');
   }
+  // 插图「走进 / 远去」：前进=从远处拉近，后退=推向远处
+  G._hltZoom = dir > 0 ? 'zoom-in' : 'zoom-out';
   setTimeout(() => {
     const el = document.getElementById('hbWrap');
-    if (el) {
-      el.innerHTML = hltPagesHtml();
-      // 内容重建后必须重新绑定，否则翻页/签到按钮全部失效
-      bindHeirloomControls(el);
-    } else {
-      openModal('heirloom', '传家宝 · 古籍', heirloomHtml());
-    }
-  }, 260);
+    if (!el) { openModal('heirloom', '传家宝 · 古籍', heirloomHtml()); return; }
+    el.classList.remove('flip-fwd', 'flip-back');   // 先撤掉动画类，避免重建后重播（抖两下）
+    el.innerHTML = hltPagesHtml();
+    bindHeirloomControls(el);                        // 重建后必须重绑
+  }, 300);
 }
 
 /* ---------------- 新手指引 ---------------- */

@@ -1730,14 +1730,16 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   font-size:10.5px;color:#8f8570;letter-spacing:.1em}
 
 /* 翻页动画 */
-@keyframes hbFwd{from{transform:rotateY(0) scale(1);opacity:1}
-  50%{transform:rotateY(-22deg) scale(.97);opacity:.55}
-  to{transform:rotateY(0) scale(1);opacity:1}}
-@keyframes hbBack{from{transform:rotateY(0) scale(1);opacity:1}
-  50%{transform:rotateY(22deg) scale(.97);opacity:.55}
-  to{transform:rotateY(0) scale(1);opacity:1}}
-.hb-wrap.flip-fwd .hb-book{animation:hbFwd .26s ease-out;transform-origin:left center}
-.hb-wrap.flip-back .hb-book{animation:hbBack .26s ease-out;transform-origin:right center}
+@keyframes hbFwd{
+  0%  {transform:perspective(1600px) rotateY(0deg);opacity:1}
+  100%{transform:perspective(1600px) rotateY(-14deg);opacity:.35}
+}
+@keyframes hbBack{
+  0%  {transform:perspective(1600px) rotateY(0deg);opacity:1}
+  100%{transform:perspective(1600px) rotateY(14deg);opacity:.35}
+}
+.hb-wrap.flip-fwd .hb-book{animation:hbFwd .30s ease-in forwards;transform-origin:left center}
+.hb-wrap.flip-back .hb-book{animation:hbBack .30s ease-in forwards;transform-origin:right center}
 @media (max-width:700px){
   .hb-book{grid-template-columns:1fr}
   .hb-page{min-height:0;max-height:none}
@@ -1746,13 +1748,32 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   .hb-stats{grid-template-columns:1fr}
 }
 
-/* 传家宝插图 */
-.hb-art{width:100%;height:150px;border-radius:4px;margin-bottom:10px;
+/* 传家宝插图（预览）*/
+.hb-art{width:100%;height:190px;border-radius:5px;margin-bottom:10px;
   background-color:#0d0a06;background-repeat:no-repeat;
-  border:1px solid #4a3d28;box-shadow:inset 0 0 26px rgba(0,0,0,.75),0 2px 10px rgba(0,0,0,.5);
-  display:flex;align-items:center;justify-content:center}
-.hb-noart{font-size:11px;color:#5a5348;letter-spacing:.16em}
-@media (max-width:700px){ .hb-art{height:120px} }
+  background-image:var(--hlt-sheet);
+  border:1px solid #4a3d28;
+  box-shadow:inset 0 0 34px rgba(0,0,0,.8),0 3px 14px rgba(0,0,0,.55);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+  position:relative;transition:box-shadow .3s}
+.hb-art::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 45%,transparent 45%,rgba(0,0,0,.55) 100%)}
+.hb-noart{font-size:11px;color:#5a5348;letter-spacing:.16em;z-index:1}
+@media (max-width:700px){ .hb-art{height:150px} }
+
+/* 走进 / 远去 */
+@keyframes hltZoomIn{
+  0%  {transform:scale(1.9);opacity:0;filter:blur(3px)}
+  55% {transform:scale(1.06);opacity:1;filter:blur(0)}
+  100%{transform:scale(1);opacity:1}
+}
+@keyframes hltZoomOut{
+  0%  {transform:scale(.55);opacity:0;filter:blur(3px)}
+  55% {transform:scale(.97);opacity:1;filter:blur(0)}
+  100%{transform:scale(1);opacity:1}
+}
+.hb-art.zoom-in{animation:hltZoomIn .45s cubic-bezier(.22,.9,.3,1)}
+.hb-art.zoom-out{animation:hltZoomOut .45s cubic-bezier(.22,.9,.3,1)}
 
 .hb-stk{margin-top:6px;font-size:11px;color:#9fe6b8;padding:6px 10px;border-radius:3px;
   background:rgba(30,60,30,.35);border-left:2px solid #5fdc4a;line-height:1.6}
@@ -6840,6 +6861,7 @@ function uiInit() {
   document.documentElement.style.setProperty('--skill-sheet', `url(${ASSETS.skills})`);
   if (ASSETS.units) document.documentElement.style.setProperty('--units-sheet', `url(${ASSETS.units})`);
   if (ASSETS.classicons) document.documentElement.style.setProperty('--class-sheet', `url(${ASSETS.classicons})`);
+  if (ASSETS.heirlooms) document.documentElement.style.setProperty('--hlt-sheet', `url(${ASSETS.heirlooms})`);
   if (ASSETS.avatars) document.documentElement.style.setProperty('--avatar-sheet', `url(${ASSETS.avatars})`);
   bindSkillTips();
   // 任务追踪：事件委托（内容重建后依然可点）
@@ -8185,7 +8207,7 @@ function hltPagesHtml() {
 
   return `<div class="hb-book">
     <div class="hb-page left">
-      <div class="hb-art" style="background-size:300% 300%;
+      <div class="hb-art ${G._hltZoom || ''}" style="background-size:300% 300%;
         background-position:${(idx % 3) * 50}% ${Math.floor(idx / 3) * 50}%">
         ${idx === 0 ? '<span class="hb-noart">暂无插图</span>' : ''}
       </div>
@@ -8294,16 +8316,15 @@ function hltGoPage(dir) {
     void wrap.offsetWidth;
     wrap.classList.add(dir > 0 ? 'flip-fwd' : 'flip-back');
   }
+  // 插图「走进 / 远去」：前进=从远处拉近，后退=推向远处
+  G._hltZoom = dir > 0 ? 'zoom-in' : 'zoom-out';
   setTimeout(() => {
     const el = document.getElementById('hbWrap');
-    if (el) {
-      el.innerHTML = hltPagesHtml();
-      // 内容重建后必须重新绑定，否则翻页/签到按钮全部失效
-      bindHeirloomControls(el);
-    } else {
-      openModal('heirloom', '传家宝 · 古籍', heirloomHtml());
-    }
-  }, 260);
+    if (!el) { openModal('heirloom', '传家宝 · 古籍', heirloomHtml()); return; }
+    el.classList.remove('flip-fwd', 'flip-back');   // 先撤掉动画类，避免重建后重播（抖两下）
+    el.innerHTML = hltPagesHtml();
+    bindHeirloomControls(el);                        // 重建后必须重绑
+  }, 300);
 }
 
 /* ---------------- 新手指引 ---------------- */

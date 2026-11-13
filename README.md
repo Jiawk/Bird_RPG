@@ -2690,3 +2690,21 @@ combatPower = 装备 + 技能 + 等级 + 属性书 + hltPower()
 CTM 杖 → skillDmg 0.40 + cdrExtra 0.5 ✅
 橙弓 → split 3, as 2.31 ✅
 ```
+
+### v164 · 传家宝：翻页抖动 + 插图全黑
+1. **翻页「抖两下」**
+   - 根因：`setTimeout` 里 `wrap.innerHTML = ...` 会**销毁并重建 `.hb-book`**，
+     而动画类还挂在 `wrap` 上 → 新节点重新触发一次动画 → 看起来抖两下
+   - 修复：**换 DOM 前先 `classList.remove('flip-fwd','flip-back')`**
+   - 动画本身也改成「单向推进」：
+     `rotateY(0deg) → rotateY(-14deg)` + 透明度降到 .35，`forwards` 停住
+     （原来是 0→-22→0 来回，本身就自带抖动感）
+2. **插图全黑（蓝框里黑色）**
+   - 根因：`.hb-art` 只设了 `background-size` / `background-position`，
+     **从头到尾没设 `background-image`**
+   - 修复：`uiInit` 注册 `--hlt-sheet` 变量，CSS 用 `background-image: var(--hlt-sheet)`
+3. **新增预览 + 走进/远去效果**
+   - 插图高度 150 → **190px**，加内阴影 + 暗角
+   - 前进翻页：`scale(1.9) → 1`（从远处拉近）
+   - 后退翻页：`scale(.55) → 1`（从远处推近 / 远去感）
+   - 0.45s 缓动，带轻微模糊渐清晰

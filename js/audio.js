@@ -12,7 +12,7 @@ const Sfx = {
   _buffers: {},
   _diagnostics: {},
   _lastHit: 0,
-  _lastAttack: 0,
+  _nextSoundAt: {},
   _lastCrit: 0,
   _lastHurt: 0,
   _alias: Object.freeze({
@@ -129,9 +129,9 @@ const Sfx = {
   play(requestedKey, gain) {
     const key = this._key(requestedKey);
     const now = Date.now();
-    if (key === 'attack') {
-      if (now - this._lastAttack < 8000) return;
-      this._lastAttack = now;
+    if (key === 'attack' || key === 'cast') {
+      if (now < (this._nextSoundAt[key] || 0)) return;
+      this._nextSoundAt[key] = now + 3000 + Math.floor(Math.random() * 4001);
     }
     if (key === 'crit') {
       if (now - this._lastCrit < 3000) return;

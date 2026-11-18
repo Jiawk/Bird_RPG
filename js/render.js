@@ -796,11 +796,11 @@ function drawProjectile(pr) {
 /* ---------------- 技能特效 ---------------- */
 /* 技能 → 特效类型 */
 const SKILL_FX = {
-  fireball:'burst', frostNova:'ring', blizzard:'shards', arcaneTorrent:'pillar',
-  blink:'flash', whirlwind:'slash', shieldwall:'ring', battleShout:'pillar',
-  execute:'slash', charge:'slash', multishot:'burst', pierceArrow:'slash',
-  freezeTrap:'ring', rapidFire:'burst', backjump:'flash', backstab:'slash',
-  poisonBlade:'burst', fanOfKnives:'slash', vanish:'flash', shadowstep:'flash'
+  fireball:'inferno', frostNova:'frost', blizzard:'shards', arcaneTorrent:'arcane',
+  blink:'flash', whirlwind:'cyclone', shieldwall:'aegis', battleShout:'warcry',
+  execute:'execute', charge:'charge', multishot:'volley', pierceArrow:'pierce',
+  freezeTrap:'trap', rapidFire:'rapid', backjump:'flash', backstab:'backstab',
+  poisonBlade:'poison', fanOfKnives:'fan', vanish:'vanish', shadowstep:'shadow'
 };
 
 function fxKindOf(e) {
@@ -808,6 +808,61 @@ function fxKindOf(e) {
   if (e.kind === 'hit') return 'hit';
   return ({ melee:'slash', dash:'slash', proj:'burst', aoe:'ring',
             trap:'ring', buff:'pillar' })[e.kind] || 'ring';
+}
+
+function drawSkillSignature(e, gx, gy, k, a, type) {
+  const R = e.r * (0.35 + k * 0.75);
+  const orb = (color, radius, alpha) => {
+    const g = CTX.createRadialGradient(gx, gy - 18, 2, gx, gy - 18, radius);
+    g.addColorStop(0, '#fff'); g.addColorStop(0.28, color); g.addColorStop(1, 'rgba(0,0,0,0)');
+    CTX.globalAlpha = alpha; CTX.fillStyle = g; CTX.beginPath(); CTX.arc(gx, gy - 18, radius, 0, 6.283); CTX.fill();
+  };
+  if (type === 'inferno') {
+    orb('#ff5a28', R, a * 0.95);
+    for (let j = 0; j < 18; j++) { const ang = e.seed + j * 0.349; const d = R * (0.2 + (j % 4) * 0.19) * k;
+      CTX.globalAlpha = a * .9; CTX.fillStyle = j % 3 ? '#ff8a24' : '#fff2a8'; CTX.beginPath(); CTX.arc(gx + Math.cos(ang) * d, gy - 18 + Math.sin(ang) * d * YS - k * 54, 5 * a + 1, 0, 6.283); CTX.fill(); }
+    return true;
+  }
+  if (type === 'frost' || type === 'trap') {
+    const n = type === 'frost' ? 14 : 8;
+    CTX.globalAlpha = a; CTX.strokeStyle = '#baf4ff'; CTX.lineWidth = 3;
+    for (let j = 0; j < n; j++) { const ang = e.seed + j * 6.283 / n; const d = R * (0.35 + (j % 3) * .18);
+      const x = gx + Math.cos(ang) * d, y = gy + Math.sin(ang) * d * YS;
+      CTX.beginPath(); CTX.moveTo(x, y); CTX.lineTo(x + Math.cos(ang) * 15, y - 38 * a); CTX.lineTo(x + Math.cos(ang + 1.5) * 8, y); CTX.stroke(); }
+    orb('#56cfff', R * .62, a * .45); return true;
+  }
+  if (type === 'arcane') {
+    CTX.globalAlpha = a * .85; CTX.strokeStyle = '#c581ff';
+    [1, .68, .38].forEach((m, i) => { CTX.lineWidth = 4 - i; CTX.beginPath(); CTX.ellipse(gx, gy, R * m, R * m * YS, k * (i % 2 ? -3 : 3), 0, 6.283); CTX.stroke(); });
+    for (let j = 0; j < 10; j++) { const ang = e.seed + j * .628 + k * 4; CTX.globalAlpha = a; CTX.fillStyle = '#f0d8ff'; CTX.fillRect(gx + Math.cos(ang) * R * .72 - 2, gy + Math.sin(ang) * R * .72 * YS - 2, 5, 5); }
+    orb('#8d5bff', R * .45, a * .65); return true;
+  }
+  if (type === 'cyclone') {
+    CTX.globalAlpha = a * .88; CTX.strokeStyle = '#dffaff';
+    for (let j = 0; j < 5; j++) { CTX.lineWidth = 2 + j; CTX.beginPath(); CTX.ellipse(gx, gy - 12 - j * 10, R * (1 - j * .12), R * (.32 - j * .025), e.seed + k * 9 + j, 0.3, 5.7); CTX.stroke(); }
+    return true;
+  }
+  if (type === 'aegis') {
+    const rr = R * .7; CTX.globalAlpha = a * .75; CTX.fillStyle = '#5ecbff'; CTX.strokeStyle = '#e9fbff'; CTX.lineWidth = 4;
+    CTX.beginPath(); for (let j = 0; j < 6; j++) { const ang = -1.57 + j * 1.047; const x = gx + Math.cos(ang) * rr, y = gy - 32 + Math.sin(ang) * rr; j ? CTX.lineTo(x, y) : CTX.moveTo(x, y); } CTX.closePath(); CTX.fill(); CTX.stroke();
+    return true;
+  }
+  if (type === 'warcry') {
+    CTX.globalAlpha = a; CTX.strokeStyle = '#ff9a45';
+    for (let j = 0; j < 4; j++) { const rr = R * (0.25 + k * (1.1 - j * .14)); CTX.lineWidth = 6 - j; CTX.beginPath(); CTX.ellipse(gx, gy, rr, rr * YS, 0, 0, 6.283); CTX.stroke(); }
+    return true;
+  }
+  if (type === 'volley' || type === 'rapid') {
+    const n = type === 'volley' ? 5 : 8; CTX.globalAlpha = a; CTX.strokeStyle = '#f6e89c'; CTX.lineWidth = 3;
+    for (let j = 0; j < n; j++) { const ang = e.seed - .48 + j * .96 / Math.max(1, n - 1); const d = R * (0.25 + k); const x = gx + Math.cos(ang) * d, y = gy - 18 + Math.sin(ang) * d * YS; CTX.beginPath(); CTX.moveTo(gx, gy - 18); CTX.lineTo(x, y); CTX.stroke(); }
+    return true;
+  }
+  if (type === 'poison' || type === 'vanish' || type === 'shadow') {
+    const color = type === 'poison' ? '#7cff5a' : '#9b58e8';
+    for (let j = 0; j < 15; j++) { const ang = e.seed + j * .419; const d = R * k * (0.3 + (j % 4) * .18); CTX.globalAlpha = a * .68; CTX.fillStyle = color; CTX.beginPath(); CTX.arc(gx + Math.cos(ang) * d, gy - 18 + Math.sin(ang) * d * YS - (type === 'shadow' ? k * 40 : 0), 3 + (j % 3) * 2, 0, 6.283); CTX.fill(); }
+    return true;
+  }
+  return false;
 }
 
 function drawVfx(w) {
@@ -820,6 +875,8 @@ function drawVfx(w) {
     const gx = px(e.x), gy = py(e.y);
     const type = fxKindOf(e);
     CTX.save();
+
+    if (drawSkillSignature(e, gx, gy, k, a, type)) { CTX.restore(); continue; }
 
     if (type === 'hit') {
       const R = 18 + k * 26;

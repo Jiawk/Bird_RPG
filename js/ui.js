@@ -721,7 +721,9 @@ function handleCommand(act) {
     case 'town': goTown(); break;
     case 'quest': toggleModal('quest', '任务官 · 黄仁勋', questHtml); break;
     case 'craft': toggleModal('craft', '锻造台', craftHtml); break;
-    case 'warehouse': toggleModal('warehouse', '仓库 · 大木箱', warehouseHtml); break;
+    case 'warehouse':
+      if (!isModalOpen('warehouse') && typeof Sfx !== 'undefined') Sfx.play('warehouse');
+      toggleModal('warehouse', '仓库 · 大木箱', warehouseHtml); break;
     case 'notice': openModal('notice', '公告牌', noticeHtml()); break;
     case 'heirloom': G._hltPage = G._hltPage || 0; openModal('heirloom', '传家宝 · 古籍', heirloomHtml()); break;
     case 'statue': openModal('statueMenu', '巫妖王雕像', statueMenuHtml()); break;
@@ -1454,7 +1456,7 @@ function npcAt(wx, wy) {
 function interactNPC(target) {
   const n = target || nearestNPC();
   if (!n) return;
-  if (typeof Sfx !== 'undefined') Sfx.play('openBig');
+  if (typeof Sfx !== 'undefined') Sfx.play(n.kind === 'warehouse' ? 'warehouse' : 'openBig');
   switch (n.kind) {
     case 'teleport': openModal('tel', '传送员 · 岳跃冲', teleportHtml()); break;
     case 'merchant': toggleModal('merchant', '商人 · 赵帅帅', merchantHtml); break;
@@ -1980,7 +1982,7 @@ function bindHeirloomControls(body) {
     const r = hltSign(G.player, b.dataset.hltSign);
     if (!r.ok) { toast(r.msg); return; }
     if (r.got) {
-      if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
+      if (typeof Sfx !== 'undefined') Sfx.play('shopSuccess');
       bigAnnounce('📜 获得传家宝：' + (hltByKey(b.dataset.hltSign) || {}).name, '#ffd24a');
       toast('🎉 签到满 7 天，获得传家宝！');
     } else {
@@ -2313,7 +2315,7 @@ function buyRelicPiece(cl, sl) {
   p.gold -= S.price;
   it.id = 'rp' + Math.random().toString(36).slice(2, 8);
   if (!addToBag(p, it)) { p.gold += S.price; toast('背包已满'); return; }
-  if (typeof Sfx !== 'undefined') { Sfx.play('lvlup'); }
+  if (typeof Sfx !== 'undefined') Sfx.play('shopSuccess');
   toast(`兑换成功：${it.name}`);
   logMsg(`🎖 获得圣物 ${it.name}`, 'level');
   G._relicSel = null;
@@ -2493,7 +2495,7 @@ function buyRelic(key) {
   };
   const ok = addToBag(p, item);
   if (!ok) { p.gold += w.price; toast('背包已满'); return; }
-  if (typeof Sfx !== 'undefined') Sfx.play('success');
+  if (typeof Sfx !== 'undefined') Sfx.play('shopSuccess');
   toast(`兑换成功：${w.name}`);
   logMsg(`🎖 获得圣物 ${w.name}`, 'level');
   G._relicSel = null;
@@ -3689,7 +3691,7 @@ function mountSound(key) {
     const r = redeemMountCode(G.player, inp ? inp.value : '');
     if (!r.ok) { toast(r.msg); return; }
     recalcStats(G.player); saveGame();
-    if (r.isNew) mountSound(r.key);
+    if (r.isNew && typeof Sfx !== 'undefined') Sfx.play('shopSuccess');
     toast(r.isNew ? `🐎 获得坐骑【${r.name}】，已自动骑乘` : `【${r.name}】已拥有，兑换码已使用`);
     if (r.isNew && typeof bigAnnounce === 'function') bigAnnounce('🐎 获得坐骑 · ' + r.name, '#ffd24a');
     openModal('mount', '坐骑 · 驯兽师', mountHtml());
@@ -3703,7 +3705,7 @@ function mountSound(key) {
     p.gold -= tier.price;
     ms.owned.push(k); ms.active = k;
     recalcStats(p); saveGame();
-    mountSound(k);
+    if (typeof Sfx !== 'undefined') Sfx.play('shopSuccess');
     toast(`🐎 获得坐骑【${m.name}】，已自动乘骑`);
     openModal('mount', '坐骑 · 驯兽师', mountHtml());
   });
@@ -3775,7 +3777,7 @@ function mountSound(key) {
     const r = redeemPetCode(G.player, inp ? inp.value : '');
     if (!r.ok) { toast(r.msg); return; }
     recalcStats(G.player); saveGame();
-    if (typeof Sfx !== 'undefined') Sfx.play('loot');
+    if (r.isNew && typeof Sfx !== 'undefined') Sfx.play('shopSuccess');
     toast(r.isNew ? `🎉 获得宠物【${r.name}】` : `【${r.name}】已拥有，兑换码已使用`);
     if (r.isNew && typeof bigAnnounce === 'function') bigAnnounce('🐾 获得宠物 · ' + r.name, r.def ? r.def.color : '#5fdc4a');
     openModal('pet', '宠物 · 驯兽师', petHtml());

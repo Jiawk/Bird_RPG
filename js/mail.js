@@ -36,6 +36,7 @@ function mailPush(p, opt) {
     claimed: false
   };
   p.mails.unshift(m);
+  if (typeof Sfx !== 'undefined' && !opt.silentAudio) Sfx.play('mail');
 
   // 超过上限：从最旧的开始，未领取的直接领取并删除
   while (p.mails.length > DATA.MAIL.cap) {

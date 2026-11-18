@@ -2938,13 +2938,18 @@ Lv.1 / 11 / 21 / 31 / 41 / 51<br><br>
 <b>小技巧</b>：点「整理背包」会按类型和战力自动重排。` },
 
   { key:'enhance', title:'如何强化技能和装备', reward:'stone',
-    body:`<b>装备强化</b>：按 <b>T</b> 打开<b>锻造台</b> → 装备强化<br>
-消耗强化石，等级越高消耗越多，成功率越低。<br>
-勾选「使用保护券」失败不会掉级，成功率提高 50%。<br><br>
-<b>技能等级</b>：按 <b>K</b> 打开技能页，花金币升级 Lv.1→Lv.5<br>
-<b>技能突破</b>：打怪攒满熟练度 + 消耗突破券，突破到 6 层<br>
-突破会重置技能等级，需要重新升级。<br><br>
-层数效果：减冷却 + 强控制　等级效果：加伤害 + 减耗蓝 + 增范围` },
+    body:`<b>一、强化装备</b><br>
+① 按 <b>T</b> 打开锻造台，选择「装备强化」。<br>
+② 点击想强化的武器或防具，确认当前强化等级与下一等级效果。<br>
+③ 每次强化消耗<b>金币 + 强化石</b>；强化石主要来自每日强化副本、挂机邮件、爬塔和抽奖。<br>
+④ 勾选<b>强化保护券</b>后，失败不会掉级，成功率提高 50%；高等级强化建议优先准备保护券。<br>
+⑤ 强化成功后装备属性立即提升，失败时按强化规则处理。<br><br>
+<b>二、升级与突破技能</b><br>
+① 按 <b>K</b> 打开技能页面，选择需要培养的主动技能。<br>
+② 使用<b>金币</b>把技能升级到 Lv.5：每级提高伤害、降低耗蓝、增加作用范围。<br>
+③ 打怪会积累该职业全部主动技能的<b>熟练度</b>；也可以使用技能强化券加速。<br>
+④ 熟练度满且技能 Lv.5 后，使用<b>技能突破券</b>突破阶数。突破会重置技能等级，需要再次升级。<br>
+⑤ 突破提升伤害、减少冷却，并强化冻结、眩晕、定身等控制效果。` },
 
   { key:'quest', title:'如何完成任务', reward:'gold',
     body:`按 <b>L</b> 打开任务面板，也能去主城找 <b>任务官 · 黄仁勋</b>。<br><br>
@@ -8086,7 +8091,18 @@ function guideState() {
   G.guide.step = Math.max(0, Math.min(NEWBIE_GUIDE_STEPS.length - 1, Number(G.guide.step) || 0));
   return G.guide;
 }
-function guideDone() { return guideState().version >= NEWBIE_GUIDE_VERSION; }
+function guideDone() {
+  const state = guideState();
+  if (state.version >= NEWBIE_GUIDE_VERSION) return true;
+  // 老账号若已完成旧版12条教程，不再被新版首次弹窗打扰。
+  if (!state.mandatory && G.player && typeof tutAllDone === 'function' && tutAllDone(G.player)) {
+    state.version = NEWBIE_GUIDE_VERSION; state.step = 0;
+    saveGame();
+    if (typeof window.__cloudPush === 'function') window.__cloudPush(true);
+    return true;
+  }
+  return false;
+}
 function guideTarget(step) {
   if (step.selector) return document.querySelector(step.selector);
   if (step.npc && G.world && G.world.npcs) return G.world.npcs.find(n => n.kind === step.npc) || null;
@@ -8135,6 +8151,8 @@ function finishNewbieGuide(skipped) {
   const state = guideState(); state.version = NEWBIE_GUIDE_VERSION; state.step = 0; state.mandatory = false;
   const root = document.getElementById('newbieGuide'); if (root) root.remove();
   saveGame();
+  // 立即同步云存档，防止玩家紧接着刷新时被旧云存档覆盖引导完成状态。
+  if (typeof window.__cloudPush === 'function') window.__cloudPush(true);
   toast(skipped ? '已跳过新手引导，可在主城“新手指引”重新查看帮助' : '新手引导完成，祝你冒险顺利！');
 }
 function startNewbieGuide() {
@@ -9949,6 +9967,7 @@ function tutorialHtml() {
         <div class="tut-reward">🎁 完成奖励：<b>${rw}</b></div>
         <div class="tut-dfoot">
           <button class="tut-back" data-tut-back="1">← 返回</button>
+          <button data-tut-locate="${item.key}">开启定位演示</button>
           <button class="tut-claim" data-tut-claim="${item.key}" ${got ? 'disabled' : ''}>
             ${got ? '已领取' : '完成并领取'}</button>
         </div>
@@ -9968,7 +9987,7 @@ function tutorialHtml() {
       <span class="tut-ic">🎓</span>
       <div>
         <div class="tut-title">新手指引</div>
-        <div class="tut-sub">已完成 <b>${done}</b> / ${DATA.TUTORIAL.length}　点击条目查看内容并领取奖励</div>
+        <div class="tut-sub">已完成 <b>${done}</b> / ${DATA.TUTORIAL.length}　点击条目查看详细操作，再开启定位演示</div>
       </div>
     </div>
     <div class="tut-list">${rows}</div>
@@ -11511,7 +11530,11 @@ function bindModal() {
     openModal('map', `导航 · ${r.name}`, diffPickHtml(rid));
   });
   body.querySelectorAll('[data-tut-open]').forEach(b => b.onclick = () => {
-    replayNewbieGuide(b.dataset.tutOpen);
+    G._tutSel = b.dataset.tutOpen;
+    openModal('tutorial', '新手指引', tutorialHtml());
+  });
+  body.querySelectorAll('[data-tut-locate]').forEach(b => b.onclick = () => {
+    replayNewbieGuide(b.dataset.tutLocate);
   });
   body.querySelectorAll('[data-tut-back]').forEach(b => b.onclick = () => {
     G._tutSel = null;

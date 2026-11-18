@@ -284,7 +284,18 @@ function guideState() {
   G.guide.step = Math.max(0, Math.min(NEWBIE_GUIDE_STEPS.length - 1, Number(G.guide.step) || 0));
   return G.guide;
 }
-function guideDone() { return guideState().version >= NEWBIE_GUIDE_VERSION; }
+function guideDone() {
+  const state = guideState();
+  if (state.version >= NEWBIE_GUIDE_VERSION) return true;
+  // 老账号若已完成旧版12条教程，不再被新版首次弹窗打扰。
+  if (!state.mandatory && G.player && typeof tutAllDone === 'function' && tutAllDone(G.player)) {
+    state.version = NEWBIE_GUIDE_VERSION; state.step = 0;
+    saveGame();
+    if (typeof window.__cloudPush === 'function') window.__cloudPush(true);
+    return true;
+  }
+  return false;
+}
 function guideTarget(step) {
   if (step.selector) return document.querySelector(step.selector);
   if (step.npc && G.world && G.world.npcs) return G.world.npcs.find(n => n.kind === step.npc) || null;
@@ -333,6 +344,8 @@ function finishNewbieGuide(skipped) {
   const state = guideState(); state.version = NEWBIE_GUIDE_VERSION; state.step = 0; state.mandatory = false;
   const root = document.getElementById('newbieGuide'); if (root) root.remove();
   saveGame();
+  // 立即同步云存档，防止玩家紧接着刷新时被旧云存档覆盖引导完成状态。
+  if (typeof window.__cloudPush === 'function') window.__cloudPush(true);
   toast(skipped ? '已跳过新手引导，可在主城“新手指引”重新查看帮助' : '新手引导完成，祝你冒险顺利！');
 }
 function startNewbieGuide() {
@@ -2147,6 +2160,7 @@ function tutorialHtml() {
         <div class="tut-reward">🎁 完成奖励：<b>${rw}</b></div>
         <div class="tut-dfoot">
           <button class="tut-back" data-tut-back="1">← 返回</button>
+          <button data-tut-locate="${item.key}">开启定位演示</button>
           <button class="tut-claim" data-tut-claim="${item.key}" ${got ? 'disabled' : ''}>
             ${got ? '已领取' : '完成并领取'}</button>
         </div>
@@ -2166,7 +2180,7 @@ function tutorialHtml() {
       <span class="tut-ic">🎓</span>
       <div>
         <div class="tut-title">新手指引</div>
-        <div class="tut-sub">已完成 <b>${done}</b> / ${DATA.TUTORIAL.length}　点击条目查看内容并领取奖励</div>
+        <div class="tut-sub">已完成 <b>${done}</b> / ${DATA.TUTORIAL.length}　点击条目查看详细操作，再开启定位演示</div>
       </div>
     </div>
     <div class="tut-list">${rows}</div>
@@ -3709,7 +3723,11 @@ function bindModal() {
     openModal('map', `导航 · ${r.name}`, diffPickHtml(rid));
   });
   body.querySelectorAll('[data-tut-open]').forEach(b => b.onclick = () => {
-    replayNewbieGuide(b.dataset.tutOpen);
+    G._tutSel = b.dataset.tutOpen;
+    openModal('tutorial', '新手指引', tutorialHtml());
+  });
+  body.querySelectorAll('[data-tut-locate]').forEach(b => b.onclick = () => {
+    replayNewbieGuide(b.dataset.tutLocate);
   });
   body.querySelectorAll('[data-tut-back]').forEach(b => b.onclick = () => {
     G._tutSel = null;

@@ -619,13 +619,16 @@ function enhanceItem(p, it, useProtect) {
   const rate = useP ? DATA.ENHANCE.rateWithProtect(lv) : DATA.ENHANCE.rate(lv);
   if (Math.random() < rate) {
     it.enh = lv + 1;
+    if (typeof Sfx !== 'undefined') Sfx.play('success');
     return { ok:true, msg:`强化成功 → +${it.enh}`, up:true };
   }
   // 失败：+11 起掉一级，保护券可免
   if (!useProtect && lv >= 11) {
     it.enh = Math.max(0, lv - DATA.ENHANCE.failDrop(lv));
+    if (typeof Sfx !== 'undefined') Sfx.play('fail');
     return { ok:true, msg:`强化失败，降至 +${it.enh}`, down:true };
   }
+  if (typeof Sfx !== 'undefined') Sfx.play('fail');
   return { ok:true, msg:'强化失败，等级不变', down:true };
 }
 

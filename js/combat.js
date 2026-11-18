@@ -83,7 +83,7 @@ function damagePlayer(amount, source) {
 function playerDie() {
   const p = G.player;
   if (p.dead) return;          // 防止一帧多次触发
-  if (typeof Sfx !== 'undefined') { Sfx.play('death'); Sfx.speak('I have failed.', { rate: 0.85, pitch: 0.8 }); }
+  if (typeof Sfx !== 'undefined') { Sfx.play('playerDie'); Sfx.speak('I have failed.', { rate: 0.85, pitch: 0.8 }); }
 
   // 复活之戒
   if (consumeRevive(p)) {
@@ -377,7 +377,7 @@ function triggerTrap(t, m) {
 function monsterDie(m) {
   if (!m.alive) return;
   m.alive = false;
-    if (typeof Sfx !== 'undefined') Sfx.play(m.isBoss ? 'boss' : 'kill');
+    if (typeof Sfx !== 'undefined') Sfx.play(m.isBoss ? 'bossDie' : 'kill');
     if (typeof perfAdd === 'function') perfAdd('k', 1);
   const p = G.player;
   burst(m.x, m.y, m.color, m.isBoss ? 30 : 10, m.isBoss ? 300 : 160);

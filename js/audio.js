@@ -26,6 +26,33 @@ const Sfx = {
     if (!this.on && window.speechSynthesis) window.speechSynthesis.cancel();
   },
 
+  /* ---------- 采样音频（MP3，来自素材）---------- */
+  _samples: {},
+  _ensureSample(key) {
+    if (this._samples[key]) return this._samples[key];
+    const src = (typeof SFX_VOICE !== 'undefined') ? SFX_VOICE[key] : null;
+    if (!src) return null;
+    try {
+      const a = new Audio(src);
+      a.preload = 'auto';
+      a.volume = 1;
+      this._samples[key] = a;
+      return a;
+    } catch (e) { return null; }
+  },
+  sample(key, gain) {
+    if (!this.on) return;
+    const a = this._ensureSample(key);
+    if (!a) return;
+    try {
+      const node = a.cloneNode ? a.cloneNode() : new Audio(a.src);   // 允许同时叠放
+      node.volume = Math.min(1, (gain === undefined ? 0.9 : gain) * this.vol * 1.6);
+      node.currentTime = 0;
+      const pr = node.play();
+      if (pr && pr.catch) pr.catch(() => {});
+    } catch (e) { /* 忽略 */ }
+  },
+
   /* ---------- 基础发声 ---------- */
   _tone(o) {
     const c = this.init(); if (!c || !this.on) return;
@@ -126,6 +153,12 @@ const Sfx = {
         this._tone({ freq: 420, to: 300, dur: 0.045, type: 'triangle', gain: 0.09 });
         this._noise({ dur: 0.03, freq: 1800, q: 2.0, gain: 0.05, filter: 'bandpass' });
         break;
+      /* ---- 素材语音 ---- */
+      case 'bossDie':   this.sample('bossDie', 1.0); break;    // BOSS 死亡
+      case 'playerDie': this.sample('playerDie', 1.0); break;  // 角色阵亡
+      case 'success':   this.sample('success', 1.0); break;    // 强化成功 / 转盘出货 / 获得特戒
+      case 'fail':      this.sample('fail', 0.9); break;       // 强化失败
+
       /* ---- 翻书声：菜单/对话/窗口 统一用这个 ---- */
       case 'open':  this.page(true);  break;
       case 'close': this.page(false); break;

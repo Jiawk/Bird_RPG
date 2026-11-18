@@ -3341,3 +3341,30 @@ NaN → 0        ✅
 undefined/null → 0 ✅
 材料页金币卡片 1.2M 正常显示 ✅
 ```
+
+### v198 · 新增 4 个素材音效
+| 触发 | 音效文件 |
+|---|---|
+| BOSS 死亡 | `啊.mp3` |
+| 角色阵亡 | `fku.mp3` |
+| 强化成功 / 转盘出货 / 获得特戒 / 兑换圣物 | `哦♂耶.mp3` |
+| 强化失败 | `shit.mp3` |
+
+**实现**
+1. 4 个 MP3 base64 内嵌进 `assets.js` → `const SFX_VOICE = {...}`（约 144KB）
+2. `audio.js` 新增
+   - `_ensureSample(key)`：懒加载 `Audio` 对象
+   - `sample(key, gain)`：`cloneNode()` 播放，允许叠放；受 `Sfx.on` / `Sfx.vol` 控制
+3. `Sfx.play()` 新增 4 个分支：`bossDie` / `playerDie` / `success` / `fail`
+4. 接线点
+   - `combat.js`：`monsterDie` 里 BOSS 死 → `bossDie`；`playerDie` → `playerDie`
+   - `core.js`：`enhanceItem` 成功 → `success`，两处失败 → `fail`
+   - `ui.js`：抽奖（含十连）→ `success`；领取特戒 → `success`；兑换圣物 → `success`
+
+**验证**
+```
+bossDie / playerDie / success / fail 全部触发 ✅
+关闭音效后不再播放 ✅
+重新开启恢复播放 ✅
+包体 2.35M → 2.46M（+144KB）✅
+```

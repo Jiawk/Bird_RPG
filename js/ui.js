@@ -2495,7 +2495,7 @@ function buyRelic(key) {
   };
   const ok = addToBag(p, item);
   if (!ok) { p.gold += w.price; toast('背包已满'); return; }
-  if (typeof Sfx !== 'undefined') { Sfx.play('lvlup'); Sfx.speak('A relic of power.'); }
+  if (typeof Sfx !== 'undefined') { Sfx.play('success'); Sfx.speak('A relic of power.'); }
   toast(`兑换成功：${w.name}`);
   logMsg(`🎖 获得圣物 ${w.name}`, 'level');
   G._relicSel = null;
@@ -3454,7 +3454,7 @@ function bindModal() {
   body.querySelectorAll('[data-claim-ring]').forEach(el => el.onclick = () => {
     const r = claimFirstKillRing(G.player, el.dataset.claimRing);
     if (!r.ok) { toast(r.msg); return; }
-    if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
+    if (typeof Sfx !== 'undefined') Sfx.play('success');
     toast(`领取成功：${r.ring.name}（已放入背包）`);
     logMsg(`🎖 领取首杀奖励 ${r.ring.name}`, 'level');
     bigAnnounce(`💍 ${r.ring.name}`, r.ring.color || '#ff3b3b');
@@ -3549,8 +3549,9 @@ function bindModal() {
         box.classList.add('got');
       }
       const best = got.find(g => g.name.indexOf('圣物') >= 0);
-      if (best) { bigAnnounce('🎉 抽中圣物：' + best.name, '#ffd24a'); if (typeof Sfx !== 'undefined') Sfx.play('lvlup'); }
-      else if (got.length > 1) {
+      if (best) bigAnnounce('🎉 抽中圣物：' + best.name, '#ffd24a');
+      if (typeof Sfx !== 'undefined') Sfx.play('success');   // 转盘出货
+      if (got.length > 1) {
         // 十连：竖排逐行展示
         toastRows(`本次获得 ${got.length} 项`, got.map(g => ({
           text: (g.ok ? '🎁 ' : '⚠ ') + g.name,

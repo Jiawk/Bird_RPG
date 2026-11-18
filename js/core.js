@@ -57,6 +57,8 @@ function createPlayer(raceKey, clsKey) {
     skillProf: {}, firstKills: {}, codex: {}, ringDropAt: {},
     quests: [], questDone: 0,
     kills: 0, bossKills: 0, bossKillsByDiff: {},
+    dailyRuns: { day: '', used: {} },
+    dailyDone: {},
     stats: {}
   };
   for (const k in race.mod) p.attrs[k] += race.mod[k];
@@ -1257,6 +1259,26 @@ function currentCodex(p) {
 }
 
 /* ---------------- 推荐战力 ---------------- */
+/* ---------------- 每日副本次数 ---------------- */
+function dailyEnsure(p) {
+  const day = todayStr();
+  if (!p.dailyRuns || p.dailyRuns.day !== day) p.dailyRuns = { day, used: {} };
+  return p.dailyRuns;
+}
+function dailyUsed(p, key) {
+  const d = dailyEnsure(p);
+  return d.used[key] || 0;
+}
+function dailyLeft(p, key) {
+  return Math.max(0, DATA.DAILY_LIMIT - dailyUsed(p, key));
+}
+function dailyConsume(p, key) {
+  const d = dailyEnsure(p);
+  if ((d.used[key] || 0) >= DATA.DAILY_LIMIT) return false;
+  d.used[key] = (d.used[key] || 0) + 1;
+  return true;
+}
+
 /* 该难度是否已解锁 */
 function diffUnlocked(p, diff) {
   const cfg = DATA.DIFF_UNLOCK[diff];

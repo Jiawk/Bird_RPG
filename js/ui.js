@@ -283,7 +283,7 @@ function updateHUD(dt) {
   // 当前位置 / 难度
   const _t = w.isTown;
   const pr = $('placeRoom'), pd = $('placeDiff');
-  if (pr) pr.textContent = _t ? '暴风城 · 安全区' : DATA.ROOMS[w.roomId].name;
+  if (pr) pr.textContent = _t ? '暴风城 · 安全区' : (getRoom(w.roomId) || DATA.ROOMS[w.roomId]).name;
   if (pd) {
     const D = DATA.DIFFICULTY[G.diff] || DATA.DIFFICULTY.normal;
     pd.textContent = _t ? '无战斗' : (D.name + '难度');
@@ -318,9 +318,9 @@ function updateHUD(dt) {
   $('diffVal').style.color = DATA.DIFFICULTY[G.diff].color;
 
   const isTown = w.isTown;
-  $('roomName').textContent = isTown ? '暴风城 · 安全区' : DATA.ROOMS[w.roomId].name;
+  $('roomName').textContent = isTown ? '暴风城 · 安全区' : (getRoom(w.roomId) || DATA.ROOMS[w.roomId]).name;
   $('roomSub').textContent = isTown ? '点击 NPC 或按 M 选择关卡'
-    : `${DATA.DIFFICULTY[G.diff].name}难度 · ${DATA.ROOMS[w.roomId].desc}`;
+    : `${DATA.DIFFICULTY[G.diff].name}难度 · ${(getRoom(w.roomId) || DATA.ROOMS[w.roomId]).desc}`;
 
   const boss = w.monsters.find(m => m.isBoss && m.alive);
   if (boss) {
@@ -1102,6 +1102,7 @@ function townMapHtml() {
     + '<button data-act-town style="border-color:#6b8a4a;color:#b9ffb0">回城</button></div>';
   html += '<div style="font-size:12px;color:#8f8570;margin:10px 0 8px">选择房间，再选难度进入</div><div class="room-pick">';
   DATA.ROOMS.forEach((r, i) => {
+    if (r.daily) return;                  // 每日副本从传送员进入
     const unlocked = p.unlocked.includes(i);
     const lvOk = p.level >= (r.reqLv || 1);
     const ok = unlocked && lvOk;
@@ -1119,7 +1120,7 @@ function townMapHtml() {
 
 function diffPickHtml(roomId) {
   const p = G.player;
-  const r = DATA.ROOMS[roomId];
+  const r = getRoom(roomId) || DATA.ROOMS[roomId];
   let html = `<div style="font-family:var(--serif);font-size:16px;color:#ffd24a;margin-bottom:4px">${r.name}</div>
     <div style="font-size:11px;color:#8f8570;margin-bottom:12px">${r.desc}　推荐等级 ${r.lv}+</div>
     <div class="diff-pick">`;
@@ -1159,6 +1160,51 @@ function openTownMap() {
   openModal('map', '选择关卡 · 难度', townMapHtml());
 }
 
+/* ---------------- 传送员主菜单 ---------------- */
+function teleportHtml() {
+  const p = G.player;
+  const leftAll = DATA.DAILY_ROOMS.reduce((n, r) => n + dailyLeft(p, r.key), 0);
+  return `<div class="tp-wrap">
+    <button class="tp-big" data-tel="rooms">
+      <b>🗺 选择关卡</b><span>前往各大副本，可选普通 / 困难 / 地狱难度</span>
+    </button>
+    <button class="tp-big" data-tel="daily">
+      <b>📅 每日副本</b><span>装备强化 / 技能强化 / 装备合成 / 金币　今日剩余 ${leftAll} 次</span>
+    </button>
+  </div>`;
+}
+
+/* ---------------- 传送员 · 每日副本 ---------------- */
+function dailyDungeonHtml() {
+  const p = G.player;
+  let html = `<div class="dd-head">
+    <div class="dd-title">📅 每日副本</div>
+    <div class="dd-sub">每个副本每天可进入 <b>${DATA.DAILY_LIMIT}</b> 次　明天 0 点重置</div>
+  </div><div class="dd-grid">`;
+
+  DATA.DAILY_ROOMS.forEach(r => {
+    const left = dailyLeft(p, r.key);
+    const done = !!(p.dailyDone && p.dailyDone[r.key + '@' + todayStr()]);
+    const ok = left > 0;
+    const mats = Object.keys(r.reward || {}).map(k =>
+      `${DATA.MATERIALS[k].name}×${r.reward[k]}`).join('　');
+    html += `<div class="dd-card ${ok ? '' : 'out'}">
+      <div class="dd-ic" style="color:${r.color}">${r.icon}</div>
+      <div class="dd-main">
+        <div class="dd-name" style="color:${r.color}">${r.name}</div>
+        <div class="dd-desc">${r.desc}</div>
+        <div class="dd-reward">🎁 ${mats}${r.rewardGold ? '　金币×' + fmt(r.rewardGold[0]) + '~' + fmt(r.rewardGold[1]) : ''}</div>
+      </div>
+      <div class="dd-side">
+        <div class="dd-left ${ok ? '' : 'zero'}">${done ? '今日已通关' : '剩余 ' + left + '/' + DATA.DAILY_LIMIT}</div>
+        <button class="dd-btn ${ok ? '' : 'dis'}" ${ok ? `data-daily-enter="${r.id}"` : 'disabled'}>进入</button>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
 /* ---------------- NPC ---------------- */
 function nearestNPC() {
   const w = G.world, p = G.player;
@@ -1192,7 +1238,7 @@ function interactNPC(target) {
   if (!n) return;
   if (typeof Sfx !== 'undefined') Sfx.play('open');   // 翻书声
   switch (n.kind) {
-    case 'teleport': openTownMap(); break;
+    case 'teleport': openModal('tel', '传送员 · 岳跃冲', teleportHtml()); break;
     case 'merchant': toggleModal('merchant', '商人 · 赵帅帅', merchantHtml); break;
     case 'exchange': toggleModal('exchange', '抽奖专员 · 李准', exchangeHtml); break;
     case 'blacksmith': toggleModal('smith', '铁匠 · 范在英', smithHtml); break;
@@ -2451,7 +2497,7 @@ function doEnterRoom(room, diff) {
 
 /* 等级警告 */
 function warnHtml(room, diff) {
-  const p = G.player, r = DATA.ROOMS[room], d = DATA.DIFFICULTY[diff];
+  const p = G.player, r = getRoom(room) || DATA.ROOMS[room], d = DATA.DIFFICULTY[diff];
   const gap = r.lv - p.level;
   const danger = gap >= 10 ? '极度危险' : gap >= 5 ? '危险' : '稍有挑战';
   const dc = gap >= 10 ? '#ff3b3b' : gap >= 5 ? '#ff9a2e' : '#ffd24a';
@@ -3382,6 +3428,22 @@ function bindModal() {
     mailDelete(G.player, +b.dataset.mailDel);
     saveGame(); mailRefreshDot();
     openModal('mail', '邮箱', mailHtml());
+  });
+  body.querySelectorAll('[data-tel]').forEach(b => b.onclick = () => {
+    if (b.dataset.tel === 'rooms') openTownMap();
+    else openModal('daily', '每日副本 · 岳跃冲', dailyDungeonHtml());
+  });
+  body.querySelectorAll('[data-daily-enter]').forEach(b => b.onclick = () => {
+    const id = +b.dataset.dailyEnter;
+    const room = DATA.ROOMS.find(r => r.id === id);
+    if (!room) return;
+    if (dailyLeft(G.player, room.dailyKey) <= 0) { toast('今天的次数已用完，明天再来'); return; }
+    dailyConsume(G.player, room.dailyKey);
+    G.diff = 'normal';
+    closeModal();
+    enterRoom(id);
+    toast(`进入 ${room.name}（今日剩余 ${dailyLeft(G.player, room.dailyKey)} 次）`);
+    saveGame();
   });
   body.querySelectorAll('[data-statue]').forEach(b => b.onclick = () => {
     const k = b.dataset.statue;

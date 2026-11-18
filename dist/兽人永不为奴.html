@@ -1932,6 +1932,45 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .nb-l{font-size:12.5px;line-height:1.95;color:#c9bfa6}
 .nb-l b{color:#ffd24a}
 
+/* ===== 传送员菜单 ===== */
+.tp-wrap{padding:2px}
+.tp-big{display:block;width:100%;text-align:left;padding:16px 20px;margin-bottom:12px;
+  border-radius:5px;cursor:pointer;border:1px solid #4a3d28;
+  background:linear-gradient(180deg,rgba(40,34,20,.96),rgba(12,10,6,.98));transition:all .14s}
+.tp-big b{display:block;font-family:var(--serif);font-size:16px;color:#ffd98a;letter-spacing:.1em}
+.tp-big span{display:block;font-size:11.5px;color:#8f8570;margin-top:6px}
+.tp-big:hover{border-color:#d4af37;box-shadow:0 0 16px rgba(212,175,55,.42);transform:translateX(3px)}
+
+/* ===== 每日副本 ===== */
+.dd-head{margin-bottom:12px}
+.dd-title{font-family:var(--serif);font-size:17px;color:#ffd98a;letter-spacing:.12em}
+.dd-sub{font-size:11.5px;color:#8f8570;margin-top:5px}
+.dd-sub b{color:#ffd24a}
+.dd-grid{display:flex;flex-direction:column;gap:10px}
+.dd-card{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:5px;
+  border:1px solid #4a3d28;cursor:pointer;transition:all .14s;
+  background:linear-gradient(180deg,rgba(34,28,18,.96),rgba(10,8,5,.98))}
+.dd-card:hover:not(.out){border-color:#d4af37;box-shadow:0 0 16px rgba(212,175,55,.4);transform:translateX(3px)}
+.dd-card.out{opacity:.45;cursor:not-allowed}
+.dd-ic{font-size:26px;flex:0 0 auto;width:34px;text-align:center}
+.dd-main{flex:1;min-width:0}
+.dd-name{font-family:var(--serif);font-size:14.5px;letter-spacing:.06em}
+.dd-desc{font-size:11.5px;color:#8f8570;margin-top:3px}
+.dd-reward{font-size:11.5px;color:#5fdc4a;margin-top:5px}
+.dd-side{flex:0 0 auto;text-align:center;display:flex;flex-direction:column;gap:6px}
+.dd-left{font-size:11px;color:#ffd98a}
+.dd-left.zero{color:#ff6b5a}
+.dd-btn{padding:7px 18px;font-size:12.5px;border-radius:4px;cursor:pointer;
+  color:#1a1206;font-weight:700;border:1px solid #ffd24a;
+  background:linear-gradient(180deg,#ffd24a,#b8912f)}
+.dd-btn:hover{background:linear-gradient(180deg,#fff2c4,#d4af37)}
+.dd-btn.dis{background:#2a251c;color:#6b6558;border-color:#3a3226;cursor:not-allowed}
+@media (max-width:700px){
+  .dd-card{padding:10px;gap:8px}
+  .dd-name{font-size:13px}
+  .dd-desc{display:none}
+}
+
 </style>
 <script id="orc-cfg" type="application/json">{}</script>
 </head>
@@ -2900,6 +2939,53 @@ DATA.ROOM_CP = [1800, 3600, 7800, 15000, 27000, 46000, 82000];
 /* 难度对战力的要求倍率（困难/地狱的怪强度提升远大于血量线性成长） */
 DATA.DIFF_CP_MUL = { normal: 1.00, hard: 1.75, hell: 3.20 };
 
+
+/* ---------------- 每日副本（传送员 → 每天 2 次） ---------------- */
+/* 怪物等级跟随玩家等级，奖励固定按类型发放 */
+DATA.DAILY_LIMIT = 2;
+
+DATA.DAILY_ROOMS = [
+  { id:101, key:'daily_eq',   name:'每日装备强化材料', short:'强化材料', icon:'◆',
+    color:'#9aa0a6', mons:'skeleton',  count:18, monsLv:0,  bossLv:2,
+    desc:'大量强化石与保护券，专供装备强化',
+    reward:{ stone:14, protect:3 }, rewardGold:[600,1200], rewardExp:1.0 },
+  { id:102, key:'daily_skill', name:'每日技能强化材料', short:'技能材料', icon:'✦',
+    color:'#3fd45a', mons:'doomguard', count:18, monsLv:0,  bossLv:2,
+    desc:'技能强化券与突破券，加速技能成长',
+    reward:{ skillT:8, breakT:2 }, rewardGold:[600,1200], rewardExp:1.0 },
+  { id:103, key:'daily_craft', name:'每日装备合成材料', short:'合成材料', icon:'▰',
+    color:'#7fb3d5', mons:'grunt',     count:18, monsLv:0,  bossLv:2,
+    desc:'魔铁锭 / 秘银矿 / 龙鳞片 / 虚空碎片',
+    reward:{ iron:10, mithril:6, scale:3, shard:2 }, rewardGold:[500,1000], rewardExp:1.0 },
+  { id:104, key:'daily_gold', name:'每日金币',         short:'金币',     icon:'◉',
+    color:'#ffd24a', mons:'abyssal',   count:20, monsLv:0,  bossLv:2,
+    desc:'怪物携带大量金币，清完即可暴富',
+    reward:{}, rewardGold:[9000,18000], rewardExp:1.0 }
+];
+
+/* 把每日副本挂进 DATA.ROOMS（沿用现有的进图/刷怪/掉落逻辑），
+   但在地图列表里过滤掉，只能从传送员进入 */
+DATA.DAILY_ROOMS.forEach((r, i) => {
+  DATA.ROOMS.push({
+    id: r.id, name: r.name, lv: 1, reqLv: 1,
+    mons: r.mons, boss: 'bossKel', count: r.count, elite: 0, bosses: 1,
+    bg: '#1a1f26', accent: '#3f5568', desc: r.desc,
+    daily: true, dailyKey: r.key, dailyCfg: r
+  });
+});
+
+/* 按 id 取房间（每日副本 id 是 101+，不能用下标） */
+function getRoom(id) {
+  return DATA.ROOMS.find(r => r.id === id) || null;
+}
+
+/* 当天日期 key */
+function todayStr() {
+  const d = new Date();
+  const p2 = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate());
+}
+
 /* ---------------- 收藏图鉴（每个 BOSS 一条线，10 级） ---------------- */
 DATA.CODEX_LEVELS = [
   {lv:1,  kills:3,    dmg:0.02, drop:0.02, exp:0.02},
@@ -3470,6 +3556,8 @@ function createPlayer(raceKey, clsKey) {
     skillProf: {}, firstKills: {}, codex: {}, ringDropAt: {},
     quests: [], questDone: 0,
     kills: 0, bossKills: 0, bossKillsByDiff: {},
+    dailyRuns: { day: '', used: {} },
+    dailyDone: {},
     stats: {}
   };
   for (const k in race.mod) p.attrs[k] += race.mod[k];
@@ -4670,6 +4758,26 @@ function currentCodex(p) {
 }
 
 /* ---------------- 推荐战力 ---------------- */
+/* ---------------- 每日副本次数 ---------------- */
+function dailyEnsure(p) {
+  const day = todayStr();
+  if (!p.dailyRuns || p.dailyRuns.day !== day) p.dailyRuns = { day, used: {} };
+  return p.dailyRuns;
+}
+function dailyUsed(p, key) {
+  const d = dailyEnsure(p);
+  return d.used[key] || 0;
+}
+function dailyLeft(p, key) {
+  return Math.max(0, DATA.DAILY_LIMIT - dailyUsed(p, key));
+}
+function dailyConsume(p, key) {
+  const d = dailyEnsure(p);
+  if ((d.used[key] || 0) >= DATA.DAILY_LIMIT) return false;
+  d.used[key] = (d.used[key] || 0) + 1;
+  return true;
+}
+
 /* 该难度是否已解锁 */
 function diffUnlocked(p, diff) {
   const cfg = DATA.DIFF_UNLOCK[diff];
@@ -4983,11 +5091,25 @@ function enterRoom(roomId) {
     buildTown();
     p.x = W / 2; p.y = H * 0.80;
   } else {
-    const room = DATA.ROOMS[roomId];
+    const room = getRoom(roomId) || DATA.ROOMS[roomId];
     // 玩家从下往上打
     p.x = W / 2; p.y = H * 0.85;
-    spawnWave(room);
-    spawnBoss(room);
+    if (room.daily) {
+      room.dailyLv = Math.max(1, p.level);          // 怪物等级跟随玩家
+      for (let i = 0; i < (room.count || 18); i++) {
+        const pos = randomSpawnPos(w, false);
+        w.monsters.push(makeMonster(room.mons, pos.x, pos.y, false, room.dailyLv, 'normal'));
+      }
+      const bp = randomSpawnPos(w, true);
+      const b = makeMonster('bossKel', bp.x, bp.y, true, room.dailyLv + 2, 'normal');
+      b.name = room.name + ' · 守卫';
+      b.isDailyBoss = true;
+      b.hp = Math.round(b.hp * 0.8); b.hpMax = b.hp;
+      w.monsters.push(b);
+    } else {
+      spawnWave(room);
+      spawnBoss(room);
+    }
   }
   p.dir = -Math.PI / 2;
 }
@@ -5126,15 +5248,17 @@ function updateWorld(dt) {
 
   // 小怪补刷
   if (!w.isTown) {
-    const room = DATA.ROOMS[w.roomId];
+    const room = getRoom(w.roomId) || DATA.ROOMS[w.roomId];
     w.spawnTimer -= dt;
     if (w.spawnTimer <= 0) {
       w.spawnTimer = (G.debug && G.debug.fastSpawn) ? 1 : RESPAWN_NORMAL;   // 调试：1 秒刷怪
-      const alive = w.monsters.filter(m => !m.isBoss && m.alive).length;
-      if (alive < room.count) spawnWave(room);
+      if (!room.daily) {
+        const alive = w.monsters.filter(m => !m.isBoss && m.alive).length;
+        if (alive < room.count) spawnWave(room);
+      }
     }
-    // BOSS 补刷
-    if (!w.monsters.some(m => m.isBoss && m.alive)) {
+    // BOSS 补刷（每日副本不补刷）
+    if (!room.daily && !w.monsters.some(m => m.isBoss && m.alive)) {
       if (w.bossRespawnAt === 0) w.bossRespawnAt = G.time + RESPAWN_BOSS;
       else if (G.time >= w.bossRespawnAt) { spawnBoss(room); w.bossRespawnAt = 0; }
     } else w.bossRespawnAt = 0;
@@ -5692,6 +5816,11 @@ function monsterDie(m) {
     }
     logMsg(`★ 击杀 BOSS：${m.name}`, 'boss');
     toast(`击杀 ${m.name}！`);
+    // 每日副本通关奖励
+    const _rm = G.world ? getRoom(G.world.roomId) : null;
+    if (m.isDailyBoss && _rm && _rm.daily) {
+      grantDailyReward(_rm);
+    }
   }
   gainExp(p, m.exp);
 
@@ -5703,14 +5832,47 @@ function monsterDie(m) {
   dropLoot(m);
 }
 
+/* ---------------- 每日副本通关奖励 ---------------- */
+function grantDailyReward(room) {
+  const p = G.player, cfg = room && room.dailyCfg;
+  if (!cfg) return;
+  const day = todayStr();
+  p.dailyDone = p.dailyDone || {};
+  const k = cfg.key + '@' + day;
+  if (p.dailyDone[k]) return;             // 今天同一副本只结算一次
+  p.dailyDone[k] = 1;
+
+  const got = [];
+  const st = cfg.reward || {};
+  for (const key in st) {
+    p.materials[key] = (p.materials[key] || 0) + st[key];
+    got.push(`${DATA.MATERIALS[key].name}×${st[key]}`);
+  }
+  if (cfg.rewardGold) {
+    const g = Math.round(rnd(cfg.rewardGold[0], cfg.rewardGold[1]));
+    p.gold += g;
+    got.push(`金币×${fmt(g)}`);
+  }
+  if (cfg.rewardExp) {
+    const e = Math.round(120 * Math.max(1, p.level) * (cfg.rewardExp || 1));
+    gainExp(p, e);
+    got.push(`经验×${fmt(e)}`);
+  }
+  if (typeof bigAnnounce === 'function') bigAnnounce(`✅ ${cfg.name} 通关`, cfg.color);
+  toast('🎁 获得 ' + got.join(' · '));
+  logMsg(`🎁 ${cfg.name} 通关奖励：${got.join(' · ')}`, 'loot');
+  if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
+  saveGame();
+}
+
 function dropLoot(m) {
   const w = G.world, p = G.player;
   const d = DATA.DIFFICULTY[G.diff];
   const dropMul = d.dropMul;
   // 每个副本只出「对应等级段」的装备：第 N 个副本最高 (N×10) 级
   let ilvl = m.level;
-  if (!w.isTown && DATA.ROOMS[w.roomId]) {
-    const room = DATA.ROOMS[w.roomId];
+  if (!w.isTown && (getRoom(w.roomId) || DATA.ROOMS[w.roomId])) {
+    const room = getRoom(w.roomId) || DATA.ROOMS[w.roomId];
     const cap = (w.roomId + 1) * 10;
     const floorLv = room.lv || 1;
     ilvl = Math.max(floorLv, Math.min(ilvl, cap));
@@ -7361,7 +7523,7 @@ function updateHUD(dt) {
   // 当前位置 / 难度
   const _t = w.isTown;
   const pr = $('placeRoom'), pd = $('placeDiff');
-  if (pr) pr.textContent = _t ? '暴风城 · 安全区' : DATA.ROOMS[w.roomId].name;
+  if (pr) pr.textContent = _t ? '暴风城 · 安全区' : (getRoom(w.roomId) || DATA.ROOMS[w.roomId]).name;
   if (pd) {
     const D = DATA.DIFFICULTY[G.diff] || DATA.DIFFICULTY.normal;
     pd.textContent = _t ? '无战斗' : (D.name + '难度');
@@ -7396,9 +7558,9 @@ function updateHUD(dt) {
   $('diffVal').style.color = DATA.DIFFICULTY[G.diff].color;
 
   const isTown = w.isTown;
-  $('roomName').textContent = isTown ? '暴风城 · 安全区' : DATA.ROOMS[w.roomId].name;
+  $('roomName').textContent = isTown ? '暴风城 · 安全区' : (getRoom(w.roomId) || DATA.ROOMS[w.roomId]).name;
   $('roomSub').textContent = isTown ? '点击 NPC 或按 M 选择关卡'
-    : `${DATA.DIFFICULTY[G.diff].name}难度 · ${DATA.ROOMS[w.roomId].desc}`;
+    : `${DATA.DIFFICULTY[G.diff].name}难度 · ${(getRoom(w.roomId) || DATA.ROOMS[w.roomId]).desc}`;
 
   const boss = w.monsters.find(m => m.isBoss && m.alive);
   if (boss) {
@@ -8180,6 +8342,7 @@ function townMapHtml() {
     + '<button data-act-town style="border-color:#6b8a4a;color:#b9ffb0">回城</button></div>';
   html += '<div style="font-size:12px;color:#8f8570;margin:10px 0 8px">选择房间，再选难度进入</div><div class="room-pick">';
   DATA.ROOMS.forEach((r, i) => {
+    if (r.daily) return;                  // 每日副本从传送员进入
     const unlocked = p.unlocked.includes(i);
     const lvOk = p.level >= (r.reqLv || 1);
     const ok = unlocked && lvOk;
@@ -8197,7 +8360,7 @@ function townMapHtml() {
 
 function diffPickHtml(roomId) {
   const p = G.player;
-  const r = DATA.ROOMS[roomId];
+  const r = getRoom(roomId) || DATA.ROOMS[roomId];
   let html = `<div style="font-family:var(--serif);font-size:16px;color:#ffd24a;margin-bottom:4px">${r.name}</div>
     <div style="font-size:11px;color:#8f8570;margin-bottom:12px">${r.desc}　推荐等级 ${r.lv}+</div>
     <div class="diff-pick">`;
@@ -8237,6 +8400,51 @@ function openTownMap() {
   openModal('map', '选择关卡 · 难度', townMapHtml());
 }
 
+/* ---------------- 传送员主菜单 ---------------- */
+function teleportHtml() {
+  const p = G.player;
+  const leftAll = DATA.DAILY_ROOMS.reduce((n, r) => n + dailyLeft(p, r.key), 0);
+  return `<div class="tp-wrap">
+    <button class="tp-big" data-tel="rooms">
+      <b>🗺 选择关卡</b><span>前往各大副本，可选普通 / 困难 / 地狱难度</span>
+    </button>
+    <button class="tp-big" data-tel="daily">
+      <b>📅 每日副本</b><span>装备强化 / 技能强化 / 装备合成 / 金币　今日剩余 ${leftAll} 次</span>
+    </button>
+  </div>`;
+}
+
+/* ---------------- 传送员 · 每日副本 ---------------- */
+function dailyDungeonHtml() {
+  const p = G.player;
+  let html = `<div class="dd-head">
+    <div class="dd-title">📅 每日副本</div>
+    <div class="dd-sub">每个副本每天可进入 <b>${DATA.DAILY_LIMIT}</b> 次　明天 0 点重置</div>
+  </div><div class="dd-grid">`;
+
+  DATA.DAILY_ROOMS.forEach(r => {
+    const left = dailyLeft(p, r.key);
+    const done = !!(p.dailyDone && p.dailyDone[r.key + '@' + todayStr()]);
+    const ok = left > 0;
+    const mats = Object.keys(r.reward || {}).map(k =>
+      `${DATA.MATERIALS[k].name}×${r.reward[k]}`).join('　');
+    html += `<div class="dd-card ${ok ? '' : 'out'}">
+      <div class="dd-ic" style="color:${r.color}">${r.icon}</div>
+      <div class="dd-main">
+        <div class="dd-name" style="color:${r.color}">${r.name}</div>
+        <div class="dd-desc">${r.desc}</div>
+        <div class="dd-reward">🎁 ${mats}${r.rewardGold ? '　金币×' + fmt(r.rewardGold[0]) + '~' + fmt(r.rewardGold[1]) : ''}</div>
+      </div>
+      <div class="dd-side">
+        <div class="dd-left ${ok ? '' : 'zero'}">${done ? '今日已通关' : '剩余 ' + left + '/' + DATA.DAILY_LIMIT}</div>
+        <button class="dd-btn ${ok ? '' : 'dis'}" ${ok ? `data-daily-enter="${r.id}"` : 'disabled'}>进入</button>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
 /* ---------------- NPC ---------------- */
 function nearestNPC() {
   const w = G.world, p = G.player;
@@ -8270,7 +8478,7 @@ function interactNPC(target) {
   if (!n) return;
   if (typeof Sfx !== 'undefined') Sfx.play('open');   // 翻书声
   switch (n.kind) {
-    case 'teleport': openTownMap(); break;
+    case 'teleport': openModal('tel', '传送员 · 岳跃冲', teleportHtml()); break;
     case 'merchant': toggleModal('merchant', '商人 · 赵帅帅', merchantHtml); break;
     case 'exchange': toggleModal('exchange', '抽奖专员 · 李准', exchangeHtml); break;
     case 'blacksmith': toggleModal('smith', '铁匠 · 范在英', smithHtml); break;
@@ -9529,7 +9737,7 @@ function doEnterRoom(room, diff) {
 
 /* 等级警告 */
 function warnHtml(room, diff) {
-  const p = G.player, r = DATA.ROOMS[room], d = DATA.DIFFICULTY[diff];
+  const p = G.player, r = getRoom(room) || DATA.ROOMS[room], d = DATA.DIFFICULTY[diff];
   const gap = r.lv - p.level;
   const danger = gap >= 10 ? '极度危险' : gap >= 5 ? '危险' : '稍有挑战';
   const dc = gap >= 10 ? '#ff3b3b' : gap >= 5 ? '#ff9a2e' : '#ffd24a';
@@ -10460,6 +10668,22 @@ function bindModal() {
     mailDelete(G.player, +b.dataset.mailDel);
     saveGame(); mailRefreshDot();
     openModal('mail', '邮箱', mailHtml());
+  });
+  body.querySelectorAll('[data-tel]').forEach(b => b.onclick = () => {
+    if (b.dataset.tel === 'rooms') openTownMap();
+    else openModal('daily', '每日副本 · 岳跃冲', dailyDungeonHtml());
+  });
+  body.querySelectorAll('[data-daily-enter]').forEach(b => b.onclick = () => {
+    const id = +b.dataset.dailyEnter;
+    const room = DATA.ROOMS.find(r => r.id === id);
+    if (!room) return;
+    if (dailyLeft(G.player, room.dailyKey) <= 0) { toast('今天的次数已用完，明天再来'); return; }
+    dailyConsume(G.player, room.dailyKey);
+    G.diff = 'normal';
+    closeModal();
+    enterRoom(id);
+    toast(`进入 ${room.name}（今日剩余 ${dailyLeft(G.player, room.dailyKey)} 次）`);
+    saveGame();
   });
   body.querySelectorAll('[data-statue]').forEach(b => b.onclick = () => {
     const k = b.dataset.statue;

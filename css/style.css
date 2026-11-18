@@ -1924,3 +1924,42 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .nb-h{font-family:var(--serif);font-size:14px;color:#ffd98a;margin-bottom:8px;letter-spacing:.1em}
 .nb-l{font-size:12.5px;line-height:1.95;color:#c9bfa6}
 .nb-l b{color:#ffd24a}
+
+/* ===== 传送员菜单 ===== */
+.tp-wrap{padding:2px}
+.tp-big{display:block;width:100%;text-align:left;padding:16px 20px;margin-bottom:12px;
+  border-radius:5px;cursor:pointer;border:1px solid #4a3d28;
+  background:linear-gradient(180deg,rgba(40,34,20,.96),rgba(12,10,6,.98));transition:all .14s}
+.tp-big b{display:block;font-family:var(--serif);font-size:16px;color:#ffd98a;letter-spacing:.1em}
+.tp-big span{display:block;font-size:11.5px;color:#8f8570;margin-top:6px}
+.tp-big:hover{border-color:#d4af37;box-shadow:0 0 16px rgba(212,175,55,.42);transform:translateX(3px)}
+
+/* ===== 每日副本 ===== */
+.dd-head{margin-bottom:12px}
+.dd-title{font-family:var(--serif);font-size:17px;color:#ffd98a;letter-spacing:.12em}
+.dd-sub{font-size:11.5px;color:#8f8570;margin-top:5px}
+.dd-sub b{color:#ffd24a}
+.dd-grid{display:flex;flex-direction:column;gap:10px}
+.dd-card{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:5px;
+  border:1px solid #4a3d28;cursor:pointer;transition:all .14s;
+  background:linear-gradient(180deg,rgba(34,28,18,.96),rgba(10,8,5,.98))}
+.dd-card:hover:not(.out){border-color:#d4af37;box-shadow:0 0 16px rgba(212,175,55,.4);transform:translateX(3px)}
+.dd-card.out{opacity:.45;cursor:not-allowed}
+.dd-ic{font-size:26px;flex:0 0 auto;width:34px;text-align:center}
+.dd-main{flex:1;min-width:0}
+.dd-name{font-family:var(--serif);font-size:14.5px;letter-spacing:.06em}
+.dd-desc{font-size:11.5px;color:#8f8570;margin-top:3px}
+.dd-reward{font-size:11.5px;color:#5fdc4a;margin-top:5px}
+.dd-side{flex:0 0 auto;text-align:center;display:flex;flex-direction:column;gap:6px}
+.dd-left{font-size:11px;color:#ffd98a}
+.dd-left.zero{color:#ff6b5a}
+.dd-btn{padding:7px 18px;font-size:12.5px;border-radius:4px;cursor:pointer;
+  color:#1a1206;font-weight:700;border:1px solid #ffd24a;
+  background:linear-gradient(180deg,#ffd24a,#b8912f)}
+.dd-btn:hover{background:linear-gradient(180deg,#fff2c4,#d4af37)}
+.dd-btn.dis{background:#2a251c;color:#6b6558;border-color:#3a3226;cursor:not-allowed}
+@media (max-width:700px){
+  .dd-card{padding:10px;gap:8px}
+  .dd-name{font-size:13px}
+  .dd-desc{display:none}
+}

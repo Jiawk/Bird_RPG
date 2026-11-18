@@ -776,6 +776,53 @@ DATA.ROOM_CP = [1800, 3600, 7800, 15000, 27000, 46000, 82000];
 /* 难度对战力的要求倍率（困难/地狱的怪强度提升远大于血量线性成长） */
 DATA.DIFF_CP_MUL = { normal: 1.00, hard: 1.75, hell: 3.20 };
 
+
+/* ---------------- 每日副本（传送员 → 每天 2 次） ---------------- */
+/* 怪物等级跟随玩家等级，奖励固定按类型发放 */
+DATA.DAILY_LIMIT = 2;
+
+DATA.DAILY_ROOMS = [
+  { id:101, key:'daily_eq',   name:'每日装备强化材料', short:'强化材料', icon:'◆',
+    color:'#9aa0a6', mons:'skeleton',  count:18, monsLv:0,  bossLv:2,
+    desc:'大量强化石与保护券，专供装备强化',
+    reward:{ stone:14, protect:3 }, rewardGold:[600,1200], rewardExp:1.0 },
+  { id:102, key:'daily_skill', name:'每日技能强化材料', short:'技能材料', icon:'✦',
+    color:'#3fd45a', mons:'doomguard', count:18, monsLv:0,  bossLv:2,
+    desc:'技能强化券与突破券，加速技能成长',
+    reward:{ skillT:8, breakT:2 }, rewardGold:[600,1200], rewardExp:1.0 },
+  { id:103, key:'daily_craft', name:'每日装备合成材料', short:'合成材料', icon:'▰',
+    color:'#7fb3d5', mons:'grunt',     count:18, monsLv:0,  bossLv:2,
+    desc:'魔铁锭 / 秘银矿 / 龙鳞片 / 虚空碎片',
+    reward:{ iron:10, mithril:6, scale:3, shard:2 }, rewardGold:[500,1000], rewardExp:1.0 },
+  { id:104, key:'daily_gold', name:'每日金币',         short:'金币',     icon:'◉',
+    color:'#ffd24a', mons:'abyssal',   count:20, monsLv:0,  bossLv:2,
+    desc:'怪物携带大量金币，清完即可暴富',
+    reward:{}, rewardGold:[9000,18000], rewardExp:1.0 }
+];
+
+/* 把每日副本挂进 DATA.ROOMS（沿用现有的进图/刷怪/掉落逻辑），
+   但在地图列表里过滤掉，只能从传送员进入 */
+DATA.DAILY_ROOMS.forEach((r, i) => {
+  DATA.ROOMS.push({
+    id: r.id, name: r.name, lv: 1, reqLv: 1,
+    mons: r.mons, boss: 'bossKel', count: r.count, elite: 0, bosses: 1,
+    bg: '#1a1f26', accent: '#3f5568', desc: r.desc,
+    daily: true, dailyKey: r.key, dailyCfg: r
+  });
+});
+
+/* 按 id 取房间（每日副本 id 是 101+，不能用下标） */
+function getRoom(id) {
+  return DATA.ROOMS.find(r => r.id === id) || null;
+}
+
+/* 当天日期 key */
+function todayStr() {
+  const d = new Date();
+  const p2 = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate());
+}
+
 /* ---------------- 收藏图鉴（每个 BOSS 一条线，10 级） ---------------- */
 DATA.CODEX_LEVELS = [
   {lv:1,  kills:3,    dmg:0.02, drop:0.02, exp:0.02},

@@ -64,11 +64,25 @@ function enterRoom(roomId) {
     buildTown();
     p.x = W / 2; p.y = H * 0.80;
   } else {
-    const room = DATA.ROOMS[roomId];
+    const room = getRoom(roomId) || DATA.ROOMS[roomId];
     // 玩家从下往上打
     p.x = W / 2; p.y = H * 0.85;
-    spawnWave(room);
-    spawnBoss(room);
+    if (room.daily) {
+      room.dailyLv = Math.max(1, p.level);          // 怪物等级跟随玩家
+      for (let i = 0; i < (room.count || 18); i++) {
+        const pos = randomSpawnPos(w, false);
+        w.monsters.push(makeMonster(room.mons, pos.x, pos.y, false, room.dailyLv, 'normal'));
+      }
+      const bp = randomSpawnPos(w, true);
+      const b = makeMonster('bossKel', bp.x, bp.y, true, room.dailyLv + 2, 'normal');
+      b.name = room.name + ' · 守卫';
+      b.isDailyBoss = true;
+      b.hp = Math.round(b.hp * 0.8); b.hpMax = b.hp;
+      w.monsters.push(b);
+    } else {
+      spawnWave(room);
+      spawnBoss(room);
+    }
   }
   p.dir = -Math.PI / 2;
 }
@@ -207,15 +221,17 @@ function updateWorld(dt) {
 
   // 小怪补刷
   if (!w.isTown) {
-    const room = DATA.ROOMS[w.roomId];
+    const room = getRoom(w.roomId) || DATA.ROOMS[w.roomId];
     w.spawnTimer -= dt;
     if (w.spawnTimer <= 0) {
       w.spawnTimer = (G.debug && G.debug.fastSpawn) ? 1 : RESPAWN_NORMAL;   // 调试：1 秒刷怪
-      const alive = w.monsters.filter(m => !m.isBoss && m.alive).length;
-      if (alive < room.count) spawnWave(room);
+      if (!room.daily) {
+        const alive = w.monsters.filter(m => !m.isBoss && m.alive).length;
+        if (alive < room.count) spawnWave(room);
+      }
     }
-    // BOSS 补刷
-    if (!w.monsters.some(m => m.isBoss && m.alive)) {
+    // BOSS 补刷（每日副本不补刷）
+    if (!room.daily && !w.monsters.some(m => m.isBoss && m.alive)) {
       if (w.bossRespawnAt === 0) w.bossRespawnAt = G.time + RESPAWN_BOSS;
       else if (G.time >= w.bossRespawnAt) { spawnBoss(room); w.bossRespawnAt = 0; }
     } else w.bossRespawnAt = 0;

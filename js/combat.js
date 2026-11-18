@@ -388,6 +388,11 @@ function monsterDie(m) {
     }
     logMsg(`★ 击杀 BOSS：${m.name}`, 'boss');
     toast(`击杀 ${m.name}！`);
+    // 每日副本通关奖励
+    const _rm = G.world ? getRoom(G.world.roomId) : null;
+    if (m.isDailyBoss && _rm && _rm.daily) {
+      grantDailyReward(_rm);
+    }
   }
   gainExp(p, m.exp);
 
@@ -399,14 +404,47 @@ function monsterDie(m) {
   dropLoot(m);
 }
 
+/* ---------------- 每日副本通关奖励 ---------------- */
+function grantDailyReward(room) {
+  const p = G.player, cfg = room && room.dailyCfg;
+  if (!cfg) return;
+  const day = todayStr();
+  p.dailyDone = p.dailyDone || {};
+  const k = cfg.key + '@' + day;
+  if (p.dailyDone[k]) return;             // 今天同一副本只结算一次
+  p.dailyDone[k] = 1;
+
+  const got = [];
+  const st = cfg.reward || {};
+  for (const key in st) {
+    p.materials[key] = (p.materials[key] || 0) + st[key];
+    got.push(`${DATA.MATERIALS[key].name}×${st[key]}`);
+  }
+  if (cfg.rewardGold) {
+    const g = Math.round(rnd(cfg.rewardGold[0], cfg.rewardGold[1]));
+    p.gold += g;
+    got.push(`金币×${fmt(g)}`);
+  }
+  if (cfg.rewardExp) {
+    const e = Math.round(120 * Math.max(1, p.level) * (cfg.rewardExp || 1));
+    gainExp(p, e);
+    got.push(`经验×${fmt(e)}`);
+  }
+  if (typeof bigAnnounce === 'function') bigAnnounce(`✅ ${cfg.name} 通关`, cfg.color);
+  toast('🎁 获得 ' + got.join(' · '));
+  logMsg(`🎁 ${cfg.name} 通关奖励：${got.join(' · ')}`, 'loot');
+  if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
+  saveGame();
+}
+
 function dropLoot(m) {
   const w = G.world, p = G.player;
   const d = DATA.DIFFICULTY[G.diff];
   const dropMul = d.dropMul;
   // 每个副本只出「对应等级段」的装备：第 N 个副本最高 (N×10) 级
   let ilvl = m.level;
-  if (!w.isTown && DATA.ROOMS[w.roomId]) {
-    const room = DATA.ROOMS[w.roomId];
+  if (!w.isTown && (getRoom(w.roomId) || DATA.ROOMS[w.roomId])) {
+    const room = getRoom(w.roomId) || DATA.ROOMS[w.roomId];
     const cap = (w.roomId + 1) * 10;
     const floorLv = room.lv || 1;
     ilvl = Math.max(floorLv, Math.min(ilvl, cap));

@@ -3368,3 +3368,22 @@ bossDie / playerDie / success / fail 全部触发 ✅
 重新开启恢复播放 ✅
 包体 2.35M → 2.46M（+144KB）✅
 ```
+
+### v199 · 全服金币补偿 + 金币不再被清零
+1. **经济事故原因**
+   - v197 的 `ensureGold` 在遇到 `NaN` 时会**兜底成 0**
+   - 而此前存档里已经写入了 `NaN`（`JSON.stringify(NaN)` → `null`）
+   - 于是上线后读到 `null` → 判定无法修复 → 金币被清零
+2. **全服补偿（已在服务器执行）**
+   - 给 `users` 表全部 **8 个账号**各发一封邮件：
+     - 标题「金币补偿 · 100,000」
+     - 附件 `{ type:'gold', amount:100000 }`
+   - 用 `settings.comp_gold_100k_v1` 做幂等标记，重复执行不会重复发
+3. **以后不会再清零**
+   - `ensureGold` 新增 `p.goldBackup`：每次金币合法时记下最近值
+   - 一旦读到脏数据且无法解析 → **回退到 goldBackup**，而不是 0
+
+```js
+if (typeof v === 'number' && isFinite(v)) { p.gold = round(v); p.goldBackup = p.gold; }
+else { ...解析失败 → 用 goldBackup 兜底... }
+```

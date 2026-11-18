@@ -1281,14 +1281,24 @@ function currentCodex(p) {
 function ensureGold(p) {
   if (!p) return 0;
   const v = p.gold;
-  if (typeof v === 'number' && isFinite(v)) { p.gold = Math.max(0, Math.round(v)); return p.gold; }
+  if (typeof v === 'number' && isFinite(v)) {
+    p.gold = Math.max(0, Math.round(v));
+    p.goldBackup = p.gold;          // 记住最近一次合法值
+    return p.gold;
+  }
   let n = Number(v);
   if (!isFinite(n)) {
     // 例如 "123,45" / "[object Object]" 这类脏数据，取前导数字
     const m = String(v == null ? '' : v).match(/-?\d+/);
-    n = m ? Number(m[0]) : 0;
+    n = m ? Number(m[0]) : NaN;
+  }
+  // 实在修不出来 → 回退到上一次合法值（避免玩家金币被清零）
+  if (!isFinite(n) || n <= 0) {
+    const bak = Number(p.goldBackup);
+    if (isFinite(bak) && bak > 0) n = bak;
   }
   p.gold = Math.max(0, Math.round(isFinite(n) ? n : 0));
+  if (p.gold > 0) p.goldBackup = p.gold;
   return p.gold;
 }
 

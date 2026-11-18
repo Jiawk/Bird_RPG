@@ -213,7 +213,15 @@ function updatePlayer(dt) {
   if (p.stats.invis > 0) p.stats.invis = Math.max(0, p.stats.invis - dt);
 
   if (G.debug && G.debug.infMp) p.mp = p.stats.mpMax;
-  else p.mp = Math.min(p.stats.mpMax, p.mp + p.stats.mpMax * p.stats.mpRegen * dt);
+  else {
+    // 百分比回蓝 + 光环固定回蓝（辉煌光环）
+    p.mp = Math.min(p.stats.mpMax,
+      p.mp + (p.stats.mpMax * p.stats.mpRegen + (p.stats.auraMpRegen || 0)) * dt);
+  }
+  // 生命回复（邪恶光环）
+  if (p.stats.auraHpRegenPct > 0 && !p.dead) {
+    p.hp = Math.min(p.stats.hpMax, p.hp + p.stats.hpMax * p.stats.auraHpRegenPct * dt);
+  }
 
   // 移动：方向键 / 触屏摇杆 / 按住右键跟随鼠标
   let mx = 0, my = 0;
@@ -224,17 +232,20 @@ function updatePlayer(dt) {
   if (Input.keys['arrowdown']) my += 1;
   if (Input.moveStick.active) { mx += Input.moveStick.x; my += Input.moveStick.y; }
 
+  // 移速 = 基础 + 坐骑加成 + 光环加成
+  const spdMul = 1 + ((p.stats && p.stats.mountSpd) || 0) + ((p.stats && p.stats.auraMoveSpd) || 0);
+  const SPD = 235 * spdMul;
   let len = Math.hypot(mx, my);
   if (len > 0.1) {
     mx /= len; my /= len;
-    p.x += mx * 235 * dt;
-    p.y += my * 235 * dt;
+    p.x += mx * SPD * dt;
+    p.y += my * SPD * dt;
   } else if (G.moveTarget) {
     const dx = G.moveTarget.x - p.x, dy = G.moveTarget.y - p.y;
     const dd = Math.hypot(dx, dy);
     if (dd > 10) {
-      p.x += (dx / dd) * 235 * dt;
-      p.y += (dy / dd) * 235 * dt;
+      p.x += (dx / dd) * SPD * dt;
+      p.y += (dy / dd) * SPD * dt;
       len = 1;
     } else {
       G.moveTarget = null;   // 到达

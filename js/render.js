@@ -1031,6 +1031,31 @@ function drawNPC(n) {
       CTX.fillRect(bx - 8, py, IW + 16, 2);
 
       npcDrawn = true;
+    } else if (n.kind === 'beastmaster') {
+      // 驯兽师：绿色兽栏 + 爪印
+      const cy = gy - 2;
+      const glow = CTX.createRadialGradient(gx, cy - 30, 4, gx, cy - 30, 62);
+      glow.addColorStop(0, 'rgba(143,212,138,.30)');
+      glow.addColorStop(1, 'rgba(143,212,138,0)');
+      CTX.fillStyle = glow;
+      CTX.beginPath(); CTX.arc(gx, cy - 30, 62, 0, 6.283); CTX.fill();
+      // 木栏
+      CTX.fillStyle = '#4a3a24';
+      CTX.fillRect(gx - 26, cy - 52, 52, 6);
+      CTX.fillStyle = '#5e4a2e';
+      for (let i = -2; i <= 2; i++) CTX.fillRect(gx + i * 11 - 2, cy - 52, 4, 52);
+      // 爪印
+      CTX.fillStyle = '#8fd48a';
+      CTX.beginPath(); CTX.ellipse(gx, cy - 26, 8, 6, 0, 0, 6.283); CTX.fill();
+      for (let i = -2; i <= 2; i++) {
+        CTX.beginPath();
+        CTX.ellipse(gx + i * 7, cy - 36 - Math.abs(i) * -1.2, 3, 4.2, 0, 0, 6.283);
+        CTX.fill();
+      }
+      // 底座
+      CTX.fillStyle = '#3a3020';
+      CTX.fillRect(gx - 30, cy, 60, 7);
+      npcDrawn = true;
     } else if (n.kind === 'heirloom') {
       // 传家宝：漂浮的金色古书
       const cy = gy - 4 + Math.sin(G.time * 2) * 4;

@@ -61,6 +61,17 @@ function damagePlayer(amount, source) {
     floatText(p.x, p.y - 34, '闪避', '#9fe6b8', 15);
     return;
   }
+  // 荆棘光环：近战敌人攻击我方时受到反伤（远程/法术不触发）
+  const _th = p.stats.auraThorns || 0;
+  if (_th > 0 && source && source.isBoss !== undefined && source.hp > 0) {
+    const isMelee = Math.hypot(source.x - p.x, source.y - p.y) < 120;
+    if (isMelee) {
+      const back = Math.max(1, Math.round(amount * _th));
+      source.hp -= back;
+      floatText(source.x, source.y - 24, '-' + back, '#9fe6b8', 13);
+      if (source.hp <= 0) monsterDie(source);
+    }
+  }
   const _hdr = ((typeof hltDyn === 'function') ? hltDyn(p).dr : 0);
   const dmg = Math.max(1, Math.round(amount * (1 - Math.min(0.85, p.stats.dr + _hdr))));
   p.hp -= dmg;
@@ -103,7 +114,7 @@ function playerAttack() {
   if (!p || p.attackCd > 0) return;
   const fast = G.debug && G.debug.fastAtk;
   const HD = (typeof hltDyn === 'function') ? hltDyn(p) : { as:0, atkPct:0 };
-  const atkSpeed = p.stats.as * (1 + HD.as) * (fast ? 6 : 1);   // 传家宝叠攻速
+  const atkSpeed = p.stats.as * (1 + HD.as + (p.stats.auraAs || 0)) * (fast ? 6 : 1);   // 传家宝叠攻速 + 光环
   p.attackCd = 1 / atkSpeed;
   if (typeof hltOnAttack === 'function') hltOnAttack(p);
   p.attackAnim = fast ? 0.06 : 0.18;
@@ -127,7 +138,8 @@ function playerAttack() {
   if (p.stats.isMagic || p.cls === 'archer') {
     // 远程：发射投射物（橙弓「分裂箭」一次打 3 个不同目标）
     const shoot = (tgt, a2) => {
-      const dmg = p.stats.power * (1 + ((typeof hltDyn === 'function') ? hltDyn(p).atkPct : 0));
+      const _ranged = (p.cls === 'mage' || p.cls === 'archer' || p.cls === 'priest') ? (p.stats.auraRangedAtk || 0) : 0;
+      const dmg = p.stats.power * (1 + ((typeof hltDyn === 'function') ? hltDyn(p).atkPct : 0) + _ranged);
       w.projectiles.push({
         x: p.x + Math.cos(a2) * 22, y: p.y + Math.sin(a2) * 22,
         vx: Math.cos(a2) * 520, vy: Math.sin(a2) * 520,

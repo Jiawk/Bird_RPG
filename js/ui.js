@@ -113,6 +113,8 @@ function uiInit() {
   if (ASSETS.heirlooms) document.documentElement.style.setProperty('--hlt-sheet', `url(${ASSETS.heirlooms})`);
   if (ASSETS.lorePortraits) document.documentElement.style.setProperty('--lore-sheet', `url(${ASSETS.lorePortraits})`);
   if (ASSETS.lichStatue) document.documentElement.style.setProperty('--statue-sheet', `url(${ASSETS.lichStatue})`);
+  if (ASSETS.pets) document.documentElement.style.setProperty('--pet-sheet', `url(${ASSETS.pets})`);
+  if (ASSETS.mounts) document.documentElement.style.setProperty('--mount-sheet', `url(${ASSETS.mounts})`);
   if (ASSETS.avatars) document.documentElement.style.setProperty('--avatar-sheet', `url(${ASSETS.avatars})`);
   bindSkillTips();
   // 任务追踪：事件委托（内容重建后依然可点）
@@ -270,6 +272,7 @@ function updateHUD(dt) {
 
   const hpPct = clamp(p.hp / p.stats.hpMax, 0, 1) * 100;
   const mpPct = clamp(p.mp / p.stats.mpMax, 0, 1) * 100;
+  if (typeof updateAuraHud === 'function') updateAuraHud();
   const need = DATA.expForLevel(p.level);
   const xpPct = p.level >= DATA.MAX_LEVEL ? 100 : clamp(p.exp / need, 0, 1) * 100;
 
@@ -706,6 +709,7 @@ function handleCommand(act) {
     case 'notice': openModal('notice', '公告牌', noticeHtml()); break;
     case 'heirloom': G._hltPage = G._hltPage || 0; openModal('heirloom', '传家宝 · 古籍', heirloomHtml()); break;
     case 'statue': openModal('statueMenu', '巫妖王雕像', statueMenuHtml()); break;
+    case 'beastmaster': openModal('beast', '驯兽师 · 铃', beastMenuHtml()); break;
     case 'tutorial': toggleModal('tutorial', '新手指引', tutorialHtml); break;
     case 'mail': toggleModal('mail', '邮箱', mailHtml); break;
     case 'ringup': toggleModal('ringup', '特戒强化', ringUpHtml); break;
@@ -1175,6 +1179,125 @@ function openTownMap() {
   openModal('map', '选择关卡 · 难度', townMapHtml());
 }
 
+/* ---------------- 光环 HUD ---------------- */
+function updateAuraHud() {
+  const box = document.getElementById('hudAura');
+  const ic = document.getElementById('auraIc');
+  const tip = document.getElementById('auraTip');
+  if (!box || !ic || !tip) return;
+  const ap = activePet(G.player);
+  if (!ap) { box.classList.add('hidden'); box.classList.remove('show'); return; }
+  const { def, lv, value } = ap;
+  box.classList.remove('hidden');
+  ic.style.backgroundPosition = `${(def.icon % 4) * 33.333}% ${Math.floor(def.icon / 4) * 50}%`;
+  ic.style.borderColor = def.color;
+  ic.style.boxShadow = `0 0 12px ${def.color}88`;
+  const valTxt =
+    def.unit === '蓝/秒' ? `+${value} 蓝/秒`
+    : def.unit === '护甲' ? `+${value} 护甲`
+    : (def.unit === '吸血' || def.unit === '反弹') ? `+${Math.round(value * 100)}%`
+    : def.unit === '攻击' ? `+${Math.round(value * 100)}% 远程攻击`
+    : `+${Math.round(value * 100)}% 移速` + (def.extra ? ` / +${Math.round(def.extra[lv-1] * 100)}% ${def.effect === 'unholy' ? '回血' : '攻速'}` : '');
+  tip.innerHTML = `<b>${def.aura} L${lv}</b><br>` +
+    `<span style="color:#8f8570">${def.owner} · ${def.name}</span><br>` +
+    `<span class="at-v">${valTxt}</span><br>` +
+    `<span style="color:#a89e88">${def.desc}</span><br>` +
+    `<span style="color:#6b6558">范围 90 码 · 同名光环不叠加</span>`;
+  // 点击展开/收起（移动端）
+  box.onclick = () => box.classList.toggle('show');
+}
+
+/* ---------------- 驯兽师：坐骑 / 宠物 ---------------- */
+function beastMenuHtml() {
+  const p = G.player;
+  const ms = mountEnsure(p), pt = petEnsure(p);
+  const mAct = ms.active ? mountByKey(ms.active) : null;
+  const pAct = activePet(p);
+  return `<div class="bm-wrap">
+    <div class="bm-head">
+      <div class="bm-face">🐾</div>
+      <div>
+        <div class="bm-title">驯兽师 · 铃</div>
+        <div class="bm-sub">坐骑：<b>${mAct ? mAct.name : '未乘骑'}</b>　宠物：<b>${pAct ? pAct.def.name : '未出战'}</b></div>
+      </div>
+    </div>
+    <button class="bm-big" data-beast="mount">
+      <b>🐎 坐骑</b><span>提升移动速度 · 普通 500K / 稀有 1M / 史诗 2M</span>
+    </button>
+    <button class="bm-big" data-beast="pet">
+      <b>🐾 宠物</b><span>出战提供光环 · 兑换码获取（已拥有 ${pt.owned.length}/7）</span>
+    </button>
+  </div>`;
+}
+
+function mountHtml() {
+  const p = G.player, ms = mountEnsure(p);
+  let html = `<div class="mm-head">🐎 坐骑 <span>只提升移动速度，不影响战斗</span></div><div class="mm-grid">`;
+  DATA.MOUNTS.forEach(m => {
+    const tier = DATA.MOUNT_TIERS[m.tier];
+    const owned = ms.owned.includes(m.key);
+    const active = ms.active === m.key;
+    const afford = p.gold >= tier.price;
+    html += `<div class="mm-card ${active ? 'act' : ''}" style="border-color:${tier.color}66">
+      <div class="mm-icon" style="background-position:${(m.idx % 3) * 50}% ${Math.floor(m.idx / 3) * 50}%"></div>
+      <div class="mm-name" style="color:${tier.color}">${m.name}<i>${tier.name}</i></div>
+      <div class="mm-spd">移速 <b>+${Math.round(m.spd * 100)}%</b></div>
+      <div class="mm-desc">${m.desc}</div>
+      ${owned
+        ? (active
+            ? `<button class="mm-btn on" data-mount-off="1">下马</button>`
+            : `<button class="mm-btn" data-mount-use="${m.key}">乘骑</button>`)
+        : `<button class="mm-btn buy ${afford ? '' : 'dis'}" ${afford ? `data-mount-buy="${m.key}"` : 'disabled'}>
+             ${fmt(tier.price)} 金${afford ? '' : '（不足）'}</button>`}
+    </div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+function petHtml() {
+  const p = G.player, st = petEnsure(p);
+  let html = `<div class="mm-head">🐾 宠物光环 <span>同名光环不叠加 · 范围 90 码</span></div>`;
+  html += `<div class="pc-codes">
+    <input id="petCodeInput" class="pc-input" placeholder="输入宠物兑换码，例如 PET-BRI-1BAAA" maxlength="24">
+    <button class="pc-btn" data-pet-redeem="1">兑换</button>
+  </div>`;
+  html += '<div class="pc-grid">';
+  DATA.PETS.forEach(pt => {
+    const owned = st.owned.includes(pt.key);
+    const active = st.active === pt.key;
+    const lv = st.lv[pt.key] || 1;
+    const val = pt.values[lv - 1];
+    const upCost = DATA.PET_UP_COST[lv] || 0;
+    const canUp = owned && lv < 3 && p.gold >= upCost;
+    html += `<div class="pc-card ${active ? 'act' : ''} ${owned ? '' : 'lock'}" style="border-color:${pt.color}55">
+      <div class="pc-icon" style="background-position:${(pt.icon % 4) * 33.333}% ${Math.floor(pt.icon / 4) * 50}%"></div>
+      <div class="pc-name" style="color:${pt.color}">${pt.aura}</div>
+      <div class="pc-owner">${pt.owner} · ${pt.name}</div>
+      <div class="pc-eff">${pt.desc}</div>
+      <div class="pc-val" style="color:${pt.color}">
+        L${lv}　${pt.unit === '蓝/秒' ? '+' + val + ' 蓝/秒'
+          : pt.unit === '护甲' ? '+' + val + ' 护甲'
+          : pt.unit === '吸血' || pt.unit === '反弹' ? '+' + Math.round(val * 100) + '%'
+          : pt.unit === '攻击' ? '+' + Math.round(val * 100) + '% 远程攻击'
+          : '+' + Math.round(val * 100) + '% 移速' + (pt.extra ? ' / +' + Math.round(pt.extra[lv - 1] * 100) + '% ' + (pt.effect === 'unholy' ? '回血' : '攻速') : '')}
+      </div>
+      ${owned
+        ? `<div class="pc-btns">
+             ${active
+               ? `<button class="mm-btn on" data-pet-off="1">收回</button>`
+               : `<button class="mm-btn" data-pet-use="${pt.key}">出战</button>`}
+             ${lv < 3
+               ? `<button class="mm-btn buy ${canUp ? '' : 'dis'}" ${canUp ? `data-pet-up="${pt.key}"` : 'disabled'}>升 L${lv + 1}（${fmt(upCost)}）</button>`
+               : `<button class="mm-btn on" disabled>已满级</button>`}
+           </div>`
+        : `<div class="pc-lock">未拥有 · 用兑换码获取</div>`}
+    </div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
 /* ---------------- 传送员主菜单 ---------------- */
 function teleportHtml() {
   const p = G.player;
@@ -1265,6 +1388,7 @@ function interactNPC(target) {
     case 'notice': openModal('notice', '公告牌', noticeHtml()); break;
     case 'heirloom': G._hltPage = G._hltPage || 0; openModal('heirloom', '传家宝 · 古籍', heirloomHtml()); break;
     case 'statue': openModal('statueMenu', '巫妖王雕像', statueMenuHtml()); break;
+    case 'beastmaster': openModal('beast', '驯兽师 · 铃', beastMenuHtml()); break;
     case 'tutorial': toggleModal('tutorial', '新手指引', tutorialHtml); break;
     case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
   }
@@ -3443,6 +3567,75 @@ function bindModal() {
     mailDelete(G.player, +b.dataset.mailDel);
     saveGame(); mailRefreshDot();
     openModal('mail', '邮箱', mailHtml());
+  });
+  /* ---- 驯兽师 ---- */
+  body.querySelectorAll('[data-beast]').forEach(b => b.onclick = () => {
+    if (b.dataset.beast === 'mount') openModal('mount', '坐骑 · 驯兽师', mountHtml());
+    else openModal('pet', '宠物 · 驯兽师', petHtml());
+  });
+  body.querySelectorAll('[data-mount-buy]').forEach(b => b.onclick = () => {
+    const k = b.dataset.mountBuy, m = mountByKey(k);
+    const tier = DATA.MOUNT_TIERS[m.tier];
+    const p = G.player, ms = mountEnsure(p);
+    if (ms.owned.includes(k)) { toast('已经拥有这个坐骑'); return; }
+    if (p.gold < tier.price) { toast('金币不足'); return; }
+    p.gold -= tier.price;
+    ms.owned.push(k); ms.active = k;
+    recalcStats(p); saveGame();
+    if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
+    toast(`🐎 获得坐骑【${m.name}】，已自动乘骑`);
+    openModal('mount', '坐骑 · 驯兽师', mountHtml());
+  });
+  body.querySelectorAll('[data-mount-use]').forEach(b => b.onclick = () => {
+    mountEnsure(G.player).active = b.dataset.mountUse;
+    recalcStats(G.player); saveGame();
+    openModal('mount', '坐骑 · 驯兽师', mountHtml());
+  });
+  body.querySelectorAll('[data-mount-off]').forEach(b => b.onclick = () => {
+    mountEnsure(G.player).active = null;
+    recalcStats(G.player); saveGame();
+    toast('已下马');
+    openModal('mount', '坐骑 · 驯兽师', mountHtml());
+  });
+  body.querySelectorAll('[data-pet-use]').forEach(b => b.onclick = () => {
+    const st = petEnsure(G.player);
+    st.active = b.dataset.petUse;
+    recalcStats(G.player); saveGame();
+    if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
+    const d = petByKey(st.active);
+    toast(`🐾 ${d.name} 出战：${d.aura} 生效`);
+    openModal('pet', '宠物 · 驯兽师', petHtml());
+    updateAuraHud();
+  });
+  body.querySelectorAll('[data-pet-off]').forEach(b => b.onclick = () => {
+    petEnsure(G.player).active = null;
+    recalcStats(G.player); saveGame();
+    toast('宠物已收回');
+    openModal('pet', '宠物 · 驯兽师', petHtml());
+    updateAuraHud();
+  });
+  body.querySelectorAll('[data-pet-up]').forEach(b => b.onclick = () => {
+    const k = b.dataset.petUp, st = petEnsure(G.player), p = G.player;
+    const lv = st.lv[k] || 1;
+    const cost = DATA.PET_UP_COST[lv] || 0;
+    if (lv >= 3) return;
+    if (p.gold < cost) { toast('金币不足'); return; }
+    p.gold -= cost; st.lv[k] = lv + 1;
+    recalcStats(p); saveGame();
+    if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
+    toast(`光环提升至 L${lv + 1}`);
+    openModal('pet', '宠物 · 驯兽师', petHtml());
+    updateAuraHud();
+  });
+  body.querySelectorAll('[data-pet-redeem]').forEach(b => b.onclick = () => {
+    const inp = document.getElementById('petCodeInput');
+    const r = redeemPetCode(G.player, inp ? inp.value : '');
+    if (!r.ok) { toast(r.msg); return; }
+    recalcStats(G.player); saveGame();
+    if (typeof Sfx !== 'undefined') Sfx.play('loot');
+    toast(r.isNew ? `🎉 获得宠物【${r.name}】` : `【${r.name}】已拥有，兑换码已使用`);
+    if (r.isNew && typeof bigAnnounce === 'function') bigAnnounce('🐾 获得宠物 · ' + r.name, r.def ? r.def.color : '#5fdc4a');
+    openModal('pet', '宠物 · 驯兽师', petHtml());
   });
   body.querySelectorAll('[data-tel]').forEach(b => b.onclick = () => {
     if (b.dataset.tel === 'rooms') openTownMap();

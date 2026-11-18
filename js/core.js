@@ -57,6 +57,8 @@ function createPlayer(raceKey, clsKey) {
     skillProf: {}, firstKills: {}, codex: {}, ringDropAt: {},
     quests: [], questDone: 0,
     kills: 0, bossKills: 0, bossKillsByDiff: {},
+    mounts: { owned: [], active: null },
+    pets: { owned: [], active: null, lv: {}, usedCodes: [] },
     dailyRuns: { day: '', used: {} },
     dailyDone: {},
     stats: {}
@@ -175,6 +177,7 @@ function recalcStats(p) {
   const baseHp = cls.base.hp + (p.level - 1) * cls.growth.hp + A.vit * 6 + p.level * 10;
   const baseMp = cls.base.mp + (p.level - 1) * cls.growth.mp + A.int * 4 + p.level * 8;
 
+  const AURA = (typeof petAuraStats === 'function') ? petAuraStats(p) : { armor:0, moveSpd:0, as:0, mpRegenFlat:0, hpRegenPct:0, lifesteal:0, rangedAtk:0, thorns:0 };
   p.stats = {
     A,
     hpMax: Math.floor(baseHp * (1 + pas.hpPct) + eq.hp + (HL.hp || 0)),
@@ -188,9 +191,10 @@ function recalcStats(p) {
     crit: clamp(0.05 + A.agi / 2000 + eq.crit + pas.crit + (bonus.crit || 0) + (HL.crit || 0), 0, 0.6),
     critDmg: 1.5 + eq.critDmg + pas.critDmg + RFX.critDmg + (HL.critDmg || 0),
     dodge: clamp(A.agi / 3000 + eq.dodge, 0, 0.3),
-    armor,
+    armor: armor + (AURA.armor || 0),
     dr: clamp(dr + bf.dr + (eq.dr || 0) + (HL.dr || 0), 0, 0.85),
-    lifesteal: (eq.lifesteal || 0) + RFX.lifesteal + (RSET.lifesteal || 0) + (HL.lifesteal || 0),
+    lifesteal: (eq.lifesteal || 0) + RFX.lifesteal + (RSET.lifesteal || 0) + (HL.lifesteal || 0)
+               + ((AURA.lifesteal && (p.cls === 'warrior' || p.cls === 'assassin')) ? AURA.lifesteal : 0),
     finalDmg: (RSET.finalDmg || 0),
     skillDmg: (eq.skillDmg || 0) + (HL.skillDmg || 0) + ((hltActive(p) && hltActive(p).skillDmgExtra) || 0),
     cdr: Math.min(0.6, (eq.cdr || 0) + (HL.cdr || 0)),
@@ -198,6 +202,13 @@ function recalcStats(p) {
     relicSetCount: RSET.count,
     relicPct,
     mpRegen: (0.02 * (1 + (bonus.mpRegen || 0) + (hltActive(p) && hltActive(p).mpRegen || 0))),
+    auraMpRegen: (AURA.mpRegenFlat || 0),
+    auraMoveSpd: (AURA.moveSpd || 0),
+    auraAs: (AURA.as || 0),
+    auraHpRegenPct: (AURA.hpRegenPct || 0),
+    auraRangedAtk: (AURA.rangedAtk || 0),
+    auraThorns: (AURA.thorns || 0),
+    mountSpd: (typeof mountSpeed === 'function' ? mountSpeed(p) : 0),
     hltCdrExtra: (hltActive(p) && hltActive(p).cdrExtra) || 0,
     hltSkillDmgExtra: (hltActive(p) && hltActive(p).skillDmgExtra) || 0,
     hltSplit: (hltActive(p) && hltActive(p).split) || 0,
@@ -1259,6 +1270,75 @@ function currentCodex(p) {
 }
 
 /* ---------------- 推荐战力 ---------------- */
+/* ---------------- 坐骑 / 宠物 ---------------- */
+function mountEnsure(p) {
+  if (!p.mounts) p.mounts = { owned: [], active: null };
+  return p.mounts;
+}
+function petEnsure(p) {
+  if (!p.pets) p.pets = { owned: [], active: null, lv: {}, usedCodes: [] };
+  if (!p.pets.lv) p.pets.lv = {};
+  if (!p.pets.usedCodes) p.pets.usedCodes = [];
+  return p.pets;
+}
+function mountByKey(k) { return DATA.MOUNTS.find(m => m.key === k) || null; }
+function petByKey(k) { return DATA.PETS.find(x => x.key === k) || null; }
+
+/* 当前坐骑移动速度加成 */
+function mountSpeed(p) {
+  const m = mountEnsure(p);
+  const d = m.active ? mountByKey(m.active) : null;
+  return d ? d.spd : 0;
+}
+
+/* 当前出战宠物 + 光环等级 */
+function activePet(p) {
+  const st = petEnsure(p);
+  if (!st.active || !st.owned.includes(st.active)) return null;
+  const def = petByKey(st.active);
+  if (!def) return null;
+  const lv = Math.min(3, Math.max(1, st.lv[st.active] || 1));
+  return { def, lv, value: def.values[lv - 1] };
+}
+
+/* 光环提供的属性（并入 recalcStats） */
+function petAuraStats(p) {
+  const out = { armor: 0, moveSpd: 0, as: 0, mpRegenFlat: 0, hpRegenPct: 0,
+                lifesteal: 0, rangedAtk: 0, thorns: 0, has: false };
+  const ap = activePet(p);
+  if (!ap) return out;
+  out.has = true;
+  const { def, lv, value } = ap;
+  switch (def.effect) {
+    case 'mpRegen':  out.mpRegenFlat = value; break;
+    case 'armor':    out.armor = value; break;
+    case 'endurance':out.moveSpd = value; out.as = def.extra[lv - 1]; break;
+    case 'unholy':   out.moveSpd = value; out.hpRegenPct = def.extra[lv - 1]; break;
+    case 'vampiric': out.lifesteal = value; break;
+    case 'trueshot': out.rangedAtk = value; break;
+    case 'thorns':   out.thorns = value; break;
+  }
+  return out;
+}
+
+/* 兑换码 */
+function redeemPetCode(p, code) {
+  const c = String(code || '').trim().toUpperCase();
+  if (!c) return { ok:false, msg:'请输入兑换码' };
+  const st = petEnsure(p);
+  if (st.usedCodes.includes(c)) return { ok:false, msg:'这个兑换码已经用过了' };
+  for (const k in DATA.PET_CODES) {
+    if (DATA.PET_CODES[k].includes(c)) {
+      const def = petByKey(k);
+      st.usedCodes.push(c);
+      const isNew = !st.owned.includes(k);
+      if (isNew) { st.owned.push(k); st.lv[k] = st.lv[k] || 1; }
+      return { ok:true, key:k, name:def ? def.name : k, isNew, def };
+    }
+  }
+  return { ok:false, msg:'兑换码无效' };
+}
+
 /* ---------------- 每日副本次数 ---------------- */
 function dailyEnsure(p) {
   const day = todayStr();

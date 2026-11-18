@@ -777,6 +777,97 @@ DATA.ROOM_CP = [1800, 3600, 7800, 15000, 27000, 46000, 82000];
 DATA.DIFF_CP_MUL = { normal: 1.00, hard: 1.75, hell: 3.20 };
 
 
+
+/* ---------------- 坐骑系统 ---------------- */
+/* 只加移动速度，无战斗加成 */
+DATA.MOUNT_TIERS = {
+  normal:{key:'normal', name:'普通', color:'#4a9eff', price:500000},
+  rare:  {key:'rare',   name:'稀有', color:'#b45cff', price:1000000},
+  epic:  {key:'epic',   name:'史诗', color:'#ff9a2c', price:2000000}
+};
+
+DATA.MOUNTS = [
+  {key:'spectralhorse', name:'幽灵战马', tier:'normal', spd:0.20, idx:0, desc:'被遗忘者的战马，蹄下生寒'},
+  {key:'spectralwolf',  name:'幽灵狼',   tier:'normal', spd:0.25, idx:1, desc:'幽魂之狼，疾行无声'},
+  {key:'pvpram',        name:'联盟军马', tier:'normal', spd:0.30, idx:2, desc:'战场功勋换来的军马'},
+  {key:'raven',         name:'渡鸦坐骑', tier:'rare',   spd:0.40, idx:3, desc:'暗影中振翅的渡鸦'},
+  {key:'darkphoenix',   name:'暗影凤凰', tier:'rare',   spd:0.50, idx:4, desc:'不灭的暗影之焰'},
+  {key:'scorpion',      name:'部落蝎王', tier:'rare',   spd:0.45, idx:5, desc:'部落驯养的巨蝎'},
+  {key:'dragon',        name:'多彩巨龙', tier:'epic',   spd:0.60, idx:6, desc:'五色巨龙之力'},
+  {key:'lion',          name:'狮鹫之王', tier:'epic',   spd:0.70, idx:7, desc:'风中的王者'},
+  {key:'serpent',       name:'熊猫人翔龙',tier:'epic',  spd:0.80, idx:8, desc:'云端翔龙，御风而行'}
+];
+
+/* ---------------- 宠物 / 光环系统 ---------------- */
+/* 同名光环不叠加；光环范围 90 码 */
+DATA.AURA_RANGE = 90;
+
+DATA.PETS = [
+  { key:'brilliance', name:'卡嘉长萧', aura:'辉煌光环', owner:'大法师',
+    attr:'回蓝', icon:0, color:'#4a9eff',
+    desc:'只给魔法单位加快回蓝',
+    values:[0.75, 1.5, 2.25], unit:'蓝/秒',
+    effect:'mpRegen',
+    lore:'人族法师流的回蓝核心，男女巫与破法者靠它续命。' },
+  { key:'devotion', name:'风暴狮角', aura:'专注光环', owner:'圣骑士',
+    attr:'护甲', icon:1, color:'#ffd24a',
+    desc:'给全体友军加护甲',
+    values:[150, 300, 450], unit:'护甲',
+    effect:'armor',
+    lore:'步兵与骑士扛伤的根本，物理伤害直接削一截。' },
+  { key:'endurance', name:'古之忍耐姜歌', aura:'耐久光环', owner:'牛头人酋长',
+    attr:'移速/攻速', icon:2, color:'#ff9a5a',
+    desc:'全体友军移速、攻速双加成',
+    values:[0.10, 0.20, 0.30], unit:'移速',
+    extra:[0.05, 0.10, 0.15],
+    effect:'endurance',
+    lore:'兽族核心光环，大 G、狼骑、白牛全吃收益。' },
+  { key:'unholy', name:'毁灭之角', aura:'邪恶光环', owner:'死亡骑士',
+    attr:'移速/回血', icon:3, color:'#3fd45a',
+    desc:'全体友军移速 + 生命持续回血',
+    values:[0.10, 0.20, 0.30], unit:'移速',
+    extra:[0.005, 0.010, 0.015],
+    effect:'unholy',
+    lore:'UD 灵魂光环，蜘蛛流、狗流标配。' },
+  { key:'vampiric', name:'天灾骨钟', aura:'吸血光环', owner:'恐惧魔王',
+    attr:'吸血', icon:4, color:'#ff3b5b',
+    desc:'仅近战单位按伤害比例吸血',
+    values:[0.15, 0.30, 0.45], unit:'吸血',
+    effect:'vampiric',
+    lore:'狂狗流、胖子的对拼资本，远程单位不吃。' },
+  { key:'trueshot', name:'阿利亚之笛', aura:'强击光环', owner:'月之女祭司',
+    attr:'远程攻击', icon:5, color:'#7fd4ff',
+    desc:'仅远程友军增加攻击力',
+    values:[0.10, 0.20, 0.30], unit:'攻击',
+    effect:'trueshot',
+    lore:'AC、小鹿、奇美拉的爆发来源。' },
+  { key:'thorns', name:'荆棘之种', aura:'荆棘光环', owner:'丛林守护者',
+    attr:'反伤', icon:6, color:'#9fe6b8',
+    desc:'敌方近战攻击我方时受到反伤',
+    values:[0.10, 0.20, 0.30], unit:'反弹',
+    effect:'thorns',
+    lore:'近战敌人的噩梦，远程与魔免单位不受影响。' }
+];
+
+DATA.PET_UP_COST = [0, 1000000, 2000000];   // 升到 L2 / L3 的花费
+
+/* 宠物兑换码：7 种 × 10 个 */
+DATA.PET_CODES = (function () {
+  const LET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const out = {};
+  DATA.PETS.forEach((pt, pi) => {
+    const list = [];
+    for (let i = 0; i < 10; i++) {
+      let h = (pi + 1) * 7919 + (i + 1) * 104729;
+      let seg = '';
+      for (let k = 0; k < 4; k++) { h = (h * 1103515245 + 12345) % 2147483648; seg += LET[h % LET.length]; }
+      list.push('PET-' + pt.key.slice(0, 3).toUpperCase() + '-' + (i + 1) + seg);
+    }
+    out[pt.key] = list;
+  });
+  return out;
+})();
+
 /* ---------------- 每日副本（传送员 → 每天 2 次） ---------------- */
 /* 怪物等级跟随玩家等级，奖励固定按类型发放 */
 DATA.DAILY_LIMIT = 2;

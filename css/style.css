@@ -2116,7 +2116,7 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 
 /* ============ 账号级新手引导 ============ */
 #newbieGuide{position:fixed;inset:0;z-index:9600;color:#f5ecd2;font-family:var(--serif);pointer-events:none}
-.ng-dim{position:absolute;inset:0;background:rgba(0,0,0,.73);pointer-events:auto}
+.ng-dim{position:absolute;inset:0;background:rgba(0,0,0,.73);pointer-events:none}
 .ng-focus{position:fixed;border:3px solid #ffe36b;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.10),0 0 18px 5px rgba(255,210,74,.9);animation:ngPulse 1.15s ease-in-out infinite;pointer-events:none}
 .ng-arrow{position:fixed;color:#ffe36b;font-size:28px;line-height:1;text-shadow:0 2px 4px #000;animation:ngBounce .75s ease-in-out infinite;pointer-events:none}
 .ng-card{position:fixed;left:50%;bottom:8%;transform:translateX(-50%);width:min(440px,calc(100vw - 28px));box-sizing:border-box;padding:16px 18px 15px;border:2px solid #d5a847;border-radius:8px;background:linear-gradient(150deg,#3d301b,#171008 72%);box-shadow:0 16px 50px rgba(0,0,0,.88);pointer-events:auto}

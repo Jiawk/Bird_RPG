@@ -339,6 +339,16 @@ function startNewbieGuide() {
   if (guideDone()) return;
   setTimeout(() => { if (G.screen === 'game' && !guideDone()) renderNewbieGuide(); }, 650);
 }
+function replayNewbieGuide(key) {
+  const state = guideState();
+  if (state.mandatory && !guideDone()) { renderNewbieGuide(); return; }
+  const index = DATA.TUTORIAL.findIndex(x => x.key === key);
+  if (index < 0) return;
+  state.step = Math.min(index, NEWBIE_GUIDE_STEPS.length - 1);
+  state.replay = true;
+  closeModal();
+  setTimeout(renderNewbieGuide, 80);
+}
 
 /* ---------------- HUD ---------------- */
 function updateHUD(dt) {
@@ -806,8 +816,8 @@ function handleCommand(act) {
     case 'notice': openModal('notice', '公告牌', noticeHtml()); break;
     case 'heirloom': G._hltPage = G._hltPage || 0; openModal('heirloom', '传家宝 · 古籍', heirloomHtml()); break;
     case 'statue': openModal('statueMenu', '巫妖王雕像', statueMenuHtml()); break;
-    case 'beast': openModal('beast', '驯兽师 · 铃', beastMenuHtml()); break;
-    case 'beastmaster': openModal('beast', '驯兽师 · 铃', beastMenuHtml()); break;
+    case 'beast': toggleModal('beast', '驯兽师 · 铃', beastMenuHtml); break;
+    case 'beastmaster': toggleModal('beast', '驯兽师 · 铃', beastMenuHtml); break;
     case 'tutorial': toggleModal('tutorial', '新手指引', tutorialHtml); break;
     case 'mail': toggleModal('mail', '邮箱', mailHtml); break;
     case 'ringup': toggleModal('ringup', '特戒强化', ringUpHtml); break;
@@ -1549,8 +1559,8 @@ function interactNPC(target) {
     case 'notice': openModal('notice', '公告牌', noticeHtml()); break;
     case 'heirloom': G._hltPage = G._hltPage || 0; openModal('heirloom', '传家宝 · 古籍', heirloomHtml()); break;
     case 'statue': openModal('statueMenu', '巫妖王雕像', statueMenuHtml()); break;
-    case 'beastmaster': openModal('beast', '驯兽师 · 铃', beastMenuHtml()); break;
-    case 'beast': openModal('beast', '驯兽师 · 铃', beastMenuHtml()); break;
+    case 'beastmaster': toggleModal('beast', '驯兽师 · 铃', beastMenuHtml); break;
+    case 'beast': toggleModal('beast', '驯兽师 · 铃', beastMenuHtml); break;
     case 'tutorial': toggleModal('tutorial', '新手指引', tutorialHtml); break;
     case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
   }
@@ -3699,8 +3709,7 @@ function bindModal() {
     openModal('map', `导航 · ${r.name}`, diffPickHtml(rid));
   });
   body.querySelectorAll('[data-tut-open]').forEach(b => b.onclick = () => {
-    G._tutSel = b.dataset.tutOpen;
-    openModal('tutorial', '新手指引', tutorialHtml());
+    replayNewbieGuide(b.dataset.tutOpen);
   });
   body.querySelectorAll('[data-tut-back]').forEach(b => b.onclick = () => {
     G._tutSel = null;

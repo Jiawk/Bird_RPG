@@ -2123,7 +2123,7 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 
 /* ============ 账号级新手引导 ============ */
 #newbieGuide{position:fixed;inset:0;z-index:9600;color:#f5ecd2;font-family:var(--serif);pointer-events:none}
-.ng-dim{position:absolute;inset:0;background:rgba(0,0,0,.73);pointer-events:auto}
+.ng-dim{position:absolute;inset:0;background:rgba(0,0,0,.73);pointer-events:none}
 .ng-focus{position:fixed;border:3px solid #ffe36b;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.10),0 0 18px 5px rgba(255,210,74,.9);animation:ngPulse 1.15s ease-in-out infinite;pointer-events:none}
 .ng-arrow{position:fixed;color:#ffe36b;font-size:28px;line-height:1;text-shadow:0 2px 4px #000;animation:ngBounce .75s ease-in-out infinite;pointer-events:none}
 .ng-card{position:fixed;left:50%;bottom:8%;transform:translateX(-50%);width:min(440px,calc(100vw - 28px));box-sizing:border-box;padding:16px 18px 15px;border:2px solid #d5a847;border-radius:8px;background:linear-gradient(150deg,#3d301b,#171008 72%);box-shadow:0 16px 50px rgba(0,0,0,.88);pointer-events:auto}
@@ -8141,6 +8141,16 @@ function startNewbieGuide() {
   if (guideDone()) return;
   setTimeout(() => { if (G.screen === 'game' && !guideDone()) renderNewbieGuide(); }, 650);
 }
+function replayNewbieGuide(key) {
+  const state = guideState();
+  if (state.mandatory && !guideDone()) { renderNewbieGuide(); return; }
+  const index = DATA.TUTORIAL.findIndex(x => x.key === key);
+  if (index < 0) return;
+  state.step = Math.min(index, NEWBIE_GUIDE_STEPS.length - 1);
+  state.replay = true;
+  closeModal();
+  setTimeout(renderNewbieGuide, 80);
+}
 
 /* ---------------- HUD ---------------- */
 function updateHUD(dt) {
@@ -8608,8 +8618,8 @@ function handleCommand(act) {
     case 'notice': openModal('notice', '公告牌', noticeHtml()); break;
     case 'heirloom': G._hltPage = G._hltPage || 0; openModal('heirloom', '传家宝 · 古籍', heirloomHtml()); break;
     case 'statue': openModal('statueMenu', '巫妖王雕像', statueMenuHtml()); break;
-    case 'beast': openModal('beast', '驯兽师 · 铃', beastMenuHtml()); break;
-    case 'beastmaster': openModal('beast', '驯兽师 · 铃', beastMenuHtml()); break;
+    case 'beast': toggleModal('beast', '驯兽师 · 铃', beastMenuHtml); break;
+    case 'beastmaster': toggleModal('beast', '驯兽师 · 铃', beastMenuHtml); break;
     case 'tutorial': toggleModal('tutorial', '新手指引', tutorialHtml); break;
     case 'mail': toggleModal('mail', '邮箱', mailHtml); break;
     case 'ringup': toggleModal('ringup', '特戒强化', ringUpHtml); break;
@@ -9351,8 +9361,8 @@ function interactNPC(target) {
     case 'notice': openModal('notice', '公告牌', noticeHtml()); break;
     case 'heirloom': G._hltPage = G._hltPage || 0; openModal('heirloom', '传家宝 · 古籍', heirloomHtml()); break;
     case 'statue': openModal('statueMenu', '巫妖王雕像', statueMenuHtml()); break;
-    case 'beastmaster': openModal('beast', '驯兽师 · 铃', beastMenuHtml()); break;
-    case 'beast': openModal('beast', '驯兽师 · 铃', beastMenuHtml()); break;
+    case 'beastmaster': toggleModal('beast', '驯兽师 · 铃', beastMenuHtml); break;
+    case 'beast': toggleModal('beast', '驯兽师 · 铃', beastMenuHtml); break;
     case 'tutorial': toggleModal('tutorial', '新手指引', tutorialHtml); break;
     case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
   }
@@ -11501,8 +11511,7 @@ function bindModal() {
     openModal('map', `导航 · ${r.name}`, diffPickHtml(rid));
   });
   body.querySelectorAll('[data-tut-open]').forEach(b => b.onclick = () => {
-    G._tutSel = b.dataset.tutOpen;
-    openModal('tutorial', '新手指引', tutorialHtml());
+    replayNewbieGuide(b.dataset.tutOpen);
   });
   body.querySelectorAll('[data-tut-back]').forEach(b => b.onclick = () => {
     G._tutSel = null;

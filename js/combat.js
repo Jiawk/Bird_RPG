@@ -404,6 +404,32 @@ function monsterDie(m) {
   dropLoot(m);
 }
 
+/* ---------------- 每日副本：10 秒后自动回城 ---------------- */
+const DAILY_BACK_SEC = 10;
+function startDailyReturn() {
+  cancelDailyReturn();
+  G._dailyBackLeft = DAILY_BACK_SEC;
+  logMsg(`⏳ ${DAILY_BACK_SEC} 秒后自动返回城镇`, 'level');
+  G._dailyBackTimer = setInterval(() => {
+    G._dailyBackLeft--;
+    if (G._dailyBackLeft <= 0) {
+      cancelDailyReturn();
+      if (typeof enterRoom === 'function') {
+        enterRoom(TOWN);
+        toast('🏠 已自动返回城镇');
+      }
+      return;
+    }
+    if (G._dailyBackLeft === 5 || G._dailyBackLeft === 3 || G._dailyBackLeft === 2) {
+      logMsg(`⏳ ${G._dailyBackLeft} 秒后自动返回城镇`, 'level');
+    }
+  }, 1000);
+}
+function cancelDailyReturn() {
+  if (G._dailyBackTimer) { clearInterval(G._dailyBackTimer); G._dailyBackTimer = null; }
+  G._dailyBackLeft = 0;
+}
+
 /* ---------------- 每日副本通关奖励 ---------------- */
 function grantDailyReward(room) {
   const p = G.player, cfg = room && room.dailyCfg;
@@ -432,6 +458,7 @@ function grantDailyReward(room) {
   }
   if (typeof bigAnnounce === 'function') bigAnnounce(`✅ ${cfg.name} 通关`, cfg.color);
   toast('🎁 获得 ' + got.join(' · '));
+  startDailyReturn();
   logMsg(`🎁 ${cfg.name} 通关奖励：${got.join(' · ')}`, 'loot');
   if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
   saveGame();

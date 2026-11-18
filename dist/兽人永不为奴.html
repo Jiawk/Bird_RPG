@@ -5038,6 +5038,7 @@ const nextId = () => ENTITY_ID++;
 
 /* ---------------- 进入房间 ---------------- */
 function enterRoom(roomId) {
+  if (typeof cancelDailyReturn === 'function') cancelDailyReturn();   // 手动离开/回城则取消倒计时
   if (G.player) G.player.dead = false;
 
   // 进战斗图自动开启「自动攻击 + 自动技能」
@@ -5832,6 +5833,32 @@ function monsterDie(m) {
   dropLoot(m);
 }
 
+/* ---------------- 每日副本：10 秒后自动回城 ---------------- */
+const DAILY_BACK_SEC = 10;
+function startDailyReturn() {
+  cancelDailyReturn();
+  G._dailyBackLeft = DAILY_BACK_SEC;
+  logMsg(`⏳ ${DAILY_BACK_SEC} 秒后自动返回城镇`, 'level');
+  G._dailyBackTimer = setInterval(() => {
+    G._dailyBackLeft--;
+    if (G._dailyBackLeft <= 0) {
+      cancelDailyReturn();
+      if (typeof enterRoom === 'function') {
+        enterRoom(TOWN);
+        toast('🏠 已自动返回城镇');
+      }
+      return;
+    }
+    if (G._dailyBackLeft === 5 || G._dailyBackLeft === 3 || G._dailyBackLeft === 2) {
+      logMsg(`⏳ ${G._dailyBackLeft} 秒后自动返回城镇`, 'level');
+    }
+  }, 1000);
+}
+function cancelDailyReturn() {
+  if (G._dailyBackTimer) { clearInterval(G._dailyBackTimer); G._dailyBackTimer = null; }
+  G._dailyBackLeft = 0;
+}
+
 /* ---------------- 每日副本通关奖励 ---------------- */
 function grantDailyReward(room) {
   const p = G.player, cfg = room && room.dailyCfg;
@@ -5860,6 +5887,7 @@ function grantDailyReward(room) {
   }
   if (typeof bigAnnounce === 'function') bigAnnounce(`✅ ${cfg.name} 通关`, cfg.color);
   toast('🎁 获得 ' + got.join(' · '));
+  startDailyReturn();
   logMsg(`🎁 ${cfg.name} 通关奖励：${got.join(' · ')}`, 'loot');
   if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
   saveGame();
@@ -7567,7 +7595,9 @@ function updateHUD(dt) {
   const isTown = w.isTown;
   $('roomName').textContent = isTown ? '暴风城 · 安全区' : (getRoom(w.roomId) || DATA.ROOMS[w.roomId]).name;
   $('roomSub').textContent = isTown ? '点击 NPC 或按 M 选择关卡'
-    : `${DATA.DIFFICULTY[G.diff].name}难度 · ${(getRoom(w.roomId) || DATA.ROOMS[w.roomId]).desc}`;
+    : (G._dailyBackLeft > 0
+        ? `⏳ ${G._dailyBackLeft} 秒后自动返回城镇…`
+        : `${DATA.DIFFICULTY[G.diff].name}难度 · ${(getRoom(w.roomId) || DATA.ROOMS[w.roomId]).desc}`);
 
   const boss = w.monsters.find(m => m.isBoss && m.alive);
   if (boss) {

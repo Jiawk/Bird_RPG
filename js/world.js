@@ -11,6 +11,7 @@ const nextId = () => ENTITY_ID++;
 
 /* ---------------- 进入房间 ---------------- */
 function enterRoom(roomId) {
+  if (typeof cancelDailyReturn === 'function') cancelDailyReturn();   // 手动离开/回城则取消倒计时
   if (G.player) G.player.dead = false;
 
   // 进战斗图自动开启「自动攻击 + 自动技能」

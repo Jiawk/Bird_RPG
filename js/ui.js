@@ -320,7 +320,9 @@ function updateHUD(dt) {
   const isTown = w.isTown;
   $('roomName').textContent = isTown ? '暴风城 · 安全区' : (getRoom(w.roomId) || DATA.ROOMS[w.roomId]).name;
   $('roomSub').textContent = isTown ? '点击 NPC 或按 M 选择关卡'
-    : `${DATA.DIFFICULTY[G.diff].name}难度 · ${(getRoom(w.roomId) || DATA.ROOMS[w.roomId]).desc}`;
+    : (G._dailyBackLeft > 0
+        ? `⏳ ${G._dailyBackLeft} 秒后自动返回城镇…`
+        : `${DATA.DIFFICULTY[G.diff].name}难度 · ${(getRoom(w.roomId) || DATA.ROOMS[w.roomId]).desc}`);
 
   const boss = w.monsters.find(m => m.isBoss && m.alive);
   if (boss) {

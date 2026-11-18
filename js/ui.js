@@ -556,8 +556,25 @@ function bigAnnounce(text, color) {
   el._t = setTimeout(() => el.classList.add('hidden'), 10000);
 }
 
+/* 多行奖励列表（抽奖十连等）：每行一个，稀有项加大加粗 */
+function toastRows(title, rows, ms) {
+  const t = $('toast');
+  if (!t) return;
+  t.innerHTML = `<div class="tl-title">${title}</div>` +
+    rows.map(r => `<div class="tl-row ${r.big ? 'big' : ''}" style="color:${r.color}">${r.text}</div>`).join('');
+  t.classList.add('toast-list');
+  t.classList.remove('hidden');
+  t.style.animation = 'none'; void t.offsetWidth; t.style.animation = '';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    t.classList.add('hidden');
+    t.classList.remove('toast-list');
+  }, ms || 4200);
+}
+
 function toast(msg) {
   const t = $('toast');
+  t.classList.remove('toast-list');
   t.textContent = msg;
   t.classList.remove('hidden');
   t.style.animation = 'none'; void t.offsetWidth; t.style.animation = '';
@@ -3458,13 +3475,26 @@ function bindModal() {
     const box = body.querySelector('#lotResult');
     const render = () => {
       if (box) {
-        const rows = got.map(g => `<div class="lr-row" style="color:${g.color}">${g.ok ? '🎁' : '⚠'} ${g.name}</div>`).join('');
-        box.innerHTML = `<div class="lr-title">本次获得</div>${rows}`;
+        const isBig = nm => nm.indexOf('圣物') >= 0 || nm.indexOf('×100') >= 0;
+        const rows = got.map(g =>
+          `<div class="lr-row ${isBig(g.name) ? 'big' : ''}" style="color:${g.color}">${g.ok ? '🎁' : '⚠'} ${g.name}</div>`
+        ).join('');
+        box.innerHTML = `<div class="lr-title">本次获得（${got.length} 项）</div>${rows}`;
         box.classList.add('got');
       }
       const best = got.find(g => g.name.indexOf('圣物') >= 0);
       if (best) { bigAnnounce('🎉 抽中圣物：' + best.name, '#ffd24a'); if (typeof Sfx !== 'undefined') Sfx.play('lvlup'); }
-      else toast(`抽奖完成：${got.map(g => g.name).join('、')}`);
+      else if (got.length > 1) {
+        // 十连：竖排逐行展示
+        toastRows(`本次获得 ${got.length} 项`, got.map(g => ({
+          text: (g.ok ? '🎁 ' : '⚠ ') + g.name,
+          color: g.color,
+          big: g.name.indexOf('圣物') >= 0 || g.name.indexOf('×100') >= 0
+        })), 4600);
+      } else {
+        const g = got[0];
+        toast(`${g.ok ? '🎁' : '⚠'} ${g.name}`);
+      }
       const tokEl = body.querySelector('.lot-tok b');
       if (tokEl) tokEl.textContent = fmt(G.player.materials.bossToken || 0);
       const tok = G.player.materials.bossToken || 0;

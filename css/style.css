@@ -2042,3 +2042,18 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   .mm-grid,.pc-grid{grid-template-columns:repeat(2,1fr)}
   .pc-input{font-size:12px}
 }
+
+/* 多行奖励列表（toast-list） */
+.toast.toast-list{padding:12px 22px;min-width:300px;max-width:520px;
+  text-align:left;font-family:var(--sans);font-size:13px;line-height:1.7}
+.toast-list .tl-title{font-family:var(--serif);font-size:13px;color:#ffd98a;
+  letter-spacing:.14em;margin-bottom:8px;text-align:center;
+  border-bottom:1px solid #4a3d28;padding-bottom:6px}
+.toast-list .tl-row{font-size:13px;white-space:nowrap}
+.toast-list .tl-row.big{font-size:17px;font-weight:900;letter-spacing:.04em;
+  text-shadow:0 0 10px currentColor,0 2px 4px #000;margin:3px 0}
+
+/* 抽奖结果面板：稀有行加粗 */
+.lr-row.big{font-size:16px;font-weight:900;letter-spacing:.04em;
+  text-shadow:0 0 10px currentColor,0 2px 4px #000;margin:3px 0}
+.lot-result{max-height:220px;overflow-y:auto}

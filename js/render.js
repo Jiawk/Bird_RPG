@@ -165,15 +165,17 @@ function tileHash(x, y, salt) {
 }
 
 function drawGround(w) {
-  const room = w.isTown ? null : DATA.ROOMS[w.roomId];
-  const bg = w.isTown ? '#161d16' : room.bg;
-  const tint = w.isTown ? '#2b3a24' : room.accent;
+  const room = w.isTown ? null : (getRoom(w.roomId) || DATA.ROOMS[w.roomId]) || null;
+  // 每日副本 id 是 101+，查不到时给一个兜底配色，避免整帧报错黑屏
+  const bg = w.isTown ? '#161d16' : (room ? room.bg : '#1a1f26');
+  const tint = w.isTown ? '#2b3a24' : (room ? room.accent : '#3f5568');
 
   CTX.fillStyle = bg;
   CTX.fillRect(0, 0, VW, VH);
 
   // 主题背景图（水墨版）优先
-  const bgImg = IMG.bgs ? IMG.bgs[(w.isTown ? 0 : (w.roomId + 1)) % IMG.bgs.length] : null;
+  const _ri = w.isTown ? 0 : Math.max(0, DATA.ROOMS.findIndex(r => r.id === w.roomId));
+  const bgImg = IMG.bgs ? IMG.bgs[(_ri + 1) % IMG.bgs.length] : null;
   if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
     CTX.drawImage(bgImg, px(0), py(0), w.W, w.H * YS);
     CTX.save();

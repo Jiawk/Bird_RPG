@@ -1113,6 +1113,19 @@ function townMapHtml() {
       <div class="rb-sub">建议等级 ${r.reqLv}+　${ok ? '可进入' : (lvOk ? '未解锁' : '等级不足')}</div>
       <div class="rb-sub" style="color:${ok?v.color:'#ff6b5a'}">${lvOk ? '推荐 '+fmt(need)+'　你 '+fmt(combatPower(p)) : '需要 Lv.'+(r.reqLv||1)+'（当前 '+p.level+'）'}</div></div>`;
   });
+  html += '</div>';
+
+  // 每日副本也能从 M 面板直接进入
+  html += '<div style="font-size:12px;color:#ffd98a;margin:14px 0 8px">📅 每日副本（每个每天 2 次，怪物等级跟随你）</div><div class="room-pick">';
+  DATA.DAILY_ROOMS.forEach(r => {
+    const left = dailyLeft(p, r.key);
+    const done = !!(p.dailyDone && p.dailyDone[r.key + '@' + todayStr()]);
+    const ok = left > 0;
+    html += `<div class="room-btn ${ok ? '' : 'locked'}" ${ok ? `data-daily-enter="${r.id}"` : ''}>
+      <div class="rb-name" style="color:${r.color}">${r.icon} ${r.name}</div>
+      <div class="rb-sub">${ok ? '剩余 ' + left + '/2 次' : (done ? '今日已通关' : '次数已用完')}</div>
+      <div class="rb-sub" style="color:${ok ? '#5fdc4a' : '#ff6b5a'}">${r.desc}</div></div>`;
+  });
   html += '</div><div style="font-size:11px;color:#8f8570">当前装备达成：<b style="color:#ffd98a">' +
     gearTier(p).tierName + '</b>　建议：简单=绿装 / 困难=蓝装 / 地狱=紫装</div>';
   return html;

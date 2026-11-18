@@ -3125,3 +3125,27 @@ if (diff === 'hell') { /* 地狱额外 ×4 / ×6 */ }
 进本生成 18 怪 + 1 BOSS，等级 30 ✅
 通关奖励发放，重复结算不叠加 ✅
 ```
+
+### v188 · 修复每日副本三个问题
+1. **进每日副本黑屏**
+   - 根因：`render.js → drawGround()` 用 `DATA.ROOMS[w.roomId].bg` 取配色，
+     但每日副本 id 是 101+，数组里没有这个下标 → `undefined.bg` **每帧抛错** → 整屏黑
+   - 修复：改用 `getRoom(w.roomId)`，并给兜底配色（`#1a1f26` / `#3f5568`）
+   - 背景图索引也改用 `findIndex(r => r.id === w.roomId)`，不再用 `roomId + 1`
+2. **M 面板选不到每日副本**
+   - `townMapHtml()` 末尾新增「📅 每日副本」区块，4 个房间直接可点
+   - 复用同一套 `data-daily-enter` 事件（进入时扣次数、用完置灰）
+3. **H 回城后报 `Cannot read properties of undefined (reading 'bg')`**
+   - 同 1，是同一个 `room.bg` 崩溃；回城那一帧还在用旧 `roomId` 渲染所以继续报错
+   - 地面渲染修好后不再出现
+4. **顺带修**：每日副本掉落装备等级
+   - 原来 `cap = (roomId + 1) * 10` → 101 号房间会算出 1020 级上限
+   - 改为每日副本的装备等级 = `min(怪物等级, 玩家等级 + 2)`
+
+**验证**
+```
+drawGround 普通房间      ok
+drawGround 每日房间(101) ok（无 bg 报错）
+M 面板每日副本入口 4 个   ✅
+每周/每日掉落等级跟随玩家  ✅
+```

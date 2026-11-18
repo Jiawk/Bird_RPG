@@ -445,9 +445,14 @@ function dropLoot(m) {
   let ilvl = m.level;
   if (!w.isTown && (getRoom(w.roomId) || DATA.ROOMS[w.roomId])) {
     const room = getRoom(w.roomId) || DATA.ROOMS[w.roomId];
-    const cap = (w.roomId + 1) * 10;
-    const floorLv = room.lv || 1;
-    ilvl = Math.max(floorLv, Math.min(ilvl, cap));
+    if (room.daily) {
+      // 每日副本：装备等级跟随玩家（+2 上限），不吃「第 N 图 ×10」规则
+      ilvl = Math.max(1, Math.min(m.level, (G.player.level || 1) + 2));
+    } else {
+      const cap = (w.roomId + 1) * 10;
+      const floorLv = room.lv || 1;
+      ilvl = Math.max(floorLv, Math.min(ilvl, cap));
+    }
   }
 
   const push = (obj) => {

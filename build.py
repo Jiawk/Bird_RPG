@@ -4,6 +4,13 @@ import io, os, re, sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
+# 每次打包前从指定原始素材重新生成音效注册表
+embed = os.path.join(ROOT, 'tools', 'embed_audio_assets.py')
+if os.path.isfile(embed):
+    import subprocess
+    subprocess.run([sys.executable, embed], check=True)
+
+
 # 主题：classic（经典像素） / wq（水墨武侠）
 THEME = 'classic'
 for a in sys.argv[1:]:

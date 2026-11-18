@@ -16,7 +16,6 @@ function updateTimers(dt) {
 /* ---------------- 伤害 ---------------- */
 function damageMonster(m, amount, type, isDot) {
   if (!m.alive) return 0;
-  if (typeof Sfx !== 'undefined' && !isDot) Sfx.play('hit');
   const p = G.player;
   let dmg = amount;
   let crit = false;
@@ -37,6 +36,8 @@ function damageMonster(m, amount, type, isDot) {
   m.hp -= dmg;
   m.hitFlash = 0.12;
 
+  if (!isDot && typeof Sfx !== 'undefined') Sfx.play(crit ? 'crit' : 'hit');
+
   if (!isDot) {
     floatText(m.x, m.y - m.r - 6,
       (crit ? '✦' : '') + dmg,
@@ -53,7 +54,6 @@ function damageMonster(m, amount, type, isDot) {
 }
 
 function damagePlayer(amount, source) {
-  if (typeof Sfx !== 'undefined') Sfx.play('hurt');   // 角色受到攻击音效
   if (G.debug && G.debug.invincible) return;   // 调试：无敌
   const p = G.player;
   if (p.stats.invis > 0) return;
@@ -75,6 +75,7 @@ function damagePlayer(amount, source) {
   const _hdr = ((typeof hltDyn === 'function') ? hltDyn(p).dr : 0);
   const dmg = Math.max(1, Math.round(amount * (1 - Math.min(0.85, p.stats.dr + _hdr))));
   p.hp -= dmg;
+  if (typeof Sfx !== 'undefined') Sfx.play('hurt');
   floatText(p.x, p.y - 34, '-' + dmg, '#ff5a40', 17);
   burst(p.x, p.y, '#ff5a40', 4, 90);
   if (p.hp <= 0) playerDie();
@@ -83,7 +84,7 @@ function damagePlayer(amount, source) {
 function playerDie() {
   const p = G.player;
   if (p.dead) return;          // 防止一帧多次触发
-  if (typeof Sfx !== 'undefined') { Sfx.play('playerDie'); Sfx.speak('I have failed.', { rate: 0.85, pitch: 0.8 }); }
+  if (typeof Sfx !== 'undefined') Sfx.play('playerDie');
 
   // 复活之戒
   if (consumeRevive(p)) {
@@ -214,10 +215,7 @@ function castSkillImpl(key) {
   // 施法特效（冷却中不触发）
   const _sp = DATA.SKILLS[key];
   if (_sp && (p.cd[key] || 0) <= 0) {
-    if (typeof Sfx !== 'undefined') {
-      Sfx.play('cast');
-      if (Math.random() < 0.25) Sfx.speak(voiceFor(p));
-    }
+    if (typeof Sfx !== 'undefined') Sfx.play('cast');
     const _col = (DATA.SKILL_COLOR && DATA.SKILL_COLOR[key]) || _sp.color || '#ffd24a';
     const _rMods = (typeof skillMods === 'function') ? skillMods(p, key) : { radiusMul:1 };
     const _rad = _sp.radius ? _sp.radius * 42 * _rMods.radiusMul

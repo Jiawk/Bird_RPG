@@ -1456,7 +1456,7 @@ function npcAt(wx, wy) {
 function interactNPC(target) {
   const n = target || nearestNPC();
   if (!n) return;
-  if (typeof Sfx !== 'undefined') Sfx.play('open');   // 翻书声
+  if (typeof Sfx !== 'undefined') Sfx.play('openBig');
   switch (n.kind) {
     case 'teleport': openModal('tel', '传送员 · 岳跃冲', teleportHtml()); break;
     case 'merchant': toggleModal('merchant', '商人 · 赵帅帅', merchantHtml); break;
@@ -2021,7 +2021,7 @@ function hltGoPage(dir) {
   if (next === (G._hltPage || 0)) return;
   G._hltPage = next;
   const wrap = document.getElementById('hbWrap');
-  if (typeof Sfx !== 'undefined') Sfx.page(dir > 0);
+  if (typeof Sfx !== 'undefined') Sfx.play('page');
   if (wrap) {
     wrap.classList.remove('flip-fwd', 'flip-back');
     void wrap.offsetWidth;
@@ -2495,7 +2495,7 @@ function buyRelic(key) {
   };
   const ok = addToBag(p, item);
   if (!ok) { p.gold += w.price; toast('背包已满'); return; }
-  if (typeof Sfx !== 'undefined') { Sfx.play('success'); Sfx.speak('A relic of power.'); }
+  if (typeof Sfx !== 'undefined') Sfx.play('success');
   toast(`兑换成功：${w.name}`);
   logMsg(`🎖 获得圣物 ${w.name}`, 'level');
   G._relicSel = null;

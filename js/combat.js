@@ -500,7 +500,7 @@ function dropLoot(m) {
 
   // 金币
   if (Math.random() < (m.isBoss ? 1 : 0.8)) {
-    let g = Math.round(rnd(m.gold[0], m.gold[1]) * dropMul * (1 + p.stats.goldBonus));
+    let g = Math.round(rnd(m.gold[0], m.gold[1]) * dropMul * (1 + p.stats.goldBonus) * (DATA.GOLD_DROP_MUL || 1));
     push({ type: 'gold', gold: g, color: '#ffd24a', label: `${g} 金` });
   }
   // 装备

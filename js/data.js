@@ -131,7 +131,7 @@ DATA.QUALITY = [
   {key:'relic',    name:'圣物', color:'#ffe9a8', affixes:6, mult:5.60, lvl:34, weight:0}
 ];
 
-DATA.BOSS_WEIGHTS = {rare:3600, epic:3800, legendary:2100, mythic:200};   // 神话 2%
+DATA.BOSS_WEIGHTS = {rare:3600, epic:3800, legendary:2100, mythic:100};   // 神话约 1%
 
 DATA.AFFIXES = [
   {key:'str',name:'力量',v:[2,6],scale:0.35}, {key:'agi',name:'敏捷',v:[2,6],scale:0.35},
@@ -348,7 +348,7 @@ DATA.MATERIALS = {
     desc:'提升装备强化等级所需的消耗品，等级越高消耗越多。',
     use:'锻造台（按 T 打开）→ 装备强化'},
   protect:{name:'强化保护券', color:'#4a9eff', icon:'◇',
-    desc:'强化失败时保护装备不掉级。强化到 N 级需要 N+1 张，可使成功率翻倍。',
+    desc:'强化失败时保护装备不掉级。所需数量随等级提升，成功率提高 50%。',
     use:'锻造台（按 T 打开）→ 装备强化 → 勾选「使用保护券」'},
   skillT: {name:'技能强化券', color:'#3fd45a', icon:'✦',
     desc:'直接提升技能熟练度，让你更快攒满一次突破所需的熟练度。',
@@ -376,12 +376,12 @@ DATA.CRAFT = [
 DATA.QUEST_MATS = { iron: 3, mithril: 2, scale: 1, shard: 1 };
 
 DATA.QUEST_POOL = [
-  {id:'q1', name:'清剿荒野', room:0, need:80, exp:260,  gold:220,  mat:'iron',    matN:2},
-  {id:'q2', name:'矿洞除虫', room:1, need:80, exp:620,  gold:480,  mat:'iron',    matN:3},
-  {id:'q3', name:'击退兽人', room:2, need:80, exp:1400, gold:900,  mat:'mithril', matN:2},
-  {id:'q4', name:'净化亡灵', room:3, need:80, exp:2600, gold:1500, mat:'mithril', matN:3},
-  {id:'q5', name:'封印恶魔', room:4, need:80, exp:4800, gold:2600, mat:'scale',   matN:2},
-  {id:'q6', name:'深渊终战', room:5, need:80, exp:8000, gold:4200, mat:'shard',   matN:1}
+  {id:'q1', name:'清剿荒野', room:0, need:80, exp:260,  gold:220,  mats:{iron:2}},
+  {id:'q2', name:'矿洞除虫', room:1, need:80, exp:620,  gold:480,  mats:{iron:3,mithril:1}},
+  {id:'q3', name:'击退兽人', room:2, need:80, exp:1400, gold:900,  mats:{iron:2,mithril:2}},
+  {id:'q4', name:'净化亡灵', room:3, need:80, exp:2600, gold:1500, mats:{iron:2,mithril:2,scale:1}},
+  {id:'q5', name:'封印恶魔', room:4, need:80, exp:4800, gold:2600, mats:{iron:3,mithril:2,scale:1}},
+  {id:'q6', name:'深渊终战', room:5, need:80, exp:8000, gold:4200, mats:{iron:3,mithril:2,scale:1,shard:1}}
 ];
 
 /* ---------------- 职业专属套装（每图一套，共 6×4 = 24 套） ---------------- */
@@ -435,15 +435,15 @@ DATA.ENHANCE = {
   max: 15,
   GOLD:  [120, 480, 1080, 1920, 3000, 4320, 5880, 7680, 9720, 12000, 14520, 17280, 20280, 23520, 27000],
   STONE: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-  RATE:  [1.00, 0.95, 0.90, 0.85, 0.80, 0.75, 0.70, 0.65, 0.60, 0.50, 0.45, 0.30, 0.25, 0.20, 0.15],
+  RATE:  [1.00, 0.90, 0.85, 0.80, 0.75, 0.70, 0.60, 0.50, 0.40, 0.30, 0.25, 0.20, 0.15, 0.12, 0.10],
   STAT_STEP: 0.06,     // 每级属性倍率
   GOLD_MUL: 1,         // 强化金币系数
   goldCost:  lv => Math.round(DATA.ENHANCE.GOLD[Math.min(lv, 14)] * (DATA.ENHANCE.GOLD_MUL || 1)),
   stoneCost: lv => DATA.ENHANCE.STONE[Math.min(lv, 14)],
   rate:      lv => DATA.ENHANCE.RATE[Math.min(lv, 14)],
-  // 保护券：强化到 +N 需要 N 张，成功率翻倍（上限 100%）
-  protectNeed: lv => lv + 1,
-  rateWithProtect: lv => Math.min(1, DATA.ENHANCE.RATE[Math.min(lv, 14)] * 2),
+  // 保护券：消耗约为目标等级的一半，成功率提高 50%（上限 100%）
+  protectNeed: lv => Math.ceil((lv + 1) / 2),
+  rateWithProtect: lv => Math.min(1, DATA.ENHANCE.RATE[Math.min(lv, 14)] * 1.5),
   failDrop: lv => lv >= 11 ? 1 : 0,
   statMul: lv => 1 + lv * (DATA.ENHANCE.STAT_STEP || 0.06)
 };
@@ -503,7 +503,7 @@ DATA.MATS2 = {
 DATA.MAIL = {
   cap: 1000,                 // 邮箱上限
   idleMinutes: 20,           // 每 20 分钟发一封
-  idleReward: { gold: 10000, stone: 2, protect: 2, skillT: 2 }
+  idleReward: { gold: 4000, stone: 1, protect: 0, skillT: 0 }
 };
 
 /* 抽奖奖池：prob 为单抽概率，总和 = 1 */
@@ -525,7 +525,10 @@ DATA.LOTTERY = {
 };
 
 /* 装备掉落倍率（1 = 原版；0.2 = 五分之一） */
-DATA.EQ_DROP_MUL = 0.2;
+DATA.EQ_DROP_MUL = 0.35;
+
+/* 怪物金币独立倍率，避免随装备掉落倍率膨胀 */
+DATA.GOLD_DROP_MUL = 0.70;
 
 
 /* ---------------- 新手指引 ---------------- */
@@ -569,7 +572,7 @@ Lv.1 / 11 / 21 / 31 / 41 / 51<br><br>
   { key:'enhance', title:'如何强化技能和装备', reward:'stone',
     body:`<b>装备强化</b>：按 <b>T</b> 打开<b>锻造台</b> → 装备强化<br>
 消耗强化石，等级越高消耗越多，成功率越低。<br>
-勾选「使用保护券」失败不会掉级，成功率翻倍。<br><br>
+勾选「使用保护券」失败不会掉级，成功率提高 50%。<br><br>
 <b>技能等级</b>：按 <b>K</b> 打开技能页，花金币升级 Lv.1→Lv.5<br>
 <b>技能突破</b>：打怪攒满熟练度 + 消耗突破券，突破到 6 层<br>
 突破会重置技能等级，需要重新升级。<br><br>
@@ -909,11 +912,11 @@ DATA.DAILY_ROOMS = [
   { id:101, key:'daily_eq',   name:'每日装备强化材料', short:'强化材料', icon:'◆',
     color:'#9aa0a6', mons:'skeleton',  count:18, monsLv:0,  bossLv:2,
     desc:'大量强化石与保护券，专供装备强化',
-    reward:{ stone:14, protect:3 }, rewardGold:[600,1200], rewardExp:1.0 },
+    reward:{ stone:5, protect:1 }, rewardGold:[600,1200], rewardExp:1.0 },
   { id:102, key:'daily_skill', name:'每日技能强化材料', short:'技能材料', icon:'✦',
     color:'#3fd45a', mons:'doomguard', count:18, monsLv:0,  bossLv:2,
     desc:'技能强化券与突破券，加速技能成长',
-    reward:{ skillT:8, breakT:2 }, rewardGold:[600,1200], rewardExp:1.0 },
+    reward:{ skillT:3, breakT:1 }, rewardGold:[600,1200], rewardExp:1.0 },
   { id:103, key:'daily_craft', name:'每日装备合成材料', short:'合成材料', icon:'▰',
     color:'#7fb3d5', mons:'grunt',     count:18, monsLv:0,  bossLv:2,
     desc:'魔铁锭 / 秘银矿 / 龙鳞片 / 虚空碎片',
@@ -921,7 +924,7 @@ DATA.DAILY_ROOMS = [
   { id:104, key:'daily_gold', name:'每日金币',         short:'金币',     icon:'◉',
     color:'#ffd24a', mons:'abyssal',   count:20, monsLv:0,  bossLv:2,
     desc:'怪物携带大量金币，清完即可暴富',
-    reward:{}, rewardGold:[9000,18000], rewardExp:1.0 }
+    reward:{}, rewardGold:[5000,10000], rewardExp:1.0 }
 ];
 
 /* 把每日副本挂进 DATA.ROOMS（沿用现有的进图/刷怪/掉落逻辑），

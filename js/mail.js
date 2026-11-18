@@ -116,9 +116,9 @@ function mailIdleTick(p, dt) {
       body: `你已在线挂机 ${DATA.MAIL.idleMinutes} 分钟，这是给你的补给。`,
       items: [
         { type:'gold', amount: R.gold },
-        { type:'mat', key:'stone',   amount: R.stone },
-        { type:'mat', key:'protect', amount: R.protect },
-        { type:'mat', key:'skillT',  amount: R.skillT }
+        ...(R.stone ? [{ type:'mat', key:'stone', amount: R.stone }] : []),
+        ...(R.protect ? [{ type:'mat', key:'protect', amount: R.protect }] : []),
+        ...(R.skillT ? [{ type:'mat', key:'skillT', amount: R.skillT }] : [])
       ]
     });
     if (typeof toast === 'function') toast('📮 收到新邮件：挂机奖励');

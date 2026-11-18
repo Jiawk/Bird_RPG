@@ -524,7 +524,7 @@ function claimAllQuests() {
   const mats = {};
   done.forEach(q => {
     exp += q.exp; gold += q.gold;
-    const rw = DATA.QUEST_MATS;
+    const rw = q.mats || DATA.QUEST_MATS;
     for (const k in rw) mats[k] = (mats[k] || 0) + rw[k];
     n++;
   });
@@ -3063,6 +3063,11 @@ function enhanceItemHtml(id) {
 }
 
 /* ---------------- 任务官 ---------------- *//* ---------------- 任务官 ---------------- */
+function questMatText(q) {
+  const rw = q.mats || DATA.QUEST_MATS;
+  return Object.keys(rw).filter(k => rw[k] > 0).map(k => `${DATA.MATERIALS[k].name}${rw[k]}`).join(' ');
+}
+
 function questHtml() {
   const p = G.player;
   const qs = p.quests || [];
@@ -3082,7 +3087,7 @@ function questHtml() {
           ${done ? '<span style="color:#5fdc4a;font-size:11px">· 可领取</span>' : ''}</div>
         <div class="nr-info">在【${DATA.ROOMS[q.room].name}】击杀 ${q.need} 只　进度 ${q.have}/${q.need}</div>
         <div class="q-bar"><i style="width:${pct}%;background:${done?'#5fdc4a':'#c9a24a'}"></i></div>
-        <div class="nr-info" style="color:#ffd98a">${q.exp} 经验 · ${q.gold} 金 · 打造材料（铁${DATA.QUEST_MATS.iron} 秘银${DATA.QUEST_MATS.mithril} 龙鳞${DATA.QUEST_MATS.scale} 碎片${DATA.QUEST_MATS.shard}）</div>
+        <div class="nr-info" style="color:#ffd98a">${q.exp} 经验 · ${q.gold} 金 · 打造材料（${questMatText(q)}）</div>
         </div>
         <div class="q-btns">
           <button class="q-nav" data-quest-nav="${q.room}" title="打开【${DATA.ROOMS[q.room].name}】地图">🧭 导航</button>
@@ -3110,7 +3115,7 @@ function questHtml() {
     html += `<div class="npc-row"><div>
       <div class="nr-name" style="${unlocked ? '' : 'color:#5a5348'}">${q.name}</div>
       <div class="nr-info">${DATA.ROOMS[q.room].name} · 击杀 ${q.need} 只</div>
-      <div class="nr-info" style="color:#ffd98a">${q.exp} 经验 · ${q.gold} 金 · 打造材料（铁${DATA.QUEST_MATS.iron} 秘银${DATA.QUEST_MATS.mithril} 龙鳞${DATA.QUEST_MATS.scale} 碎片${DATA.QUEST_MATS.shard}）</div>
+      <div class="nr-info" style="color:#ffd98a">${q.exp} 经验 · ${q.gold} 金 · 打造材料（${questMatText(q)}）</div>
       </div><button data-quest-accept="${q.id}" ${unlocked ? '' : 'disabled'}>${unlocked ? '接取' : '未解锁'}</button></div>`;
   });
   html += '</div>';
@@ -3154,7 +3159,7 @@ function claimQuest(id) {
   if (q.have < q.need) { toast('任务尚未完成'); return; }
   gainExp(p, q.exp);
   p.gold += q.gold;
-  const rw = DATA.QUEST_MATS;
+  const rw = q.mats || DATA.QUEST_MATS;
   for (const k in rw) p.materials[k] = (p.materials[k] || 0) + rw[k];
   p.questDone++;
   p.quests.splice(i, 1);

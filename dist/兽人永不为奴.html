@@ -11976,11 +11976,9 @@ function bindSfxUI() {
     if (tbtn) {
       tbtn.onclick = (e) => {
         e.stopPropagation();
-        Sfx.setOn(true); G.soundOn = true; sync(); Sfx.resume();
-        const ok = !!Sfx._ensureSample('click');
-        Sfx.play('click');
-        setTimeout(() => Sfx.play('confirm'), 350);
-        toast(ok ? '🔊 已播放测试音效（听到声音即正常）' : '⚠ 设备无法加载音频，请检查浏览器权限');
+        Sfx.setOn(true); G.soundOn = true; sync(); Sfx.unlock();
+        const count = Sfx.testAll();
+        toast(`🎵 正在依次测试 ${count} 个新音效，请留意是否都有声音`);
       };
     }
   }

@@ -13,6 +13,8 @@ const Sfx = {
   _diagnostics: {},
   _lastHit: 0,
   _lastAttack: 0,
+  _lastCrit: 0,
+  _lastHurt: 0,
   _alias: Object.freeze({
     open: 'openBig', close: 'page', level: 'confirm', lvlup: 'confirm',
     loot: 'confirm', kill: 'hit', enterB: 'enterFallback', death: 'playerDie', boss: 'enter'
@@ -126,10 +128,18 @@ const Sfx = {
   },
   play(requestedKey, gain) {
     const key = this._key(requestedKey);
+    const now = Date.now();
     if (key === 'attack') {
-      const now = Date.now();
-      if (now - this._lastAttack < 3000) return;
+      if (now - this._lastAttack < 8000) return;
       this._lastAttack = now;
+    }
+    if (key === 'crit') {
+      if (now - this._lastCrit < 3000) return;
+      this._lastCrit = now;
+    }
+    if (key === 'hurt') {
+      if (now - this._lastHurt < 3000) return;
+      this._lastHurt = now;
     }
     if (!this._asset(key)) { this._record(key, 'unavailable', 'unknown audio key'); return; }
     if (!this.on) { this._record(key, 'disabled-by-preference'); return; }

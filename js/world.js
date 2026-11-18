@@ -11,7 +11,6 @@ const nextId = () => ENTITY_ID++;
 
 /* ---------------- 进入房间 ---------------- */
 function enterRoom(roomId) {
-  if (typeof Sfx !== 'undefined' && roomId !== TOWN) Sfx.play('enter');   // 进入副本音效
   if (typeof cancelDailyReturn === 'function') cancelDailyReturn();   // 手动离开/回城则取消倒计时
   if (G.player) G.player.dead = false;
 
@@ -67,6 +66,7 @@ function enterRoom(roomId) {
     p.x = W / 2; p.y = H * 0.80;
   } else {
     const room = getRoom(roomId) || DATA.ROOMS[roomId];
+    if (typeof Sfx !== 'undefined') Sfx.play(room.daily ? 'enterFallback' : 'enter');
     // 玩家从下往上打
     p.x = W / 2; p.y = H * 0.85;
     if (room.daily) {

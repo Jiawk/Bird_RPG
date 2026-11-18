@@ -36,7 +36,7 @@ function damageMonster(m, amount, type, isDot) {
   m.hp -= dmg;
   m.hitFlash = 0.12;
 
-  if (!isDot && typeof Sfx !== 'undefined') Sfx.play(crit ? 'crit' : 'hit');
+  if (!isDot && type !== 'skill' && crit && typeof Sfx !== 'undefined') Sfx.play('crit');
 
   if (!isDot) {
     floatText(m.x, m.y - m.r - 6,
@@ -215,7 +215,7 @@ function castSkillImpl(key) {
   // 施法特效（冷却中不触发）
   const _sp = DATA.SKILLS[key];
   if (_sp && (p.cd[key] || 0) <= 0) {
-    if (typeof Sfx !== 'undefined') Sfx.play('cast');
+    if (typeof Sfx !== 'undefined') Sfx.play(key === 'battleShout' ? 'beastRoar' : 'cast');
     const _col = (DATA.SKILL_COLOR && DATA.SKILL_COLOR[key]) || _sp.color || '#ffd24a';
     const _rMods = (typeof skillMods === 'function') ? skillMods(p, key) : { radiusMul:1 };
     const _rad = _sp.radius ? _sp.radius * 42 * _rMods.radiusMul
@@ -376,7 +376,7 @@ function triggerTrap(t, m) {
 function monsterDie(m) {
   if (!m.alive) return;
   m.alive = false;
-    if (typeof Sfx !== 'undefined') Sfx.play(m.isBoss ? 'bossDie' : 'kill');
+    if (m.isBoss && typeof Sfx !== 'undefined') Sfx.play('bossDie');
     if (typeof perfAdd === 'function') perfAdd('k', 1);
   const p = G.player;
   burst(m.x, m.y, m.color, m.isBoss ? 30 : 10, m.isBoss ? 300 : 160);
@@ -536,7 +536,6 @@ function dropLoot(m) {
 
 function pickupDrop(d) {
   if (typeof perfAdd === 'function') perfAdd(d.type === 'gold' ? 'g' : 'i', d.gold || 1);
-  if (typeof Sfx !== 'undefined') Sfx.play('loot');
   const p = G.player;
   d.taken = true;
   if (d.type === 'gold') {

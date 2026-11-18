@@ -3659,6 +3659,12 @@ function bindModal() {
     saveGame(); mailRefreshDot();
     openModal('mail', '邮箱', mailHtml());
   });
+function mountSound(key) {
+  const sound = key === 'spectralwolf' ? 'wolfHowl'
+    : (key === 'spectralhorse' || key === 'pvpram') ? 'horseNeigh' : 'mount';
+  if (typeof Sfx !== 'undefined') Sfx.play(sound);
+}
+
   /* ---- 驯兽师 ---- */
   body.querySelectorAll('[data-beast]').forEach(b => b.onclick = () => {
     if (b.dataset.beast === 'mount') openModal('mount', '坐骑 · 驯兽师', mountHtml());
@@ -3683,7 +3689,7 @@ function bindModal() {
     const r = redeemMountCode(G.player, inp ? inp.value : '');
     if (!r.ok) { toast(r.msg); return; }
     recalcStats(G.player); saveGame();
-    if (r.isNew && typeof Sfx !== 'undefined') Sfx.play('mount');
+    if (r.isNew) mountSound(r.key);
     toast(r.isNew ? `🐎 获得坐骑【${r.name}】，已自动骑乘` : `【${r.name}】已拥有，兑换码已使用`);
     if (r.isNew && typeof bigAnnounce === 'function') bigAnnounce('🐎 获得坐骑 · ' + r.name, '#ffd24a');
     openModal('mount', '坐骑 · 驯兽师', mountHtml());
@@ -3697,14 +3703,14 @@ function bindModal() {
     p.gold -= tier.price;
     ms.owned.push(k); ms.active = k;
     recalcStats(p); saveGame();
-    if (typeof Sfx !== 'undefined') Sfx.play('mount');
+    mountSound(k);
     toast(`🐎 获得坐骑【${m.name}】，已自动乘骑`);
     openModal('mount', '坐骑 · 驯兽师', mountHtml());
   });
   body.querySelectorAll('[data-mount-use]').forEach(b => b.onclick = () => {
     mountEnsure(G.player).active = b.dataset.mountUse;
     recalcStats(G.player); saveGame();
-    if (typeof Sfx !== 'undefined') Sfx.play('mount');
+    mountSound(b.dataset.mountUse);
     openModal('mount', '坐骑 · 驯兽师', mountHtml());
   });
   body.querySelectorAll('[data-mount-off]').forEach(b => b.onclick = () => {
@@ -3717,7 +3723,7 @@ function bindModal() {
     const st = petEnsure(G.player);
     st.active = b.dataset.petUse;
     recalcStats(G.player); saveGame();
-    if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
+    if (typeof Sfx !== 'undefined') Sfx.play(st.active === 'endurance' ? 'cowMoo' : 'confirm');
     const d = petByKey(st.active);
     toast(`🐾 ${d.name} 出战：${d.aura} 生效`);
     openModal('pet', '宠物 · 驯兽师', petHtml());

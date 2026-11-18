@@ -2057,3 +2057,25 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .lr-row.big{font-size:16px;font-weight:900;letter-spacing:.04em;
   text-shadow:0 0 10px currentColor,0 2px 4px #000;margin:3px 0}
 .lot-result{max-height:220px;overflow-y:auto}
+
+/* HUD 状态栏（坐骑 + 光环） */
+.hud-status{display:flex;gap:6px;align-items:center;flex:0 0 auto}
+.hud-mount{position:relative;width:38px;height:38px;cursor:pointer}
+.mount-ic{width:38px;height:38px;border-radius:5px;
+  background-image:var(--mount-sheet);background-size:300% 300%;
+  background-color:#0d0a06;border:1px dashed #4a3d28;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;color:#4a4436;transition:all .2s}
+.hud-mount.on .mount-ic{border:1px solid #ffd24a;
+  box-shadow:0 0 12px rgba(255,210,74,.5)}
+.mount-tip{display:none;position:absolute;left:44px;top:-4px;width:200px;z-index:120;
+  padding:9px 12px;border-radius:5px;font-size:11.5px;line-height:1.7;
+  background:rgba(14,11,7,.98);border:1px solid #8a6d3f;color:#d8cfb8;
+  box-shadow:0 6px 20px rgba(0,0,0,.8)}
+.hud-mount:hover .mount-tip,.hud-mount.show .mount-tip{display:block}
+.mount-tip b{color:#ffd98a}
+.mount-tip .mv{color:#5fdc4a;font-weight:700}
+@media (max-width:700px){
+  .hud-status{gap:4px}
+  .hud-mount,.mount-ic,.hud-aura,.aura-ic{width:32px;height:32px}
+}

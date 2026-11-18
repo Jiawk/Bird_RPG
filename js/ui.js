@@ -273,6 +273,7 @@ function updateHUD(dt) {
   const hpPct = clamp(p.hp / p.stats.hpMax, 0, 1) * 100;
   const mpPct = clamp(p.mp / p.stats.mpMax, 0, 1) * 100;
   if (typeof updateAuraHud === 'function') updateAuraHud();
+  if (typeof updateMountHud === 'function') updateMountHud();
   const need = DATA.expForLevel(p.level);
   const xpPct = p.level >= DATA.MAX_LEVEL ? 100 : clamp(p.exp / need, 0, 1) * 100;
 
@@ -1194,6 +1195,43 @@ function diffPickHtml(roomId) {
 
 function openTownMap() {
   openModal('map', '选择关卡 · 难度', townMapHtml());
+}
+
+/* ---------------- 坐骑状态 HUD ---------------- */
+function updateMountHud() {
+  const box = document.getElementById('hudMount');
+  const ic = document.getElementById('mountIc');
+  const tip = document.getElementById('mountTip');
+  if (!box || !ic || !tip) return;
+  const ms = mountEnsure(G.player);
+  const m = ms.active ? mountByKey(ms.active) : null;
+  if (!m) {
+    // 未骑乘：虚线空槽
+    box.classList.remove('on', 'show');
+    ic.style.backgroundPosition = '0 0';
+    ic.style.backgroundImage = 'none';
+    ic.textContent = '＋';
+    ic.style.borderStyle = 'dashed';
+    ic.style.borderColor = '#4a3d28';
+    ic.style.boxShadow = 'none';
+    tip.innerHTML = `<b>坐骑：未骑乘</b><br>` +
+      `<span style="color:#8f8570">去主城左下角找「驯兽师 · 铃」购买坐骑</span><br>` +
+      `<span style="color:#6b6558">坐骑只提升移动速度</span>`;
+    return;
+  }
+  box.classList.add('on');
+  ic.textContent = '';
+  ic.style.backgroundImage = '';
+  ic.style.borderStyle = 'solid';
+  ic.style.borderColor = '#ffd24a';
+  ic.style.boxShadow = '0 0 12px rgba(255,210,74,.5)';
+  ic.style.backgroundPosition = `${(m.idx % 3) * 50}% ${Math.floor(m.idx / 3) * 50}%`;
+  const tier = DATA.MOUNT_TIERS[m.tier];
+  tip.innerHTML = `<b>坐骑：${m.name}</b><br>` +
+    `<span style="color:${tier.color}">${tier.name}</span><br>` +
+    `<span class="mv">移速 +${Math.round(m.spd * 100)}%</span><br>` +
+    `<span style="color:#a89e88">${m.desc}</span>`;
+  box.onclick = () => box.classList.toggle('show');
 }
 
 /* ---------------- 光环 HUD ---------------- */

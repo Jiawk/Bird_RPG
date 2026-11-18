@@ -2065,6 +2065,28 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   text-shadow:0 0 10px currentColor,0 2px 4px #000;margin:3px 0}
 .lot-result{max-height:220px;overflow-y:auto}
 
+/* HUD 状态栏（坐骑 + 光环） */
+.hud-status{display:flex;gap:6px;align-items:center;flex:0 0 auto}
+.hud-mount{position:relative;width:38px;height:38px;cursor:pointer}
+.mount-ic{width:38px;height:38px;border-radius:5px;
+  background-image:var(--mount-sheet);background-size:300% 300%;
+  background-color:#0d0a06;border:1px dashed #4a3d28;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;color:#4a4436;transition:all .2s}
+.hud-mount.on .mount-ic{border:1px solid #ffd24a;
+  box-shadow:0 0 12px rgba(255,210,74,.5)}
+.mount-tip{display:none;position:absolute;left:44px;top:-4px;width:200px;z-index:120;
+  padding:9px 12px;border-radius:5px;font-size:11.5px;line-height:1.7;
+  background:rgba(14,11,7,.98);border:1px solid #8a6d3f;color:#d8cfb8;
+  box-shadow:0 6px 20px rgba(0,0,0,.8)}
+.hud-mount:hover .mount-tip,.hud-mount.show .mount-tip{display:block}
+.mount-tip b{color:#ffd98a}
+.mount-tip .mv{color:#5fdc4a;font-weight:700}
+@media (max-width:700px){
+  .hud-status{gap:4px}
+  .hud-mount,.mount-ic,.hud-aura,.aura-ic{width:32px;height:32px}
+}
+
 </style>
 <script id="orc-cfg" type="application/json">{}</script>
 </head>
@@ -2134,9 +2156,15 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
         <canvas id="portrait" width="80" height="80"></canvas>
         <div class="p-level" id="pLevel">1</div>
       </div>
-      <div class="hud-aura hidden" id="hudAura">
-        <div class="aura-ic" id="auraIc"></div>
-        <div class="aura-tip" id="auraTip"></div>
+      <div class="hud-status" id="hudStatus">
+        <div class="hud-mount" id="hudMount" title="坐骑状态">
+          <div class="mount-ic" id="mountIc"></div>
+          <div class="mount-tip" id="mountTip"></div>
+        </div>
+        <div class="hud-aura hidden" id="hudAura">
+          <div class="aura-ic" id="auraIc"></div>
+          <div class="aura-tip" id="auraTip"></div>
+        </div>
       </div>
       <div class="hp-info">
         <div class="p-name" id="pName">人族 · 战士</div>
@@ -7857,6 +7885,7 @@ function updateHUD(dt) {
   const hpPct = clamp(p.hp / p.stats.hpMax, 0, 1) * 100;
   const mpPct = clamp(p.mp / p.stats.mpMax, 0, 1) * 100;
   if (typeof updateAuraHud === 'function') updateAuraHud();
+  if (typeof updateMountHud === 'function') updateMountHud();
   const need = DATA.expForLevel(p.level);
   const xpPct = p.level >= DATA.MAX_LEVEL ? 100 : clamp(p.exp / need, 0, 1) * 100;
 
@@ -8778,6 +8807,43 @@ function diffPickHtml(roomId) {
 
 function openTownMap() {
   openModal('map', '选择关卡 · 难度', townMapHtml());
+}
+
+/* ---------------- 坐骑状态 HUD ---------------- */
+function updateMountHud() {
+  const box = document.getElementById('hudMount');
+  const ic = document.getElementById('mountIc');
+  const tip = document.getElementById('mountTip');
+  if (!box || !ic || !tip) return;
+  const ms = mountEnsure(G.player);
+  const m = ms.active ? mountByKey(ms.active) : null;
+  if (!m) {
+    // 未骑乘：虚线空槽
+    box.classList.remove('on', 'show');
+    ic.style.backgroundPosition = '0 0';
+    ic.style.backgroundImage = 'none';
+    ic.textContent = '＋';
+    ic.style.borderStyle = 'dashed';
+    ic.style.borderColor = '#4a3d28';
+    ic.style.boxShadow = 'none';
+    tip.innerHTML = `<b>坐骑：未骑乘</b><br>` +
+      `<span style="color:#8f8570">去主城左下角找「驯兽师 · 铃」购买坐骑</span><br>` +
+      `<span style="color:#6b6558">坐骑只提升移动速度</span>`;
+    return;
+  }
+  box.classList.add('on');
+  ic.textContent = '';
+  ic.style.backgroundImage = '';
+  ic.style.borderStyle = 'solid';
+  ic.style.borderColor = '#ffd24a';
+  ic.style.boxShadow = '0 0 12px rgba(255,210,74,.5)';
+  ic.style.backgroundPosition = `${(m.idx % 3) * 50}% ${Math.floor(m.idx / 3) * 50}%`;
+  const tier = DATA.MOUNT_TIERS[m.tier];
+  tip.innerHTML = `<b>坐骑：${m.name}</b><br>` +
+    `<span style="color:${tier.color}">${tier.name}</span><br>` +
+    `<span class="mv">移速 +${Math.round(m.spd * 100)}%</span><br>` +
+    `<span style="color:#a89e88">${m.desc}</span>`;
+  box.onclick = () => box.classList.toggle('show');
 }
 
 /* ---------------- 光环 HUD ---------------- */

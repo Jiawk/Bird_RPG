@@ -16,7 +16,8 @@ const G = {
   time: 0,
   paused: false,
   msgLog: [],
-  lastTs: 0
+  lastTs: 0,
+  guide: null
 };
 
 /* ---------------- 工具 ---------------- */
@@ -1518,7 +1519,7 @@ function saveGame() {
   try {
     syncActiveChar();
     localStorage.setItem(SAVE_KEY, JSON.stringify({
-      v: 2, diff: G.diff, active: G.active, chars: G.chars, savedAt: Date.now()
+      v: 2, diff: G.diff, active: G.active, chars: G.chars, guide: G.guide, savedAt: Date.now()
     }));
     return true;
   } catch (e) { console.error(e); return false; }
@@ -1581,6 +1582,7 @@ function loadGame() {
   if (!d) return false;
   G.diff = d.diff || 'normal';
   G.chars = d.chars || [];
+  G.guide = (d.guide && typeof d.guide === 'object') ? d.guide : { version:0, mandatory:false };
   G.active = Math.min(d.active || 0, Math.max(0, G.chars.length - 1));
   G.player = G.chars[G.active];
   G.player.buffs = []; G.player.dots = []; G.player.cd = {};

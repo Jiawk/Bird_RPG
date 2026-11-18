@@ -2112,3 +2112,16 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   border-radius:50%;cursor:pointer;font-size:13px;line-height:1;
   color:#ffd98a;border:1px solid #6b5a30;background:rgba(20,16,10,.85)}
 .sound-test:hover{border-color:#ffd24a;color:#fff}
+
+
+/* ============ 账号级新手引导 ============ */
+#newbieGuide{position:fixed;inset:0;z-index:9600;color:#f5ecd2;font-family:var(--serif);pointer-events:none}
+.ng-dim{position:absolute;inset:0;background:rgba(0,0,0,.73);pointer-events:auto}
+.ng-focus{position:fixed;border:3px solid #ffe36b;border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.10),0 0 18px 5px rgba(255,210,74,.9);animation:ngPulse 1.15s ease-in-out infinite;pointer-events:none}
+.ng-arrow{position:fixed;color:#ffe36b;font-size:28px;line-height:1;text-shadow:0 2px 4px #000;animation:ngBounce .75s ease-in-out infinite;pointer-events:none}
+.ng-card{position:fixed;left:50%;bottom:8%;transform:translateX(-50%);width:min(440px,calc(100vw - 28px));box-sizing:border-box;padding:16px 18px 15px;border:2px solid #d5a847;border-radius:8px;background:linear-gradient(150deg,#3d301b,#171008 72%);box-shadow:0 16px 50px rgba(0,0,0,.88);pointer-events:auto}
+.ng-top{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#d9c58b}.ng-top b{color:#ffcf5a}.ng-top button{background:none;border:0;color:#aaa08a;text-decoration:underline;cursor:pointer;font:inherit}
+.ng-progress{height:4px;margin:10px 0 13px;background:#171109;border-radius:4px;overflow:hidden}.ng-progress i{display:block;height:100%;background:linear-gradient(90deg,#b77a22,#ffe36b);box-shadow:0 0 8px #ffd15b}
+.ng-card h2{margin:0 0 8px;color:#ffe36b;font-size:22px;letter-spacing:.08em}.ng-card p{margin:0;min-height:48px;font:14px/1.65 system-ui,sans-serif;color:#e8debf}.ng-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}.ng-actions button{min-height:40px;border:1px solid #aa7b2d;border-radius:4px;padding:0 12px;background:linear-gradient(#60451d,#24180a);color:#f5e5bd;font:13px var(--serif);cursor:pointer}.ng-actions .ng-target{margin-right:auto;border-color:#55b8d3;background:linear-gradient(#24536b,#102632)}.ng-actions .ng-next{border-color:#e2b94f;background:linear-gradient(#8a6424,#39250d);font-weight:700;color:#fff2b8}
+@keyframes ngPulse{50%{transform:scale(1.04);filter:brightness(1.2)}}@keyframes ngBounce{50%{transform:translateY(8px)}}
+@media (max-width:520px){.ng-card{bottom:16px;padding:13px 14px}.ng-card h2{font-size:19px}.ng-card p{font-size:13px;min-height:42px}.ng-actions{gap:5px}.ng-actions button{padding:0 9px;font-size:12px;min-height:42px}}

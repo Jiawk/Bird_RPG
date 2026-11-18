@@ -248,10 +248,11 @@ function confirmCreate() {
     G.creatingNew = false;
     logMsg(`新角色：${DATA.RACES[SEL.race].name} · ${DATA.CLASSES[SEL.cls].name}`, 'level');
   } else {
-    // 首次创建：初始化角色表
+    // 首次创建：初始化角色表，并要求完成一次基础新手引导。
     G.chars = [np];
     G.active = 0;
     G.player = np;
+    G.guide = { version:0, mandatory:true, step:0 };
     logMsg(`${DATA.RACES[SEL.race].name} · ${DATA.CLASSES[SEL.cls].name} 踏上征程`, 'level');
   }
 
@@ -259,6 +260,84 @@ function confirmCreate() {
   startGame();
   toast(`获得新手装备一套 · 战力 ${combatPower(G.player)}`);
   openTownMap();
+}
+
+/* ---------------- 账号级新手引导 ---------------- */
+const NEWBIE_GUIDE_VERSION = 1;
+const NEWBIE_GUIDE_STEPS = [
+  { title:'欢迎来到艾泽拉斯', text:'这是你的英雄界面。接下来用一分钟认识主城和成长路线。', target:null },
+  { title:'先学会战斗', text:'右下角是命令卡。按 A 开启自动攻击，按 S 开启自动技能；Q/W/E/R/D 可手动施放技能。', selector:'#commandCard', action:'autoAtk', actionText:'开启自动攻击' },
+  { title:'打开地图', text:'点击“传送/回城”，选择已解锁副本和难度。', selector:'.cc-btn[data-act="map"]', action:'map', actionText:'打开传送' },
+  { title:'找到传送员', text:'主城左上方的传送员可带你进入普通副本、每日副本。', npc:'teleport', action:'npc', actionText:'打开传送员' },
+  { title:'整理装备', text:'掉落的装备进入背包。点击背包可穿戴、强化、出售或放入仓库。', selector:'.cc-btn[data-act="bag"]', action:'bag', actionText:'打开背包' },
+  { title:'强化与打造', text:'铁匠和锻造台位于主城中部。强化石提升装备，打造材料用于制作装备。', npc:'craft', action:'npc', actionText:'前往锻造台' },
+  { title:'领取悬赏', text:'任务官提供击杀委托。完成任务可获得经验、金币和分层打造材料。', npc:'quest', action:'npc', actionText:'打开任务官' },
+  { title:'挑战试炼之塔', text:'试炼之塔每天有限次数，层数越高，奖励越好。', npc:'tower', action:'npc', actionText:'查看试炼之塔' },
+  { title:'收集图鉴与特戒', text:'右上角的装备图鉴和收藏图鉴记录进度，首杀奖励需要手动领取。', selector:'.codex-btn[data-act="codexCollect"]', action:'codexCollect', actionText:'打开收藏图鉴' },
+  { title:'BOSS 凭证抽奖', text:'抽奖专员使用 BOSS 击杀凭证。圣物稀有，建议把日常和副本作为主要成长来源。', npc:'exchange', action:'npc', actionText:'打开抽奖' },
+  { title:'坐骑、宠物与传家宝', text:'驯兽师提供坐骑和宠物；古籍记录传家宝签到。它们都会保存到你的角色存档。', npc:'beastmaster', action:'npc', actionText:'打开驯兽师' },
+  { title:'你已准备好', text:'优先完成副本、任务和每日活动。装备、技能和挑战会逐步解锁。随时可在主城的新手指引 NPC 查看帮助。', npc:'tutorial', action:'npc', actionText:'查看新手指引' }
+];
+
+function guideState() {
+  if (!G.guide || typeof G.guide !== 'object') G.guide = { version:0, mandatory:false, step:0 };
+  G.guide.step = Math.max(0, Math.min(NEWBIE_GUIDE_STEPS.length - 1, Number(G.guide.step) || 0));
+  return G.guide;
+}
+function guideDone() { return guideState().version >= NEWBIE_GUIDE_VERSION; }
+function guideTarget(step) {
+  if (step.selector) return document.querySelector(step.selector);
+  if (step.npc && G.world && G.world.npcs) return G.world.npcs.find(n => n.kind === step.npc) || null;
+  return null;
+}
+function guideTargetRect(step) {
+  const target = guideTarget(step);
+  if (!target) return null;
+  if (step.selector) return target.getBoundingClientRect();
+  const canvas = document.getElementById('view');
+  const cr = canvas.getBoundingClientRect();
+  const x = cr.left + px(target.x), y = cr.top + py(target.y);
+  const r = Math.max(28, target.r || 24);
+  return { left:x-r, top:y-r*1.8, width:r*2, height:r*2 };
+}
+function guideAction(step) {
+  if (step.action === 'npc') { const npc = guideTarget(step); if (npc) interactNPC(npc); }
+  else if (step.action) handleCommand(step.action);
+}
+function renderNewbieGuide() {
+  const state = guideState();
+  let root = document.getElementById('newbieGuide');
+  if (!root) { root = document.createElement('div'); root.id = 'newbieGuide'; document.body.appendChild(root); }
+  const step = NEWBIE_GUIDE_STEPS[state.step];
+  const rect = guideTargetRect(step);
+  const progress = Math.round((state.step + 1) / NEWBIE_GUIDE_STEPS.length * 100);
+  root.innerHTML = `<div class="ng-dim"></div>${rect ? '<div class="ng-focus"></div><div class="ng-arrow">▼</div>' : ''}
+    <section class="ng-card">
+      <div class="ng-top"><span>新手引导 ${state.step + 1}/${NEWBIE_GUIDE_STEPS.length}</span>${state.mandatory ? '<b>新角色必修</b>' : '<button data-ng-skip="1">跳过引导</button>'}</div>
+      <div class="ng-progress"><i style="width:${progress}%"></i></div>
+      <h2>${step.title}</h2><p>${step.text}</p>
+      <div class="ng-actions">${state.step ? '<button data-ng-prev="1">上一步</button>' : ''}${step.action ? `<button class="ng-target" data-ng-action="1">${step.actionText}</button>` : ''}<button class="ng-next" data-ng-next="1">${state.step === NEWBIE_GUIDE_STEPS.length - 1 ? '完成引导' : '下一步'}</button></div>
+    </section>`;
+  if (rect) {
+    const focus = root.querySelector('.ng-focus'), arrow = root.querySelector('.ng-arrow');
+    focus.style.left = `${rect.left - 7}px`; focus.style.top = `${rect.top - 7}px`;
+    focus.style.width = `${rect.width + 14}px`; focus.style.height = `${rect.height + 14}px`;
+    arrow.style.left = `${rect.left + rect.width / 2 - 12}px`; arrow.style.top = `${Math.max(8, rect.top - 40)}px`;
+  }
+  root.querySelector('[data-ng-prev]')?.addEventListener('click', () => { state.step--; renderNewbieGuide(); });
+  root.querySelector('[data-ng-next]')?.addEventListener('click', () => { if (state.step >= NEWBIE_GUIDE_STEPS.length - 1) finishNewbieGuide(false); else { state.step++; renderNewbieGuide(); } });
+  root.querySelector('[data-ng-skip]')?.addEventListener('click', () => finishNewbieGuide(true));
+  root.querySelector('[data-ng-action]')?.addEventListener('click', () => guideAction(step));
+}
+function finishNewbieGuide(skipped) {
+  const state = guideState(); state.version = NEWBIE_GUIDE_VERSION; state.step = 0; state.mandatory = false;
+  const root = document.getElementById('newbieGuide'); if (root) root.remove();
+  saveGame();
+  toast(skipped ? '已跳过新手引导，可在主城“新手指引”重新查看帮助' : '新手引导完成，祝你冒险顺利！');
+}
+function startNewbieGuide() {
+  if (guideDone()) return;
+  setTimeout(() => { if (G.screen === 'game' && !guideDone()) renderNewbieGuide(); }, 650);
 }
 
 /* ---------------- HUD ---------------- */

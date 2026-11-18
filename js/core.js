@@ -175,13 +175,15 @@ function recalcStats(p) {
   const dr = armor / (armor + 1000 + p.level * 50) + (bonus.dr || 0);
 
   const baseHp = cls.base.hp + (p.level - 1) * cls.growth.hp + A.vit * 6 + p.level * 10;
-  const baseMp = cls.base.mp + (p.level - 1) * cls.growth.mp + A.int * 4 + p.level * 8;
+  // 法力值数值收缩：智力系数 4 → 1.2，装备法力只按 6% 计入，传家宝按 30%
+  const MP_INT_MUL = 1.2, MP_EQ_MUL = 0.06, MP_HL_MUL = 0.3;
+  const baseMp = cls.base.mp + (p.level - 1) * cls.growth.mp + A.int * MP_INT_MUL + p.level * 8;
 
   const AURA = (typeof petAuraStats === 'function') ? petAuraStats(p) : { armor:0, moveSpd:0, as:0, mpRegenFlat:0, hpRegenPct:0, lifesteal:0, rangedAtk:0, thorns:0 };
   p.stats = {
     A,
     hpMax: Math.floor(baseHp * (1 + pas.hpPct) + eq.hp + (HL.hp || 0)),
-    mpMax: Math.floor(baseMp + eq.mp + (HL.mp || 0)),
+    mpMax: Math.floor(baseMp + eq.mp * MP_EQ_MUL + (HL.mp || 0) * MP_HL_MUL),
     power: (power + (HL.atk || 0) + (isMagic ? (HL.spell || 0) : 0)) * (1 + berserk),
     isMagic,
     skillMul: 1 + SB.skillDmg,

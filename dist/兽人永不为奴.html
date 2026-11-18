@@ -2087,6 +2087,18 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   .hud-mount,.mount-ic,.hud-aura,.aura-ic{width:32px;height:32px}
 }
 
+/* 兑换码输入更适配 */
+.pc-codes{flex-wrap:wrap}
+.pc-input{min-width:0;font-size:13px}
+.pc-btn.paste{background:linear-gradient(180deg,#6f8fb8,#3d5a78);color:#eaf4ff;
+  border-color:#7fb3d5;flex:0 0 auto}
+.pc-btn.paste:hover{background:linear-gradient(180deg,#8fb4d8,#4e6f90)}
+@media (max-width:700px){
+  .pc-codes{gap:6px}
+  .pc-input{flex:1 1 100%;margin-bottom:2px}
+  .pc-btn{flex:1}
+}
+
 </style>
 <script id="orc-cfg" type="application/json">{}</script>
 </head>
@@ -8856,7 +8868,7 @@ function updateAuraHud() {
   if (!ap) { box.classList.add('hidden'); box.classList.remove('show'); return; }
   const { def, lv, value } = ap;
   box.classList.remove('hidden');
-  ic.style.backgroundPosition = `${(def.icon % 4) * 33.333}% ${Math.floor(def.icon / 4) * 50}%`;
+  ic.style.backgroundPosition = `${(def.icon % 4) * 33.333}% ${Math.floor(def.icon / 4) * 100}%`;
   ic.style.borderColor = def.color;
   ic.style.boxShadow = `0 0 12px ${def.color}88`;
   const valTxt =
@@ -8926,7 +8938,10 @@ function petHtml() {
   const p = G.player, st = petEnsure(p);
   let html = `<div class="mm-head">🐾 宠物光环 <span>同名光环不叠加 · 范围 90 码</span></div>`;
   html += `<div class="pc-codes">
-    <input id="petCodeInput" class="pc-input" placeholder="输入宠物兑换码，例如 PET-BRI-1BAAA" maxlength="24">
+    <input id="petCodeInput" class="pc-input" type="text" inputmode="text"
+      autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"
+      placeholder="输入或粘贴兑换码，如 PET-BRI-1BAAA" maxlength="24">
+    <button class="pc-btn paste" data-pet-paste="1">粘贴</button>
     <button class="pc-btn" data-pet-redeem="1">兑换</button>
   </div>`;
   html += '<div class="pc-grid">';
@@ -8938,7 +8953,7 @@ function petHtml() {
     const upCost = DATA.PET_UP_COST[lv] || 0;
     const canUp = owned && lv < 3 && p.gold >= upCost;
     html += `<div class="pc-card ${active ? 'act' : ''} ${owned ? '' : 'lock'}" style="border-color:${pt.color}55">
-      <div class="pc-icon" style="background-position:${(pt.icon % 4) * 33.333}% ${Math.floor(pt.icon / 4) * 50}%"></div>
+      <div class="pc-icon" style="background-position:${(pt.icon % 4) * 33.333}% ${Math.floor(pt.icon / 4) * 100}%"></div>
       <div class="pc-name" style="color:${pt.color}">${pt.aura}</div>
       <div class="pc-owner">${pt.owner} · ${pt.name}</div>
       <div class="pc-eff">${pt.desc}</div>
@@ -11307,6 +11322,27 @@ function bindModal() {
     openModal('pet', '宠物 · 驯兽师', petHtml());
     updateAuraHud();
   });
+  body.querySelectorAll('[data-pet-paste]').forEach(b => b.onclick = async () => {
+    const inp = document.getElementById('petCodeInput');
+    if (!inp) return;
+    try {
+      let txt = '';
+      if (navigator.clipboard && navigator.clipboard.readText) {
+        txt = await navigator.clipboard.readText();
+      }
+      if (!txt) {
+        inp.focus();
+        document.execCommand && document.execCommand('paste');
+        toast('请长按输入框手动粘贴');
+        return;
+      }
+      inp.value = String(txt).trim().toUpperCase();
+      toast('已粘贴兑换码');
+    } catch (e) {
+      inp.focus();
+      toast('浏览器不允许读取剪贴板，请长按输入框粘贴');
+    }
+  });
   body.querySelectorAll('[data-pet-redeem]').forEach(b => b.onclick = () => {
     const inp = document.getElementById('petCodeInput');
     const r = redeemPetCode(G.player, inp ? inp.value : '');
@@ -11910,6 +11946,9 @@ function startGame() {
 /* ---------------- 输入 ---------------- */
 function initInput() {
   window.addEventListener('keydown', e => {
+    const t = e.target;
+    // 正在输入框里打字：不拦截任何按键（否则无法输入兑换码）
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
     const k = e.key.toLowerCase();
     Input.keys[k] = true;
     if (G.screen !== 'game') return;

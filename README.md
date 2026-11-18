@@ -3241,3 +3241,25 @@ t+1s 剩余 9 … t+9s 剩余 1 → t+10s 触发回城 ✅
 下马 → 回到「＋」 ✅
 tooltip 含坐骑名与移速 ✅
 ```
+
+### v194 · 兑换码输入适配 + 宠物图标裁剪修复
+1. **输入框打不了字**
+   - 根因：`window` 的 keydown 全局拦截（Q/W/E/R/B/C/K/M 等都是快捷键并 `preventDefault`），
+     在输入框里打字也会被吃掉
+   - 修复：keydown 开头判断 `e.target` 是 INPUT / TEXTAREA / contentEditable 就直接 return
+2. **新增「粘贴」按钮**
+   - 优先用 `navigator.clipboard.readText()` 自动读剪贴板
+   - 浏览器拒绝时回退 `execCommand('paste')` 并提示长按粘贴
+   - 粘贴后自动转大写、去空格
+   - 输入框补 `inputmode/autocapitalize/spellcheck`，移动端友好
+   - 移动端布局：输入框占满一行，粘贴/兑换各占一半
+3. **宠物图标裁剪错位（吸血/强击/荆棘同时出现两个图）**
+   - 根因：`pets.png` 是 **4 列 × 2 行**，Y 方向步进应按 `100% / (2-1) = 100%`，
+     但代码里写的是 `50%`（当成 3 行了）→ 第二行图标只偏移半格
+   - 修复：`Math.floor(icon / 4) * 100`（列表页与 HUD 光环图标两处）
+
+**验证**
+```
+7 个图标全部单图居中、无重影 ✅
+输入框有粘贴 + 兑换两个按钮 ✅
+```

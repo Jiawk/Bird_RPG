@@ -76,6 +76,9 @@ function startGame() {
 /* ---------------- 输入 ---------------- */
 function initInput() {
   window.addEventListener('keydown', e => {
+    const t = e.target;
+    // 正在输入框里打字：不拦截任何按键（否则无法输入兑换码）
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
     const k = e.key.toLowerCase();
     Input.keys[k] = true;
     if (G.screen !== 'game') return;

@@ -11,6 +11,7 @@ const nextId = () => ENTITY_ID++;
 
 /* ---------------- 进入房间 ---------------- */
 function enterRoom(roomId) {
+  if (typeof Sfx !== 'undefined' && roomId !== TOWN) Sfx.play('enter');   // 进入副本音效
   if (typeof cancelDailyReturn === 'function') cancelDailyReturn();   // 手动离开/回城则取消倒计时
   if (G.player) G.player.dead = false;
 

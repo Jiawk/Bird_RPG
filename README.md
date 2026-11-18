@@ -3387,3 +3387,35 @@ bossDie / playerDie / success / fail 全部触发 ✅
 if (typeof v === 'number' && isFinite(v)) { p.gold = round(v); p.goldBackup = p.gold; }
 else { ...解析失败 → 用 goldBackup 兜底... }
 ```
+
+### v200 · 音效全面换成素材音频（修复无声）
+1. **之前 4 个音效为什么没生效**
+   - 根因：`Sfx.on` **默认是关闭的**（`G.soundOn` 未设置 → `setOn(false)`），
+     没在设置里手动打开音效 = 所有声音都不播
+   - 修复：`welcome/init` 时 `if (G.soundOn === undefined) G.soundOn = true;` → **默认开启**
+2. **清除所有程序化合成音**
+   - `Sfx.play()` 的 21 个事件全部改为播放素材音频
+   - `clang()` 保留接口但内部改为素材（`_clangSynth` 留作兜底）
+   - 不再有 `_tone/_noise` 直接调用（仅 `page()` 的极端兜底保留）
+3. **接入 `铃声/1音效2` 目录的 11 个素材**（按文件名用途映射）
+
+   | 事件 | 素材文件 |
+   |---|---|
+   | 进入副本 | mixkit-big-cinematic-impact-788 |
+   | 进入副本（备） | mixkit-cinematic-glass-hit-suspense-677 |
+   | 角色受到攻击 | mixkit-boxer-getting-hit-2055 |
+   | 普通攻击 | mixkit-fast-sword-whoosh-2792 |
+   | 打击 1 声 | mixkit-impact-of-a-strong-punch-2155 |
+   | 打击 3 声（暴击/重击） | mixkit-strong-punches-to-the-body-2198 |
+   | 点击咚声 | mixkit-page-back-chime-1108 |
+   | 点击成功 | mixkit-page-forward-single-chime-1107 |
+   | 翻书一声 | mixkit-page-turn-single-1104 |
+   | 翻书 2 声 | mixkit-single-book-paging-1101 |
+   | 放技能哼声 | mixkit-voice-from-effort-to-punch-2174 |
+
+4. **体积优化**：WAV 原文件合计 4.1MB，用 `afconvert` 转 **单声道 AAC 48kbps**
+   - 11 个文件合计约 175KB（最大 45KB）
+   - 加上今天的 4 个 MP3（144KB），音效总量约 320KB
+   - 包体 2.46M → **2.70M**
+
+**验证**：21 个事件逐一触发，全部有声音输出（无遗漏）

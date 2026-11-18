@@ -53,7 +53,7 @@ function damageMonster(m, amount, type, isDot) {
 }
 
 function damagePlayer(amount, source) {
-  if (typeof Sfx !== 'undefined') Sfx.play('hit');
+  if (typeof Sfx !== 'undefined') Sfx.play('hurt');   // 角色受到攻击音效
   if (G.debug && G.debug.invincible) return;   // 调试：无敌
   const p = G.player;
   if (p.stats.invis > 0) return;
@@ -118,6 +118,7 @@ function playerAttack() {
   p.attackCd = 1 / atkSpeed;
   if (typeof hltOnAttack === 'function') hltOnAttack(p);
   p.attackAnim = fast ? 0.06 : 0.18;
+  if (typeof Sfx !== 'undefined') Sfx.play('attack');   // 普通攻击（挥砍）
 
   const w = G.world;
   const range = p.cls === 'warrior' || p.cls === 'assassin' ? 78 : 420;

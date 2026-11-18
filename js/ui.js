@@ -4256,7 +4256,8 @@ function bindSfxUI() {
       btn.textContent = on ? '🔊' : '🔇';
       btn.classList.toggle('off', !on);
     };
-    Sfx.setOn(G.soundOn === true);   // 默认关闭
+    if (G.soundOn === undefined) G.soundOn = true;   // 默认开启
+    Sfx.setOn(G.soundOn === true);
     sync();
     btn.onclick = (e) => {
       e.stopPropagation();

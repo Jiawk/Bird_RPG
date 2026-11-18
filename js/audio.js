@@ -92,6 +92,8 @@ const Sfx = {
 
   /* ---------- 翻书声 ---------- */
   page(up) {
+    if (this._samples) { this.sample('page', up ? 0.85 : 0.75); return; }
+    // 兜底：无素材时走合成
     const c = this.init(); if (!c || !this.on) return;
     this.resume();
     const t0 = c.currentTime;
@@ -121,6 +123,11 @@ const Sfx = {
 
   /* ---------- 金属撞击（魔兽风） ---------- */
   clang(gain, pitch) {
+    // 已改为素材音效：统一用「打击 3 声」
+    this.sample('crit', (gain === undefined ? 0.7 : gain));
+    return;
+  },
+  _clangSynth(gain, pitch) {
     const c = this.init(); if (!c || !this.on) return;
     this.resume();
     const t0 = c.currentTime;
@@ -144,65 +151,52 @@ const Sfx = {
     this._noise({ dur: 0.06, freq: 520, q: 0.6, gain: g0 * 0.18, filter: 'lowpass' });
   },
 
-  /* ---------- 音效表 ---------- */
+  /* ---------- 音效表（全部使用素材音频，已移除程序化合成） ---------- */
   play(name) {
     if (!this.on) return;
     this.resume();
+
+    // 名字 → 素材 key（默认同名）
     switch (name) {
-      case 'click':
-        this._tone({ freq: 420, to: 300, dur: 0.045, type: 'triangle', gain: 0.09 });
-        this._noise({ dur: 0.03, freq: 1800, q: 2.0, gain: 0.05, filter: 'bandpass' });
+      /* ---- 界面 ---- */
+      case 'click':   this.sample('click', 0.85); break;     // 点击咚声
+      case 'open':    this.sample('page', 0.9);   break;     // 翻书一声（开面板）
+      case 'close':   this.sample('page', 0.8);   break;     // 翻书一声（关面板）
+      case 'page':    this.sample('page', 0.85);  break;     // 翻书
+      case 'openBig': this.sample('open', 0.9);   break;     // 翻书 2 声（大面板）
+      case 'confirm': this.sample('confirm', 0.9); break;    // 点击成功
+
+      /* ---- 战斗 ---- */
+      case 'attack':  this.sample('attack', 0.75); break;    // 普通攻击（挥砍）
+      case 'hit': {
+        const now = Date.now();
+        if (now - this._lastHit < 45) return;                // 连击限流
+        this._lastHit = now;
+        this.sample('hit', 0.7);                             // 打击 1 声
         break;
+      }
+      case 'crit':    this.sample('crit', 0.9);  break;      // 打击 3 声（重击）
+      case 'kill':    this.sample('hit', 0.85);  break;      // 击杀
+      case 'hurt':    this.sample('hurt', 0.9);  break;      // 角色受到攻击
+      case 'cast':    this.sample('cast', 0.85); break;      // 放技能用力的哼声
+
+      /* ---- 场景 & 结算 ---- */
+      case 'enter':   this.sample('enter', 1.0); break;      // 进入副本
+      case 'enterB':  this.sample('enterB', 0.9); break;     // 进入副本（玻璃悬念）
+
       /* ---- 素材语音 ---- */
       case 'bossDie':   this.sample('bossDie', 1.0); break;    // BOSS 死亡
       case 'playerDie': this.sample('playerDie', 1.0); break;  // 角色阵亡
       case 'success':   this.sample('success', 1.0); break;    // 强化成功 / 转盘出货 / 获得特戒
       case 'fail':      this.sample('fail', 0.9); break;       // 强化失败
 
-      /* ---- 翻书声：菜单/对话/窗口 统一用这个 ---- */
-      case 'open':  this.page(true);  break;
-      case 'close': this.page(false); break;
-
-      case 'cast':
-        // 施法：低沉的气流 + 一点金属尾音，不再卡通
-        this._noise({ dur: 0.22, freq: 700, q: 0.6, gain: 0.14, filter: 'lowpass' });
-        this._tone({ freq: 180, to: 520, dur: 0.20, type: 'sine', gain: 0.07 });
-        break;
-
-      /* ---- 战斗：魔兽风金属撞击 ---- */
-      case 'hit': {
-        const now = Date.now();
-        if (now - this._lastHit < 45) return;      // 连击限流
-        this._lastHit = now;
-        this.clang(0.55, 1.0);
-        break;
-      }
-      case 'crit':
-        this.clang(1.0, 1.35);
-        this._tone({ freq: 92, to: 55, dur: 0.14, type: 'sine', gain: 0.14 });
-        break;
-      case 'kill':
-        this.clang(0.75, 0.95);
-        this._tone({ freq: 120, to: 45, dur: 0.28, type: 'sine', gain: 0.16 });
-        this._noise({ dur: 0.22, freq: 380, q: 0.6, gain: 0.13, filter: 'lowpass' });
-        break;
-      case 'death':
-        this._tone({ freq: 220, to: 38, dur: 1.0, type: 'sawtooth', gain: 0.22 });
-        this._tone({ freq: 110, to: 30, dur: 1.1, type: 'sine', gain: 0.18, delay: 0.05 });
-        this._noise({ dur: 0.5, freq: 300, q: 0.7, gain: 0.12 });
-        break;
-      case 'lvlup':
-        [523, 659, 784, 1046].forEach((f, i) =>
-          this._tone({ freq: f, dur: 0.18, type: 'triangle', gain: 0.18, delay: i * 0.09 }));
-        break;
-      case 'loot':
-        this._tone({ freq: 1180, dur: 0.09, type: 'sine', gain: 0.13 });
-        this._tone({ freq: 1560, dur: 0.10, type: 'sine', gain: 0.10, delay: 0.05 });
-        break;
-      case 'boss':
-        this._tone({ freq: 90, to: 55, dur: 0.7, type: 'sawtooth', gain: 0.20 });
-        this._noise({ dur: 0.6, freq: 180, q: 0.6, gain: 0.14 });
-        break;
+      /* ---- 其余事件复用已有素材 ---- */
+      case 'lvlup':   this.sample('confirm', 0.95); break;   // 升级 → 点击成功
+      case 'loot':    this.sample('confirm', 0.7);  break;   // 拾取 → 点击成功
+      case 'boss':    this.sample('enter', 0.8);    break;   // BOSS 出现 → 进入副本
+      case 'death':   this.sample('playerDie', 1.0); break;  // 死亡
+      case 'level':   this.sample('confirm', 0.8);  break;
+      default: break;
     }
   },
 

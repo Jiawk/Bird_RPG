@@ -1273,6 +1273,7 @@ function currentCodex(p) {
 /* ---------------- 坐骑 / 宠物 ---------------- */
 function mountEnsure(p) {
   if (!p.mounts) p.mounts = { owned: [], active: null };
+  if (!p.mounts.usedCodes) p.mounts.usedCodes = [];
   return p.mounts;
 }
 function petEnsure(p) {
@@ -1319,6 +1320,25 @@ function petAuraStats(p) {
     case 'thorns':   out.thorns = value; break;
   }
   return out;
+}
+
+/* 坐骑兑换码 */
+function redeemMountCode(p, code) {
+  const c = String(code || '').trim().toUpperCase();
+  if (!c) return { ok:false, msg:'请输入兑换码' };
+  const ms = mountEnsure(p);
+  ms.usedCodes = ms.usedCodes || [];
+  if (ms.usedCodes.includes(c)) return { ok:false, msg:'这个兑换码已经用过了' };
+  for (const k in DATA.MOUNT_CODES) {
+    if (DATA.MOUNT_CODES[k].includes(c)) {
+      const def = mountByKey(k);
+      ms.usedCodes.push(c);
+      const isNew = !ms.owned.includes(k);
+      if (isNew) { ms.owned.push(k); ms.active = k; }   // 直接骑上
+      return { ok:true, key:k, name:def ? def.name : k, isNew, def };
+    }
+  }
+  return { ok:false, msg:'兑换码无效' };
 }
 
 /* 兑换码 */

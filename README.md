@@ -3263,3 +3263,25 @@ tooltip 含坐骑名与移速 ✅
 7 个图标全部单图居中、无重影 ✅
 输入框有粘贴 + 兑换两个按钮 ✅
 ```
+
+### v195 · 驯兽师快捷键 + 教程 + 状态持久化 + 坐骑兑换码
+1. **快捷键 `G`** → 打开驯兽师（坐骑 / 宠物）；`handleCommand` 与 `interactNPC` 两个 switch 都加了 `case 'beast'`
+2. **新手指引新增第 12 课**「坐骑与宠物（驯兽师）」
+   - 坐骑品质/价格、兑换码、宠物 7 光环、HUD 状态图标、自动保存说明
+3. **状态持久化**（本来就在 player 上，这次补了 `usedCodes` 并验证）
+   - `player.mounts = { owned, active, usedCodes }`
+   - `player.pets = { owned, active, lv, usedCodes }`
+   - 存档往返测试：恢复后 `mountSpd 0.6`、`auraThorns 0.1` 正确重算
+4. **坐骑兑换码**：9 种 × 10 = **90 个**
+   - 格式 `MNT-<标签>-<序号><4位>`
+   - 标签：HRS/WLF/PVP/RVN/PHX/SCP/DRG/LON/SRN（每种坐骑独立前缀）
+   - 坐骑页顶部新增输入框 + 粘贴 + 兑换
+   - 兑换成功后**自动骑乘**
+
+**验证**
+```
+兑换码 正常/重复/无效 三种情况 ✅
+兑换后自动骑乘（active=dragon）✅
+存档往返后 骑乘与光环状态保持 ✅
+新手指引 12 条含 beast ✅
+```

@@ -2918,6 +2918,20 @@ BOSS击杀凭证 ×10　10%<br>
 <b>白嫖途径</b>：<br>
 · 邮箱里有一封<b>一次性福利</b>（1000 凭证）<br>
 · <b>每晚 20 点</b>在线，邮箱自动发 <b>100 抽</b>` },
+  { key:'beast', title:'坐骑与宠物（驯兽师）', reward:'gold',
+    body:`主城<b>左下角</b>找 <b>驯兽师 · 铃</b>（快捷键 <b>G</b>）。<br><br>
+<b>🐎 坐骑</b>：只加移动速度，不影响战斗<br>
+· 普通（蓝）<b>50 万</b>金 · 稀有（紫）<b>100 万</b> · 史诗（橙）<b>200 万</b><br>
+· 同时只能骑 1 只，<b>买下自动骑乘</b>，可随时下马<br>
+· 也可以用<b>兑换码</b>直接获得（坐骑页最上方输入）<br><br>
+<b>🐾 宠物</b>：出战提供一条<b>光环</b>，共 7 种<br>
+· <b>辉煌</b>（回蓝）· <b>专注</b>（护甲）· <b>耐久</b>（移速+攻速）<br>
+· <b>邪恶</b>（移速+回血）· <b>吸血</b>（仅近战）<br>
+· <b>强击</b>（仅远程攻击）· <b>荆棘</b>（近战反伤）<br>
+· 用<b>兑换码</b>获取，光环最高 <b>L3</b>（金币升级）<br><br>
+出战后<b>头像右侧</b>会显示坐骑和光环图标，鼠标悬停（手机点一下）可看效果。<br>
+<b>骑乘状态与光环选择都会自动保存</b>，下次上线无需重新设置。` },
+
   { key:'heirloom', title:'如何获得传家宝', reward:'gold',
     body:`主城找 <b>传家宝 · 古籍</b>（新手指引左边），打开一本可以翻页的古书。<br><br>
 每一页记载一件魔兽经典武器：<b>风剑、橙锤、鸡腿杖、蛋刀、橙弓、奶橙锤、橙斧、CTM 橙杖、霜之哀伤</b>。<br><br>
@@ -3153,6 +3167,25 @@ DATA.PETS = [
 ];
 
 DATA.PET_UP_COST = [0, 1000000, 2000000];   // 升到 L2 / L3 的花费
+
+/* 坐骑兑换码：9 种 × 10 个 */
+DATA.MOUNT_CODES = (function () {
+  const LET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const out = {};
+  DATA.MOUNTS.forEach((m, mi) => {
+    const list = [];
+    for (let i = 0; i < 10; i++) {
+      let h = (mi + 1) * 53197 + (i + 1) * 7919;
+      let seg = '';
+      for (let k = 0; k < 4; k++) { h = (h * 1103515245 + 12345) % 2147483648; seg += LET[h % LET.length]; }
+      const TAG = { spectralhorse:'HRS', spectralwolf:'WLF', pvpram:'PVP', raven:'RVN',
+                    darkphoenix:'PHX', scorpion:'SCP', dragon:'DRG', lion:'LON', serpent:'SRN' };
+      list.push('MNT-' + (TAG[m.key] || m.key.slice(0, 3).toUpperCase()) + '-' + (i + 1) + seg);
+    }
+    out[m.key] = list;
+  });
+  return out;
+})();
 
 /* 宠物兑换码：7 种 × 10 个 */
 DATA.PET_CODES = (function () {
@@ -5003,6 +5036,7 @@ function currentCodex(p) {
 /* ---------------- 坐骑 / 宠物 ---------------- */
 function mountEnsure(p) {
   if (!p.mounts) p.mounts = { owned: [], active: null };
+  if (!p.mounts.usedCodes) p.mounts.usedCodes = [];
   return p.mounts;
 }
 function petEnsure(p) {
@@ -5049,6 +5083,25 @@ function petAuraStats(p) {
     case 'thorns':   out.thorns = value; break;
   }
   return out;
+}
+
+/* 坐骑兑换码 */
+function redeemMountCode(p, code) {
+  const c = String(code || '').trim().toUpperCase();
+  if (!c) return { ok:false, msg:'请输入兑换码' };
+  const ms = mountEnsure(p);
+  ms.usedCodes = ms.usedCodes || [];
+  if (ms.usedCodes.includes(c)) return { ok:false, msg:'这个兑换码已经用过了' };
+  for (const k in DATA.MOUNT_CODES) {
+    if (DATA.MOUNT_CODES[k].includes(c)) {
+      const def = mountByKey(k);
+      ms.usedCodes.push(c);
+      const isNew = !ms.owned.includes(k);
+      if (isNew) { ms.owned.push(k); ms.active = k; }   // 直接骑上
+      return { ok:true, key:k, name:def ? def.name : k, isNew, def };
+    }
+  }
+  return { ok:false, msg:'兑换码无效' };
 }
 
 /* 兑换码 */
@@ -8351,6 +8404,7 @@ function handleCommand(act) {
     case 'notice': openModal('notice', '公告牌', noticeHtml()); break;
     case 'heirloom': G._hltPage = G._hltPage || 0; openModal('heirloom', '传家宝 · 古籍', heirloomHtml()); break;
     case 'statue': openModal('statueMenu', '巫妖王雕像', statueMenuHtml()); break;
+    case 'beast': openModal('beast', '驯兽师 · 铃', beastMenuHtml()); break;
     case 'beastmaster': openModal('beast', '驯兽师 · 铃', beastMenuHtml()); break;
     case 'tutorial': toggleModal('tutorial', '新手指引', tutorialHtml); break;
     case 'mail': toggleModal('mail', '邮箱', mailHtml); break;
@@ -8911,7 +8965,15 @@ function beastMenuHtml() {
 
 function mountHtml() {
   const p = G.player, ms = mountEnsure(p);
-  let html = `<div class="mm-head">🐎 坐骑 <span>只提升移动速度，不影响战斗</span></div><div class="mm-grid">`;
+  let html = `<div class="mm-head">🐎 坐骑 <span>只提升移动速度，不影响战斗</span></div>
+  <div class="pc-codes">
+    <input id="mountCodeInput" class="pc-input" type="text" inputmode="text"
+      autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"
+      placeholder="输入或粘贴坐骑兑换码，如 MNT-HRS-1FAAA" maxlength="24">
+    <button class="pc-btn paste" data-mount-paste="1">粘贴</button>
+    <button class="pc-btn" data-mount-redeem="1">兑换</button>
+  </div>
+  <div class="mm-grid">`;
   DATA.MOUNTS.forEach(m => {
     const tier = DATA.MOUNT_TIERS[m.tier];
     const owned = ms.owned.includes(m.key);
@@ -9071,6 +9133,7 @@ function interactNPC(target) {
     case 'heirloom': G._hltPage = G._hltPage || 0; openModal('heirloom', '传家宝 · 古籍', heirloomHtml()); break;
     case 'statue': openModal('statueMenu', '巫妖王雕像', statueMenuHtml()); break;
     case 'beastmaster': openModal('beast', '驯兽师 · 铃', beastMenuHtml()); break;
+    case 'beast': openModal('beast', '驯兽师 · 铃', beastMenuHtml()); break;
     case 'tutorial': toggleModal('tutorial', '新手指引', tutorialHtml); break;
     case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
   }
@@ -11268,6 +11331,30 @@ function bindModal() {
     if (b.dataset.beast === 'mount') openModal('mount', '坐骑 · 驯兽师', mountHtml());
     else openModal('pet', '宠物 · 驯兽师', petHtml());
   });
+  body.querySelectorAll('[data-mount-paste]').forEach(b => b.onclick = async () => {
+    const inp = document.getElementById('mountCodeInput');
+    if (!inp) return;
+    try {
+      let txt = '';
+      if (navigator.clipboard && navigator.clipboard.readText) txt = await navigator.clipboard.readText();
+      if (!txt) { inp.focus(); toast('请长按输入框手动粘贴'); return; }
+      inp.value = String(txt).trim().toUpperCase();
+      toast('已粘贴兑换码');
+    } catch (e) {
+      inp.focus();
+      toast('浏览器不允许读取剪贴板，请长按输入框粘贴');
+    }
+  });
+  body.querySelectorAll('[data-mount-redeem]').forEach(b => b.onclick = () => {
+    const inp = document.getElementById('mountCodeInput');
+    const r = redeemMountCode(G.player, inp ? inp.value : '');
+    if (!r.ok) { toast(r.msg); return; }
+    recalcStats(G.player); saveGame();
+    if (typeof Sfx !== 'undefined') Sfx.play('loot');
+    toast(r.isNew ? `🐎 获得坐骑【${r.name}】，已自动骑乘` : `【${r.name}】已拥有，兑换码已使用`);
+    if (r.isNew && typeof bigAnnounce === 'function') bigAnnounce('🐎 获得坐骑 · ' + r.name, '#ffd24a');
+    openModal('mount', '坐骑 · 驯兽师', mountHtml());
+  });
   body.querySelectorAll('[data-mount-buy]').forEach(b => b.onclick = () => {
     const k = b.dataset.mountBuy, m = mountByKey(k);
     const tier = DATA.MOUNT_TIERS[m.tier];
@@ -11966,6 +12053,7 @@ function initInput() {
       case 'm': handleCommand('map'); break;
       case 't': handleCommand('craft'); break;   // T = 锻造台（打造 / 强化 / 升星）
       case 'v': handleCommand('tower'); break;   // V = 爬塔
+      case 'g': handleCommand('beast'); e.preventDefault(); break;   // G = 驯兽师（坐骑/宠物）
       case 'j':
       case 'l': handleCommand('quest'); break;   // 任务面板（J / L 都可以）
       case 'x': useGatherRing(); break;          // 聚合之戒

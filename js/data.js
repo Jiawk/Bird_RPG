@@ -615,6 +615,20 @@ BOSS击杀凭证 ×10　10%<br>
 <b>白嫖途径</b>：<br>
 · 邮箱里有一封<b>一次性福利</b>（1000 凭证）<br>
 · <b>每晚 20 点</b>在线，邮箱自动发 <b>100 抽</b>` },
+  { key:'beast', title:'坐骑与宠物（驯兽师）', reward:'gold',
+    body:`主城<b>左下角</b>找 <b>驯兽师 · 铃</b>（快捷键 <b>G</b>）。<br><br>
+<b>🐎 坐骑</b>：只加移动速度，不影响战斗<br>
+· 普通（蓝）<b>50 万</b>金 · 稀有（紫）<b>100 万</b> · 史诗（橙）<b>200 万</b><br>
+· 同时只能骑 1 只，<b>买下自动骑乘</b>，可随时下马<br>
+· 也可以用<b>兑换码</b>直接获得（坐骑页最上方输入）<br><br>
+<b>🐾 宠物</b>：出战提供一条<b>光环</b>，共 7 种<br>
+· <b>辉煌</b>（回蓝）· <b>专注</b>（护甲）· <b>耐久</b>（移速+攻速）<br>
+· <b>邪恶</b>（移速+回血）· <b>吸血</b>（仅近战）<br>
+· <b>强击</b>（仅远程攻击）· <b>荆棘</b>（近战反伤）<br>
+· 用<b>兑换码</b>获取，光环最高 <b>L3</b>（金币升级）<br><br>
+出战后<b>头像右侧</b>会显示坐骑和光环图标，鼠标悬停（手机点一下）可看效果。<br>
+<b>骑乘状态与光环选择都会自动保存</b>，下次上线无需重新设置。` },
+
   { key:'heirloom', title:'如何获得传家宝', reward:'gold',
     body:`主城找 <b>传家宝 · 古籍</b>（新手指引左边），打开一本可以翻页的古书。<br><br>
 每一页记载一件魔兽经典武器：<b>风剑、橙锤、鸡腿杖、蛋刀、橙弓、奶橙锤、橙斧、CTM 橙杖、霜之哀伤</b>。<br><br>
@@ -850,6 +864,25 @@ DATA.PETS = [
 ];
 
 DATA.PET_UP_COST = [0, 1000000, 2000000];   // 升到 L2 / L3 的花费
+
+/* 坐骑兑换码：9 种 × 10 个 */
+DATA.MOUNT_CODES = (function () {
+  const LET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const out = {};
+  DATA.MOUNTS.forEach((m, mi) => {
+    const list = [];
+    for (let i = 0; i < 10; i++) {
+      let h = (mi + 1) * 53197 + (i + 1) * 7919;
+      let seg = '';
+      for (let k = 0; k < 4; k++) { h = (h * 1103515245 + 12345) % 2147483648; seg += LET[h % LET.length]; }
+      const TAG = { spectralhorse:'HRS', spectralwolf:'WLF', pvpram:'PVP', raven:'RVN',
+                    darkphoenix:'PHX', scorpion:'SCP', dragon:'DRG', lion:'LON', serpent:'SRN' };
+      list.push('MNT-' + (TAG[m.key] || m.key.slice(0, 3).toUpperCase()) + '-' + (i + 1) + seg);
+    }
+    out[m.key] = list;
+  });
+  return out;
+})();
 
 /* 宠物兑换码：7 种 × 10 个 */
 DATA.PET_CODES = (function () {

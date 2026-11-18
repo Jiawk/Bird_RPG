@@ -727,6 +727,7 @@ function handleCommand(act) {
     case 'notice': openModal('notice', '公告牌', noticeHtml()); break;
     case 'heirloom': G._hltPage = G._hltPage || 0; openModal('heirloom', '传家宝 · 古籍', heirloomHtml()); break;
     case 'statue': openModal('statueMenu', '巫妖王雕像', statueMenuHtml()); break;
+    case 'beast': openModal('beast', '驯兽师 · 铃', beastMenuHtml()); break;
     case 'beastmaster': openModal('beast', '驯兽师 · 铃', beastMenuHtml()); break;
     case 'tutorial': toggleModal('tutorial', '新手指引', tutorialHtml); break;
     case 'mail': toggleModal('mail', '邮箱', mailHtml); break;
@@ -1287,7 +1288,15 @@ function beastMenuHtml() {
 
 function mountHtml() {
   const p = G.player, ms = mountEnsure(p);
-  let html = `<div class="mm-head">🐎 坐骑 <span>只提升移动速度，不影响战斗</span></div><div class="mm-grid">`;
+  let html = `<div class="mm-head">🐎 坐骑 <span>只提升移动速度，不影响战斗</span></div>
+  <div class="pc-codes">
+    <input id="mountCodeInput" class="pc-input" type="text" inputmode="text"
+      autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"
+      placeholder="输入或粘贴坐骑兑换码，如 MNT-HRS-1FAAA" maxlength="24">
+    <button class="pc-btn paste" data-mount-paste="1">粘贴</button>
+    <button class="pc-btn" data-mount-redeem="1">兑换</button>
+  </div>
+  <div class="mm-grid">`;
   DATA.MOUNTS.forEach(m => {
     const tier = DATA.MOUNT_TIERS[m.tier];
     const owned = ms.owned.includes(m.key);
@@ -1447,6 +1456,7 @@ function interactNPC(target) {
     case 'heirloom': G._hltPage = G._hltPage || 0; openModal('heirloom', '传家宝 · 古籍', heirloomHtml()); break;
     case 'statue': openModal('statueMenu', '巫妖王雕像', statueMenuHtml()); break;
     case 'beastmaster': openModal('beast', '驯兽师 · 铃', beastMenuHtml()); break;
+    case 'beast': openModal('beast', '驯兽师 · 铃', beastMenuHtml()); break;
     case 'tutorial': toggleModal('tutorial', '新手指引', tutorialHtml); break;
     case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
   }
@@ -3643,6 +3653,30 @@ function bindModal() {
   body.querySelectorAll('[data-beast]').forEach(b => b.onclick = () => {
     if (b.dataset.beast === 'mount') openModal('mount', '坐骑 · 驯兽师', mountHtml());
     else openModal('pet', '宠物 · 驯兽师', petHtml());
+  });
+  body.querySelectorAll('[data-mount-paste]').forEach(b => b.onclick = async () => {
+    const inp = document.getElementById('mountCodeInput');
+    if (!inp) return;
+    try {
+      let txt = '';
+      if (navigator.clipboard && navigator.clipboard.readText) txt = await navigator.clipboard.readText();
+      if (!txt) { inp.focus(); toast('请长按输入框手动粘贴'); return; }
+      inp.value = String(txt).trim().toUpperCase();
+      toast('已粘贴兑换码');
+    } catch (e) {
+      inp.focus();
+      toast('浏览器不允许读取剪贴板，请长按输入框粘贴');
+    }
+  });
+  body.querySelectorAll('[data-mount-redeem]').forEach(b => b.onclick = () => {
+    const inp = document.getElementById('mountCodeInput');
+    const r = redeemMountCode(G.player, inp ? inp.value : '');
+    if (!r.ok) { toast(r.msg); return; }
+    recalcStats(G.player); saveGame();
+    if (typeof Sfx !== 'undefined') Sfx.play('loot');
+    toast(r.isNew ? `🐎 获得坐骑【${r.name}】，已自动骑乘` : `【${r.name}】已拥有，兑换码已使用`);
+    if (r.isNew && typeof bigAnnounce === 'function') bigAnnounce('🐎 获得坐骑 · ' + r.name, '#ffd24a');
+    openModal('mount', '坐骑 · 驯兽师', mountHtml());
   });
   body.querySelectorAll('[data-mount-buy]').forEach(b => b.onclick = () => {
     const k = b.dataset.mountBuy, m = mountByKey(k);

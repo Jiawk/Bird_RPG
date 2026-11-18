@@ -155,6 +155,11 @@ function initInput() {
     if (npcT) { G.moveTarget = null; interactNPC(npcT); }
   }, { passive: true });
 
+  // 首次点击/触摸时解锁音频（移动端必需）
+  const _unlock = () => { if (typeof Sfx !== 'undefined') Sfx.unlock(); };
+  document.addEventListener('pointerdown', _unlock, { once: true });
+  document.addEventListener('touchstart', _unlock, { once: true, passive: true });
+
   // 全局禁用右键菜单（Mac 双指点按也不会弹出来）
   document.addEventListener('contextmenu', e => e.preventDefault());
   CV.addEventListener('contextmenu', e => e.preventDefault());

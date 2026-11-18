@@ -3419,3 +3419,25 @@ else { ...解析失败 → 用 goldBackup 兜底... }
    - 包体 2.46M → **2.70M**
 
 **验证**：21 个事件逐一触发，全部有声音输出（无遗漏）
+
+### v201 · 音效兼容性修复（Blob URL + WebAudio 兜底 + 解锁 + 自检）
+**排查结论**：代码本身没问题（在 Chrome 里 `SFX_VOICE` 可读、`Audio` 能播、`paused=false`）。
+问题出在**部分设备/浏览器对 data URI 音频的限制**，而 TTS 走 `speechSynthesis` 不受影响
+—— 所以出现「人声能听到、音效全哑」的现象。
+
+**四项修复**
+1. **data URI → Blob URL**
+   - base64 解码成 `Uint8Array` → `Blob` → `URL.createObjectURL`
+   - `<audio>` 读 blob: 比读 data: 兼容性好得多（也避免超长字符串）
+2. **WebAudio 解码兜底**
+   - `<audio>.play()` 被拒绝时，自动改用 `decodeAudioData` + `BufferSource` 播放
+3. **首次交互解锁**
+   - 移动端要求在手势内初始化音频
+   - `pointerdown/touchstart` 首次触发时 `Sfx.unlock()`：把所有音效以 0.001 音量试播一次
+4. **音效自检按钮 🎵**
+   - 喇叭按钮右边新增，点一下播放「点击咚声 + 点击成功」
+   - 同时提示设备是否成功加载音频，方便定位
+5. **服务端 `/game` 加 `Cache-Control: no-store`**
+   - 避免玩家一直跑到旧版本
+
+**体积**：包体 2.70M（本次无新增素材）

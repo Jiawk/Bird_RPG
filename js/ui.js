@@ -4267,6 +4267,18 @@ function bindSfxUI() {
       if (G.soundOn) { Sfx.resume(); Sfx.play('open'); }
       saveGame();
     };
+    // 音效自检按钮（排查设备兼容）
+    const tbtn = document.getElementById('soundTest');
+    if (tbtn) {
+      tbtn.onclick = (e) => {
+        e.stopPropagation();
+        Sfx.setOn(true); G.soundOn = true; sync(); Sfx.resume();
+        const ok = !!Sfx._ensureSample('click');
+        Sfx.play('click');
+        setTimeout(() => Sfx.play('confirm'), 350);
+        toast(ok ? '🔊 已播放测试音效（听到声音即正常）' : '⚠ 设备无法加载音频，请检查浏览器权限');
+      };
+    }
   }
 }
 

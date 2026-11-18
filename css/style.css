@@ -2106,3 +2106,9 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .mg-sub{font-size:10.5px;color:#8f8570;margin-top:2px}
 .mg-val{font-size:19px;font-weight:900;color:#ffe9a8;text-shadow:0 2px 6px rgba(0,0,0,.9)}
 @media (max-width:700px){ .mat-gold-row{grid-template-columns:1fr} .mg-val{font-size:16px} }
+
+/* 音效自检按钮 */
+.sound-test{position:absolute;left:52px;top:104px;z-index:25;width:34px;height:34px;
+  border-radius:50%;cursor:pointer;font-size:13px;line-height:1;
+  color:#ffd98a;border:1px solid #6b5a30;background:rgba(20,16,10,.85)}
+.sound-test:hover{border-color:#ffd24a;color:#fff}

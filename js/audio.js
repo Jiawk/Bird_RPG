@@ -26,31 +26,91 @@ const Sfx = {
     if (!this.on && window.speechSynthesis) window.speechSynthesis.cancel();
   },
 
-  /* ---------- 采样音频（MP3，来自素材）---------- */
+  /* ---------- 首次交互解锁（移动端必须在手势里初始化音频）---------- */
+  _unlocked: false,
+  unlock() {
+    if (this._unlocked) return;
+    this._unlocked = true;
+    try { this.resume(); } catch (e) {}
+    const keys = (typeof SFX_VOICE !== 'undefined') ? Object.keys(SFX_VOICE) : [];
+    keys.forEach(k => {
+      try {
+        const a = this._ensureSample(k);
+        if (!a) return;
+        a.volume = 0.001;
+        const pr = a.play();
+        if (pr && pr.then) pr.then(() => { a.pause(); a.currentTime = 0; a.volume = 1; }).catch(() => {});
+      } catch (e) {}
+    });
+    // WebAudio 也解锁一次（静音缓冲）
+    try { const c = this.init(); if (c && c.state === 'suspended') c.resume(); } catch (e) {}
+  },
+
+  /* ---------- 采样音频（素材：MP3 / AAC）---------- */
+  /* 用 Blob URL 播放（比 data URI 兼容性更好），失败再走 WebAudio 解码 */
   _samples: {},
+  _buffers: {},
+  _bytes(key) {
+    const src = (typeof SFX_VOICE !== 'undefined' && SFX_VOICE[key]) ? SFX_VOICE[key] : null;
+    if (!src) return null;
+    const comma = src.indexOf(',');
+    if (comma < 0) return null;
+    const bin = atob(src.slice(comma + 1));
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return { arr, mime: src.slice(5, src.indexOf(';')) || 'audio/mpeg' };
+  },
   _ensureSample(key) {
     if (this._samples[key]) return this._samples[key];
-    const src = (typeof SFX_VOICE !== 'undefined') ? SFX_VOICE[key] : null;
-    if (!src) return null;
+    const d = this._bytes(key);
+    if (!d) return null;
     try {
-      const a = new Audio(src);
+      const url = URL.createObjectURL(new Blob([d.arr], { type: d.mime }));
+      const a = new Audio();
       a.preload = 'auto';
-      a.volume = 1;
+      a.src = url;
+      a._url = url;
       this._samples[key] = a;
       return a;
     } catch (e) { return null; }
   },
+  /* WebAudio 解码兜底（<audio> 被拦时用） */
+  _playBuffer(key, gain) {
+    const c = this.init(); if (!c) return;
+    const play = buf => {
+      try {
+        const src = c.createBufferSource(); src.buffer = buf;
+        const gg = c.createGain(); gg.gain.value = gain;
+        src.connect(gg); gg.connect(c.destination); src.start(0);
+      } catch (e) {}
+    };
+    if (this._buffers[key]) return play(this._buffers[key]);
+    const d = this._bytes(key);
+    if (!d) return;
+    const cb = ab => {
+      try {
+        const pr = c.decodeAudioData(ab, b => { this._buffers[key] = b; play(b); }, () => {});
+        if (pr && pr.then) pr.then(b => { this._buffers[key] = b; play(b); }).catch(() => {});
+      } catch (e) {}
+    };
+    try {
+      if (fetch) fetch(URL.createObjectURL(new Blob([d.arr], { type: d.mime })))
+        .then(r => r.arrayBuffer()).then(cb).catch(() => {});
+      else cb(d.arr.buffer);
+    } catch (e) { cb(d.arr.buffer); }
+  },
   sample(key, gain) {
     if (!this.on) return;
+    const g = Math.min(1, Math.max(0.12, (gain === undefined ? 0.9 : gain)) * this.vol * 1.6);
     const a = this._ensureSample(key);
-    if (!a) return;
+    if (!a) { this._playBuffer(key, g); return; }
     try {
-      const node = a.cloneNode ? a.cloneNode() : new Audio(a.src);   // 允许同时叠放
-      node.volume = Math.min(1, (gain === undefined ? 0.9 : gain) * this.vol * 1.6);
+      const node = (a.cloneNode ? a.cloneNode() : new Audio(a.src));
+      node.volume = g;
       node.currentTime = 0;
       const pr = node.play();
-      if (pr && pr.catch) pr.catch(() => {});
-    } catch (e) { /* 忽略 */ }
+      if (pr && pr.catch) pr.catch(() => this._playBuffer(key, g));   // 被拦 → 解码兜底
+    } catch (e) { this._playBuffer(key, g); }
   },
 
   /* ---------- 基础发声 ---------- */

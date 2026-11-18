@@ -2091,3 +2091,18 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   .pc-input{flex:1 1 100%;margin-bottom:2px}
   .pc-btn{flex:1}
 }
+
+/* 材料页：货币展示 */
+.mat-gold-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.mg-card{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:5px;
+  border:1px solid #8a6d3f;background:linear-gradient(180deg,rgba(48,38,18,.95),rgba(14,10,5,.98));
+  box-shadow:0 0 14px rgba(212,175,55,.18)}
+.mg-ic{width:36px;height:36px;flex:0 0 auto;border-radius:50%;font-style:normal;
+  display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;
+  color:#1a1206;background:linear-gradient(180deg,#ffd24a,#b8912f);border:1px solid #ffd98a}
+.mg-ic.tok{background:linear-gradient(180deg,#ff9a3c,#a85c14);border-color:#ffb870}
+.mg-main{flex:1;min-width:0}
+.mg-name{font-family:var(--serif);font-size:14px;color:#ffd98a;letter-spacing:.08em}
+.mg-sub{font-size:10.5px;color:#8f8570;margin-top:2px}
+.mg-val{font-size:19px;font-weight:900;color:#ffe9a8;text-shadow:0 2px 6px rgba(0,0,0,.9)}
+@media (max-width:700px){ .mat-gold-row{grid-template-columns:1fr} .mg-val{font-size:16px} }

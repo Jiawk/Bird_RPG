@@ -2099,6 +2099,21 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   .pc-btn{flex:1}
 }
 
+/* 材料页：货币展示 */
+.mat-gold-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.mg-card{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:5px;
+  border:1px solid #8a6d3f;background:linear-gradient(180deg,rgba(48,38,18,.95),rgba(14,10,5,.98));
+  box-shadow:0 0 14px rgba(212,175,55,.18)}
+.mg-ic{width:36px;height:36px;flex:0 0 auto;border-radius:50%;font-style:normal;
+  display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;
+  color:#1a1206;background:linear-gradient(180deg,#ffd24a,#b8912f);border:1px solid #ffd98a}
+.mg-ic.tok{background:linear-gradient(180deg,#ff9a3c,#a85c14);border-color:#ffb870}
+.mg-main{flex:1;min-width:0}
+.mg-name{font-family:var(--serif);font-size:14px;color:#ffd98a;letter-spacing:.08em}
+.mg-sub{font-size:10.5px;color:#8f8570;margin-top:2px}
+.mg-val{font-size:19px;font-weight:900;color:#ffe9a8;text-shadow:0 2px 6px rgba(0,0,0,.9)}
+@media (max-width:700px){ .mat-gold-row{grid-template-columns:1fr} .mg-val{font-size:16px} }
+
 </style>
 <script id="orc-cfg" type="application/json">{}</script>
 </head>
@@ -3682,7 +3697,7 @@ function mailClaimOne(p, m, silent) {
   if (!m || m.claimed) return 0;
   let n = 0;
   (m.items || []).forEach(it => {
-    if (it.type === 'gold') { p.gold += it.amount; n++; }
+    if (it.type === 'gold') { p.gold += (Number(it.amount) || 0); n++; }
     else if (it.type === 'mat') {
       p.materials[it.key] = (p.materials[it.key] || 0) + it.amount; n++;
     } else if (it.type === 'item' && it.item) {
@@ -3845,6 +3860,7 @@ function createPlayer(raceKey, clsKey) {
 
 /* ---------------- 属性计算 ---------------- */
 function recalcStats(p) {
+  if (typeof ensureGold === 'function') ensureGold(p);
   const cls = DATA.CLASSES[p.cls], race = DATA.RACES[p.race];
   const bonus = race.extra || {};
 
@@ -5035,6 +5051,22 @@ function currentCodex(p) {
 }
 
 /* ---------------- 推荐战力 ---------------- */
+/* ---------------- 金币安全化 ---------------- */
+/* 任何地方把金币弄成 NaN / 字符串 / 数组时，这里兜底修正 */
+function ensureGold(p) {
+  if (!p) return 0;
+  const v = p.gold;
+  if (typeof v === 'number' && isFinite(v)) { p.gold = Math.max(0, Math.round(v)); return p.gold; }
+  let n = Number(v);
+  if (!isFinite(n)) {
+    // 例如 "123,45" / "[object Object]" 这类脏数据，取前导数字
+    const m = String(v == null ? '' : v).match(/-?\d+/);
+    n = m ? Number(m[0]) : 0;
+  }
+  p.gold = Math.max(0, Math.round(isFinite(n) ? n : 0));
+  return p.gold;
+}
+
 /* ---------------- 坐骑 / 宠物 ---------------- */
 function mountEnsure(p) {
   if (!p.mounts) p.mounts = { owned: [], active: null };
@@ -5247,6 +5279,7 @@ function syncActiveChar() {
 
 function saveGame() {
   if (!G.player) return;
+  if (typeof ensureGold === 'function') ensureGold(G.player);
   try {
     syncActiveChar();
     localStorage.setItem(SAVE_KEY, JSON.stringify({
@@ -6337,7 +6370,7 @@ function pickupDrop(d) {
   const p = G.player;
   d.taken = true;
   if (d.type === 'gold') {
-    p.gold += d.gold;
+    p.gold += (Number(d.gold) || 0);
     floatText(d.x, d.y - 10, `+${d.gold} 金`, '#ffd24a', 15);
   } else if (d.type === 'item') {
     // 自动出售低战力武器
@@ -7990,7 +8023,7 @@ function updateHUD(dt) {
   $('pStats').innerHTML =
     `攻击 <b>${Math.round(p.stats.power)}</b>　攻速 <b>${p.stats.as.toFixed(2)}</b>　` +
     `暴击 <b>${(p.stats.crit*100).toFixed(0)}%</b>　护甲 <b>${Math.round(p.stats.armor)}</b>`;
-  $('goldVal').textContent = fmt(p.gold);
+  $('goldVal').textContent = fmt(typeof ensureGold === 'function' ? ensureGold(p) : (Number(p.gold) || 0));
   $('cpVal').textContent = fmt(combatPower(p));
 
   const gt = gearTier(p);
@@ -8536,6 +8569,21 @@ function bagHtml() {
 
   // ---- 材料背包页 ----
   if (page === 2) {
+    const gold = (typeof ensureGold === 'function') ? ensureGold(p) : (Number(p.gold) || 0);
+    html += `<div class="mat-gold-row">
+      <div class="mg-card">
+        <i class="mg-ic">金</i>
+        <div class="mg-main"><div class="mg-name">金币</div>
+          <div class="mg-sub">全部货币 · 打怪 / 任务 / 每日副本产出</div></div>
+        <div class="mg-val">${fmt(gold)}</div>
+      </div>
+      <div class="mg-card">
+        <i class="mg-ic tok">⬢</i>
+        <div class="mg-main"><div class="mg-name">BOSS击杀凭证</div>
+          <div class="mg-sub">抽奖转盘消耗品</div></div>
+        <div class="mg-val">${fmt((p.materials && p.materials.bossToken) || 0)}</div>
+      </div>
+    </div>`;
     html += '<div class="bag-grid bag-grid-8 mat-page">';
     html += matPageHtml();
     html += '</div>';

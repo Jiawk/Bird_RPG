@@ -311,7 +311,7 @@ function updateHUD(dt) {
   $('pStats').innerHTML =
     `攻击 <b>${Math.round(p.stats.power)}</b>　攻速 <b>${p.stats.as.toFixed(2)}</b>　` +
     `暴击 <b>${(p.stats.crit*100).toFixed(0)}%</b>　护甲 <b>${Math.round(p.stats.armor)}</b>`;
-  $('goldVal').textContent = fmt(p.gold);
+  $('goldVal').textContent = fmt(typeof ensureGold === 'function' ? ensureGold(p) : (Number(p.gold) || 0));
   $('cpVal').textContent = fmt(combatPower(p));
 
   const gt = gearTier(p);
@@ -857,6 +857,21 @@ function bagHtml() {
 
   // ---- 材料背包页 ----
   if (page === 2) {
+    const gold = (typeof ensureGold === 'function') ? ensureGold(p) : (Number(p.gold) || 0);
+    html += `<div class="mat-gold-row">
+      <div class="mg-card">
+        <i class="mg-ic">金</i>
+        <div class="mg-main"><div class="mg-name">金币</div>
+          <div class="mg-sub">全部货币 · 打怪 / 任务 / 每日副本产出</div></div>
+        <div class="mg-val">${fmt(gold)}</div>
+      </div>
+      <div class="mg-card">
+        <i class="mg-ic tok">⬢</i>
+        <div class="mg-main"><div class="mg-name">BOSS击杀凭证</div>
+          <div class="mg-sub">抽奖转盘消耗品</div></div>
+        <div class="mg-val">${fmt((p.materials && p.materials.bossToken) || 0)}</div>
+      </div>
+    </div>`;
     html += '<div class="bag-grid bag-grid-8 mat-page">';
     html += matPageHtml();
     html += '</div>';

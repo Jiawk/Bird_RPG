@@ -541,7 +541,7 @@ function pickupDrop(d) {
   const p = G.player;
   d.taken = true;
   if (d.type === 'gold') {
-    p.gold += d.gold;
+    p.gold += (Number(d.gold) || 0);
     floatText(d.x, d.y - 10, `+${d.gold} 金`, '#ffd24a', 15);
   } else if (d.type === 'item') {
     // 自动出售低战力武器

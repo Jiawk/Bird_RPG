@@ -51,7 +51,7 @@ function mailClaimOne(p, m, silent) {
   if (!m || m.claimed) return 0;
   let n = 0;
   (m.items || []).forEach(it => {
-    if (it.type === 'gold') { p.gold += it.amount; n++; }
+    if (it.type === 'gold') { p.gold += (Number(it.amount) || 0); n++; }
     else if (it.type === 'mat') {
       p.materials[it.key] = (p.materials[it.key] || 0) + it.amount; n++;
     } else if (it.type === 'item' && it.item) {

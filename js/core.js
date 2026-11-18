@@ -82,6 +82,7 @@ function createPlayer(raceKey, clsKey) {
 
 /* ---------------- 属性计算 ---------------- */
 function recalcStats(p) {
+  if (typeof ensureGold === 'function') ensureGold(p);
   const cls = DATA.CLASSES[p.cls], race = DATA.RACES[p.race];
   const bonus = race.extra || {};
 
@@ -1272,6 +1273,22 @@ function currentCodex(p) {
 }
 
 /* ---------------- 推荐战力 ---------------- */
+/* ---------------- 金币安全化 ---------------- */
+/* 任何地方把金币弄成 NaN / 字符串 / 数组时，这里兜底修正 */
+function ensureGold(p) {
+  if (!p) return 0;
+  const v = p.gold;
+  if (typeof v === 'number' && isFinite(v)) { p.gold = Math.max(0, Math.round(v)); return p.gold; }
+  let n = Number(v);
+  if (!isFinite(n)) {
+    // 例如 "123,45" / "[object Object]" 这类脏数据，取前导数字
+    const m = String(v == null ? '' : v).match(/-?\d+/);
+    n = m ? Number(m[0]) : 0;
+  }
+  p.gold = Math.max(0, Math.round(isFinite(n) ? n : 0));
+  return p.gold;
+}
+
 /* ---------------- 坐骑 / 宠物 ---------------- */
 function mountEnsure(p) {
   if (!p.mounts) p.mounts = { owned: [], active: null };
@@ -1484,6 +1501,7 @@ function syncActiveChar() {
 
 function saveGame() {
   if (!G.player) return;
+  if (typeof ensureGold === 'function') ensureGold(G.player);
   try {
     syncActiveChar();
     localStorage.setItem(SAVE_KEY, JSON.stringify({

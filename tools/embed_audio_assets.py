@@ -17,7 +17,7 @@ MANIFEST = (
     ("attack", "游戏素材/铃声/1音效2/mixkit-fast-sword-whoosh-2792-普通攻击音效.wav", "assets/sfx/attack.m4a"),
     ("hit", "游戏素材/铃声/1音效2/mixkit-impact-of-a-strong-punch-2155-打击1声.mp3", "assets/sfx/hit.m4a"),
     ("crit", "游戏素材/铃声/1音效2/mixkit-strong-punches-to-the-body-2198-打击3声.wav", "assets/sfx/crit.m4a"),
-    ("click", "游戏素材/铃声/1音效2/mixkit-page-back-chime-1108-点击咚声.wav", "assets/sfx/click.m4a"),
+    ("mount", "游戏素材/铃声/1音效2/mixkit-wild-lion-animal-roar-6-狮子叫声-装备坐骑使用.wav", "assets/sfx/mount.m4a"),
     ("confirm", "游戏素材/铃声/1音效2/mixkit-page-forward-single-chime-1107-点击成功.wav", "assets/sfx/confirm.m4a"),
     ("page", "游戏素材/铃声/1音效2/mixkit-page-turn-single-1104-翻书一声.wav", "assets/sfx/page.m4a"),
     ("openBig", "游戏素材/铃声/1音效2/mixkit-single-book-paging-1101-翻书2声.wav", "assets/sfx/openBig.m4a"),

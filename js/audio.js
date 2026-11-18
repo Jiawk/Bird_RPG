@@ -12,6 +12,7 @@ const Sfx = {
   _buffers: {},
   _diagnostics: {},
   _lastHit: 0,
+  _lastAttack: 0,
   _alias: Object.freeze({
     open: 'openBig', close: 'page', level: 'confirm', lvlup: 'confirm',
     loot: 'confirm', kill: 'hit', enterB: 'enterFallback', death: 'playerDie', boss: 'enter'
@@ -125,6 +126,11 @@ const Sfx = {
   },
   play(requestedKey, gain) {
     const key = this._key(requestedKey);
+    if (key === 'attack') {
+      const now = Date.now();
+      if (now - this._lastAttack < 3000) return;
+      this._lastAttack = now;
+    }
     if (!this._asset(key)) { this._record(key, 'unavailable', 'unknown audio key'); return; }
     if (!this.on) { this._record(key, 'disabled-by-preference'); return; }
     const volume = Math.min(1, Math.max(0.08, (gain === undefined ? 0.85 : gain) * this.vol * 1.6));

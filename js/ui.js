@@ -123,7 +123,6 @@ function uiInit() {
     qt.addEventListener('click', e => {
       if (e.target.closest('[data-qt-open]')) {
         e.stopPropagation();
-        if (typeof Sfx !== 'undefined') Sfx.play('click');
         handleCommand('quest');
         return;
       }
@@ -597,7 +596,6 @@ function openModal(key, title, html) {
   });
 }
 function closeModal() {
-  if (typeof Sfx !== 'undefined') Sfx.play('close');
   $('modal').classList.add('hidden');
   MODAL_KEY = null;
   hideTooltip();
@@ -1887,7 +1885,7 @@ function loreNext() {
   const sc = DATA.LORE_SCENES[st.key];
   if (st.i >= sc.lines.length - 1) { G._lore = null; renderLore(); return; }
   st.i++;
-  if (typeof Sfx !== 'undefined') Sfx.play('click');
+  if (typeof Sfx !== 'undefined') 
   renderLore();
 }
 
@@ -3347,7 +3345,6 @@ function bindModal() {
         if (it.ringKey) wearRing(G.player, it);
         else equipItem(G.player, it);
       }
-      Sfx.play('click');
       saveGame();
       openModal('bag', '背包 · 装备', bagHtml());
     };
@@ -3385,7 +3382,7 @@ function bindModal() {
   });
   body.querySelectorAll('[data-ring-pick]').forEach(el => el.onclick = () => {
     const k = el.dataset.ringPick;
-    Sfx.play('click');
+    
     openModal('ringup', '特戒强化 · ' + DATA.SPECIAL_RINGS[k].name, ringStarHtml(k));
   });
   body.querySelectorAll('[data-ring-back]').forEach(el => el.onclick = () => {
@@ -3498,7 +3495,6 @@ function bindModal() {
   }
   body.querySelectorAll('[data-relic]').forEach(el => el.onclick = () => {
     G._relicSel = (G._relicSel === el.dataset.relic) ? null : el.dataset.relic;
-    if (typeof Sfx !== 'undefined') Sfx.play('click');
     openModal('merchant', '商人 · 赵帅帅', merchantHtml());
   });
   body.querySelectorAll('[data-relic-cancel]').forEach(el => el.onclick = () => {
@@ -3578,7 +3574,6 @@ function bindModal() {
   /* ---- 角色面板：特戒 / 传家宝 切换 ---- */
   body.querySelectorAll('[data-char-tab]').forEach(b => b.onclick = () => {
     G._charTab = b.dataset.charTab;
-    if (typeof Sfx !== 'undefined') Sfx.play('click');
     openModal('char', '角色', charHtml());
   });
   body.querySelectorAll('[data-hlt-open]').forEach(b => b.onclick = () => {
@@ -3615,7 +3610,6 @@ function bindModal() {
     if (!r) return;
     if (!p.unlocked.includes(rid)) { toast(`【${r.name}】尚未解锁，先通关前面的副本`); return; }
     if (p.level < (r.lv || 1)) { toast(`等级不足：进入【${r.name}】需要 Lv.${r.lv}`); return; }
-    if (typeof Sfx !== 'undefined') Sfx.play('click');
     openModal('map', `导航 · ${r.name}`, diffPickHtml(rid));
   });
   body.querySelectorAll('[data-tut-open]').forEach(b => b.onclick = () => {
@@ -3689,7 +3683,7 @@ function bindModal() {
     const r = redeemMountCode(G.player, inp ? inp.value : '');
     if (!r.ok) { toast(r.msg); return; }
     recalcStats(G.player); saveGame();
-    if (typeof Sfx !== 'undefined') Sfx.play('loot');
+    if (r.isNew && typeof Sfx !== 'undefined') Sfx.play('mount');
     toast(r.isNew ? `🐎 获得坐骑【${r.name}】，已自动骑乘` : `【${r.name}】已拥有，兑换码已使用`);
     if (r.isNew && typeof bigAnnounce === 'function') bigAnnounce('🐎 获得坐骑 · ' + r.name, '#ffd24a');
     openModal('mount', '坐骑 · 驯兽师', mountHtml());
@@ -3703,13 +3697,14 @@ function bindModal() {
     p.gold -= tier.price;
     ms.owned.push(k); ms.active = k;
     recalcStats(p); saveGame();
-    if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
+    if (typeof Sfx !== 'undefined') Sfx.play('mount');
     toast(`🐎 获得坐骑【${m.name}】，已自动乘骑`);
     openModal('mount', '坐骑 · 驯兽师', mountHtml());
   });
   body.querySelectorAll('[data-mount-use]').forEach(b => b.onclick = () => {
     mountEnsure(G.player).active = b.dataset.mountUse;
     recalcStats(G.player); saveGame();
+    if (typeof Sfx !== 'undefined') Sfx.play('mount');
     openModal('mount', '坐骑 · 驯兽师', mountHtml());
   });
   body.querySelectorAll('[data-mount-off]').forEach(b => b.onclick = () => {
@@ -4044,7 +4039,7 @@ function bindModal() {
   body.querySelectorAll('[data-act="salvageMythic"]').forEach(b => b.onclick = () => handleCommand('salvageMythic'));
   body.querySelectorAll('[data-act="sortBag"]').forEach(b => b.onclick = () => {
     const n = sortBag(G.player);
-    Sfx.play('click');
+    
     toast(`已整理 ${n} 件物品（按类型 + 战力降序）`);
     saveGame();
     openModal('bag', '背包 · 装备', bagHtml());
@@ -4239,15 +4234,7 @@ function bindSfxUI() {
   if (window._sfxBound) return;
   window._sfxBound = true;
 
-  // 任何按钮/格子/条目的点击都发一声
-  document.addEventListener('pointerdown', e => {
-    const t = e.target;
-    if (!t || !t.closest) return;
-    if (t.closest('#soundToggle')) return;
-    if (t.closest('button, .cc-btn, .bag-cell, .codex-btn, .eq-slot, .npc-row, .tab, .cc-tab')) {
-      Sfx.play('click');
-    }
-  }, true);
+
 
   const btn = $('soundToggle');
   if (btn) {
@@ -4264,7 +4251,7 @@ function bindSfxUI() {
       G.soundOn = !(G.soundOn === true);
       Sfx.setOn(G.soundOn);
       sync();
-      if (G.soundOn) { Sfx.resume(); Sfx.play('open'); }
+      if (G.soundOn) Sfx.resume();
       saveGame();
     };
     // 音效自检按钮（排查设备兼容）

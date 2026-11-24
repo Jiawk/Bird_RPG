@@ -1,0 +1,52 @@
+{
+  "attack_daoguang1": {
+    "desc": "刀光·青绿（战士/刺客普攻）",
+    "frames": 9,
+    "fps": 30,
+    "cw": 180,
+    "ch": 151,
+    "dur": 0.267,
+    "file": "assets/spinefx/attack_daoguang1/sheet.webp",
+    "bytes": 40826
+  },
+  "attack_daoguang2": {
+    "desc": "刀光·橙金（战士/刺客重击）",
+    "frames": 10,
+    "fps": 30,
+    "cw": 180,
+    "ch": 157,
+    "dur": 0.3,
+    "file": "assets/spinefx/attack_daoguang2/sheet.webp",
+    "bytes": 35124
+  },
+  "base_fly_fire": {
+    "desc": "火球（法师普攻）",
+    "frames": 9,
+    "fps": 30,
+    "cw": 180,
+    "ch": 84,
+    "dur": 0.267,
+    "file": "assets/spinefx/base_fly_fire/sheet.webp",
+    "bytes": 31746
+  },
+  "base_fly_arrow": {
+    "desc": "箭矢（弓箭手普攻）",
+    "frames": 7,
+    "fps": 30,
+    "cw": 180,
+    "ch": 60,
+    "dur": 0.2,
+    "file": "assets/spinefx/base_fly_arrow/sheet.webp",
+    "bytes": 27568
+  },
+  "criticalhiteffect": {
+    "desc": "暴击星爆",
+    "frames": 9,
+    "fps": 30,
+    "cw": 176,
+    "ch": 180,
+    "dur": 0.267,
+    "file": "assets/spinefx/criticalhiteffect/sheet.webp",
+    "bytes": 58192
+  }
+}

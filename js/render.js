@@ -1435,7 +1435,7 @@ function drawVignette() {
 function drawPortrait(p) {
   const W = PRT.width, H = PRT.height;
   PRX.clearRect(0, 0, W, H);
-  const cls = DATA.CLASSES[p.cls], race = DATA.RACES[p.race];
+  const cls = DATA.CLASSES[p.cls];
   const col = cls.color;
 
   // 背景
@@ -1446,46 +1446,24 @@ function drawPortrait(p) {
   PRX.fillStyle = g;
   PRX.fillRect(0, 0, W, H);
 
-  const ri = DATA.RACE_AVATAR[p.race], ci = DATA.CLASS_AVATAR[p.cls];
-
-  if (imgReady('avatars') && ri !== undefined) {
-    // 种族头像铺满
+  // 头像只展示「职业」：高清图集优先，其余用 CLASS_AVATAR
+  const hi = (DATA.AVATAR_HD && DATA.AVATAR_HD[p.cls] !== undefined) ? DATA.AVATAR_HD[p.cls] : null;
+  if (hi !== null && imgReady('avatarsHd')) {
     PRX.imageSmoothingEnabled = true;
-    PRX.drawImage(IMG.avatars, ri * 64, 0, 64, 64, 0, 0, W, H);
-
-    // 右下角职业头像小徽章
-    if (ci !== undefined) {
-      const bs = 34, bx = W - bs - 2, by = H - bs - 2;
-      PRX.save();
-      PRX.beginPath(); PRX.arc(bx + bs / 2, by + bs / 2, bs / 2, 0, 6.283); PRX.clip();
-      PRX.drawImage(IMG.avatars, ci * 64, 0, 64, 64, bx, by, bs, bs);
-      PRX.restore();
-      PRX.strokeStyle = '#ffd24a'; PRX.lineWidth = 2;
-      PRX.beginPath(); PRX.arc(bx + bs / 2, by + bs / 2, bs / 2, 0, 6.283); PRX.stroke();
-    }
+    PRX.drawImage(IMG.avatarsHd, hi * 128, 0, 128, 128, 0, 0, W, H);
+  } else if (imgReady('avatars') && DATA.CLASS_AVATAR[p.cls] !== undefined) {
+    PRX.imageSmoothingEnabled = true;
+    PRX.drawImage(IMG.avatars, DATA.CLASS_AVATAR[p.cls] * 64, 0, 64, 64, 0, 0, W, H);
   } else if (imgReady('units') && ['warrior','mage','archer','assassin'].indexOf(p.cls) >= 0) {
     const k = ['warrior','mage','archer','assassin'].indexOf(p.cls);
     const scale = Math.max(W / 32, H / 34) * 1.02;
     PRX.imageSmoothingEnabled = false;
-    PRX.drawImage(IMG.units, k * 128, 0, 32, 34, (W - 32 * scale) / 2, (H - 34 * scale) * 0.62, 32 * scale, 34 * scale);
+    PRX.drawImage(IMG.units, k * 128, 0, 32, 48,
+      (W - 32 * scale) / 2, (H - 48 * scale) / 2, 32 * scale, 48 * scale);
+  } else {
+    PRX.fillStyle = col;
+    PRX.beginPath(); PRX.arc(W / 2, H / 2, W * 0.34, 0, 6.283); PRX.fill();
   }
-
-  // 底部压暗 + 名字
-  const vg = PRX.createLinearGradient(0, H * 0.5, 0, H);
-  vg.addColorStop(0, 'rgba(0,0,0,0)');
-  vg.addColorStop(1, 'rgba(0,0,0,.78)');
-  PRX.fillStyle = vg;
-  PRX.fillRect(0, H * 0.5, W, H * 0.5);
-
-  PRX.font = '700 11px "KaiTi",serif';
-  PRX.textAlign = 'center';
-  PRX.lineWidth = 3; PRX.strokeStyle = 'rgba(0,0,0,.9)';
-  PRX.strokeText(race.name, W / 2, H - 5);
-  PRX.fillStyle = '#ffe6a8';
-  PRX.fillText(race.name, W / 2, H - 5);
-
-  PRX.strokeStyle = col; PRX.lineWidth = 2;
-  PRX.strokeRect(1, 1, W - 2, H - 2);
 }
 
 

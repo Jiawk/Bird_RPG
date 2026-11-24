@@ -2156,3 +2156,10 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   border-color:#4a4436;color:#8f8570;font-size:15px;padding:10px 0}
 .big-btn.ghost:hover{border-color:#8a6d3f;color:#c9bfa6}
 @media (max-width:700px){ .big-btn.ghost{font-size:13px;padding:8px 0} }
+
+/* 高清职业头像（剑圣 / 恶魔猎手）：2 格 128px 图集 */
+.cls-portrait .av-img.big.hd{background-image:var(--avatar-hd-sheet);
+  width:140px;height:140px;
+  background-size:280px 140px;
+  background-position:calc(var(--hi,0) * -140px) 0;
+  border-radius:2px}

@@ -991,6 +991,8 @@ DATA.SKILL_COLOR = {
 /* 魔兽头像图集索引（avatars.png 12 格） */
 DATA.RACE_AVATAR  = { human:0, orc:1, undead:2, elf:3 };
 DATA.CLASS_AVATAR = { warrior:4, mage:5, archer:6, assassin:7 };
+/* 高清职业头像（avatarsHd 图集）：0=剑圣 1=恶魔猎手，未列出的职业用 CLASS_AVATAR */
+DATA.AVATAR_HD = { warrior:0, assassin:1 };
 
 DATA.MAX_LEVEL = 60;
 /* 经验曲线：1~25 级沿用原版 100×lv^1.5；26 级起每级 ×2.4（25 级之后非常慢） */

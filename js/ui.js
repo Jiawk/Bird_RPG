@@ -61,11 +61,7 @@ function buildCreateScreen() {
     const r = DATA.RACES[k];
     const el = document.createElement('div');
     el.className = 'card' + (k === SEL.race ? ' sel' : '');
-    const rai = DATA.RACE_AVATAR[k] !== undefined ? DATA.RACE_AVATAR[k] : 0;
-    el.innerHTML = `<div class="race-portrait" style="--ai:${rai}">
-        <span class="av-img"></span>
-      </div>
-      <h3 style="color:${r.color}">${r.name}</h3>
+    el.innerHTML = `<h3 style="color:${r.color}">${r.name}</h3>
       <p>${r.desc}</p>
       <div><span class="tag">力 ${fmtMod(r.mod.str)}</span><span class="tag">敏 ${fmtMod(r.mod.agi)}</span>
       <span class="tag">智 ${fmtMod(r.mod.int)}</span><span class="tag">体 ${fmtMod(r.mod.vit)}</span></div>
@@ -84,8 +80,8 @@ function buildCreateScreen() {
     const km = c.keymap;
     const ci = Object.keys(DATA.CLASSES).indexOf(k);
     el.innerHTML = `
-      <div class="cls-portrait" style="--ai:${DATA.CLASS_AVATAR[k] !== undefined ? DATA.CLASS_AVATAR[k] : 0}">
-        <span class="av-img big"></span>
+      <div class="cls-portrait" style="--ai:${DATA.CLASS_AVATAR[k] !== undefined ? DATA.CLASS_AVATAR[k] : 0}${DATA.AVATAR_HD && DATA.AVATAR_HD[k] !== undefined ? ';--hi:' + DATA.AVATAR_HD[k] : ''}">
+        <span class="av-img big${DATA.AVATAR_HD && DATA.AVATAR_HD[k] !== undefined ? ' hd' : ''}"></span>
         <span class="cls-badge" style="background-position:${-ci * 64}px 0"></span>
         <span class="cls-name-plate">${c.name}</span>
       </div>
@@ -116,6 +112,7 @@ function uiInit() {
   if (ASSETS.pets) document.documentElement.style.setProperty('--pet-sheet', `url(${ASSETS.pets})`);
   if (ASSETS.mounts) document.documentElement.style.setProperty('--mount-sheet', `url(${ASSETS.mounts})`);
   if (ASSETS.avatars) document.documentElement.style.setProperty('--avatar-sheet', `url(${ASSETS.avatars})`);
+  if (ASSETS.avatarsHd) document.documentElement.style.setProperty('--avatar-hd-sheet', `url(${ASSETS.avatarsHd})`);
   bindSkillTips();
   // 任务追踪：事件委托（内容重建后依然可点）
   const qt = $('questTracker');

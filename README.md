@@ -3543,3 +3543,33 @@ else { ...解析失败 → 用 goldBackup 兜底... }
 技能面板正确显示「剑圣风暴 / 恶魔变身」及描述 ✅
 包体 3.0M → 3.7M（+755KB 特效）
 ```
+
+### v206 · 修复大招 R 空白 / 无法释放 + 新技能图标
+**现象**：技能栏 R 是空的，按 R 没有任何效果。
+
+**根因**（旧存档兼容问题）
+- `p.keymap` 是**建号时写进存档**的：`{q,w,e,r,d}` → `r:'vanish'`
+- v205 把 `vanish` 换成了 `metamorphosis`，但老角色的 `keymap.r` 仍指向已删除的技能
+- HUD 里 `DATA.SKILLS['vanish']` = undefined → 名字显示「—」、图标不渲染
+- `castSkillImpl('vanish')` 直接 return → 按 R 无反应
+
+**修复**
+1. 新增 `migrateSkills(p)`（`core.js`）
+   - 技能改名映射 `{ vanish:'metamorphosis', execute:'bladestorm' }`
+   - 旧技能**等级转移**到新技能
+   - 删除所有已不存在的技能记录
+   - `active` 快捷栏数组同步替换
+   - **keymap 一律以 `DATA.CLASSES[cls].keymap` 为准**（彻底修掉旧存档脏数据）
+   - 在 `loadGame()` 与 `switchChar()` 都调用
+2. **新增两个技能图标**（原图集 28 格，索引 24 是深色隐身图，不适合变身）
+   - 图集扩到 **30 格**：28 = `Ability_Warrior_Bladestorm`，29 = `Spell_Shadow_Metamorphosis`
+   - `SKILL_ICON_COUNT` 28 → 30
+   - `bladestorm` → 28，`metamorphosis` → 29
+
+**验证**
+```
+旧存档（keymap.r='vanish', skills.vanish=4）
+  → migrateSkills 后 keymap.r='metamorphosis'、skills.metamorphosis=4 ✅
+按 R → CD 179.9s 开始倒计时（技能成功释放）✅
+刺客 R 显示恶魔变身图标 ✅  战士 R 显示剑刃风暴图标 ✅
+```

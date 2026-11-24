@@ -1536,6 +1536,39 @@ function saveGame() {
 }
 
 /* 切换角色 */
+/* ---------------- 技能表迁移 ---------------- */
+/* 技能被改名/替换后，把旧存档里的等级、快捷栏、keymap 迁移到新技能 */
+const SKILL_RENAMES = { vanish: 'metamorphosis', execute: 'bladestorm' };
+
+function migrateSkills(p) {
+  if (!p || !p.cls || !DATA.CLASSES[p.cls]) return;
+  p.skills = p.skills || {};
+  // 1) 技能等级转移
+  for (const oldK in SKILL_RENAMES) {
+    const newK = SKILL_RENAMES[oldK];
+    if (!DATA.SKILLS[newK]) continue;
+    if (p.skills[oldK] !== undefined) {
+      p.skills[newK] = Math.max(p.skills[newK] || 0, p.skills[oldK]);
+      delete p.skills[oldK];
+    }
+    // 清理已不存在的技能
+  }
+  // 2) 删除所有已不存在的技能等级
+  for (const k in p.skills) {
+    if (!DATA.SKILLS[k]) delete p.skills[k];
+  }
+  // 3) 快捷栏数组迁移
+  if (Array.isArray(p.active)) {
+    p.active = p.active.map(k => SKILL_RENAMES[k] || k).filter(k => DATA.SKILLS[k]);
+  }
+  // 4) keymap 一律以职业定义为准（修复旧存档指向已删除技能）
+  const km = DATA.CLASSES[p.cls].keymap;
+  if (km) {
+    p.keymap = { q: km.q, w: km.w, e: km.e, r: km.r, d: km.d };
+    p.dash = km.d;
+  }
+}
+
 function switchChar(idx) {
   if (!Array.isArray(G.chars) || !G.chars[idx]) return false;
   if (idx === G.active) return false;
@@ -1543,6 +1576,7 @@ function switchChar(idx) {
   G.active = idx;
   G.player = G.chars[idx];
   migrateItemSlots(G.player);
+  if (typeof migrateSkills === 'function') migrateSkills(G.player);
   recalcStats(G.player);
   return true;
 }
@@ -1604,6 +1638,8 @@ function loadGame() {
     G.player.active = [km.q, km.w, km.e, km.r];
     G.player.dash = km.d;
   }
+  // 技能改版迁移（vanish→metamorphosis / execute→bladestorm）
+  if (typeof migrateSkills === 'function') migrateSkills(G.player);
   G.player.kills = G.player.kills || 0;
   G.player.materials = G.player.materials || { iron:0, mithril:0, scale:0, shard:0 };
   // 旧存档迁移：单个 quest → 数组

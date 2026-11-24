@@ -37,6 +37,10 @@ function damageMonster(m, amount, type, isDot) {
   m.hitFlash = 0.12;
 
   if (!isDot && type !== 'skill' && crit && typeof Sfx !== 'undefined') Sfx.play('crit');
+  // 暴击星爆特效
+  if (!isDot && crit && typeof spawnSpriteFx === 'function') {
+    spawnSpriteFx('criticalhiteffect', m.x, m.y, { scale: 0.72, oy: 24 });
+  }
 
   if (!isDot) {
     floatText(m.x, m.y - m.r - 6,
@@ -170,7 +174,17 @@ function playerAttack() {
     }
   } else if (target) {
     // 近战：直接判定
-    if (p.cls === 'warrior' || p.cls === 'assassin') p.swingT = 0.26;   // 挥砍动作
+    const isMelee = (p.cls === 'warrior' || p.cls === 'assassin');
+    if (isMelee) p.swingT = 0.26;   // 挥砍动作
+    // 刀光：战士用橙金、刺客用青绿
+    if (isMelee) {
+      const fxKey = (p.cls === 'assassin') ? 'attack_daoguang1' : 'attack_daoguang2';
+      spawnSpriteFx(fxKey, target.x, target.y, {
+        scale: 0.85,
+        rot: Math.atan2(target.y - p.y, target.x - p.x) + Math.PI / 2,
+        oy: 22
+      });
+    }
     damageMonster(target, p.stats.power * (1 + ((typeof hltDyn === 'function') ? hltDyn(p).atkPct : 0)), 'melee');
     burst(target.x, target.y, '#ffd24a', 5, 120);
   }
@@ -206,6 +220,22 @@ function spawnVfx(x, y, color, radius, kind, life, skill) {
     fx: FX_OF[kind] !== undefined ? FX_OF[kind] : 0,
     t: 0, life: life || 0.55,
     seed: Math.random() * 6.283
+  });
+}
+
+/* 生成一个 SPINE 精灵表特效实例 */
+function spawnSpriteFx(key, x, y, opt) {
+  const w = G.world; if (!w) return;
+  if (!w.vfx) w.vfx = [];
+  const m = (typeof FX_META !== 'undefined') ? FX_META[key] : null;
+  if (!m) return;
+  const o = opt || {};
+  w.vfx.push({
+    kind: 'sprite', key, x, y,
+    scale: o.scale === undefined ? 1 : o.scale,
+    rot: o.rot || 0,
+    oy: o.oy || 18,
+    t: 0, life: m.frames / m.fps
   });
 }
 

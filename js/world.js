@@ -34,6 +34,7 @@ function enterRoom(roomId) {
   G.world = {
     roomId, isTown, W, H,
     monsters: [], projectiles: [], drops: [], traps: [], npcs: [],
+    vfx: [],
     bossAlive: false, bossRespawnAt: 0,
     spawnTimer: 0,
     floats: [],   // 飘字

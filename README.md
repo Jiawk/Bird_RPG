@@ -3441,3 +3441,42 @@ else { ...解析失败 → 用 goldBackup 兜底... }
    - 避免玩家一直跑到旧版本
 
 **体积**：包体 2.70M（本次无新增素材）
+
+### v203 · 接入 5 个 SPINE 烘焙特效（刀光/火球/箭矢/暴击）
+**背景**：新素材包 `游戏素材/UI技能特效1000个【SPINE格式】`（448 个特效目录 / 908 套 atlas），
+均为 Spine 2.1.27 导出。写了纯 Python 烘焙器把它们转成精灵表，避开引入 Spine 运行时。
+
+**新增**
+1. `tools/bake_spine.py`（380 行，仅 Pillow）
+   - 解析 `.atlas` + `skeleton.json`
+   - 逐帧采样 bones(translate/rotate/scale) + slots(attachment 显隐)
+   - 世界矩阵递归 → 仿射合成 → 统一包围盒裁剪
+   - 支持 `--fps/--scale/--max/--webp`
+   - **实测 400 个 json 全部是 region 附件（零 mesh）**，覆盖率高
+2. `assets/spinefx/`：5 个精灵表 + manifest（189KB → 内嵌后 ~252KB）
+   | 特效 | 帧 | 尺寸 | 体积 |
+   |---|---:|---|---:|
+   | attack_daoguang1 青绿刀光 | 9 | 180×151 | 39.9KB |
+   | attack_daoguang2 橙金刀光 | 10 | 180×157 | 34.3KB |
+   | base_fly_fire 火球 | 9 | 180×84 | 31.0KB |
+   | base_fly_arrow 箭矢 | 7 | 180×60 | 26.9KB |
+   | criticalhiteffect 暴击星爆 | 9 | 176×180 | 56.8KB |
+
+**接入**
+- `assets.js`：`FX_META` + `FX_SHEETS`（5 个 data:image/webp），`loadAssets()` 一并加载为 `IMG['fx_*']`
+- `render.js`
+  - `fxReady(key)` / `drawFxSprite(key, cx, cy, {scale, rot, t, loop, alpha, flipX})`
+  - `drawProjectile`：火球/箭矢**优先用精灵表**（未就绪时回退原程序化绘制）
+  - `drawVfx`：支持 `kind:'sprite'`，直接绘制后跳过手绘
+- `combat.js`
+  - `spawnSpriteFx(key, x, y, {scale, rot, oy})`：生成精灵表特效实例
+  - 近战普攻 → 战士播 `attack_daoguang2`（橙金）、刺客播 `attack_daoguang1`（青绿），按目标方向旋转
+  - 暴击 → 目标位置播 `criticalhiteffect`
+- `world.js`：`enterRoom` 初始化 `vfx: []`
+
+**验证**
+- Node 单测：`fxReady` 5/5、`drawFxSprite` 源矩形裁切正确（t=0.1→frame3 sx=540；t=0.2→frame6 sx=1056）
+- 打包后浏览器实测：`FX_META=object | sheets=5 | ready=5/5`
+- 游戏内实拍：5 个特效同屏渲染正常（位置/旋转/缩放/透明度均正确）
+- 包体 2.7M → **3.0M**（+252KB）
+

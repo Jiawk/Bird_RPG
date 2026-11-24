@@ -702,11 +702,61 @@ function drawTrap(t) {
   CTX.setLineDash([]);
 }
 
+
+/* ---------------- SPINE 烘焙特效（精灵表） ---------------- */
+function fxReady(key) {
+  const im = IMG['fx_' + key];
+  return im && im.complete && im.naturalWidth > 0 && FX_META[key];
+}
+/* 逐帧播放：loop=true 时循环，否则播完停在最后一帧 */
+function drawFxSprite(key, cx, cy, opt) {
+  if (!fxReady(key)) return false;
+  const m = FX_META[key], im = IMG['fx_' + key];
+  const o = opt || {};
+  const scale = o.scale === undefined ? 1 : o.scale;
+  const rot = o.rot || 0;
+  const alpha = o.alpha === undefined ? 1 : o.alpha;
+  const startT = o.t === undefined ? G.time : o.t;
+  let idx;
+  if (o.loop) {
+    idx = Math.floor(startT * m.fps) % m.frames;
+  } else {
+    idx = Math.min(m.frames - 1, Math.floor(startT * m.fps));
+  }
+  const w = m.cw * scale, h = m.ch * scale;
+  CTX.save();
+  if (alpha !== 1) CTX.globalAlpha = alpha;
+  CTX.translate(cx, cy);
+  if (rot) CTX.rotate(rot);
+  if (o.flipX) CTX.scale(-1, 1);
+  CTX.drawImage(im, idx * m.cw, 0, m.cw, m.ch, -w / 2, -h / 2, w, h);
+  CTX.restore();
+  return true;
+}
+
 function drawProjectile(pr) {
   const x = px(pr.x), y = py(pr.y) - 18;
   const ang = Math.atan2(pr.vy, pr.vx);
 
-  // ---- 火球：纯程序化绘制（有拖尾火焰 + 跳动核心）----
+  // ---- 火球：优先用 SPINE 烘焙精灵表 ----
+  if (pr.shape === 'fireball' && fxReady('base_fly_fire')) {
+    // 先铺一层光晕，再叠精灵表
+    const g0 = CTX.createRadialGradient(x, y, 2, x, y, 26);
+    g0.addColorStop(0, 'rgba(255,170,70,.45)');
+    g0.addColorStop(1, 'rgba(255,60,0,0)');
+    CTX.fillStyle = g0;
+    CTX.beginPath(); CTX.arc(x, y, 26, 0, 6.283); CTX.fill();
+    drawFxSprite('base_fly_fire', x, y, { scale: 0.52, loop: true, rot: ang });
+    return;
+  }
+
+  // ---- 箭矢：优先用 SPINE 烘焙精灵表 ----
+  if (pr.shape === 'arrow' && fxReady('base_fly_arrow')) {
+    drawFxSprite('base_fly_arrow', x, y, { scale: 0.62, loop: true, rot: ang });
+    return;
+  }
+
+  // ---- 火球：程序化绘制（精灵表未就绪时的兜底）----
   if (pr.shape === 'fireball') {
     const t = G.time * 18;
     // 外焰光晕
@@ -875,6 +925,15 @@ function drawVfx(w) {
     const gx = px(e.x), gy = py(e.y);
     const type = fxKindOf(e);
     CTX.save();
+
+    // SPINE 烘焙特效：一旦命中直接绘制并跳过后续手绘
+    if (e.kind === 'sprite' && e.key) {
+      CTX.restore();
+      drawFxSprite(e.key, gx, gy - (e.oy || 0), {
+        scale: e.scale || 1, rot: e.rot || 0, t: e.t, alpha: 1
+      });
+      continue;
+    }
 
     if (drawSkillSignature(e, gx, gy, k, a, type)) { CTX.restore(); continue; }
 

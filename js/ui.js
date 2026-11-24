@@ -220,6 +220,25 @@ function uiInit() {
 
   $('btnNew').addEventListener('click', () => { SEL = { race: 'human', cls: 'warrior' }; showScreen('create'); });
   $('btnContinue').addEventListener('click', () => { if (loadGame()) startGame(); else toast('没有存档'); });
+  const lo = $('btnLogout');
+  if (lo) lo.addEventListener('click', async () => {
+    if (location.protocol === 'file:') { toast('单机版无需退出账号'); return; }
+    if (!confirm('退出当前账号？\n本机存档会保留，下次登录可直接继续。')) return;
+    // 先把当前进度推到云端
+    try { if (typeof window.__cloudPush === 'function') window.__cloudPush(true); } catch (e) {}
+    try {
+      await new Promise(r => {
+        const x = new XMLHttpRequest();
+        x.open('POST', '/api/logout', true);
+        x.onloadend = () => r();
+        x.onerror = () => r();
+        x.send();
+      });
+    } catch (e) {}
+    // 跳回登录页
+    location.href = '/login';
+  });
+
   $('btnImport').addEventListener('click', () => {
     const inp = document.createElement('input');
     inp.type = 'file'; inp.accept = '.json';
@@ -257,9 +276,15 @@ function confirmCreate() {
   }
 
   saveGame();
+  G._noticeFirst = true;          // 必须在 startGame 之前设置：否则 startNewbieGuide 已经排好定时器
   startGame();
   toast(`获得新手装备一套 · 战力 ${combatPower(G.player)}`);
-  openTownMap();
+  // 新角色进游戏先看公告（关闭后再开始新手引导）
+  setTimeout(() => {
+    if (G.screen === 'game' && typeof openModal === 'function') {
+      openModal('notice', '公告牌', noticeHtml());
+    }
+  }, 700);
 }
 
 /* ---------------- 账号级新手引导 ---------------- */
@@ -350,7 +375,17 @@ function finishNewbieGuide(skipped) {
 }
 function startNewbieGuide() {
   if (guideDone()) return;
+  if (G._noticeFirst) return;      // 等公告关闭后再引导（见 notice 关闭回调）
   setTimeout(() => { if (G.screen === 'game' && !guideDone()) renderNewbieGuide(); }, 650);
+}
+
+/* 公告关闭后接着开始新手引导 */
+function resumeGuideAfterNotice() {
+  if (!G._noticeFirst) return;
+  G._noticeFirst = false;
+  setTimeout(() => {
+    if (G.screen === 'game' && !guideDone()) renderNewbieGuide();
+  }, 350);
 }
 function replayNewbieGuide(key) {
   const state = guideState();
@@ -3758,7 +3793,10 @@ function bindModal() {
     G._tutSel = null;
     openModal('tutorial', '新手指引', tutorialHtml());
   });
-  body.querySelectorAll('[data-notice-close]').forEach(b => b.onclick = () => closeModal());
+  body.querySelectorAll('[data-notice-close]').forEach(b => b.onclick = () => {
+    closeModal();
+    if (typeof resumeGuideAfterNotice === 'function') resumeGuideAfterNotice();
+  });
   body.querySelectorAll('[data-mat-close]').forEach(b => b.onclick = () => closeModal());
   body.querySelectorAll('[data-mail-claim-all]').forEach(b => b.onclick = () => {
     const r = mailClaimAll(G.player);

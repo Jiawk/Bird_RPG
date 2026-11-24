@@ -3573,3 +3573,22 @@ else { ...解析失败 → 用 goldBackup 兜底... }
 按 R → CD 179.9s 开始倒计时（技能成功释放）✅
 刺客 R 显示恶魔变身图标 ✅  战士 R 显示剑刃风暴图标 ✅
 ```
+
+### v207 · 标题页退出账号 + 新角色改为弹公告
+1. **标题页新增「退出账号」**（`#btnLogout`）
+   - 样式低调（`.big-btn.ghost`，灰色描边，不抢主按钮）
+   - 点击 → 先把本地进度推到云端 → `POST /api/logout`（清 httpOnly cookie）→ 跳 `/login`
+   - `file://` 单机版下不跳转，只 toast「单机版无需退出账号」
+2. **新角色进游戏不再强弹「选择关卡」**
+   - 原：`confirmCreate()` 末尾直接 `openTownMap()`
+   - 现：改为弹出【公告牌】`openModal('notice', ...)`
+   - 新手引导让位：`G._noticeFirst` 必须在 `startGame()` **之前**设置，
+     否则 `startNewbieGuide()` 已经排好 650ms 定时器，两层面板会叠在一起
+   - 公告关闭时触发 `resumeGuideAfterNotice()`，350ms 后再开始引导
+
+**验证**
+```
+标题页：继续游戏 / 新的征程 / 导入存档 / 退出账号 四个按钮 ✅
+新角色创建 → 只弹【公告牌】，无「选择关卡」、无引导遮挡 ✅
+file:// 下点退出账号 → toast，不跳转 ✅
+```

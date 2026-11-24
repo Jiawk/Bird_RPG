@@ -2150,3 +2150,9 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   border:1px dashed #3a3328;border-radius:3px;margin:2px auto;
   color:#4a4436;font-size:16px;line-height:1;background:rgba(0,0,0,.18)}
 .eq-v.none .eq-nm{color:#6b6558}
+
+/* 标题页：退出账号（低调款） */
+.big-btn.ghost{background:linear-gradient(180deg,rgba(40,34,24,.9),rgba(14,11,7,.95));
+  border-color:#4a4436;color:#8f8570;font-size:15px;padding:10px 0}
+.big-btn.ghost:hover{border-color:#8a6d3f;color:#c9bfa6}
+@media (max-width:700px){ .big-btn.ghost{font-size:13px;padding:8px 0} }

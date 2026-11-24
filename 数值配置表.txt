@@ -907,3 +907,29 @@ MNT-SRN-66AAA  MNT-SRN-79AAA  MNT-SRN-8CA2A  MNT-SRN-9FAAA  MNT-SRN-10JAAA
 - 强化成功率：100/90/85/80/75/70/60/50/40/30/25/20/15/12/10%。
 - 保护券：目标等级消耗改为 ceil(目标等级/2)，成功率倍率 2.0 → 1.5。
 - 任务材料按关卡分层：前期只给铁和秘银，龙鳞从亡灵墓穴任务开始，碎片只由深渊终战任务给出。
+
+========================================================================
+[4.9] 大招改版（v205）
+========================================================================
+一、战士 · 剑圣 R →【剑圣风暴】bladestorm
+   持续 7 秒，范围 200，每秒 300% 普攻伤害（每 0.25s 结算一次，单次 75%）
+   冷却 60 秒，无耗蓝
+   期间：免疫所有伤害 + 免疫控制（p._immune 计时）
+   可移动；每 tick 在玩家周围随机角度生成一柄旋转刀光
+   伤害与范围随技能等级提升（沿用 skillMods 的层数成长）
+
+二、恶魔猎手 R →【恶魔变身】metamorphosis
+   持续 45 秒，冷却 180 秒，耗蓝 30
+   1. 形态：角色放大 1.85 倍、红色染色、黑色魔翼 + 犄角 + 旋转魔纹
+   2. 生命：最大生命 +30%（随技能等级提升），每秒回复 2% 最大生命
+   3. 攻击：射程 600（远程），投射物换成「飞出的刀光」，命中溅射 78 范围 50% 伤害
+   4. 混乱攻击：不衰减（当前怪物无护甲，等价全额伤害）
+   5. 原被动（致命偷袭/影舞/闪避）全部保留
+
+三、技能特效接入（SPINE 精灵表）
+   frostNova / blizzard → daoshi_skill1      arcaneTorrent → impact_dark
+   shieldwall → baohushijian（跟随，持续刷新）battleShout / rapidFire → buff
+   charge / bladestorm → attack_daoguang2    blink / shadowstep / metamorphosis → impact_dark
+   backjump → character_yanwu                backstab → attack_daoguang1
+   poisonBlade → impact_grass                fanOfKnives → impact_light
+   火球命中 impact_fire，箭矢命中 impact_light

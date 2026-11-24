@@ -208,6 +208,8 @@ function updatePlayer(dt) {
   if (p.castAnim > 0) p.castAnim -= dt;
   if (p.swingT > 0) p.swingT -= dt;
 
+  // 剑圣风暴 / 恶魔变身的持续效果（伤害 tick、回血、免疫倒计时）
+  if (typeof updatePlayerBuffs === 'function') updatePlayerBuffs(p, dt);
   for (let i = p.buffs.length - 1; i >= 0; i--) {
     const b = p.buffs[i];
     b.t -= dt;

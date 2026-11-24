@@ -142,11 +142,17 @@ function recalcStats(p) {
   }
 
   // Buff 加成
-  const bf = { dr:0, atkPct:0, asPct:0, invis:0 };
+  const bf = { dr:0, atkPct:0, asPct:0, invis:0, hpPct:0, regen:0, metamorph:false, bladestorm:false };
   for (const b of p.buffs) {
     if (b.dr) bf.dr = Math.max(bf.dr, b.dr);
     if (b.atkPct) bf.atkPct += b.atkPct;
     if (b.asPct) bf.asPct += b.asPct;
+    if (b.metamorph) {
+      bf.metamorph = true;
+      bf.hpPct += (b.hpPct || 0);
+      bf.regen = Math.max(bf.regen, b.regen || 0);
+    }
+    if (b.bladestorm) bf.bladestorm = true;
   }
 
   const isMagic = p.cls === 'mage';
@@ -184,7 +190,7 @@ function recalcStats(p) {
   const AURA = (typeof petAuraStats === 'function') ? petAuraStats(p) : { armor:0, moveSpd:0, as:0, mpRegenFlat:0, hpRegenPct:0, lifesteal:0, rangedAtk:0, thorns:0 };
   p.stats = {
     A,
-    hpMax: Math.floor(baseHp * (1 + pas.hpPct) + eq.hp + (HL.hp || 0)),
+    hpMax: Math.floor((baseHp * (1 + pas.hpPct) + eq.hp + (HL.hp || 0)) * (1 + (bf.hpPct || 0))),
     mpMax: Math.floor(baseMp + eq.mp * MP_EQ_MUL + (HL.mp || 0) * MP_HL_MUL),
     power: (power + (HL.atk || 0) + (isMagic ? (HL.spell || 0) : 0)) * (1 + berserk),
     isMagic,
@@ -225,7 +231,11 @@ function recalcStats(p) {
     gatherRing: RFX.gather,
     killMana: pas.killMana || 0,
     killAs: pas.killAs || 0,
-    invis: bf.invis
+    invis: bf.invis,
+    metamorph: bf.metamorph,
+    bladestorm: bf.bladestorm,
+    metaRegen: bf.regen,
+    metaRange: (bf.metamorph ? 600 : 0)
   };
   p.hp = Math.min(p.hp, p.stats.hpMax);
   p.mp = Math.min(p.mp, p.stats.mpMax);

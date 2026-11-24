@@ -39,8 +39,8 @@ DATA.CLASSES = {
     desc:'挥刀成风、以力破巧的近战英雄',
     base:{hp:200, mp:40, atk:14, spell:0, as:1.00, armor:8},
     growth:{hp:24, mp:3, atk:2.4, spell:0, armor:1.6},
-    skills:['whirlwind','shieldwall','battleShout','execute','charge','critMastery','toughness'],
-    keymap:{ q:'whirlwind', w:'shieldwall', e:'battleShout', r:'execute', d:'charge' } },
+    skills:['whirlwind','shieldwall','battleShout','bladestorm','charge','critMastery','toughness'],
+    keymap:{ q:'whirlwind', w:'shieldwall', e:'battleShout', r:'bladestorm', d:'charge' } },
 
   mage: { key:'mage', name:'大法师', primary:'int', weapon:'法杖', color:'#5b8dd6',
     desc:'掌控奥术与冰霜的施法者',
@@ -60,8 +60,8 @@ DATA.CLASSES = {
     desc:'追逐恶魔之力、以命换命的刺客',
     base:{hp:135, mp:60, atk:16, spell:0, as:1.30, armor:4},
     growth:{hp:15, mp:5, atk:2.6, spell:0, armor:0.9},
-    skills:['backstab','poisonBlade','fanOfKnives','vanish','shadowstep','lethality','shadowDance'],
-    keymap:{ q:'backstab', w:'poisonBlade', e:'fanOfKnives', r:'vanish', d:'shadowstep' } }
+    skills:['backstab','poisonBlade','fanOfKnives','metamorphosis','shadowstep','lethality','shadowDance'],
+    keymap:{ q:'backstab', w:'poisonBlade', e:'fanOfKnives', r:'metamorphosis', d:'shadowstep' } }
 };
 
 /* ---------------- 技能 ----------------
@@ -72,7 +72,9 @@ DATA.SKILLS = {
   whirlwind:    {name:'旋风斩', cls:'warrior', type:'active', kind:'aoe', cd:8,  cost:0,  dmg:1.3, hits:3, radius:3.4, desc:'对周围敌人造成 3 段 130% 攻击力伤害'},
   shieldwall:   {name:'盾墙',   cls:'warrior', type:'active', kind:'buff', cd:30, cost:0, buff:{dr:0.45, dur:6}, desc:'6 秒内受到伤害降低 45%'},
   battleShout:  {name:'战斗怒吼',cls:'warrior', type:'active', kind:'buff', cd:30, cost:0, buff:{atkPct:0.30, dur:10}, desc:'10 秒内攻击力 +30%'},
-  execute:      {name:'斩杀',   cls:'warrior', type:'active', kind:'melee', cd:12, cost:0, dmg:3.2, arc:1.6, range:3.0, execute:0.4, desc:'320% 攻击力；目标血量低于 40% 时伤害翻倍'},
+  bladestorm:   {name:'剑圣风暴', cls:'warrior', type:'active', kind:'bladestorm', cd:60, cost:0,
+                 dmg:3.0, radius:200, dur:7, tick:0.25,
+                 desc:'持续 7 秒高速旋转，每秒对周围 200 范围造成 300% 普攻伤害；期间免疫伤害与控制'},
   charge:       {name:'冲锋',   cls:'warrior', type:'active', kind:'dash', cd:10, cost:0, dmg:1.2, range:9, stun:0.8, desc:'冲向目标，眩晕 0.8 秒'},
   critMastery:  {name:'致命一击',cls:'warrior', type:'passive', kind:'passive', desc:'暴击率 +15%，暴击伤害 +50%', passive:{crit:0.15, critDmg:0.5}},
   toughness:    {name:'坚韧',   cls:'warrior', type:'passive', kind:'passive', desc:'生命上限 +15%', passive:{hpPct:0.15}},
@@ -99,7 +101,9 @@ DATA.SKILLS = {
   backstab:     {name:'背刺',   cls:'assassin', type:'active', kind:'melee', cd:4,  cost:0, dmg:2.4, arc:1.6, range:2.8, desc:'对前方敌人造成 240% 伤害'},
   poisonBlade:  {name:'毒刃',   cls:'assassin', type:'active', kind:'melee', cd:6,  cost:6, dmg:1.0, arc:1.8, range:2.8, poison:{dps:0.35, dur:6}, desc:'附加中毒，每秒 35% 攻击力，持续 6 秒'},
   fanOfKnives:  {name:'刀扇',   cls:'assassin', type:'active', kind:'aoe', cd:9,  cost:10, dmg:1.4, radius:3.8, desc:'对周围所有敌人造成 140% 伤害'},
-  vanish:       {name:'消失',   cls:'assassin', type:'active', kind:'buff', cd:26, cost:12, buff:{invis:2.5, nextCrit:true, asPct:0.4, dur:2.5}, desc:'隐身 2.5 秒，攻速 +40%，下次攻击必暴击'},
+  metamorphosis:{name:'恶魔变身',cls:'assassin', type:'active', kind:'metamorph', cd:180, cost:30,
+                 dur:45, hpPct:0.30, regen:0.02, range:600,
+                 desc:'变身恶魔 45 秒：生命上限 +30%、持续回血，攻击变为 600 射程远程混乱伤害并溅射'},
   shadowstep:   {name:'影袭',   cls:'assassin', type:'active', kind:'dash', cd:8, cost:0, dmg:1.6, range:10, desc:'瞬移到目标背后并造成 160% 伤害'},
   lethality:    {name:'致命偷袭',cls:'assassin', type:'passive', kind:'passive', desc:'暴击伤害 +60%', passive:{critDmg:0.6}},
   shadowDance:  {name:'影舞',   cls:'assassin', type:'passive', kind:'passive', desc:'击杀后 3 秒内攻速 +35%', passive:{killAs:0.35}}
@@ -416,7 +420,7 @@ for (const cls in SET_NAMES) {
    22剑 23斧 */
 DATA.SKILL_ICON = {
   // 战士（剑圣）0-6
-  whirlwind:0, shieldwall:1, battleShout:2, execute:3, charge:4,
+  whirlwind:0, shieldwall:1, battleShout:2, bladestorm:3, charge:4,
   critMastery:5, toughness:6,
   // 法师（大法师）7-13
   fireball:7, frostNova:8, blizzard:9, arcaneTorrent:10, blink:11,
@@ -425,7 +429,7 @@ DATA.SKILL_ICON = {
   multishot:14, pierceArrow:15, freezeTrap:16, rapidFire:17, backjump:18,
   eagleEye:19, swiftness:20,
   // 盗贼（恶魔猎手）21-27
-  backstab:21, poisonBlade:22, fanOfKnives:23, vanish:24, shadowstep:25,
+  backstab:21, poisonBlade:22, fanOfKnives:23, metamorphosis:24, shadowstep:25,
   lethality:26, shadowDance:27
 };
 
@@ -977,11 +981,11 @@ DATA.SKILL_COLOR = {
   fireball:'#ff6a2a', frostNova:'#6fd4ff', blizzard:'#bfe9ff',
   arcaneTorrent:'#b45cff', blink:'#9f7fff',
   whirlwind:'#ffb347', shieldwall:'#c9a24a', battleShout:'#ff8a3d',
-  execute:'#ff3b3b', charge:'#ffb347',
+  bladestorm:'#ffd24a', charge:'#ffb347',
   multishot:'#8fe36a', pierceArrow:'#b6ff8a', freezeTrap:'#6fd4ff',
   rapidFire:'#ffe08a', backjump:'#8fe36a',
   backstab:'#c06bff', poisonBlade:'#7fdc5a', fanOfKnives:'#c06bff',
-  vanish:'#9f7fff', shadowstep:'#9f7fff'
+  metamorphosis:'#ff3b3b', shadowstep:'#9f7fff'
 };
 
 /* 魔兽头像图集索引（avatars.png 12 格） */

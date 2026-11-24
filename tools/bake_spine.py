@@ -101,27 +101,35 @@ def sample_attach(tl, t):
 
 # ---------------- 主烘焙 ----------------
 def pick_spine_files(dirpath):
-    js = glob.glob(os.path.join(dirpath, '*.json'))
-    if js:
-        # 优先与目录同名的 json
-        base = os.path.basename(dirpath.rstrip('/'))
-        for p in js:
-            if os.path.basename(p).startswith(base): return p
-        return js[0]
+    # 先找顶层，再递归找变体子目录（001/002/...）
+    for pattern in ('*.json', '**/*.json'):
+        js = glob.glob(os.path.join(dirpath, pattern), recursive=('**' in pattern))
+        js = [p for p in js if 'skeleton.atlas' not in p]
+        if js:
+            base = os.path.basename(dirpath.rstrip('/'))
+            for p in js:
+                if os.path.basename(p).startswith(base): return p
+            # 优先选含同名 atlas 的
+            return sorted(js)[0]
     return None
 
 def bake(dirpath, outdir, fps=30, scale=1.0, padding=4):
     json_path = pick_spine_files(dirpath)
     if not json_path:
         raise SystemExit('没有找到 skeleton json: ' + dirpath)
-    atlas_paths = glob.glob(os.path.join(dirpath, '*.atlas'))
+    atlas_paths = glob.glob(os.path.join(dirpath, '*.atlas')) or \
+                  glob.glob(os.path.join(dirpath, '**', '*.atlas'), recursive=True)
     if not atlas_paths:
         raise SystemExit('没有找到 atlas: ' + dirpath)
     atlas_path = atlas_paths[0]
 
     data = json.load(open(json_path, encoding='utf-8'))
+    # 优先用与 json 同目录的 atlas
+    same_dir = os.path.dirname(json_path)
+    cand = glob.glob(os.path.join(same_dir, '*.atlas'))
+    if cand: atlas_path = cand[0]
     png_name, regions = parse_atlas(atlas_path)
-    sheet = Image.open(os.path.join(dirpath, png_name)).convert('RGBA')
+    sheet = Image.open(os.path.join(os.path.dirname(atlas_path), png_name)).convert('RGBA')
     region_cache = {n: extract_region(sheet, r) for n, r in regions.items()}
 
     bones_def = data.get('bones', [])

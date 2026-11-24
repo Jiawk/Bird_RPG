@@ -13,6 +13,50 @@ function updateTimers(dt) {
   }
 }
 
+/* ---------------- 玩家 buff 持续效果（每帧） ---------------- */
+function updatePlayerBuffs(p, dt) {
+  if (!p || !p.buffs || !p.buffs.length) {
+    if (p && (p._immune || 0) > 0) p._immune = Math.max(0, p._immune - dt);
+    return;
+  }
+  p._immune = Math.max(0, (p._immune || 0) - dt);
+
+  for (let i = p.buffs.length - 1; i >= 0; i--) {
+    const b = p.buffs[i];
+    // 剑圣风暴：每 tick 对范围内所有敌人造成伤害
+    if (b.bladestorm) {
+      b.tick = (b.tick || 0) + dt;
+      const interval = 0.25;
+      while (b.tick >= interval) {
+        b.tick -= interval;
+        const R = b.radius || 200;
+        for (const m of G.world.monsters) {
+          if (!m.alive) continue;
+          if (Math.hypot(m.x - p.x, m.y - p.y) <= R + m.r) {
+            damageMonster(m, p.stats.power * (b.dps || 3.0) * interval, 'skill');
+          }
+        }
+        // 旋刃视觉：绕玩家一圈随机角度
+        const ang = Math.random() * Math.PI * 2;
+        spawnSpriteFx('attack_daoguang1', p.x + Math.cos(ang) * 46, p.y + Math.sin(ang) * 46,
+          { scale: 0.8, rot: ang + Math.PI / 2, oy: 20 });
+      }
+    }
+    // 持续型光环/护盾：周期性重刷精灵表
+    if (b.fxKey) {
+      b.fxT = (b.fxT === undefined ? 0 : b.fxT) - dt;
+      if (b.fxT <= 0) {
+        b.fxT = 0.9;
+        spawnSpriteFx(b.fxKey, p.x, p.y, { scale: b.fxScale || 1.4, follow: true, oy: 20 });
+      }
+    }
+    // 恶魔变身：百分比生命回复
+    if (b.metamorph && b.regen) {
+      p.hp = Math.min(p.stats.hpMax, p.hp + p.stats.hpMax * b.regen * dt);
+    }
+  }
+}
+
 /* ---------------- 伤害 ---------------- */
 function damageMonster(m, amount, type, isDot) {
   if (!m.alive) return 0;
@@ -61,6 +105,11 @@ function damagePlayer(amount, source) {
   if (G.debug && G.debug.invincible) return;   // 调试：无敌
   const p = G.player;
   if (p.stats.invis > 0) return;
+  // 剑圣风暴：完全免疫
+  if (p.stats.bladestorm || (p._immune || 0) > 0) {
+    floatText(p.x, p.y - 40, '免疫', '#ffd24a', 17);
+    return;
+  }
   if (Math.random() < p.stats.dodge) {
     floatText(p.x, p.y - 34, '闪避', '#9fe6b8', 15);
     return;
@@ -128,7 +177,8 @@ function playerAttack() {
   if (typeof Sfx !== 'undefined') Sfx.play('attack');   // 普通攻击（挥砍）
 
   const w = G.world;
-  const range = p.cls === 'warrior' || p.cls === 'assassin' ? 78 : 420;
+  const _meta = !!p.stats.metamorph;
+  const range = _meta ? 600 : (p.cls === 'warrior' || p.cls === 'assassin' ? 78 : 420);
   const ang = p.dir;
 
   // 找到朝向扇区内最近的怪
@@ -143,24 +193,27 @@ function playerAttack() {
     if (d < best) { best = d; target = m; }
   }
 
-  if (p.stats.isMagic || p.cls === 'archer') {
+  if (p.stats.isMagic || p.cls === 'archer' || _meta) {
     // 远程：发射投射物（橙弓「分裂箭」一次打 3 个不同目标）
     const shoot = (tgt, a2) => {
       const _ranged = (p.cls === 'mage' || p.cls === 'archer' || p.cls === 'priest') ? (p.stats.auraRangedAtk || 0) : 0;
       const dmg = p.stats.power * (1 + ((typeof hltDyn === 'function') ? hltDyn(p).atkPct : 0) + _ranged);
       w.projectiles.push({
         x: p.x + Math.cos(a2) * 22, y: p.y + Math.sin(a2) * 22,
-        vx: Math.cos(a2) * 520, vy: Math.sin(a2) * 520,
-        life: 0.9, dead: false, pierce: false, dmg,
+        vx: Math.cos(a2) * (_meta ? 760 : 520), vy: Math.sin(a2) * (_meta ? 760 : 520),
+        life: _meta ? 1.1 : 0.9, dead: false, pierce: false, dmg,
         color: (p.cls === 'mage') ? '#ff7a2a'
              : (p.stats.weaponFx === 'arrow' ? '#d8f0ff'
              : (p.stats.weaponFx === 'spell' ? '#9f7fff' : '#ffe08a')),
-        shape: (p.cls === 'archer') ? 'arrow'
+        shape: _meta ? 'slash'
+             : (p.cls === 'archer') ? 'arrow'
              : (p.cls === 'mage') ? 'fireball'
              : (p.stats.weaponFx === 'arrow' ? 'arrow'
              : (p.stats.weaponFx === 'spell' ? 'orb'
              : (p.stats.weaponFx === 'stab' ? 'blade' : 'bolt'))),
-        hitSet: new Set(), isSkill: false, target: tgt || null
+        hitSet: new Set(), isSkill: false, target: tgt || null,
+        splash: _meta ? { r: 78, pct: 0.5 } : null,      // 恶魔变身：混乱溅射
+        hitFx: _meta ? 'impact_fire' : null
       });
     };
     const nSplit = (p.stats.hltSplit || 0);
@@ -214,6 +267,29 @@ function castSkillKey(k) {
 
 const FX_OF = { melee:1, dash:1, proj:0, aoe:0, trap:2, buff:2, hit:2 };
 
+/* 技能 → SPINE 精灵表特效（施法瞬间播放） */
+const SKILL_SPRITE = {
+  frostNova:     { key:'daoshi_skill1',   scale:1.6 },
+  blizzard:      { key:'daoshi_skill1',   scale:1.8 },
+  arcaneTorrent: { key:'impact_dark',     scale:2.0 },
+  shieldwall:    { key:'baohushijian',    scale:1.5, follow:true },
+  battleShout:   { key:'buff',            scale:1.6, follow:true },
+  rapidFire:     { key:'buff',            scale:1.4, follow:true },
+  charge:        { key:'attack_daoguang2',scale:1.2 },
+  blink:         { key:'impact_dark',     scale:1.2 },
+  backjump:      { key:'character_yanwu', scale:1.0 },
+  backstab:      { key:'attack_daoguang1',scale:1.1 },
+  poisonBlade:   { key:'impact_grass',    scale:1.0 },
+  fanOfKnives:   { key:'impact_light',    scale:2.0 },
+  shadowstep:    { key:'impact_dark',     scale:1.3 },
+  freezeTrap:    { key:'daoshi_skill1',   scale:1.3 },
+  metamorphosis: { key:'impact_dark',     scale:2.4, follow:true },
+  bladestorm:    { key:'attack_daoguang2',scale:1.6, follow:true }
+};
+
+/* 投射物命中时的 SPINE 特效 */
+const PROJ_HIT_FX = { fireball:'impact_fire', arrow:'impact_light', fire:'impact_fire', poison:'impact_grass' };
+
 function spawnVfx(x, y, color, radius, kind, life, skill) {
   const w = G.world; if (!w) return;
   if (!w.vfx) w.vfx = [];
@@ -237,7 +313,9 @@ function spawnSpriteFx(key, x, y, opt) {
     scale: o.scale === undefined ? 1 : o.scale,
     rot: o.rot || 0,
     oy: o.oy || 18,
-    t: 0, life: m.frames / m.fps
+    follow: !!o.follow,
+    t: 0, life: m.frames / m.fps,
+    keep: !!o.keep            // keep=true 时不自动删除（由外部管理）
   });
 }
 
@@ -263,6 +341,15 @@ function castSkillImpl(key) {
 
     spawnVfx(_tx, _ty, _col, _rad, _sp.kind,
              _sp.kind === 'aoe' ? 0.95 : 0.6, key);
+    // SPINE 精灵表特效
+    const _sfx = SKILL_SPRITE[key];
+    if (_sfx) {
+      spawnSpriteFx(_sfx.key, _tx, _ty, {
+        scale: _sfx.scale || 1,
+        follow: !!_sfx.follow,
+        oy: 22
+      });
+    }
   }
   const sp = DATA.SKILLS[key];
   if (!sp || sp.type !== 'active') return;
@@ -294,6 +381,9 @@ function castSkillImpl(key) {
       for (let h = 0; h < hits; h++) {
         schedule(h * 0.28, () => {
           burst(ax, ay, acol, 14, 220);
+          const _hf = (key === 'blizzard' || key === 'frostNova') ? 'impact_water'
+                    : (key === 'arcaneTorrent') ? 'impact_dark' : 'impact_fire';
+          spawnSpriteFx(_hf, ax, ay, { scale: 1.4, oy: 16 });
           for (const m of w.monsters) {
             if (!m.alive) continue;
             if (Math.hypot(m.x - ax, m.y - ay) <= sp.radius * 42 * _mods.radiusMul + m.r) {
@@ -357,7 +447,10 @@ function castSkillImpl(key) {
       break;
     }
     case 'buff': {
-      p.buffs.push({ ...sp.buff, t: sp.buff.dur });
+      const _fxMap = { shieldwall:'baohushijian', battleShout:'buff', rapidFire:'buff' };
+      p.buffs.push({ ...sp.buff, t: sp.buff.dur,
+                     fxKey: _fxMap[key] || null,
+                     fxScale: key === 'shieldwall' ? 1.5 : 1.6 });
       if (sp.buff.invis) p.stats.invis = sp.buff.dur;
       if (sp.buff.nextCrit) p._forceCrit = true;
       recalcStats(p);
@@ -370,6 +463,31 @@ function castSkillImpl(key) {
       break;
     }
   }
+  // ---- 剑圣风暴：持续 7 秒旋转 AOE + 免伤免控 ----
+  if (sp.kind === 'bladestorm') {
+    p.buffs.push({
+      bladestorm: true, t: sp.dur, tick: 0,
+      radius: sp.radius, dps: sp.dmg, dur: sp.dur
+    });
+    p._immune = sp.dur;                 // 免伤 + 免控
+    recalcStats(p);
+    bigAnnounce('⚔ 剑 圣 风 暴', '#ffd24a');
+    toast(`剑圣风暴：${sp.dur} 秒内免疫伤害与控制`);
+  }
+
+  // ---- 恶魔变身：45 秒形态切换 ----
+  if (sp.kind === 'metamorph') {
+    p.buffs.push({
+      metamorph: true, t: sp.dur,
+      hpPct: sp.hpPct, regen: sp.regen, range: sp.range, dur: sp.dur
+    });
+    recalcStats(p);
+    p.hp = p.stats.hpMax;               // 变身高涨满
+    bigAnnounce('😈 恶 魔 变 身', '#ff3b3b');
+    toast(`恶魔变身：${sp.dur} 秒，攻击变为远程混乱伤害`);
+    spawnSpriteFx('impact_dark', p.x, p.y, { scale: 3.0, oy: 20 });
+  }
+
   logMsg(`✦ 释放 ${sp.name}`, 'skill');
 }
 
@@ -387,9 +505,23 @@ function onProjectileHit(pr, m) {
   const p = G.player;
   let dmg = pr.dmg;
   if (p._forceCrit) { m.hp -= 1; }
-  damageMonster(m, dmg, 'skill');
+  damageMonster(m, dmg, pr.isSkill ? 'skill' : 'melee');
   if (pr.burn) m.burn = { dps: pr.burn.dps, t: pr.burn.dur };
   burst(m.x, m.y, pr.color, 6, 130);
+  // 命中 SPINE 特效
+  const _hfx = pr.hitFx || PROJ_HIT_FX[pr.shape];
+  if (_hfx) spawnSpriteFx(_hfx, m.x, m.y, { scale: 1.0, oy: 10 });
+  // 恶魔变身：混乱攻击溅射
+  if (pr.splash) {
+    const _r = pr.splash.r || 70;
+    for (const mm of G.world.monsters) {
+      if (mm === m || !mm.alive) continue;
+      if (Math.hypot(mm.x - m.x, mm.y - m.y) <= _r + mm.r) {
+        damageMonster(mm, dmg * (pr.splash.pct || 0.5), 'melee');
+        burst(mm.x, mm.y, '#ff5a3c', 6, 140);
+      }
+    }
+  }
 }
 
 function triggerTrap(t, m) {

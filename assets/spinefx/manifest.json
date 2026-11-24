@@ -48,5 +48,105 @@
     "dur": 0.267,
     "file": "assets/spinefx/criticalhiteffect/sheet.webp",
     "bytes": 58192
+  },
+  "impact_fire": {
+    "desc": "火属性命中",
+    "frames": 7,
+    "fps": 24,
+    "cw": 126,
+    "ch": 127,
+    "dur": 0.25,
+    "file": "assets/spinefx/impact_fire/sheet.webp",
+    "bytes": 40282
+  },
+  "impact_water": {
+    "desc": "水属性命中",
+    "frames": 7,
+    "fps": 24,
+    "cw": 126,
+    "ch": 127,
+    "dur": 0.25,
+    "file": "assets/spinefx/impact_water/sheet.webp",
+    "bytes": 40350
+  },
+  "impact_electric": {
+    "desc": "雷属性命中",
+    "frames": 7,
+    "fps": 24,
+    "cw": 126,
+    "ch": 127,
+    "dur": 0.25,
+    "file": "assets/spinefx/impact_electric/sheet.webp",
+    "bytes": 40528
+  },
+  "impact_dark": {
+    "desc": "暗属性命中",
+    "frames": 7,
+    "fps": 24,
+    "cw": 125,
+    "ch": 128,
+    "dur": 0.25,
+    "file": "assets/spinefx/impact_dark/sheet.webp",
+    "bytes": 37436
+  },
+  "impact_grass": {
+    "desc": "草属性命中",
+    "frames": 7,
+    "fps": 24,
+    "cw": 126,
+    "ch": 127,
+    "dur": 0.25,
+    "file": "assets/spinefx/impact_grass/sheet.webp",
+    "bytes": 40754
+  },
+  "impact_light": {
+    "desc": "光属性命中",
+    "frames": 7,
+    "fps": 24,
+    "cw": 126,
+    "ch": 127,
+    "dur": 0.25,
+    "file": "assets/spinefx/impact_light/sheet.webp",
+    "bytes": 40446
+  },
+  "baohushijian": {
+    "desc": "护盾（盾墙/冰甲）",
+    "frames": 21,
+    "fps": 20,
+    "cw": 101,
+    "ch": 105,
+    "dur": 1.0,
+    "file": "assets/spinefx/baohushijian/sheet.webp",
+    "bytes": 62540
+  },
+  "daoshi_skill1": {
+    "desc": "冰霜（冰柱/暴风雪/陷阱）",
+    "frames": 25,
+    "fps": 20,
+    "cw": 140,
+    "ch": 111,
+    "dur": 1.2,
+    "file": "assets/spinefx/daoshi_skill1/sheet.webp",
+    "bytes": 103894
+  },
+  "character_yanwu": {
+    "desc": "角色烟雾（后跳/闪现）",
+    "frames": 13,
+    "fps": 20,
+    "cw": 128,
+    "ch": 66,
+    "dur": 0.6,
+    "file": "assets/spinefx/character_yanwu/sheet.webp",
+    "bytes": 36832
+  },
+  "buff": {
+    "desc": "增益光环",
+    "frames": 27,
+    "fps": 16,
+    "cw": 120,
+    "ch": 108,
+    "dur": 1.625,
+    "file": "assets/spinefx/buff/sheet.webp",
+    "bytes": 136798
   }
 }

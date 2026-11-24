@@ -3501,3 +3501,45 @@ else { ...解析失败 → 用 goldBackup 兜底... }
 装 1 件武器 → 空槽 13 个，该槽显示真实图标 ✅
 阵亡 → #deathFlash 显示 ✅（截图确认红屏 + 大字）
 ```
+
+### v205 · 技能特效全量接入 + 两个大招改版
+1. **新增 10 个 SPINE 烘焙特效**（累计 15 个，共 755KB）
+   `impact_fire/water/electric/dark/grass/light`、`baohushijian`、`daoshi_skill1`、
+   `character_yanwu`、`buff`
+   - 烘焙器修复：支持 `001/002/...` 变体子目录（之前 daoshi_skill1 / jiaxu_skill1 找不到 json）
+2. **技能特效映射并接入**
+   | 技能 | 特效 |
+   |---|---|
+   | 冰霜新星 / 暴风雪 | `daoshi_skill1` + AOE 每段 `impact_water` |
+   | 奥术洪流 | `impact_dark` + `impact_dark` |
+   | 盾墙 | `baohushijian`（跟随玩家，每 0.9s 重刷，持续整个 buff） |
+   | 战斗怒吼 / 急速射击 | `buff`（跟随） |
+   | 冲锋 / 剑圣风暴 | `attack_daoguang2` |
+   | 闪现 / 影袭 / 恶魔变身 | `impact_dark` |
+   | 后跳 | `character_yanwu` |
+   | 背刺 | `attack_daoguang1` |
+   | 毒刃 | `impact_grass` |
+   | 刀扇（E） | `impact_light`（scale 2.0，AOE 范围表现） |
+   - 投射物命中：火球 → `impact_fire`，箭矢 → `impact_light`
+3. **剑圣风暴（战士 R，替代「斩杀」）**
+   - 持续 7s / 范围 200 / 每秒 300% 普攻伤害（0.25s 一跳）
+   - CD 60s；期间**免疫伤害与控制**（`p._immune`）
+   - 每跳在玩家周围随机角度生成旋转刀光，画面呈旋涡状
+   - 可移动施放
+4. **恶魔变身（恶魔猎手 R，替代「消失」）**
+   - 持续 45s / CD 180s / 耗蓝 30
+   - **形态**：放大 1.85×、红色染色、黑色魔翼 + 犄角 + 旋转魔纹 + 红光
+   - **生命**：最大生命 +30%，每秒回复 2%（随技能等级）
+   - **攻击**：射程 600，投射物换成「飞出的刀光」（`shape:'slash'`），
+     命中溅射 78 范围 50% 伤害
+   - **混乱攻击**：全额伤害不衰减
+   - 被动闪避/致命偷袭/影舞全部保留
+
+**验证**
+```
+四职业 × 全技能释放冒烟测试：warrior/mage/archer/assassin 全部 ✅
+剑圣风暴：7s buff、200 半径、1 秒打掉 1015 血、免疫生效、8 个旋刃特效 ✅
+恶魔变身：hpMax 1840→2392（+30%）、range 600、slash 投射物带 splash、regen 2% ✅
+技能面板正确显示「剑圣风暴 / 恶魔变身」及描述 ✅
+包体 3.0M → 3.7M（+755KB 特效）
+```

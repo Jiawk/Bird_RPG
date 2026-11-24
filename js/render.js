@@ -355,13 +355,63 @@ function drawPlayer(p) {
   const cls = DATA.CLASSES[p.cls], race = DATA.RACES[p.race];
   const clsIdx = ['warrior','mage','archer','assassin'].indexOf(p.cls);
 
-  selRing(gx, gy, 24, 11, '#7fd45a');
+  const meta = !!p.stats.metamorph;
+  if (meta) {
+    // 恶魔变身：脚下黑红魔纹 + 黑光
+    const g0 = CTX.createRadialGradient(gx, gy - 20, 6, gx, gy - 20, 78);
+    g0.addColorStop(0, 'rgba(255,50,30,.42)');
+    g0.addColorStop(0.55, 'rgba(120,0,0,.30)');
+    g0.addColorStop(1, 'rgba(0,0,0,0)');
+    CTX.fillStyle = g0;
+    CTX.beginPath(); CTX.arc(gx, gy - 20, 78, 0, 6.283); CTX.fill();
+    // 旋转的黑色魔纹
+    CTX.save();
+    CTX.globalAlpha = 0.55;
+    CTX.strokeStyle = '#2a0000'; CTX.lineWidth = 3;
+    CTX.translate(gx, gy); CTX.rotate(G.time * 1.6);
+    CTX.beginPath(); CTX.ellipse(0, 0, 34, 34 * YS, 0, 0, 6.283); CTX.stroke();
+    CTX.beginPath(); CTX.ellipse(0, 0, 26, 26 * YS, 0, 0, 6.283); CTX.stroke();
+    CTX.restore();
+  } else {
+    selRing(gx, gy, 24, 11, '#7fd45a');
+  }
 
   CTX.fillStyle = 'rgba(0,0,0,.5)';
   CTX.beginPath(); CTX.ellipse(gx, gy, 15, 15 * YS * 0.55, 0, 0, 6.283); CTX.fill();
 
+  // 恶魔变身：背后黑色魔翼 + 头顶犄角
+  if (meta) {
+    const bob = Math.sin(G.time * 2.2) * 3;
+    CTX.save();
+    CTX.globalAlpha = 0.9;
+    CTX.fillStyle = '#180000';
+    const drawWing = (dir) => {
+      CTX.beginPath();
+      CTX.moveTo(gx + dir * 6, gy - 46);
+      CTX.quadraticCurveTo(gx + dir * 66, gy - 100 + bob, gx + dir * 84, gy - 44);
+      CTX.quadraticCurveTo(gx + dir * 62, gy - 60 + bob, gx + dir * 40, gy - 34);
+      CTX.quadraticCurveTo(gx + dir * 26, gy - 50 - bob, gx + dir * 10, gy - 28);
+      CTX.closePath(); CTX.fill();
+    };
+    drawWing(-1); drawWing(1);
+    // 骨刺
+    CTX.strokeStyle = '#2a0000'; CTX.lineWidth = 2.5;
+    for (let i = 0; i < 3; i++) {
+      CTX.beginPath();
+      CTX.moveTo(gx - 8 - i * 20, gy - 44 - i * 14 + bob);
+      CTX.lineTo(gx - 30 - i * 22, gy - 78 - i * 12 + bob);
+      CTX.stroke();
+      CTX.beginPath();
+      CTX.moveTo(gx + 8 + i * 20, gy - 44 - i * 14 + bob);
+      CTX.lineTo(gx + 30 + i * 22, gy - 78 - i * 12 + bob);
+      CTX.stroke();
+    }
+    CTX.restore();
+  }
+
   const moved = Math.hypot(p.x - (p._lx ?? p.x), p.y - (p._ly ?? p.y)) > 0.4;
-  const S = 1.45, sw = U_FRAME_W * S, sh = U_FRAME_H * S;
+  const S = meta ? 1.85 : 1.45;
+  const sw = U_FRAME_W * S, sh = U_FRAME_H * S;
 
   if (imgReady('units')) {
     const row = dirRow(p.dir);
@@ -376,6 +426,28 @@ function drawPlayer(p) {
     CTX.globalAlpha = p.stats.invis > 0 ? 0.45 : 1;
     CTX.drawImage(IMG.units, sx0, sy0, U_FRAME_W, U_FRAME_H,
                   gx - sw / 2 + ox, gy - sh + 8 + oy + bobY, sw, sh);
+    if (meta) {
+      // 红色染色：用 source-atop 只染角色像素
+      CTX.globalCompositeOperation = 'source-atop';
+      CTX.globalAlpha = 0.55;
+      CTX.fillStyle = '#c8140a';
+      CTX.fillRect(gx - sw / 2 + ox, gy - sh + 8 + oy + bobY, sw, sh);
+      CTX.globalAlpha = 0.28;
+      CTX.fillStyle = '#000';
+      CTX.fillRect(gx - sw / 2 + ox, gy - sh + 8 + oy + bobY, sw, sh);
+      CTX.globalCompositeOperation = 'source-over';
+    }
+    if (meta) {
+      // 头顶黑色犄角
+      const topY = gy - sh + 14 + oy + bobY;
+      CTX.fillStyle = '#120000';
+      CTX.beginPath();
+      CTX.moveTo(gx - 12, topY + 6); CTX.lineTo(gx - 22, topY - 18); CTX.lineTo(gx - 4, topY + 2);
+      CTX.closePath(); CTX.fill();
+      CTX.beginPath();
+      CTX.moveTo(gx + 12, topY + 6); CTX.lineTo(gx + 22, topY - 18); CTX.lineTo(gx + 4, topY + 2);
+      CTX.closePath(); CTX.fill();
+    }
     CTX.restore();
   } else {
     CTX.fillStyle = cls.color;
@@ -738,6 +810,18 @@ function drawProjectile(pr) {
   const x = px(pr.x), y = py(pr.y) - 18;
   const ang = Math.atan2(pr.vy, pr.vx);
 
+  // ---- 变身挥砍：刀光精灵飞出去 ----
+  if (pr.shape === 'slash' && fxReady('attack_daoguang2')) {
+    drawFxSprite('attack_daoguang2', x, y, { scale: 0.8, loop: true, rot: ang + Math.PI / 2, alpha: 0.95 });
+    return;
+  }
+  if (pr.shape === 'slash') {
+    CTX.save(); CTX.translate(x, y); CTX.rotate(ang);
+    CTX.strokeStyle = '#ff6a3c'; CTX.lineWidth = 4; CTX.lineCap = 'round';
+    CTX.beginPath(); CTX.arc(0, 0, 18, -1.1, 1.1); CTX.stroke();
+    CTX.restore(); return;
+  }
+
   // ---- 火球：优先用 SPINE 烘焙精灵表 ----
   if (pr.shape === 'fireball' && fxReady('base_fly_fire')) {
     // 先铺一层光晕，再叠精灵表
@@ -848,9 +932,9 @@ function drawProjectile(pr) {
 const SKILL_FX = {
   fireball:'inferno', frostNova:'frost', blizzard:'shards', arcaneTorrent:'arcane',
   blink:'flash', whirlwind:'cyclone', shieldwall:'aegis', battleShout:'warcry',
-  execute:'execute', charge:'charge', multishot:'volley', pierceArrow:'pierce',
+  bladestorm:'cyclone', charge:'charge', multishot:'volley', pierceArrow:'pierce',
   freezeTrap:'trap', rapidFire:'rapid', backjump:'flash', backstab:'backstab',
-  poisonBlade:'poison', fanOfKnives:'fan', vanish:'vanish', shadowstep:'shadow'
+  poisonBlade:'poison', fanOfKnives:'fan', metamorphosis:'shadow', shadowstep:'shadow'
 };
 
 function fxKindOf(e) {
@@ -925,6 +1009,9 @@ function drawVfx(w) {
     const gx = px(e.x), gy = py(e.y);
     const type = fxKindOf(e);
     CTX.save();
+
+    // 跟随玩家的特效（护盾/光环/变身）
+    if (e.follow && G.player) { e.x = G.player.x; e.y = G.player.y; }
 
     // SPINE 烘焙特效：一旦命中直接绘制并跳过后续手绘
     if (e.kind === 'sprite' && e.key) {

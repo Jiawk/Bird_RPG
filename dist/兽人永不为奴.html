@@ -2133,6 +2133,31 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 @keyframes ngPulse{50%{transform:scale(1.04);filter:brightness(1.2)}}@keyframes ngBounce{50%{transform:translateY(8px)}}
 @media (max-width:520px){.ng-card{bottom:16px;padding:13px 14px}.ng-card h2{font-size:19px}.ng-card p{font-size:13px;min-height:42px}.ng-actions{gap:5px}.ng-actions button{padding:0 9px;font-size:12px;min-height:42px}}
 
+/* ===== 阵亡：红色全屏遮罩 + 大字 ===== */
+.death-flash{position:absolute;inset:0;z-index:400;pointer-events:none;
+  display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 50% 50%,rgba(120,0,0,.15) 0%,rgba(60,0,0,.72) 100%)}
+.death-flash.hidden{display:none}
+.death-flash span{
+  font-family:var(--serif);font-size:64px;font-weight:900;letter-spacing:.3em;
+  color:#ff3b3b;
+  text-shadow:0 0 24px #ff0000,0 0 60px rgba(255,0,0,.8),0 6px 18px #000;
+  animation:deathPop .9s cubic-bezier(.2,1.4,.4,1) both, deathPulse 1.2s ease-in-out .9s infinite}
+@keyframes deathPop{
+  0%{opacity:0;transform:scale(2.4)}
+  55%{opacity:1;transform:scale(.96)}
+  100%{opacity:1;transform:scale(1)}
+}
+@keyframes deathPulse{0%,100%{text-shadow:0 0 24px #ff0000,0 0 60px rgba(255,0,0,.8),0 6px 18px #000}
+  50%{text-shadow:0 0 40px #ff0000,0 0 90px rgba(255,0,0,1),0 6px 18px #000}}
+@media (max-width:700px){ .death-flash span{font-size:40px;letter-spacing:.2em} }
+
+/* 空装备槽：虚线 + 淡加号 */
+.eq-empty-ic{display:flex;align-items:center;justify-content:center;
+  border:1px dashed #3a3328;border-radius:3px;margin:2px auto;
+  color:#4a4436;font-size:16px;line-height:1;background:rgba(0,0,0,.18)}
+.eq-v.none .eq-nm{color:#6b6558}
+
 </style>
 <script id="orc-cfg" type="application/json">{}</script>
 </head>
@@ -2177,6 +2202,7 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 
     <!-- 大字广播 -->
     <div id="bigAnnounce" class="big-announce hidden"></div>
+    <div id="deathFlash" class="death-flash hidden"><span>☠ 你 已 阵 亡</span></div>
 
     <!-- 左上角：当前位置 / 难度 -->
     <div class="hud-place" id="hudPlace">
@@ -5993,6 +6019,8 @@ function playerDie() {
   p.hp = 0;
   logMsg('☠ 你倒下了……返回城镇', 'bad');
   toast('你被击败了，返回城镇');
+  // 醒目阵亡提示：红屏 + 大字
+  if (typeof showDeathFlash === 'function') showDeathFlash();
   const lost = Math.floor(p.gold * 0.1);
   p.gold -= lost;
   if (lost > 0) logMsg(`损失金币 ${lost}`, 'bad');
@@ -8558,6 +8586,18 @@ function claimAllQuests() {
 /* ---------------- Toast ---------------- */
 let toastTimer = null;
 /* 大字醒目广播（驻留 10 秒） */
+/* 阵亡红屏 + 大字（1.7 秒后淡出） */
+function showDeathFlash() {
+  const el = document.getElementById('deathFlash');
+  if (!el) return;
+  el.classList.remove('hidden');
+  // 重启动画
+  const sp = el.querySelector('span');
+  if (sp) { sp.style.animation = 'none'; void sp.offsetWidth; sp.style.animation = ''; }
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.add('hidden'), 1700);
+}
+
 function bigAnnounce(text, color) {
   const el = $('bigAnnounce');
   if (!el) return;
@@ -8964,13 +9004,16 @@ function charHtml() {
   const isRing = sk => sk.indexOf('ring_') === 0;
   const slotHtml = (sk, size) => {
     const it = p.equip[sk];
-    const qi = it ? DATA.QUALITY.findIndex(q => q.key === it.qKey) : -1;
     const ringCls = isRing(sk) ? (it ? ' relic-ring has' : ' relic-ring empty') : '';
+    // 有装备 → 用「装备自己的图标」；空槽 → 只显示空框，不显示占位图标
+    const ic = it
+      ? iconTag(isRing(sk) ? sk : (it.slot || sk), size || 34, it.wtype, it.relicKey)
+      : `<span class="eq-empty-ic" style="width:${size || 34}px;height:${size || 34}px">＋</span>`;
     return `<div class="eq-v ${it ? 'q-border-' + it.qKey : 'none'}${ringCls}" data-slot="${sk}" ${it ? `data-item="${it.id}"` : ''}>
       ${isRing(sk) && it ? '<span class="relic-star">✦</span>' : ''}
       <span class="eq-lv">${it ? it.ilvl : '—'}</span>
-      ${iconTag(sk, size || 34)}
-      <span class="eq-nm" style="${it ? 'color:' + it.color : ''}">${it ? (it.enh ? '+' + it.enh + ' ' : '') + it.name.slice(0, 5) : DATA.SLOTS[sk].name}</span>
+      ${ic}
+      <span class="eq-nm" style="${it ? 'color:' + it.color : 'color:#6b6558'}">${it ? (it.enh ? '+' + it.enh + ' ' : '') + it.name.slice(0, 5) : DATA.SLOTS[sk].name}</span>
     </div>`;
   };
 

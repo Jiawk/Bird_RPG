@@ -107,6 +107,8 @@ function playerDie() {
   p.hp = 0;
   logMsg('☠ 你倒下了……返回城镇', 'bad');
   toast('你被击败了，返回城镇');
+  // 醒目阵亡提示：红屏 + 大字
+  if (typeof showDeathFlash === 'function') showDeathFlash();
   const lost = Math.floor(p.gold * 0.1);
   p.gold -= lost;
   if (lost > 0) logMsg(`损失金币 ${lost}`, 'bad');

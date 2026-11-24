@@ -2125,3 +2125,28 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .ng-card h2{margin:0 0 8px;color:#ffe36b;font-size:22px;letter-spacing:.08em}.ng-card p{margin:0;min-height:48px;font:14px/1.65 system-ui,sans-serif;color:#e8debf}.ng-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}.ng-actions button{min-height:40px;border:1px solid #aa7b2d;border-radius:4px;padding:0 12px;background:linear-gradient(#60451d,#24180a);color:#f5e5bd;font:13px var(--serif);cursor:pointer}.ng-actions .ng-target{margin-right:auto;border-color:#55b8d3;background:linear-gradient(#24536b,#102632)}.ng-actions .ng-next{border-color:#e2b94f;background:linear-gradient(#8a6424,#39250d);font-weight:700;color:#fff2b8}
 @keyframes ngPulse{50%{transform:scale(1.04);filter:brightness(1.2)}}@keyframes ngBounce{50%{transform:translateY(8px)}}
 @media (max-width:520px){.ng-card{bottom:16px;padding:13px 14px}.ng-card h2{font-size:19px}.ng-card p{font-size:13px;min-height:42px}.ng-actions{gap:5px}.ng-actions button{padding:0 9px;font-size:12px;min-height:42px}}
+
+/* ===== 阵亡：红色全屏遮罩 + 大字 ===== */
+.death-flash{position:absolute;inset:0;z-index:400;pointer-events:none;
+  display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 50% 50%,rgba(120,0,0,.15) 0%,rgba(60,0,0,.72) 100%)}
+.death-flash.hidden{display:none}
+.death-flash span{
+  font-family:var(--serif);font-size:64px;font-weight:900;letter-spacing:.3em;
+  color:#ff3b3b;
+  text-shadow:0 0 24px #ff0000,0 0 60px rgba(255,0,0,.8),0 6px 18px #000;
+  animation:deathPop .9s cubic-bezier(.2,1.4,.4,1) both, deathPulse 1.2s ease-in-out .9s infinite}
+@keyframes deathPop{
+  0%{opacity:0;transform:scale(2.4)}
+  55%{opacity:1;transform:scale(.96)}
+  100%{opacity:1;transform:scale(1)}
+}
+@keyframes deathPulse{0%,100%{text-shadow:0 0 24px #ff0000,0 0 60px rgba(255,0,0,.8),0 6px 18px #000}
+  50%{text-shadow:0 0 40px #ff0000,0 0 90px rgba(255,0,0,1),0 6px 18px #000}}
+@media (max-width:700px){ .death-flash span{font-size:40px;letter-spacing:.2em} }
+
+/* 空装备槽：虚线 + 淡加号 */
+.eq-empty-ic{display:flex;align-items:center;justify-content:center;
+  border:1px dashed #3a3328;border-radius:3px;margin:2px auto;
+  color:#4a4436;font-size:16px;line-height:1;background:rgba(0,0,0,.18)}
+.eq-v.none .eq-nm{color:#6b6558}

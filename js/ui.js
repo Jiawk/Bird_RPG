@@ -645,6 +645,18 @@ function claimAllQuests() {
 /* ---------------- Toast ---------------- */
 let toastTimer = null;
 /* 大字醒目广播（驻留 10 秒） */
+/* 阵亡红屏 + 大字（1.7 秒后淡出） */
+function showDeathFlash() {
+  const el = document.getElementById('deathFlash');
+  if (!el) return;
+  el.classList.remove('hidden');
+  // 重启动画
+  const sp = el.querySelector('span');
+  if (sp) { sp.style.animation = 'none'; void sp.offsetWidth; sp.style.animation = ''; }
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.add('hidden'), 1700);
+}
+
 function bigAnnounce(text, color) {
   const el = $('bigAnnounce');
   if (!el) return;
@@ -1051,13 +1063,16 @@ function charHtml() {
   const isRing = sk => sk.indexOf('ring_') === 0;
   const slotHtml = (sk, size) => {
     const it = p.equip[sk];
-    const qi = it ? DATA.QUALITY.findIndex(q => q.key === it.qKey) : -1;
     const ringCls = isRing(sk) ? (it ? ' relic-ring has' : ' relic-ring empty') : '';
+    // 有装备 → 用「装备自己的图标」；空槽 → 只显示空框，不显示占位图标
+    const ic = it
+      ? iconTag(isRing(sk) ? sk : (it.slot || sk), size || 34, it.wtype, it.relicKey)
+      : `<span class="eq-empty-ic" style="width:${size || 34}px;height:${size || 34}px">＋</span>`;
     return `<div class="eq-v ${it ? 'q-border-' + it.qKey : 'none'}${ringCls}" data-slot="${sk}" ${it ? `data-item="${it.id}"` : ''}>
       ${isRing(sk) && it ? '<span class="relic-star">✦</span>' : ''}
       <span class="eq-lv">${it ? it.ilvl : '—'}</span>
-      ${iconTag(sk, size || 34)}
-      <span class="eq-nm" style="${it ? 'color:' + it.color : ''}">${it ? (it.enh ? '+' + it.enh + ' ' : '') + it.name.slice(0, 5) : DATA.SLOTS[sk].name}</span>
+      ${ic}
+      <span class="eq-nm" style="${it ? 'color:' + it.color : 'color:#6b6558'}">${it ? (it.enh ? '+' + it.enh + ' ' : '') + it.name.slice(0, 5) : DATA.SLOTS[sk].name}</span>
     </div>`;
   };
 

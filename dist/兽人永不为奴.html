@@ -3608,7 +3608,7 @@ DATA.expForLevel = (lv) => {
        两个锚点：Σ(60..69) days = 7；Σ(110..119) days = 180
        → R = (180/7)^(1/50) = 1.06710，D60 = 0.7 */
   const n59 = Math.round(n29 * Math.pow(DATA.EXP_GEOM_MUL, 30));
-  const I60 = 9600000;            // 60 级一天的理论经验收益（约 2 倍 51-60 图）
+  const I60 = 3310000000;         // 60 级一天的实测经验收益（2.3M/分钟 × 1440 ≈ 3.31B）
   const D60 = 0.513;              // 60 级每级 0.513 天（10 级合计 ≈ 7 天）
   const RATE = 1.06710;           // 每级天数 ×1.0671 → 50 级后 ×25.71
   const need = I60 * Math.pow(2, (lv - 60) / 10) * D60 * Math.pow(RATE, lv - 60);
@@ -3667,7 +3667,7 @@ DATA.talentCost = (toLv) => {
   return {
     stone:   Math.round(2 * Math.pow(1.75, n - 1)),
     crystal: Math.round(1 * Math.pow(1.70, n - 1)),
-    gold:    Math.round(20000 * Math.pow(2.15, n - 1))
+    gold:    Math.round(1000000 * Math.pow(2.15, n - 1))   // v218：×50
   };
 };
 

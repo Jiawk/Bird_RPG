@@ -15,7 +15,7 @@ function enterRoom(roomId) {
   if (G.player) G.player.dead = false;
 
   // 进战斗图自动开启「自动攻击 + 自动技能」
-  if (roomId !== TOWN && typeof AUTO !== 'undefined') {
+  if (roomId !== TOWN && roomId !== HOLY_TOWN && typeof AUTO !== 'undefined') {
     const wasOff = !AUTO.atk || !AUTO.skill;
     AUTO.atk = true;
     AUTO.skill = true;
@@ -27,7 +27,7 @@ function enterRoom(roomId) {
   }
   const p = G.player;
   p.room = roomId;
-  const isTown = roomId === TOWN;
+  const isTown = (roomId === TOWN || roomId === HOLY_TOWN);
   const W = isTown ? 1240 : 1440;
   const H = isTown ? 880 : 1020;
 
@@ -63,7 +63,7 @@ function enterRoom(roomId) {
   }
 
   if (isTown) {
-    buildTown();
+    if (roomId === HOLY_TOWN) buildHolyTown(); else buildTown();
     p.x = W / 2; p.y = H * 0.80;
   } else {
     const room = getRoom(roomId) || DATA.ROOMS[roomId];
@@ -109,7 +109,23 @@ function buildTown() {
     { id: nextId(), kind: 'tutorial', name: '新手指引',         ...P(0.62, 0.74), r: 24, color: '#5fd45f' },
     { id: nextId(), kind: 'heirloom', name: '传家宝 · 古籍',    ...P(0.44, 0.72), r: 26, color: '#ffd24a' },
     { id: nextId(), kind: 'beastmaster', name: '驯兽师 · 铃',    ...P(0.22, 0.76), r: 26, color: '#8fd48a' },
-    { id: nextId(), kind: 'statue',   name: '巫妖王雕像',       ...P(0.15, 0.50), r: 34, color: '#8fd8ff' }
+    { id: nextId(), kind: 'statue',   name: '巫妖王雕像',       ...P(0.15, 0.50), r: 34, color: '#8fd8ff' },
+    { id: nextId(), kind: 'holyportal', name: '圣光大陆 · 传送位面', ...P(0.84, 0.70), r: 28, color: '#9fd8ff' }
+  ];
+}
+
+/* ---------------- 圣光大陆（第二主城） ---------------- */
+function buildHolyTown() {
+  const w = G.world;
+  const W = w.W, H = w.H;
+  const P = (fx, fy) => ({ x: W * fx, y: H * fy });
+  w.npcs = [
+    { id: nextId(), kind: 'holygate',   name: '圣光大陆 · 入口', ...P(0.50, 0.30), r: 26, color: '#9fd8ff' },
+    { id: nextId(), kind: 'holytownback', name: '返回暴风城',    ...P(0.30, 0.58), r: 24, color: '#c9a24a' },
+    { id: nextId(), kind: 'save',       name: '存档石碑',       ...P(0.70, 0.58), r: 24, color: '#9fe6b8' },
+    { id: nextId(), kind: 'quest',      name: '任务官 · 黄仁勋', ...P(0.62, 0.40), r: 24, color: '#ff9a6b' },
+    { id: nextId(), kind: 'merchant',   name: '商人 · 赵帅帅',   ...P(0.80, 0.34), r: 24, color: '#e0c060' },
+    { id: nextId(), kind: 'blacksmith', name: '铁匠 · 范在英',   ...P(0.38, 0.36), r: 24, color: '#d06a3a' }
   ];
 }
 

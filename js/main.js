@@ -441,9 +441,12 @@ function autoBattleTick(dt) {
 
 /* ---------------- 房间 ---------------- */
 function goTown() {
-  enterRoom(TOWN);
+  // 在圣光大陆区域回城 → 回圣光大陆主城
+  const r = (G.world && typeof getRoom === 'function') ? getRoom(G.world.roomId) : null;
+  const holy = !!(r && r.zone === 'holy');
+  enterRoom(holy ? HOLY_TOWN : TOWN);
   saveGame();
-  logMsg('回到城镇', 'info');
+  logMsg(holy ? '回到圣光大陆' : '回到城镇', 'info');
 }
 
 function checkBossUnlock() {

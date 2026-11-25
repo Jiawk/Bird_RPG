@@ -420,7 +420,7 @@ function updateHUD(dt) {
   // 当前位置 / 难度
   const _t = w.isTown;
   const pr = $('placeRoom'), pd = $('placeDiff');
-  if (pr) pr.textContent = _t ? '暴风城 · 安全区' : (getRoom(w.roomId) || DATA.ROOMS[w.roomId]).name;
+  if (pr) pr.textContent = _t ? (w.roomId === HOLY_TOWN ? '圣光大陆 · 安全区' : '暴风城 · 安全区') : (getRoom(w.roomId) || DATA.ROOMS[w.roomId]).name;
   if (pd) {
     const D = DATA.DIFFICULTY[G.diff] || DATA.DIFFICULTY.normal;
     pd.textContent = _t ? '无战斗' : (D.name + '难度');
@@ -455,7 +455,7 @@ function updateHUD(dt) {
   $('diffVal').style.color = DATA.DIFFICULTY[G.diff].color;
 
   const isTown = w.isTown;
-  $('roomName').textContent = isTown ? '暴风城 · 安全区' : (getRoom(w.roomId) || DATA.ROOMS[w.roomId]).name;
+  $('roomName').textContent = isTown ? (w.roomId === HOLY_TOWN ? '圣光大陆 · 安全区' : '暴风城 · 安全区') : (getRoom(w.roomId) || DATA.ROOMS[w.roomId]).name;
   $('roomSub').textContent = isTown ? '点击 NPC 或按 M 选择关卡'
     : (G._dailyBackLeft > 0
         ? `⏳ ${G._dailyBackLeft} 秒后自动返回城镇…`
@@ -607,8 +607,12 @@ function updateQuestTracker() {
   if (!p || G.screen !== 'game') { el.classList.add('hidden'); return; }
 
   const qs = p.quests || [];
-  const avail = DATA.QUEST_POOL.filter(q =>
-    !qs.some(x => x.id === q.id) && p.unlocked.includes(q.room));
+  const qOpen = q => {
+    const r = DATA.ROOMS[q.room];
+    if (r && r.zone === 'holy') return p.level >= (r.reqLv || 1);
+    return p.unlocked.includes(q.room);
+  };
+  const avail = DATA.QUEST_POOL.filter(q => !qs.some(x => x.id === q.id) && qOpen(q));
   if (!qs.length && !avail.length) { el.classList.add('hidden'); return; }
   el.classList.remove('hidden');
 
@@ -865,6 +869,9 @@ function handleCommand(act) {
     case 'skill': toggleModal('skill', '技能', () => skillHtml()); break;
     case 'map': toggleModal('map', '传送 / 回城', () => townMapHtml()); break;
     case 'town': goTown(); break;
+    case 'holyportal': interactNPC({ kind:'holyportal' }); break;
+    case 'holygate': interactNPC({ kind:'holygate' }); break;
+    case 'holytownback': interactNPC({ kind:'holytownback' }); break;
     case 'quest': toggleModal('quest', '任务官 · 黄仁勋', questHtml); break;
     case 'craft': toggleModal('craft', '锻造台', craftHtml); break;
     case 'warehouse':
@@ -1284,15 +1291,18 @@ function skillHtml() {
 }
 
 /* ---------------- 关卡 / 难度选择 ---------------- */
-function townMapHtml() {
+function townMapHtml(zone) {
   const p = G.player;
+  const z = zone || 'main';
   let html = '<div class="npc-row" style="margin-bottom:10px"><div><div class="nr-name">回城</div>'
     + '<div class="nr-info">返回暴风城安全区（也可按 H）</div></div>'
     + '<button data-act-town style="border-color:#6b8a4a;color:#b9ffb0">回城</button></div>';
   html += '<div style="font-size:12px;color:#8f8570;margin:10px 0 8px">选择房间，再选难度进入</div><div class="room-pick">';
   DATA.ROOMS.forEach((r, i) => {
     if (r.daily) return;                  // 每日副本从传送员进入
-    const unlocked = p.unlocked.includes(i);
+    const rz = r.zone || 'main';
+    if (z === 'holy' ? rz !== 'holy' : rz === 'holy') return;
+    const unlocked = (rz === 'holy') ? (p.level >= (r.reqLv || 1)) : p.unlocked.includes(i);
     const lvOk = p.level >= (r.reqLv || 1);
     const ok = unlocked && lvOk;
     const need = requiredCP(i, 'normal');
@@ -1304,7 +1314,8 @@ function townMapHtml() {
   });
   html += '</div>';
 
-  // 每日副本也能从 M 面板直接进入
+  // 每日副本也能从 M 面板直接进入（仅主城分区）
+  if (z === 'holy') { html += '</div>'; return html + '</div>'; }
   html += '<div style="font-size:12px;color:#ffd98a;margin:14px 0 8px">📅 每日副本（每个每天 2 次，怪物等级跟随你）</div><div class="room-pick">';
   DATA.DAILY_ROOMS.forEach(r => {
     const left = dailyLeft(p, r.key);
@@ -1608,6 +1619,12 @@ function interactNPC(target) {
   if (typeof Sfx !== 'undefined') Sfx.play(n.kind === 'warehouse' ? 'warehouse' : 'openBig');
   switch (n.kind) {
     case 'teleport': openModal('tel', '传送员 · 岳跃冲', teleportHtml()); break;
+    case 'holyportal': openModal('holy', '圣光大陆 · 传送位面',
+      '<div class="holy-txt">一道悬浮的光门，门后是另一个位面。</div>'
+      + '<div class="holy-sub">圣光大陆：60 ~ 120 级副本，每 10 级一档，共 6 个副本 × 3 难度。</div>'
+      + '<button class="holy-go" data-holy-go="1">穿过光门 →</button>'); break;
+    case 'holygate': openModal('map', '圣光大陆 · 选择副本', townMapHtml('holy')); break;
+    case 'holytownback': closeModal(); enterRoom(TOWN); logMsg('返回暴风城', 'info'); break;
     case 'merchant': toggleModal('merchant', '商人 · 赵帅帅', merchantHtml); break;
     case 'exchange': toggleModal('exchange', '抽奖专员 · 李准', exchangeHtml); break;
     case 'blacksmith': toggleModal('smith', '铁匠 · 范在英', smithHtml); break;
@@ -3292,7 +3309,9 @@ function acceptAllQuests() {
   let n = 0;
   DATA.QUEST_POOL.forEach(q => {
     if (p.quests.some(x => x.id === q.id)) return;
-    if (!p.unlocked.includes(q.room)) return;
+    const _r = DATA.ROOMS[q.room];
+    const _ok = (_r && _r.zone === 'holy') ? (p.level >= (_r.reqLv || 1)) : p.unlocked.includes(q.room);
+    if (!_ok) return;
     p.quests.push({ ...q, have: 0 });
     n++;
   });
@@ -3416,13 +3435,21 @@ function bindModal() {
 
   body.querySelectorAll('[data-pick-room]').forEach(b => b.onclick = () => {
     const i = +b.dataset.pickRoom;
-    if (!G.player.unlocked.includes(i)) { toast('尚未解锁'); return; }
+    const _r = DATA.ROOMS[i];
+    const _holy = _r && _r.zone === 'holy';
+    if (_holy ? (G.player.level < (_r.reqLv || 1)) : !G.player.unlocked.includes(i)) {
+      toast(_holy ? `需要 Lv.${_r.reqLv}` : '尚未解锁'); return;
+    }
     openModal('map', '选择难度 · ' + DATA.ROOMS[i].name, diffPickHtml(i));
   });
 
   body.querySelectorAll('[data-pick-diff]').forEach(b => b.onclick = () => {
     const diff = b.dataset.pickDiff, room = +b.dataset.room;
-    if (!G.player.unlocked.includes(room)) { toast('尚未解锁'); return; }
+    const _rr = DATA.ROOMS[room];
+    const _holy2 = _rr && _rr.zone === 'holy';
+    if (_holy2 ? (G.player.level < (_rr.reqLv || 1)) : !G.player.unlocked.includes(room)) {
+      toast(_holy2 ? `需要 Lv.${_rr.reqLv}` : '尚未解锁'); return;
+    }
     const p = G.player;
     if (!diffUnlocked(p, diff)) { toast('🔒 ' + diffLockText(p, diff)); return; }
     const r = DATA.ROOMS[room];
@@ -4142,6 +4169,9 @@ function mountSound(key) {
     openModal('chars', '选择角色', charListHtml());
   });
   body.querySelectorAll('[data-act-town]').forEach(b => b.onclick = () => { closeModal(); goTown(); });
+  body.querySelectorAll('[data-holy-go]').forEach(b => b.onclick = () => {
+    closeModal(); enterRoom(HOLY_TOWN); logMsg('穿过光门，来到圣光大陆', 'level');
+  });
   body.querySelectorAll('[data-act-enhance]').forEach(b => b.onclick = () => openModal('enhance', '铁匠 · 装备强化', enhanceHtml()));
   body.querySelectorAll('[data-tower-start]').forEach(b => b.onclick = () => enterTower(+b.dataset.towerStart));
   body.querySelectorAll('[data-set-info]').forEach(b => b.onclick = () => {

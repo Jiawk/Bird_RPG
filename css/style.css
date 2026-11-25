@@ -2163,3 +2163,12 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   background-size:280px 140px;
   background-position:calc(var(--hi,0) * -140px) 0;
   border-radius:2px}
+
+/* 圣光大陆传送位面弹窗 */
+.holy-txt{font-family:var(--serif);font-size:16px;color:#cfe6ff;margin-bottom:8px}
+.holy-sub{font-size:12px;color:#8f9bb0;margin-bottom:14px;line-height:1.7}
+.holy-go{display:block;width:100%;padding:12px 0;border-radius:3px;cursor:pointer;
+  font-family:var(--serif);font-size:17px;letter-spacing:.16em;color:#0b1220;
+  background:linear-gradient(180deg,#bfe4ff,#5fa8d8);border:1px solid #8fd0ff;
+  box-shadow:0 0 18px rgba(120,200,255,.45)}
+.holy-go:hover{filter:brightness(1.12)}

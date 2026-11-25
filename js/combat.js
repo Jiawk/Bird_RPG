@@ -651,7 +651,8 @@ function dropLoot(m) {
       // 每日副本：装备等级跟随玩家（+2 上限），不吃「第 N 图 ×10」规则
       ilvl = Math.max(1, Math.min(m.level, (G.player.level || 1) + 2));
     } else {
-      const cap = (w.roomId + 1) * 10;
+      // 圣光大陆（60-120）每图固定 10 级一段；老地图沿用「第 N 图 ×10」
+      const cap = (room.zone === 'holy') ? ((room.lv || 1) + 9) : ((w.roomId + 1) * 10);
       const floorLv = room.lv || 1;
       ilvl = Math.max(floorLv, Math.min(ilvl, cap));
     }

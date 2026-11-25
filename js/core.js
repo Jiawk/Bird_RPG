@@ -4,6 +4,7 @@
 'use strict';
 
 const TOWN = 99;   // 城镇房间 id
+const HOLY_TOWN = 98;   // 圣光大陆主城 id
 
 const G = {
   screen: 'title',

@@ -135,7 +135,7 @@ DATA.QUALITY = [
   {key:'relic',    name:'圣物', color:'#ffe9a8', affixes:6, mult:5.60, lvl:34, weight:0}
 ];
 
-DATA.BOSS_WEIGHTS = {rare:3600, epic:3800, legendary:2100, mythic:100};   // 神话约 1%
+DATA.BOSS_WEIGHTS = {rare:4000, epic:3900, legendary:1500, mythic:45};   // 神话约 0.48%（红装更难）
 
 DATA.AFFIXES = [
   {key:'str',name:'力量',v:[2,6],scale:0.35}, {key:'agi',name:'敏捷',v:[2,6],scale:0.35},
@@ -268,7 +268,15 @@ DATA.MONSTERS = {
   grunt:     {name:'兽人步兵',   color:'#6b8e23', hp:260, atk:18, spd:2.4, r:19, exp:62,  gold:[28,58]},
   skeleton:  {name:'骷髅战士',   color:'#dcd6c8', hp:430, atk:27, spd:2.5, r:18, exp:110, gold:[44,88]},
   doomguard: {name:'恶魔卫士',   color:'#7d2b8b', hp:650, atk:38, spd:2.5, r:21, exp:180, gold:[64,128]},
-  abyssal:   {name:'深渊魔仆',   color:'#c0392b', hp:950, atk:52, spd:2.4, r:22, exp:280, gold:[90,180]}
+  abyssal:   {name:'深渊魔仆',   color:'#c0392b', hp:950, atk:52, spd:2.4, r:22, exp:280, gold:[90,180]},
+
+  /* ===== 圣光大陆（60-120） ===== */
+  lightspawn:  {name:'圣光余烬',   color:'#8fb8e8', hp:1500, atk:70,  spd:2.4, r:20, exp:560,   gold:[140,280]},
+  vrykul:      {name:'维库劫掠者', color:'#9a7a4a', hp:2400, atk:95,  spd:2.3, r:22, exp:1120,  gold:[220,440]},
+  valkyr:      {name:'瓦格里侍女', color:'#8fb8e8', hp:3800, atk:130, spd:2.6, r:21, exp:2240,  gold:[340,680]},
+  titanforged: {name:'泰坦造物',   color:'#a88ad0', hp:6000, atk:175, spd:2.2, r:24, exp:4480,  gold:[520,1040]},
+  naaru:       {name:'纳鲁哨兵',   color:'#9fd8ff', hp:9500, atk:240, spd:2.4, r:23, exp:8960,  gold:[800,1600]},
+  voidlord:    {name:'虚空仆从',   color:'#7a4ab8', hp:15000,atk:320, spd:2.3, r:26, exp:17920, gold:[1200,2400]}
 };
 
 /* BOSS：魔兽争霸3 冰封王座角色 */
@@ -292,7 +300,15 @@ DATA.BOSSES = {
   bossKel:      {name:'克尔苏加德',      title:'亡灵天灾的巫妖',  color:'#7fb3d5', hp:25000, atk:54,  spd:2.3, r:34, exp:3400, gold:[1600,2600]},
   bossMannoroth:{name:'玛诺洛斯',        title:'燃烧军团的毁灭者',color:'#a83232', hp:52000, atk:98,  spd:2.4, r:38, exp:6000, gold:[2800,4400]},
   bossArchimonde:{name:'阿克蒙德',       title:'污染者',          color:'#5b2c6f', hp:95000, atk:145, spd:2.5, r:40, exp:10000,gold:[5000,8000]},
-  lichKing:     {name:'巫妖王 · 阿尔萨斯', title:'霜之哀伤的主人',  color:'#8fd8ff', hp:180000, atk:190, spd:2.2, r:44, exp:26000,gold:[9000,14000]}
+  lichKing:     {name:'巫妖王 · 阿尔萨斯', title:'霜之哀伤的主人',  color:'#8fd8ff', hp:180000, atk:190, spd:2.2, r:44, exp:26000,gold:[9000,14000]},
+
+  /* ===== 圣光大陆 BOSS（60-120） ===== */
+  bossLight:   {name:'圣光先锋 · 图拉扬', title:'圣光的执剑者', color:'#8fb8e8', hp:420000,  atk:260, spd:2.4, r:38, exp:14000,  gold:[2000,3600]},
+  bossVrykul:  {name:'维库之王 · 斯卡迪', title:'北境的霜巨人', color:'#9a7a4a', hp:700000,  atk:360, spd:2.3, r:40, exp:28000,  gold:[3200,5600]},
+  bossValkyr:  {name:'瓦格里女王 · 希格琳',title:'英灵的选择者', color:'#8fb8e8', hp:1150000, atk:500, spd:2.5, r:40, exp:56000,  gold:[5000,8600]},
+  bossTitan:   {name:'泰坦守望者 · 奥尔加隆',title:'星空的审判者',color:'#a88ad0', hp:1900000, atk:700, spd:2.2, r:42, exp:112000, gold:[8000,14000]},
+  bossNaaru:   {name:'纳鲁之影 · 阿达尔', title:'纯粹圣光的碎片', color:'#9fd8ff', hp:3200000, atk:980, spd:2.4, r:44, exp:224000, gold:[13000,22000]},
+  bossVoid:    {name:'虚空之主 · 迪门修斯',title:'吞噬万物的虚空', color:'#7a4ab8', hp:5600000, atk:1400,spd:2.3, r:46, exp:448000, gold:[22000,38000]}
 };
 
 /* ---------------- 房间 ---------------- */
@@ -303,7 +319,15 @@ DATA.ROOMS = [
   {id:3, name:'亡灵墓穴',    lv:31, reqLv:31, mons:'skeleton',  boss:'bossKel',       count:50, elite:20, bosses:2, bg:'#1a1f26', accent:'#3f5568', desc:'死亡并非终点'},
   {id:4, name:'燃烧军团裂隙',lv:41, reqLv:41, mons:'doomguard', boss:'bossMannoroth', count:50, elite:20, bosses:2, bg:'#26141a', accent:'#6b2438', desc:'虚空在低语'},
   {id:5, name:'深渊祭坛',    lv:51, reqLv:51, mons:'abyssal',   boss:'bossArchimonde',count:50, elite:20, bosses:2, bg:'#1c1226', accent:'#4a2a6b', desc:'污染者的王座'},
-  {id:6, name:'冰冠堡垒 · 王座', lv:58, reqLv:1, mons:'skeleton', boss:'lichKing', count:0, elite:0, bosses:1, bg:'#101822', accent:'#2a4a6b', desc:'霜之哀伤在低语', challenge:true}
+  {id:6, name:'冰冠堡垒 · 王座', lv:58, reqLv:1, mons:'skeleton', boss:'lichKing', count:0, elite:0, bosses:1, bg:'#101822', accent:'#2a4a6b', desc:'霜之哀伤在低语', challenge:true},
+
+  /* ===== 圣光大陆（60-120，每 10 级一档，需从「圣光大陆」传送位面进入） ===== */
+  {id:7,  name:'圣光前哨',   lv:60, reqLv:60,  zone:'holy', mons:'lightspawn',  boss:'bossLight',   count:50, elite:20, bosses:2, bg:'#1e2430', accent:'#7fa8d8', desc:'圣光的边缘，暗影初现'},
+  {id:8,  name:'维库人营地', lv:70, reqLv:70,  zone:'holy', mons:'vrykul',      boss:'bossVrykul',  count:50, elite:20, bosses:2, bg:'#232019', accent:'#9a7a4a', desc:'北境巨人的战鼓'},
+  {id:9,  name:'瓦格里圣殿', lv:80, reqLv:80,  zone:'holy', mons:'valkyr',      boss:'bossValkyr',  count:50, elite:20, bosses:2, bg:'#1c2230', accent:'#8fb8e8', desc:'女武神在挑选英灵'},
+  {id:10, name:'泰坦造物厅', lv:90, reqLv:90,  zone:'holy', mons:'titanforged', boss:'bossTitan',   count:50, elite:20, bosses:2, bg:'#241f28', accent:'#a88ad0', desc:'远古机械仍在运转'},
+  {id:11, name:'纳鲁之环',   lv:100,reqLv:100, zone:'holy', mons:'naaru',       boss:'bossNaaru',   count:50, elite:20, bosses:2, bg:'#1a2436', accent:'#9fd8ff', desc:'纯粹圣光凝聚成形'},
+  {id:12, name:'虚空王座',   lv:110,reqLv:110, zone:'holy', mons:'voidlord',    boss:'bossVoid',    count:50, elite:20, bosses:2, bg:'#1a1024', accent:'#7a4ab8', desc:'虚空在吞噬一切'}
 ];
 
 DATA.POTIONS = [
@@ -385,7 +409,15 @@ DATA.QUEST_POOL = [
   {id:'q3', name:'击退兽人', room:2, need:80, exp:1400, gold:900,  mats:{iron:2,mithril:2}},
   {id:'q4', name:'净化亡灵', room:3, need:80, exp:2600, gold:1500, mats:{iron:2,mithril:2,scale:1}},
   {id:'q5', name:'封印恶魔', room:4, need:80, exp:4800, gold:2600, mats:{iron:3,mithril:2,scale:1}},
-  {id:'q6', name:'深渊终战', room:5, need:80, exp:8000, gold:4200, mats:{iron:3,mithril:2,scale:1,shard:1}}
+  {id:'q6', name:'深渊终战', room:5, need:80, exp:8000, gold:4200, mats:{iron:3,mithril:2,scale:1,shard:1}},
+
+  /* ===== 圣光大陆（60-120） ===== */
+  {id:'q7',  name:'圣光前哨', room:7,  need:100, exp:26000,  gold:9000,  mats:{iron:3,mithril:3,scale:2,shard:1}},
+  {id:'q8',  name:'维库之乱', room:8,  need:100, exp:52000,  gold:16000, mats:{iron:4,mithril:3,scale:2,shard:2}},
+  {id:'q9',  name:'英灵试炼', room:9,  need:100, exp:105000, gold:28000, mats:{iron:4,mithril:4,scale:3,shard:2}},
+  {id:'q10', name:'泰坦遗迹', room:10, need:100, exp:210000, gold:48000, mats:{iron:5,mithril:4,scale:3,shard:3}},
+  {id:'q11', name:'纳鲁之环', room:11, need:100, exp:420000, gold:82000, mats:{iron:5,mithril:5,scale:4,shard:3}},
+  {id:'q12', name:'虚空终局', room:12, need:100, exp:840000, gold:140000,mats:{iron:6,mithril:5,scale:5,shard:4}}
 ];
 
 /* ---------------- 职业专属套装（每图一套，共 6×4 = 24 套） ---------------- */
@@ -393,10 +425,14 @@ const SET_SLOTS = ['weapon','helm','chest','legs','boots','neck'];
 DATA.SET_SLOTS = SET_SLOTS;
 
 const SET_NAMES = {
-  warrior:  ['荒野破军', '矿脉破军', '战歌破军', '亡灵破军', '燃烧破军', '深渊破军'],
-  mage:     ['荒野霜语', '矿脉霜语', '战歌霜语', '亡灵霜语', '燃烧霜语', '深渊霜语'],
-  archer:   ['荒野风行', '矿脉风行', '战歌风行', '亡灵风行', '燃烧风行', '深渊风行'],
-  assassin: ['荒野影杀', '矿脉影杀', '战歌影杀', '亡灵影杀', '燃烧影杀', '深渊影杀']
+  warrior:  ['荒野破军', '矿脉破军', '战歌破军', '亡灵破军', '燃烧破军', '深渊破军', '冰冠破军',
+             '圣光破军', '维库破军', '英灵破军', '泰坦破军', '纳鲁破军', '虚空破军'],
+  mage:     ['荒野霜语', '矿脉霜语', '战歌霜语', '亡灵霜语', '燃烧霜语', '深渊霜语', '冰冠霜语',
+             '圣光霜语', '维库霜语', '英灵霜语', '泰坦霜语', '纳鲁霜语', '虚空霜语'],
+  archer:   ['荒野风行', '矿脉风行', '战歌风行', '亡灵风行', '燃烧风行', '深渊风行', '冰冠风行',
+             '圣光风行', '维库风行', '英灵风行', '泰坦风行', '纳鲁风行', '虚空风行'],
+  assassin: ['荒野影杀', '矿脉影杀', '战歌影杀', '亡灵影杀', '燃烧影杀', '深渊影杀', '冰冠影杀',
+             '圣光影杀', '维库影杀', '英灵影杀', '泰坦影杀', '纳鲁影杀', '虚空影杀']
 };
 
 DATA.SETS = {};
@@ -529,7 +565,7 @@ DATA.LOTTERY = {
 };
 
 /* 装备掉落倍率（1 = 原版；0.2 = 五分之一） */
-DATA.EQ_DROP_MUL = 0.35;
+DATA.EQ_DROP_MUL = 0.24;   // v214：从 0.35 降到 0.24，装备更难出
 
 /* 怪物金币独立倍率，避免随装备掉落倍率膨胀 */
 DATA.GOLD_DROP_MUL = 0.70;
@@ -798,7 +834,8 @@ DATA.SPECIAL_RINGS = {
 /* 每图「普通」难度的推荐战力
    标定依据：该图 BOSS 血量 × 期望击杀 40 秒 → 所需 DPS，再折算成战力
    普通难度 BOSS 血：1500 / 4200 / 11500 / 25000 / 52000 / 95000 / 180000 */
-DATA.ROOM_CP = [1800, 3600, 7800, 15000, 27000, 46000, 82000];
+DATA.ROOM_CP = [1800, 3600, 7800, 15000, 27000, 46000, 82000,
+                120000, 185000, 280000, 420000, 640000, 950000];   // 7-12 圣光大陆
 /* 难度对战力的要求倍率（困难/地狱的怪强度提升远大于血量线性成长） */
 DATA.DIFF_CP_MUL = { normal: 1.00, hard: 1.75, hell: 3.20 };
 
@@ -994,7 +1031,7 @@ DATA.CLASS_AVATAR = { warrior:4, mage:5, archer:6, assassin:7 };
 /* 高清职业头像（avatarsHd 图集）：0=剑圣 1=恶魔猎手，未列出的职业用 CLASS_AVATAR */
 DATA.AVATAR_HD = { warrior:0, assassin:1 };
 
-DATA.MAX_LEVEL = 60;
+DATA.MAX_LEVEL = 120;
 /* 经验曲线：1~25 级沿用原版 100×lv^1.5；26 级起每级 ×2.4（25 级之后非常慢） */
 DATA.EXP_TAIL_FROM = 26;
 DATA.EXP_TAIL_MUL = 2.4;
@@ -1005,8 +1042,22 @@ DATA.expForLevel = (lv) => {
     const base = Math.floor(100 * Math.pow(DATA.EXP_TAIL_FROM - 1, 1.5));
     return Math.round(base * Math.pow(DATA.EXP_TAIL_MUL, lv - (DATA.EXP_TAIL_FROM - 1)));
   }
-  // 30 级之后：每级需求 = 上一级 × 1.5（几何增长）
+  // 30~59：每级需求 = 上一级 × 1.08447（每 5 级 ×1.5）
   const b0 = Math.floor(100 * Math.pow(DATA.EXP_TAIL_FROM - 1, 1.5));
   const n29 = Math.round(b0 * Math.pow(DATA.EXP_TAIL_MUL, 29 - (DATA.EXP_TAIL_FROM - 1)));
-  return Math.round(n29 * Math.pow(DATA.EXP_GEOM_MUL, lv - 29));
+  if (lv < 60) return Math.round(n29 * Math.pow(DATA.EXP_GEOM_MUL, lv - 29));
+
+  /* ===== 60~120：以「挂机天数」为锚点反推 =====
+     目标：60→70 共 7 天；110→120 共 180 天（约 6 个月）
+     设计：每级需求 = 该等级「一天的挂机收益」× 「需要挂几天」
+       - 日收益 income(lv) = I60 × 2^((lv-60)/10)   （每 10 级翻倍，与怪物经验同步）
+       - 天数     days(lv)   = D60 × R^((lv-60)/50)  （R 由两个锚点解出）
+       两个锚点：Σ(60..69) days = 7；Σ(110..119) days = 180
+       → R = (180/7)^(1/50) = 1.06710，D60 = 0.7 */
+  const n59 = Math.round(n29 * Math.pow(DATA.EXP_GEOM_MUL, 30));
+  const I60 = 9600000;            // 60 级一天的理论经验收益（约 2 倍 51-60 图）
+  const D60 = 0.513;              // 60 级每级 0.513 天（10 级合计 ≈ 7 天）
+  const RATE = 1.06710;           // 每级天数 ×1.0671 → 50 级后 ×25.71
+  const need = I60 * Math.pow(2, (lv - 60) / 10) * D60 * Math.pow(RATE, lv - 60);
+  return Math.round(Math.max(n59, need));
 };

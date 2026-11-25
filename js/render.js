@@ -509,11 +509,13 @@ function drawMonster(m) {
 
   let drawn = false;
 
-  const MON_IDX = { centaur:8, kobold:9, grunt:10, skeleton:11, doomguard:12, abyssal:13 };
+  const MON_IDX = { centaur:8, kobold:9, grunt:10, skeleton:11, doomguard:12, abyssal:13,
+    lightspawn:14, vrykul:15, valkyr:16, titanforged:17, naaru:18, voidlord:19 };
   if (!drawn && imgReady('units')) {
     const S = m.isBoss ? 2.9 : (m.isElite ? 1.6 : 1.35);
     const sw = U_FRAME_W * S, sh = U_FRAME_H * S;
-    const BOSS_IDX = { bossWolf:8, bossKobold:9, bossGrom:10, bossKel:11, bossMannoroth:12, bossArchimonde:13 };
+    const BOSS_IDX = { bossWolf:8, bossKobold:9, bossGrom:10, bossKel:11, bossMannoroth:12, bossArchimonde:13,
+      bossLight:14, bossVrykul:15, bossValkyr:16, bossTitan:17, bossNaaru:18, bossVoid:19 };
     const idx = (MON_IDX[m.kind] !== undefined) ? MON_IDX[m.kind]
               : (BOSS_IDX[m.kind] !== undefined ? BOSS_IDX[m.kind] : 11);
     const moving = (m.aggro || m.wandering) && m.stun <= 0 && m.frozen <= 0;
@@ -1161,7 +1163,8 @@ function drawNPC(n) {
   CTX.fillStyle = lg;
   CTX.fillRect(gx - 18, y - 80, 36, 80);
 
-  const NPC_IDX = { teleport:4, merchant:5, exchange:6, blacksmith:7, quest:0, tower:2 };
+  const NPC_IDX = { teleport:4, merchant:5, exchange:6, blacksmith:7, quest:0, tower:2,
+    holyportal:20, holygate:21, holytownback:4 };
   let npcDrawn = false;
   if (imgReady('units') && NPC_IDX[n.kind] !== undefined) {
     const S = 1.4, sw = U_FRAME_W*S, sh = U_FRAME_H*S;

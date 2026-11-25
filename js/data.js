@@ -386,7 +386,13 @@ DATA.MATERIALS = {
     use:'技能页（按 K 打开）→ 每个技能右侧的「突破」按钮'},
   bossToken:{name:'BOSS击杀凭证', color:'#ff9a3c', icon:'⬢',
     desc:'击败 BOSS 的荣誉证明。可用于兑换神秘物品（内容待定）。',
-    use:'暂无（后续开放神秘兑换）'}
+    use:'暂无（后续开放神秘兑换）'},
+  talentStone:  {name:'天赋突破石', color:'#ffd24a', icon:'◆',
+    desc:'天赋突破的核心材料。只有 BOSS 会掉落，掉率极低。',
+    use:'天赋 → 突破（右上角「天赋」按钮）'},
+  sourceCrystal:{name:'源晶', color:'#ff7ae0', icon:'❖',
+    desc:'蕴含本源之力的晶体，天赋突破必需。只有 BOSS 会掉落。',
+    use:'天赋 → 突破（右上角「天赋」按钮）'}
 };
 
 /* 合成配方：3 材料 + 金币 → 指定品质随机部位 */
@@ -1061,3 +1067,62 @@ DATA.expForLevel = (lv) => {
   const need = I60 * Math.pow(2, (lv - 60) / 10) * D60 * Math.pow(RATE, lv - 60);
   return Math.round(Math.max(n59, need));
 };
+
+/* ================= 天赋系统 ================= */
+/* 9 个天赋等级（觉醒即「黑铁」，突破 9 次到「超神级」） */
+DATA.TALENT_TIERS = [
+  {key:'iron',     name:'黑铁',   color:'#8c8c8c'},
+  {key:'bronze',   name:'青铜',   color:'#c07a3a'},
+  {key:'silver',   name:'白银',   color:'#cfd6dd'},
+  {key:'gold',     name:'黄金',   color:'#ffd24a'},
+  {key:'platinum', name:'铂金',   color:'#9fe8ff'},
+  {key:'diamond',  name:'钻石',   color:'#7ad4ff'},
+  {key:'holy',     name:'圣级',   color:'#ffe9a8'},
+  {key:'god',      name:'神级',   color:'#ff9a2e'},
+  {key:'supergod', name:'超神级', color:'#ff3b3b'}
+];
+/* 突破门槛：30 / 40 / … / 120（共 10 个节点：觉醒 + 9 次突破） */
+DATA.TALENT_GATES = [30, 40, 50, 60, 70, 80, 90, 100, 110, 120];
+
+/* 4 个天赋：效果随「天赋等级」线性成长 */
+DATA.TALENTS = {
+  soulPoison: {
+    key:'soulPoison', name:'灵魂之毒', color:'#7fdc5a',
+    desc:'普攻命中后附加剧毒，每秒造成怪物总血量的百分比伤害。',
+    per:{ poison:0.005, dur:1 },      // 每级 +0.5% 伤害、+1 秒
+    base:{ poison:0.005, dur:10 }     // 初始：0.5% / 10 秒
+  },
+  recovery: {
+    key:'recovery', name:'恢复之力', color:'#5fd45f',
+    desc:'每秒恢复自身总血量的百分比生命。',
+    per:{ regen:0.005 },
+    base:{ regen:0.005 }
+  },
+  execute: {
+    key:'execute', name:'绝杀之力', color:'#ff5a40',
+    desc:'普攻与技能命中有概率直接斩杀目标。',
+    per:{ exec:0.005 },
+    base:{ exec:0.005 }
+  },
+  revive: {
+    key:'revive', name:'复活之力', color:'#c06bff',
+    desc:'被击杀后有概率原地满血复活（冷却 60 秒）。',
+    per:{ revive:0.005 },
+    base:{ revive:0.005 }, revCd:60
+  }
+};
+DATA.TALENT_ORDER = ['soulPoison', 'recovery', 'execute', 'revive'];
+
+/* 突破消耗：等级越高越贵（stone 突破石 / crystal 源晶 / gold 金币） */
+DATA.talentCost = (toLv) => {
+  // toLv: 目标天赋等级 2..10
+  const n = toLv - 1;
+  return {
+    stone:   Math.round(2 * Math.pow(1.75, n - 1)),
+    crystal: Math.round(1 * Math.pow(1.70, n - 1)),
+    gold:    Math.round(20000 * Math.pow(2.15, n - 1))
+  };
+};
+
+/* BOSS 掉落新材料（概率极低，随难度微增） */
+DATA.TALENT_DROP = { stone: 0.045, crystal: 0.030 };   // 每次 BOSS 击杀

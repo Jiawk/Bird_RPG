@@ -280,6 +280,12 @@ function updateMonsters(dt) {
       damageMonster(m, m.poison.dps * dt * p.stats.power, 'poison', true);
       if (m.poison.t <= 0) m.poison = null;
     }
+    // 天赋：灵魂之毒（按怪物总血量百分比，每秒结算）
+    if (m.talentPoison) {
+      m.talentPoison.t -= dt;
+      damageMonster(m, m.hpMax * m.talentPoison.pct * dt, 'poison', true);
+      if (m.talentPoison.t <= 0) m.talentPoison = null;
+    }
     if (!m.alive) continue;
 
     const d = dist(m, p);

@@ -2172,3 +2172,83 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   background:linear-gradient(180deg,#bfe4ff,#5fa8d8);border:1px solid #8fd0ff;
   box-shadow:0 0 18px rgba(120,200,255,.45)}
 .holy-go:hover{filter:brightness(1.12)}
+
+/* 天赋按钮 */
+.codex-btn.talent-btn{border-color:#c9a24a;color:#ffd98a;
+  background:linear-gradient(180deg,rgba(90,70,30,.9),rgba(30,22,10,.95));
+  box-shadow:0 0 12px rgba(255,210,74,.25)}
+.codex-btn.talent-btn:hover{border-color:#ffd24a;color:#fff}
+.codex-btn.talent-btn.awake{color:#ffe9a8;border-color:#ffd24a;
+  box-shadow:0 0 16px rgba(255,210,74,.55)}
+
+/* ============ 天赋页面 ============ */
+.tal-tabs{display:flex;gap:8px;margin-bottom:12px}
+.tal-tab{flex:1;padding:9px 0;border-radius:3px;cursor:pointer;font-family:var(--serif);
+  font-size:15px;letter-spacing:.08em;color:#8f8570;
+  background:linear-gradient(180deg,rgba(48,38,22,.9),rgba(20,16,9,.95));
+  border:1px solid #4a3d28}
+.tal-tab.on{color:#ffd98a;border-color:#c9a24a;box-shadow:0 0 12px rgba(255,210,74,.28)}
+.tal-hero{text-align:center;padding:14px 10px;border-radius:4px;margin-bottom:12px;
+  background:radial-gradient(ellipse at 50% 30%,rgba(90,70,30,.28),rgba(0,0,0,.5));
+  border:1px solid rgba(138,109,59,.45)}
+.tal-hero.empty .tal-orb{font-size:44px;color:#5a5348}
+.tal-orb{width:86px;height:86px;margin:0 auto 8px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  border:2px solid #6b5a35;background:radial-gradient(circle,rgba(60,48,24,.9),rgba(10,8,5,.95));
+  overflow:hidden}
+.tal-title{font-family:var(--serif);font-size:21px;letter-spacing:.1em;margin-bottom:2px}
+.tal-tier{font-family:var(--serif);font-size:15px}
+.tal-lv{color:#8f8570;font-size:12px;margin-left:6px}
+.tal-desc2{font-size:12px;color:#a89e88;margin:8px 0 6px;line-height:1.7}
+.tal-effect{font-size:13px;color:#cfe6ff;margin-bottom:4px}
+.tal-next{font-size:11px;color:#8f8570}
+.tal-hint{font-size:13px;color:#c9bfa6;line-height:1.8;margin-bottom:10px}
+.tal-awake{padding:10px 30px;border-radius:3px;cursor:pointer;font-family:var(--serif);
+  font-size:16px;letter-spacing:.14em;color:#1a1206;
+  background:linear-gradient(180deg,#ffe9a8,#d4af37);border:1px solid #ffd24a;
+  box-shadow:0 0 18px rgba(255,210,74,.6)}
+.tal-list{display:flex;flex-direction:column;gap:8px}
+.tal-card{display:flex;gap:10px;padding:9px 10px;border-radius:3px;
+  background:rgba(30,26,18,.72);border:1px solid rgba(138,109,59,.35)}
+.tal-card.dim{opacity:.55}
+.tal-card.on{border-color:#ffd24a;background:rgba(60,48,20,.7);box-shadow:0 0 12px rgba(255,210,74,.2)}
+.tal-card.locked{opacity:.7}
+.tal-ic{width:44px;height:44px;flex:0 0 44px;border-radius:3px;overflow:hidden;
+  border:1px solid #4a3d28;background:#0b0d10}
+.tal-main{flex:1;min-width:0}
+.tal-name{font-family:var(--serif);font-size:15px}
+.tal-name small{font-size:10px;color:#8f8570;margin-left:4px}
+.tal-desc{font-size:11px;color:#a89e88;line-height:1.6}
+.tal-val{font-size:11px;color:#7fd4ff;margin-top:2px}
+.tal-warn{margin-top:10px;font-size:11px;color:#ff9a6b;text-align:center}
+
+/* 突破树 */
+.tree-head{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-bottom:8px;
+  padding:8px;border-radius:3px;background:rgba(40,32,18,.6);border:1px solid rgba(138,109,59,.35)}
+.tree-mat{display:flex;align-items:center;gap:5px;font-size:12px;color:#c9bfa6}
+.tree-mat b{color:#ffd98a}
+.tree-sub{font-size:11px;color:#8f8570;text-align:center;margin-bottom:12px}
+.tree-wrap{position:relative;padding-left:26px}
+.tree-line{position:absolute;left:13px;top:8px;bottom:8px;width:2px;
+  background:linear-gradient(180deg,#6b5a35,#2a2318)}
+.tree-node{position:relative;display:flex;gap:10px;margin-bottom:10px;align-items:flex-start}
+.tn-dot{width:26px;height:26px;flex:0 0 26px;border-radius:50%;margin-left:-26px;
+  display:flex;align-items:center;justify-content:center;font-size:11px;color:#0b0d10;
+  border:2px solid #6b5a35;background:#15120c;font-weight:700}
+.tree-node.done .tn-dot{color:#0b0d10}
+.tree-node.next .tn-dot{box-shadow:0 0 14px currentColor;animation:tnPulse 1.4s infinite}
+@keyframes tnPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+.tn-body{flex:1;padding:7px 10px;border-radius:3px;background:rgba(26,22,14,.7);
+  border:1px solid rgba(138,109,59,.3)}
+.tree-node.done .tn-body{border-color:rgba(255,210,74,.5);background:rgba(52,42,18,.6)}
+.tree-node.next .tn-body{border-color:#ffd24a}
+.tree-node.lock .tn-body{opacity:.55}
+.tn-name{font-family:var(--serif);font-size:14px}
+.tn-name small{font-size:10px;color:#8f8570;margin-left:5px}
+.tn-req{font-size:11px;color:#8f8570;margin-top:2px}
+.tn-cost{font-size:11px;color:#c9bfa6;margin-top:2px}
+.tn-btn{margin-top:6px;padding:5px 18px;border-radius:3px;cursor:pointer;
+  font-family:var(--serif);font-size:13px;letter-spacing:.1em;color:#1a1206;
+  background:linear-gradient(180deg,#ffe9a8,#d4af37);border:1px solid #ffd24a}
+.tn-btn.off{background:linear-gradient(180deg,#3a3428,#1a160f);color:#8f8570;
+  border-color:#4a3d28;cursor:not-allowed}

@@ -15,6 +15,15 @@ function updateTimers(dt) {
 
 /* ---------------- 玩家 buff 持续效果（每帧） ---------------- */
 function updatePlayerBuffs(p, dt) {
+  // 天赋：恢复之力（每秒按总血量百分比回血）+ 复活冷却
+  if (typeof talentEffect === 'function' && p) {
+    talentEnsure(p);
+    if (p.talent.reviveCd > 0) p.talent.reviveCd = Math.max(0, p.talent.reviveCd - dt);
+    const _te = talentEffect(p);
+    if (_te.regen > 0 && p.hp > 0) {
+      p.hp = Math.min(p.stats.hpMax, p.hp + p.stats.hpMax * _te.regen * dt);
+    }
+  }
   if (!p || !p.buffs || !p.buffs.length) {
     if (p && (p._immune || 0) > 0) p._immune = Math.max(0, p._immune - dt);
     return;
@@ -77,7 +86,16 @@ function damageMonster(m, amount, type, isDot) {
     dmg += Math.max(1, Math.round(m.hpMax * p.stats.relicPct));
   }
   dmg = Math.max(1, Math.round(dmg));
-  m.hp -= dmg;
+  // 天赋：绝杀之力（普攻与技能均可触发，BOSS 免疫）
+  if (!isDot && typeof talentEffect === 'function' && !m.isBoss) {
+    const _te = talentEffect(p);
+    if (_te.exec > 0 && Math.random() < _te.exec) {
+      m.hp = 0;
+      floatText(m.x, m.y - m.r - 10, '绝杀！', '#ff3b3b', 24);
+      burst(m.x, m.y, '#ff3b3b', 14, 220);
+    }
+  }
+  if (m.hp > 0) { m.hp -= dmg; }
   m.hitFlash = 0.12;
 
   if (!isDot && type !== 'skill' && crit && typeof Sfx !== 'undefined') Sfx.play('crit');
@@ -138,6 +156,22 @@ function playerDie() {
   const p = G.player;
   if (p.dead) return;          // 防止一帧多次触发
   if (typeof Sfx !== 'undefined') Sfx.play('playerDie');
+
+  // 天赋：复活之力（冷却 60 秒）
+  if (typeof talentEffect === 'function') {
+    const _tr = talentEffect(p);
+    if (_tr.revive > 0 && (p.talent.reviveCd || 0) <= 0 && Math.random() < _tr.revive) {
+      p.dead = false;
+      p.hp = p.stats.hpMax;
+      p.mp = p.stats.mpMax;
+      p.talent.reviveCd = _tr.revCd;
+      floatText(p.x, p.y - 44, '天赋复活！', '#c06bff', 26);
+      bigAnnounce('✦ 复 活 之 力', '#c06bff');
+      spawnSpriteFx('impact_dark', p.x, p.y, { scale: 2.6, oy: 20 });
+      logMsg('✦ 天赋「复活之力」触发', 'level');
+      return;
+    }
+  }
 
   // 复活之戒
   if (consumeRevive(p)) {
@@ -241,6 +275,16 @@ function playerAttack() {
       });
     }
     damageMonster(target, p.stats.power * (1 + ((typeof hltDyn === 'function') ? hltDyn(p).atkPct : 0)), 'melee');
+    // 天赋：灵魂之毒（普攻触发，按怪物总血量百分比）
+    if (typeof talentEffect === 'function') {
+      const _te2 = talentEffect(p);
+      if (_te2.poison > 0) {
+        target.talentPoison = {
+          pct: _te2.poison, t: _te2.poisonDur, max: _te2.poisonDur
+        };
+        floatText(target.x, target.y - target.r - 18, '☠中毒', '#7fdc5a', 14);
+      }
+    }
     burst(target.x, target.y, '#ffd24a', 5, 120);
   }
 }
@@ -508,6 +552,14 @@ function onProjectileHit(pr, m) {
   damageMonster(m, dmg, pr.isSkill ? 'skill' : 'melee');
   if (pr.burn) m.burn = { dps: pr.burn.dps, t: pr.burn.dur };
   burst(m.x, m.y, pr.color, 6, 130);
+  // 天赋：灵魂之毒（远程普攻同样触发）
+  if (!pr.isSkill && typeof talentEffect === 'function') {
+    const _te3 = talentEffect(p);
+    if (_te3.poison > 0) {
+      m.talentPoison = { pct:_te3.poison, t:_te3.poisonDur, max:_te3.poisonDur };
+      floatText(m.x, m.y - m.r - 18, '☠中毒', '#7fdc5a', 14);
+    }
+  }
   // 命中 SPINE 特效
   const _hfx = pr.hitFx || PROJ_HIT_FX[pr.shape];
   if (_hfx) spawnSpriteFx(_hfx, m.x, m.y, { scale: 1.0, oy: 10 });
@@ -677,6 +729,19 @@ function dropLoot(m) {
       : rollQuality(Object.fromEntries(DATA.QUALITY.map(x => [x.key, x.weight])));
     push({ type: 'item', item: makeItem(slot, ilvl, q, p.stats.isMagic), color: DATA.QUALITY.find(x => x.key === q).color });
   }
+  // 天赋突破材料：只有 BOSS 掉，概率极低
+  if (m.isBoss && DATA.TALENT_DROP) {
+    if (Math.random() < DATA.TALENT_DROP.stone * dropMul) {
+      const n = 1 + (Math.random() < 0.25 ? 1 : 0);
+      p.materials.talentStone = (p.materials.talentStone || 0) + n;
+      push({ type:'mat', mat:'talentStone', amount:n, color:'#ffd24a', label:'天赋突破石×' + n });
+    }
+    if (Math.random() < DATA.TALENT_DROP.crystal * dropMul) {
+      const n = 1;
+      p.materials.sourceCrystal = (p.materials.sourceCrystal || 0) + n;
+      push({ type:'mat', mat:'sourceCrystal', amount:n, color:'#ff7ae0', label:'源晶×' + n });
+    }
+  }
   // 技能书
   const bookChance = (m.isBoss ? 0.30 : 0.02) * dropMul;
   if (Math.random() < bookChance) {
@@ -746,5 +811,10 @@ function pickupDrop(d) {
   } else if (d.type === 'potion') {
     addToBag(p, { ...d.potion, type: 'potion', count: 1 });
     floatText(d.x, d.y - 10, d.potion.name, '#9fe6b8', 13);
+  } else if (d.type === 'mat') {
+    p.materials[d.mat] = (p.materials[d.mat] || 0) + (d.amount || 1);
+    const M = DATA.MATERIALS[d.mat];
+    floatText(d.x, d.y - 10, `${M.name}×${d.amount || 1}`, M.color, 14);
+    logMsg(`拾取 ${M.name} ×${d.amount || 1}`, 'loot');
   }
 }

@@ -258,6 +258,14 @@ function gainExp(p, amount) {
   }
   if (ups) {
     recalcStats(p);
+    // 30 级首次达到 → 提示可觉醒（每个角色只弹一次）
+    try {
+      const t = talentEnsure(p);
+      if (!t.notified && p.level >= DATA.TALENT_GATES[0] && !t.key) {
+        t.notified = true;
+        if (typeof talentUnlockPrompt === 'function') talentUnlockPrompt();
+      }
+    } catch (e) {}
     p.hp = p.stats.hpMax; p.mp = p.stats.mpMax;
     logMsg(`⚔ 升级！当前等级 ${p.level}`, 'level');
     toast(`升级到 ${p.level} 级`);
@@ -1290,6 +1298,89 @@ function currentCodex(p) {
 /* ---------------- 推荐战力 ---------------- */
 /* ---------------- 金币安全化 ---------------- */
 /* 任何地方把金币弄成 NaN / 字符串 / 数组时，这里兜底修正 */
+
+/* ================= 天赋系统 ================= */
+function talentEnsure(p) {
+  if (!p) return null;
+  if (!p.talent || typeof p.talent !== 'object') {
+    p.talent = { key:null, lv:0, notified:false, reviveCd:0 };
+  }
+  if (p.talent.key === undefined) p.talent.key = null;
+  if (p.talent.lv === undefined) p.talent.lv = 0;
+  if (p.talent.notified === undefined) p.talent.notified = false;
+  if (p.talent.reviveCd === undefined) p.talent.reviveCd = 0;
+  return p.talent;
+}
+
+/* 天赋等级 → 阶级（1..9；10 视为「超神圆满」） */
+function talentTier(p) {
+  const t = talentEnsure(p);
+  if (!t || !t.key || t.lv < 1) return null;
+  const idx = Math.min(t.lv, 9) - 1;
+  return { lv: t.lv, maxed: t.lv >= 10, tier: DATA.TALENT_TIERS[idx], idx };
+}
+
+/* 天赋数值（随等级线性成长） */
+function talentEffect(p) {
+  const t = talentEnsure(p);
+  const out = { poison:0, poisonDur:0, regen:0, exec:0, revive:0, revCd:60 };
+  if (!t || !t.key || t.lv < 1) return out;
+  const def = DATA.TALENTS[t.key];
+  if (!def) return out;
+  const lv = t.lv;
+  if (def.base.poison) {
+    out.poison = def.base.poison + (lv - 1) * def.per.poison;
+    out.poisonDur = def.base.dur + (lv - 1) * def.per.dur;
+  }
+  if (def.base.regen) out.regen = def.base.regen + (lv - 1) * def.per.regen;
+  if (def.base.exec)  out.exec  = def.base.exec  + (lv - 1) * def.per.exec;
+  if (def.base.revive) {
+    out.revive = def.base.revive + (lv - 1) * def.per.revive;
+    out.revCd = def.revCd || 60;
+  }
+  return out;
+}
+
+/* 觉醒（只能一次，随机） */
+function talentAwaken(p) {
+  const t = talentEnsure(p);
+  if (t.key) return null;
+  if (p.level < DATA.TALENT_GATES[0]) return null;
+  const key = DATA.TALENT_ORDER[Math.floor(Math.random() * DATA.TALENT_ORDER.length)];
+  t.key = key; t.lv = 1;
+  return key;
+}
+
+/* 下一次突破的门槛与消耗 */
+function talentNext(p) {
+  const t = talentEnsure(p);
+  if (!t.key) return { none:true, reason:'尚未觉醒天赋' };
+  if (t.lv >= 10) return { maxed:true, reason:'天赋已达上限（超神圆满）' };
+  const toLv = t.lv + 1;
+  const needLv = DATA.TALENT_GATES[toLv - 1];
+  const cost = DATA.talentCost(toLv);
+  const mats = p.materials || {};
+  const okLv = p.level >= needLv;
+  const okMats = (mats.talentStone||0) >= cost.stone
+              && (mats.sourceCrystal||0) >= cost.crystal
+              && (p.gold||0) >= cost.gold;
+  return { toLv, needLv, cost, okLv, okMats, ok: okLv && okMats };
+}
+
+/* 执行突破 */
+function talentBreak(p) {
+  const n = talentNext(p);
+  if (n.none || n.maxed) { toast(n.reason); return false; }
+  if (!n.okLv) { toast('需要角色等级 Lv.' + n.needLv); return false; }
+  if (!n.okMats) { toast('天赋突破石 / 源晶 / 金币 不足'); return false; }
+  p.materials.talentStone -= n.cost.stone;
+  p.materials.sourceCrystal -= n.cost.crystal;
+  p.gold -= n.cost.gold;
+  if (typeof ensureGold === 'function') ensureGold(p);
+  p.talent.lv = n.toLv;
+  return true;
+}
+
 function ensureGold(p) {
   if (!p) return 0;
   const v = p.gold;

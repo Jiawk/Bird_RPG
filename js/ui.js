@@ -20,8 +20,10 @@ const RING_IDX = {
   ring:20, ring_exp:21, ring_revive:22, ring_summon:23,
   ring_cleave:24, ring_drop:25, ring_gather:26
 };
-const MAT_IDX = { iron:27, mithril:28, scale:29, shard:30, stone:31, protect:32, skillT:33, breakT:34, bossToken:35 };
-const EQUIP_COUNT = 37;
+const MAT_IDX = { iron:27, mithril:28, scale:29, shard:30, stone:31, protect:32, skillT:33, breakT:34, bossToken:35,
+  talentStone:37, sourceCrystal:38 };
+const TALENT_IDX = { soulPoison:39, recovery:40, execute:41, revive:42 };
+const EQUIP_COUNT = 43;
 const BOOK_IDX = 36;
 const POTION_IDX  = { hp:18, mp:19 };
 
@@ -455,6 +457,8 @@ function updateHUD(dt) {
   $('diffVal').style.color = DATA.DIFFICULTY[G.diff].color;
 
   const isTown = w.isTown;
+  const _tb = document.querySelector('.codex-btn.talent-btn');
+  if (_tb && G.player) _tb.classList.toggle('awake', !!(talentEnsure(G.player) || {}).key);
   $('roomName').textContent = isTown ? (w.roomId === HOLY_TOWN ? '圣光大陆 · 安全区' : '暴风城 · 安全区') : (getRoom(w.roomId) || DATA.ROOMS[w.roomId]).name;
   $('roomSub').textContent = isTown ? '点击 NPC 或按 M 选择关卡'
     : (G._dailyBackLeft > 0
@@ -869,6 +873,7 @@ function handleCommand(act) {
     case 'skill': toggleModal('skill', '技能', () => skillHtml()); break;
     case 'map': toggleModal('map', '传送 / 回城', () => townMapHtml()); break;
     case 'town': goTown(); break;
+    case 'talent': openModal('talent', '天赋', talentHtml()); break;
     case 'holyportal': interactNPC({ kind:'holyportal' }); break;
     case 'holygate': interactNPC({ kind:'holygate' }); break;
     case 'holytownback': interactNPC({ kind:'holytownback' }); break;
@@ -1291,6 +1296,207 @@ function skillHtml() {
 }
 
 /* ---------------- 关卡 / 难度选择 ---------------- */
+
+/* ================= 天赋页面 ================= */
+function talentTab() { return G._talentTab === 'tree' ? 'tree' : 'desc'; }
+
+function talentIconHtml(key, size) {
+  const i = TALENT_IDX[key];
+  const sz = size || 44;
+  if (i === undefined) return '';
+  return `<span class="ic-sprite" style="width:${sz}px;height:${sz}px;
+    background-size:${sz * EQUIP_COUNT}px ${sz}px;
+    background-position:${-i * sz}px 0"></span>`;
+}
+
+/* 天赋描述页 */
+function talentDescHtml() {
+  const p = G.player;
+  const t = talentEnsure(p);
+  const e = talentEffect(p);
+  const gate = DATA.TALENT_GATES[0];
+  let html = '';
+
+  if (!t.key) {
+    // 未觉醒
+    const canAwake = p.level >= gate;
+    html += `<div class="tal-hero empty">
+      <div class="tal-orb">？</div>
+      <div class="tal-hint">${canAwake
+        ? '你已获得觉醒资格 —— 点击下方按钮，随机觉醒一种天赋'
+        : `达到 Lv.${gate} 后可以觉醒天赋（当前 Lv.${p.level}）`}</div>
+      ${canAwake ? '<button class="tal-awake" data-talent-awake="1">✦ 觉醒天赋</button>' : ''}
+    </div>
+    <div class="tal-list">`;
+    DATA.TALENT_ORDER.forEach(k => {
+      const d = DATA.TALENTS[k];
+      html += `<div class="tal-card dim">
+        <div class="tal-ic">${talentIconHtml(k, 40)}</div>
+        <div class="tal-main">
+          <div class="tal-name" style="color:${d.color}">${d.name}</div>
+          <div class="tal-desc">${d.desc}</div>
+          <div class="tal-val">初始：${talentEffectText(k, 1)}</div>
+        </div></div>`;
+    });
+    html += '</div>';
+    return html;
+  }
+
+  // 已觉醒
+  const d = DATA.TALENTS[t.key];
+  const tier = talentTier(p);
+  const next = talentNext(p);
+  html += `<div class="tal-hero">
+    <div class="tal-orb" style="border-color:${tier.tier.color};box-shadow:0 0 26px ${tier.tier.color}66">
+      ${talentIconHtml(t.key, 62)}</div>
+    <div class="tal-title" style="color:${d.color}">${d.name}</div>
+    <div class="tal-tier" style="color:${tier.tier.color}">${tier.maxed ? '超神圆满' : tier.tier.name}
+      <span class="tal-lv">Lv.${t.lv}</span></div>
+    <div class="tal-desc2">${d.desc}</div>
+    <div class="tal-effect">当前效果：<b style="color:${d.color}">${talentEffectText(t.key, t.lv)}</b></div>
+    <div class="tal-next">${next.maxed ? '已达上限' :
+      `下一级：${talentEffectText(t.key, t.lv + 1)}（需 Lv.${next.needLv}）`}</div>
+  </div>
+  <div class="tal-list">`;
+  DATA.TALENT_ORDER.forEach(k => {
+    const dd = DATA.TALENTS[k];
+    const on = k === t.key;
+    html += `<div class="tal-card${on ? ' on' : ' locked'}">
+      <div class="tal-ic">${talentIconHtml(k, 40)}</div>
+      <div class="tal-main">
+        <div class="tal-name" style="color:${dd.color}">${dd.name}${on ? ' <small>已觉醒</small>' : ' <small>未选择</small>'}</div>
+        <div class="tal-desc">${dd.desc}</div>
+        <div class="tal-val">${on ? '当前：' + talentEffectText(k, t.lv) : '初始：' + talentEffectText(k, 1)}</div>
+      </div></div>`;
+  });
+  html += `</div><div class="tal-warn">天赋只能觉醒一次，且不可更改。</div>`;
+  return html;
+}
+
+/* 天赋某一级的文字描述 */
+function talentEffectText(key, lv) {
+  const def = DATA.TALENTS[key];
+  const n = Math.max(1, lv);
+  const pct = v => (v * 100).toFixed(1).replace(/\.0$/, '') + '%';
+  if (key === 'soulPoison')
+    return `每秒 ${pct(def.base.poison + (n - 1) * def.per.poison)} 怪物总血量毒伤，持续 ${def.base.dur + (n - 1) * def.per.dur} 秒`;
+  if (key === 'recovery')
+    return `每秒回复 ${pct(def.base.regen + (n - 1) * def.per.regen)} 总血量`;
+  if (key === 'execute')
+    return `${pct(def.base.exec + (n - 1) * def.per.exec)} 概率一击必杀`;
+  if (key === 'revive')
+    return `${pct(def.base.revive + (n - 1) * def.per.revive)} 概率原地复活（CD 60s）`;
+  return '';
+}
+
+/* 突破树 */
+function talentTreeHtml() {
+  const p = G.player;
+  const t = talentEnsure(p);
+  const mats = p.materials || {};
+  const next = talentNext(p);
+  let html = `<div class="tree-head">
+    <div class="tree-mat"><span class="ic-sprite" style="width:26px;height:26px;background-size:${26*EQUIP_COUNT}px 26px;background-position:${-MAT_IDX.talentStone*26}px 0"></span>
+      天赋突破石 <b>${mats.talentStone || 0}</b></div>
+    <div class="tree-mat"><span class="ic-sprite" style="width:26px;height:26px;background-size:${26*EQUIP_COUNT}px 26px;background-position:${-MAT_IDX.sourceCrystal*26}px 0"></span>
+      源晶 <b>${mats.sourceCrystal || 0}</b></div>
+    <div class="tree-mat">金币 <b>${fmt(p.gold || 0)}</b></div>
+  </div>
+  <div class="tree-sub">材料只有 <b style="color:#ff9a6b">BOSS</b> 掉落，掉率很低。每 10 级解锁一个突破节点。</div>
+  <div class="tree-wrap"><div class="tree-line"></div>`;
+
+  for (let i = 0; i < DATA.TALENT_GATES.length; i++) {
+    const lv = i + 1;                      // 该节点对应天赋等级
+    const needLv = DATA.TALENT_GATES[i];
+    const tierObj = DATA.TALENT_TIERS[Math.min(lv, 9) - 1];
+    const reached = t.key && t.lv >= lv;
+    const isNext = !!(t.key && !next.none && !next.maxed && next.toLv === lv);
+    const lvOk = p.level >= needLv;
+    const cost = lv === 1 ? null : DATA.talentCost(lv);
+    const cls = reached ? 'done' : (isNext ? (lvOk ? 'next' : 'next locklv') : 'lock');
+    html += `<div class="tree-node ${cls}">
+      <div class="tn-dot" style="border-color:${tierObj.color};${reached ? 'background:' + tierObj.color : ''}">
+        ${lv === 1 ? '✦' : lv}</div>
+      <div class="tn-body">
+        <div class="tn-name" style="color:${tierObj.color}">${lv === 10 ? '超神圆满' : tierObj.name}
+          <small>Lv.${lv}</small></div>
+        <div class="tn-req">需要角色 Lv.${needLv} ${lvOk ? '✅' : '（未达到）'}</div>
+        ${cost ? `<div class="tn-cost">突破石 ${cost.stone}　源晶 ${cost.crystal}　金币 ${fmt(cost.gold)}</div>` : '<div class="tn-cost">觉醒节点（随机天赋）</div>'}
+        ${isNext ? `<button class="tn-btn ${next.ok ? '' : 'off'}" data-talent-break="1">
+          ${next.ok ? '突 破' : (lvOk ? '材料不足' : '等级不足')}</button>` : ''}
+      </div></div>`;
+  }
+  html += `</div>`;
+  if (!t.key) html += `<div class="tal-warn">先觉醒天赋，才能开始突破。</div>`;
+  return html;
+}
+
+function talentHtml() {
+  const tab = talentTab();
+  const p = G.player;
+  const t = talentEnsure(p);
+  let html = `<div class="tal-tabs">
+    <button class="tal-tab ${tab === 'desc' ? 'on' : ''}" data-talent-tab="desc">✦ 天赋</button>
+    <button class="tal-tab ${tab === 'tree' ? 'on' : ''}" data-talent-tab="tree">🌳 天赋突破</button>
+  </div>`;
+  html += tab === 'tree' ? talentTreeHtml() : talentDescHtml();
+  return html;
+}
+
+/* 天赋控件绑定（每次重建后必须重新调用） */
+function bindTalentControls(body) {
+  body.querySelectorAll('[data-talent-tab]').forEach(b => b.onclick = () => {
+    G._talentTab = b.dataset.talentTab;
+    openModal('talent', '天赋', talentHtml());
+  });
+  body.querySelectorAll('[data-talent-awake]').forEach(b => b.onclick = () => startTalentAwaken(b));
+  body.querySelectorAll('[data-talent-break]').forEach(b => b.onclick = () => {
+    if (talentBreak(G.player)) {
+      const tier = talentTier(G.player);
+      toast(`✦ 突破成功：${tier.maxed ? '超神圆满' : tier.tier.name} Lv.${tier.lv}`);
+      saveGame();
+      openModal('talent', '天赋', talentHtml());
+    } else {
+      openModal('talent', '天赋', talentHtml());
+    }
+  });
+}
+
+/* 觉醒：3 / 2 / 1 倒计时 → 金光 */
+function startTalentAwaken(btn) {
+  const p = G.player;
+  if (p.level < DATA.TALENT_GATES[0]) { toast('需要 Lv.' + DATA.TALENT_GATES[0]); return; }
+  if (talentEnsure(p).key) { toast('已经觉醒过了'); return; }
+  const box = btn.parentElement;
+  let n = 3;
+  btn.disabled = true; btn.textContent = n;
+  const tick = setInterval(() => {
+    n--;
+    if (n > 0) { btn.textContent = n; if (typeof Sfx !== 'undefined') Sfx.play('confirm'); return; }
+    clearInterval(tick);
+    const key = talentAwaken(p);
+    if (!key) { toast('觉醒失败'); return; }
+    const d = DATA.TALENTS[key];
+    saveGame();
+    if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
+    bigAnnounce('✦ 觉 醒 · ' + d.name, d.color);
+    // 金光扫过
+    G._talentGlow = 1.6;
+    openModal('talent', '天赋', talentHtml());
+    toast(`✦ 觉醒成功：${d.name}`);
+  }, 800);
+}
+
+/* 30 级解锁提示（每角色一次） */
+function talentUnlockPrompt() {
+  setTimeout(() => {
+    if (G.screen !== 'game') return;
+    bigAnnounce('✦ 已可觉醒天赋', '#ffd24a');
+    toast('✦ 达到 30 级：打开右上角「天赋」可觉醒一种天赋（只能一次）');
+    if (typeof Sfx !== 'undefined') Sfx.play('confirm');
+  }, 600);
+}
+
 function townMapHtml(zone) {
   const p = G.player;
   const z = zone || 'main';
@@ -4169,6 +4375,7 @@ function mountSound(key) {
     openModal('chars', '选择角色', charListHtml());
   });
   body.querySelectorAll('[data-act-town]').forEach(b => b.onclick = () => { closeModal(); goTown(); });
+  if (typeof bindTalentControls === 'function') bindTalentControls(body);
   body.querySelectorAll('[data-holy-go]').forEach(b => b.onclick = () => {
     closeModal(); enterRoom(HOLY_TOWN); logMsg('穿过光门，来到圣光大陆', 'level');
   });

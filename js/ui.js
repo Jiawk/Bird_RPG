@@ -23,7 +23,7 @@ const RING_IDX = {
 const MAT_IDX = { iron:27, mithril:28, scale:29, shard:30, stone:31, protect:32, skillT:33, breakT:34, bossToken:35,
   talentStone:37, sourceCrystal:38 };
 const TALENT_IDX = { soulPoison:39, recovery:40, execute:41, revive:42 };
-const EQUIP_COUNT = 43;
+const EQUIP_COUNT = 44;
 const BOOK_IDX = 36;
 const POTION_IDX  = { hp:18, mp:19 };
 
@@ -1303,6 +1303,37 @@ function skillHtml() {
 
 
 /* ================= 七天签到 ================= */
+
+/* 签到奖励图标：装备图集 / 宠物图集 / 坐骑图集 */
+function signinIconHtml(d, sz) {
+  const S = sz || 44;
+  const eq = (i) => `<span class="ic-sprite" style="width:${S}px;height:${S}px;
+    background-size:${S * EQUIP_COUNT}px ${S}px;background-position:${-i * S}px 0"></span>`;
+  const sw = d.sprite || '';
+  if (sw === 'coin')        return eq(43);
+  if (sw === 'stone')       return eq(31);
+  if (sw === 'bossToken')   return eq(35);
+  if (sw === 'talentStone') return eq(37);
+  if (sw === 'sourceCrystal') return eq(38);
+  if (sw.startsWith('pet')) {
+    const i = +(sw.slice(3) || 0);
+    const x = (i % 4) * (100 / 3), y = Math.floor(i / 4) * 100;
+    return `<span class="si-sheet" style="width:${S}px;height:${S}px;
+      background-image:var(--pet-sheet);
+      background-size:400% 200%;
+      background-position:${x}% ${y}%"></span>`;
+  }
+  if (sw.startsWith('mount')) {
+    const i = +(sw.slice(5) || 0);
+    const x = (i % 3) * 50, y = Math.floor(i / 3) * 50;
+    return `<span class="si-sheet" style="width:${S}px;height:${S}px;
+      background-image:var(--mount-sheet);
+      background-size:300% 300%;
+      background-position:${x}% ${y}%"></span>`;
+  }
+  return `<span class="si-fallback">${d.icon || '?'}</span>`;
+}
+
 function signinHtml() {
   const p = G.player;
   const si = signinEnsure(p);
@@ -1332,7 +1363,7 @@ function signinHtml() {
                  : '<div class="si-btn">未开启</div>');
     html += `<div class="si-card ${cls}">
       <div class="si-ribbon">第 ${d.day} 天</div>
-      <div class="si-ic" style="color:${d.color}">${d.icon}</div>
+      <div class="si-ic" style="color:${d.color}">${signinIconHtml(d, 42)}</div>
       <div class="si-nm" style="color:${d.color}">${d.name}</div>
       ${btn}
     </div>`;

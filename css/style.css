@@ -2438,3 +2438,8 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   box-shadow:inset 0 0 12px rgba(255,200,80,.22)}
 .si-panel .si-nm{font-size:10px}
 .si-done-tip{margin-top:12px;text-align:center;font-size:12px;letter-spacing:.1em;color:#5fdc4a}
+
+/* 签到奖励图标容器 */
+.si-panel .si-ic{display:flex;align-items:center;justify-content:center;overflow:hidden}
+.si-sheet{display:block;background-repeat:no-repeat;image-rendering:auto}
+.si-fallback{font-family:var(--serif);font-size:22px}

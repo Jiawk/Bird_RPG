@@ -1138,14 +1138,14 @@ DATA.TALENT_DROP = { stone: 0.020, crystal: 0.010 };   // v219：突破石 2% / 
 /* 每天可领一次，共 7 天；同一天不能重复领 */
 DATA.SIGNIN = {
   days: [
-    { day:1, name:'100,000 金币',        icon:'金', color:'#ffd24a', kind:'gold',  amount:100000 },
-    { day:2, name:'强化石×100 + 保护券×10', icon:'石', color:'#9aa0a6', kind:'mat',
+    { day:1, name:'100,000 金币',        sprite:'coin',      color:'#ffd24a', kind:'gold',  amount:100000 },
+    { day:2, name:'强化石×100 + 保护券×10', sprite:'stone',  color:'#9aa0a6', kind:'mat',
       items:{ stone:100, protect:10 } },
-    { day:3, name:'BOSS击杀凭证×1000（100 抽）', icon:'⬢', color:'#ff9a3c', kind:'mat',
+    { day:3, name:'BOSS击杀凭证×1000（100 抽）', sprite:'bossToken', color:'#ff9a3c', kind:'mat',
       items:{ bossToken:1000 } },
-    { day:4, name:'天赋突破石×1',        icon:'◆', color:'#ffd24a', kind:'mat', items:{ talentStone:1 } },
-    { day:5, name:'源晶×1',              icon:'❖', color:'#ff7ae0', kind:'mat', items:{ sourceCrystal:1 } },
-    { day:6, name:'耐久光环（宠物）',     icon:'宠', color:'#5fd45f', kind:'pet',  key:'endurance' },
-    { day:7, name:'坐骑 · 幽灵战马',      icon:'马', color:'#c06bff', kind:'mount', key:'spectralhorse' }
+    { day:4, name:'天赋突破石×1',        sprite:'talentStone', color:'#ffd24a', kind:'mat', items:{ talentStone:1 } },
+    { day:5, name:'源晶×1',              sprite:'sourceCrystal', color:'#ff7ae0', kind:'mat', items:{ sourceCrystal:1 } },
+    { day:6, name:'耐久光环（宠物）',     sprite:'pet2',      color:'#5fd45f', kind:'pet',  key:'endurance' },
+    { day:7, name:'坐骑 · 幽灵战马',      sprite:'mount0',    color:'#c06bff', kind:'mount', key:'spectralhorse' }
   ]
 };

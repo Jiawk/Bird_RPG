@@ -4543,78 +4543,43 @@ function showTooltip(it, x, y) {
       parts.push(`<div class="tt-req" style="font-size:12px;font-weight:700">⛔ 等级不足：需要 Lv.${it.reqLv}（当前 Lv.${G.player.level}）</div>`);
     }
 
-    // ---- 左右并排对比（左：当前装备 / 右：候选装备 / 中间差值）----
+    // ---- 并排展示两件装备的完整属性（不对比，各自显示装备战力值）----
     const cur = G.player.equip[it.slot];
     if (cur) {
       const curM = enhMul(cur), newM = enhMul(it);
-      const keys = [];
-      const seen = new Set();
-      for (const k in cur.stats) if (!seen.has(k)) { seen.add(k); keys.push(k); }
-      for (const k in it.stats) if (!seen.has(k)) { seen.add(k); keys.push(k); }
-
       const fmtV = (k, v) => PCT_KEYS.includes(k) ? (v * 100).toFixed(1) + '%' : Math.round(v);
 
-      let g = '<div class="cmp-grid">';
-      g += '<div class="cmp-h">当前装备</div><div class="cmp-h"></div><div class="cmp-h">候选装备</div>';
-      g += `<div class="cmp-nm" style="color:${cur.color || '#c8c8c8'}">${cur.enh ? '+' + cur.enh + ' ' : ''}${cur.name}</div>`;
-      g += '<div></div>';
-      g += `<div class="cmp-nm" style="color:${it.color}">${it.enh ? '+' + it.enh + ' ' : ''}${it.name}</div>`;
-
-      keys.forEach(k => {
-        const v0 = (cur.stats[k] || 0) * curM;
-        const v1 = (it.stats[k] || 0) * newM;
-        const d = v1 - v0;
-        const pct = PCT_KEYS.includes(k);
-        g += `<div class="cmp-v">${cur.stats[k] !== undefined ? fmtV(k, v0) : '—'}</div>`;
-        if (Math.abs(d) < 1e-9) {
-          g += '<div class="cmp-d">—</div>';
-        } else {
-          const txt = pct ? (Math.abs(d) * 100).toFixed(1) + '%' : Math.abs(Math.round(d));
-          g += `<div class="cmp-d ${d > 0 ? 'up' : 'down'}">${d > 0 ? '▲' : '▼'}${txt}</div>`;
+      const colHtml = (item, m, title, isCur) => {
+        const rows = [];
+        for (const k in item.stats) {
+          rows.push(`<div class="eq2-row"><em>${AFFIX_NAMES[k] || k}</em><b>${fmtV(k, item.stats[k] * m)}</b></div>`);
         }
-        g += `<div class="cmp-v">${it.stats[k] !== undefined ? fmtV(k, v1) : '—'}</div>`;
-      });
-
-      // 属性名单独一行放不下，改用后缀提示
-      g = g.replace(/<div class="cmp-v">/g, '<div class="cmp-v"><i></i><span>');
-      g = g.replace(/<\/div>\s*(?=<div class="cmp-d"|<div class="cmp-nm")/g, '</span></div>');
-      // 简化：重新生成带属性名的版本
-      g = '<div class="cmp-grid">';
-      g += '<div class="cmp-h">当前装备</div><div class="cmp-h"></div><div class="cmp-h">候选装备</div>';
-      g += `<div class="cmp-nm" style="color:${cur.color || '#c8c8c8'}">${cur.enh ? '+' + cur.enh + ' ' : ''}${cur.name}</div><div></div>`;
-      g += `<div class="cmp-nm" style="color:${it.color}">${it.enh ? '+' + it.enh + ' ' : ''}${it.name}</div>`;
-      keys.forEach(k => {
-        const v0 = (cur.stats[k] || 0) * curM;
-        const v1 = (it.stats[k] || 0) * newM;
-        const d = v1 - v0;
-        const pct = PCT_KEYS.includes(k);
-        const nm = AFFIX_NAMES[k] || k;
-        g += `<div class="cmp-v"><em>${nm}</em><b>${cur.stats[k] !== undefined ? fmtV(k, v0) : '—'}</b></div>`;
-        if (Math.abs(d) < 1e-9) {
-          g += '<div class="cmp-d">—</div>';
-        } else {
-          const txt = pct ? (Math.abs(d) * 100).toFixed(1) + '%' : Math.abs(Math.round(d));
-          g += `<div class="cmp-d ${d > 0 ? 'up' : 'down'}">${d > 0 ? '▲' : '▼'}${txt}</div>`;
+        if (!rows.length) rows.push('<div class="eq2-row"><em>—</em><b></b></div>');
+        // 特效数值
+        if (item.effect) {
+          for (const k in item.effect) {
+            rows.push(`<div class="eq2-row eff"><em>${effectText(k, item.effect[k] * m)}</em><b></b></div>`);
+          }
         }
-        g += `<div class="cmp-v"><em>${nm}</em><b>${it.stats[k] !== undefined ? fmtV(k, v1) : '—'}</b></div>`;
-      });
-      g += '</div>';
+        return `<div class="eq2-col${isCur ? ' cur' : ''}">
+          <div class="eq2-h">${title}</div>
+          <div class="eq2-nm" style="color:${item.color || '#c8c8c8'}">${item.enh ? '+' + item.enh + ' ' : ''}${item.name}</div>
+          <div class="eq2-cp">战力 <b>${fmt(Math.round(itemPower(item)))}</b></div>
+          ${rows.join('')}
+        </div>`;
+      };
 
-      if (cur.effect || it.effect) {
-        const efTxt = (o, m) => Object.keys(o.effect || {}).map(k => effectText(k, o.effect[k] * m)).join('；') || '—';
-        g += `<div class="cmp-eff"><span>${efTxt(cur, curM)}</span><span>${efTxt(it, newM)}</span></div>`;
-      }
-      parts.push(g);
-    }
-
-    const dCP = equipDeltaPower(G.player, it);
-    if (dCP !== 0) {
-      parts.push(`<div class="tt-cp ${dCP>0?'tt-up':'tt-down'}">战力 ${dCP>0?'+':''}${dCP} ${dCP>0?'▲ 更强':'▼ 更弱'}</div>`);
-    } else if (cur) {
-      parts.push(`<div class="tt-cp">战力持平</div>`);
+      parts.push(`<div class="eq2-wrap">
+        ${colHtml(cur, curM, '当前装备', true)}
+        ${colHtml(it, newM, '候选装备', false)}
+      </div>`);
     }
     parts.push(`<div class="tt-desc">点击查看详情（强化 / 穿戴 / 卸下）</div>`);
     TIP.innerHTML = parts.join('');
+    // 双栏并排需要更宽，否则属性名会被挤掉
+    if (G.player && G.player.equip[it.slot]) {
+      TIP.style.maxWidth = 'min(460px, 92vw)';
+    }
   }
   document.body.appendChild(TIP);
   moveTooltip(x, y);

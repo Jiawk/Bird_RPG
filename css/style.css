@@ -2252,3 +2252,22 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   background:linear-gradient(180deg,#ffe9a8,#d4af37);border:1px solid #ffd24a}
 .tn-btn.off{background:linear-gradient(180deg,#3a3428,#1a160f);color:#8f8570;
   border-color:#4a3d28;cursor:not-allowed}
+
+/* 装备提示：并排展示两件装备的完整属性（不做对比） */
+.eq2-wrap{display:flex;gap:10px;margin-top:8px;padding-top:8px;
+  border-top:1px solid rgba(138,109,59,.45)}
+.eq2-col{flex:1;min-width:0;padding:6px 7px;border-radius:3px;
+  background:rgba(18,16,10,.6);border:1px solid rgba(138,109,59,.3)}
+.eq2-col.cur{border-color:rgba(138,109,59,.5);background:rgba(26,22,14,.7)}
+.eq2-h{font-size:10px;color:#8f8570;letter-spacing:.08em;margin-bottom:3px}
+.eq2-nm{font-size:12.5px;font-weight:700;line-height:1.3;margin-bottom:4px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.eq2-cp{font-size:11px;color:#ffd98a;margin-bottom:5px;
+  padding-bottom:4px;border-bottom:1px dashed rgba(138,109,59,.35)}
+.eq2-cp b{font-size:13px;color:#ffe9a8}
+.eq2-row{display:flex;justify-content:space-between;gap:6px;font-size:11.5px;
+  line-height:1.65;color:#c9bfa6}
+.eq2-row em{font-style:normal;color:#8f8570;flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.eq2-row b{color:#e8e2d4;font-weight:700}
+.eq2-row.eff em{color:#8fd0ff;font-size:10.5px;white-space:normal}

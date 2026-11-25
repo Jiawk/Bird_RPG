@@ -2330,3 +2330,111 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .lot-rare .lr-star{color:#9fe8ff;text-shadow:0 0 8px #6fd4ff}
 .lot-rare .lr-pct{color:#ffd24a;font-size:13px;font-weight:700}
 .lot-rare .lr-note{font-size:10.5px;color:#8f8570}
+
+/* 抽奖稀有行（文案版） */
+.lot-rare .lr-txt{font-size:12px;color:#cfe6ff}
+.lot-rare .lr-txt b{color:#ffd24a;margin:0 2px}
+
+/* ===== 天赋突破树（中轴 + 左右交替，仿 demo） ===== */
+.tb-tree{position:relative;padding:6px 0 4px}
+.tb-axis{position:absolute;left:50%;top:4px;bottom:4px;width:2px;margin-left:-1px;
+  background:linear-gradient(180deg,rgba(120,100,60,0),#7a6238 8%,#7a6238 92%,rgba(120,100,60,0))}
+.tb-row{display:grid;grid-template-columns:1fr 62px 1fr;align-items:center;margin-bottom:10px}
+.tb-cell{min-width:0}
+.tb-card{position:relative;padding:8px 11px;border-radius:4px;
+  background:linear-gradient(170deg,rgba(38,32,20,.96),rgba(14,11,7,.97));
+  border:1px solid rgba(138,109,59,.5);box-shadow:0 2px 10px rgba(0,0,0,.5)}
+.tb-row.done .tb-card{border-color:rgba(255,210,74,.6);
+  background:linear-gradient(170deg,rgba(52,42,18,.95),rgba(20,16,7,.97))}
+.tb-row.next .tb-card{border-color:#ffd24a;box-shadow:0 0 16px rgba(255,210,74,.35)}
+.tb-row.lock .tb-card{opacity:.62}
+.tb-title{font-family:var(--serif);font-size:14.5px;letter-spacing:.05em;
+  display:flex;align-items:center;gap:6px}
+.tb-title small{font-size:10px;color:#8f8570;margin-left:auto}
+.tb-dot{width:9px;height:9px;border-radius:50%;border:2px solid;display:inline-block;flex:0 0 9px}
+.tb-req{font-size:11px;color:#8f8570;margin-top:3px}
+.tb-req .ok{color:#5fdc4a;font-weight:700}
+.tb-req .no{color:#ff8a6b}
+.tb-cost{font-size:11px;color:#c9bfa6;margin-top:3px;line-height:1.5}
+.tb-btn{margin-top:6px;padding:5px 22px;border-radius:3px;cursor:pointer;
+  font-family:var(--serif);font-size:13px;letter-spacing:.1em;color:#1a1206;
+  background:linear-gradient(180deg,#ffe9a8,#d4af37);border:1px solid #ffd24a;
+  box-shadow:0 0 12px rgba(255,210,74,.45)}
+.tb-btn.off{background:linear-gradient(180deg,#3a3428,#1a160f);color:#8f8570;
+  border-color:#4a3d28;box-shadow:none;cursor:not-allowed}
+
+/* 指向中轴的箭头 */
+.tb-arrow{position:relative;height:2px;background:linear-gradient(90deg,rgba(160,160,170,.15),#9aa4b0)}
+.tb-row.left .tb-arrow{margin-left:2px}
+.tb-row.right .tb-arrow{margin-right:2px;background:linear-gradient(270deg,rgba(160,160,170,.15),#9aa4b0)}
+.tb-arrow i{position:absolute;top:-4px;width:0;height:0;
+  border-top:5px solid transparent;border-bottom:5px solid transparent}
+.tb-row.left .tb-arrow i{right:-1px;border-left:8px solid #9aa4b0}
+.tb-row.right .tb-arrow i{left:-1px;border-right:8px solid #9aa4b0}
+/* 中轴上的连接点 */
+.tb-row .tb-arrow::after{content:'';position:absolute;top:-3px;width:8px;height:8px;
+  border-radius:50%;background:#7a6238}
+.tb-row.left .tb-arrow::after{right:-4px}
+.tb-row.right .tb-arrow::after{left:-4px}
+@media (max-width:620px){
+  .tb-row{grid-template-columns:1fr 34px 1fr}
+  .tb-title{font-size:12.5px}
+  .tb-cost{font-size:10px}
+}
+
+/* ===== 七天签到 · 装饰面板 ===== */
+.si-panel{position:relative;padding:12px 14px 16px;border-radius:6px;
+  background:
+    radial-gradient(120% 70% at 50% -10%,rgba(120,90,30,.30),rgba(0,0,0,0) 60%),
+    linear-gradient(180deg,#2a2214,#15110a 55%,#0c0905);
+  border:1px solid #7a6238;
+  box-shadow:inset 0 0 0 1px rgba(212,175,55,.22),0 0 26px rgba(0,0,0,.7)}
+/* 四角装饰 */
+.si-deco{position:absolute;width:26px;height:26px;pointer-events:none;
+  border:2px solid #d4af37;opacity:.85}
+.si-deco.tl{left:5px;top:5px;border-right:0;border-bottom:0;border-radius:5px 0 0 0}
+.si-deco.tr{right:5px;top:5px;border-left:0;border-bottom:0;border-radius:0 5px 0 0}
+.si-deco.bl{left:5px;bottom:5px;border-right:0;border-top:0;border-radius:0 0 0 5px}
+.si-deco.br{right:5px;bottom:5px;border-left:0;border-top:0;border-radius:0 0 5px 0}
+
+/* 顶部横幅 */
+.si-banner{position:relative;text-align:center;margin:2px 0 14px;padding:12px 10px 10px;
+  border-radius:4px;overflow:hidden;
+  background:linear-gradient(90deg,rgba(60,46,20,0),rgba(96,74,30,.55),rgba(60,46,20,0));
+  border-top:1px solid rgba(212,175,55,.35);
+  border-bottom:1px solid rgba(212,175,55,.35)}
+.si-banner-glow{position:absolute;left:50%;top:-46px;width:340px;height:120px;margin-left:-170px;
+  background:radial-gradient(ellipse,rgba(255,210,74,.42),rgba(255,210,74,0) 70%);pointer-events:none}
+.si-title{position:relative;font-family:var(--serif);font-size:26px;letter-spacing:.34em;
+  color:#ffe9a8;text-shadow:0 0 18px rgba(255,190,60,.85),0 0 34px rgba(255,150,30,.5),0 3px 6px #000}
+.si-sub2{position:relative;font-size:11.5px;color:#b3a78c;margin-top:5px;letter-spacing:.04em}
+.si-progress{position:relative;width:62%;height:7px;margin:10px auto 5px;border-radius:4px;
+  background:rgba(0,0,0,.55);border:1px solid rgba(138,109,59,.6);overflow:hidden}
+.si-progress i{display:block;height:100%;border-radius:3px;
+  background:linear-gradient(90deg,#ffd24a,#ff9a2e);
+  box-shadow:0 0 10px rgba(255,180,60,.8);transition:width .45s ease}
+.si-progress-txt{position:relative;font-size:11px;color:#8f8570}
+.si-progress-txt b{color:#ffd98a}
+
+/* 卡片：改造成「卷轴格」 */
+.si-panel .si-grid{position:relative}
+.si-panel .si-card{overflow:hidden;
+  background:linear-gradient(180deg,rgba(52,42,24,.95),rgba(14,11,6,.98));
+  border:1px solid rgba(138,109,59,.55);
+  box-shadow:inset 0 1px 0 rgba(255,220,140,.12),0 3px 10px rgba(0,0,0,.55)}
+.si-panel .si-card::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(80% 50% at 50% 0%,rgba(255,210,74,.10),rgba(0,0,0,0) 70%)}
+.si-ribbon{position:relative;margin:-8px -4px 6px;padding:3px 0;font-size:11px;letter-spacing:.08em;
+  color:#1a1206;background:linear-gradient(180deg,#d8b45c,#9c7a2e);
+  text-shadow:0 1px 0 rgba(255,255,255,.25)}
+.si-panel .si-card.done .si-ribbon{background:linear-gradient(180deg,#7fd45a,#3f7a35);color:#0b1608}
+.si-panel .si-card.today .si-ribbon{background:linear-gradient(180deg,#ffe9a8,#d4af37);
+  box-shadow:0 0 14px rgba(255,210,74,.7)}
+.si-panel .si-card.today{animation:siPulse 1.8s ease-in-out infinite}
+@keyframes siPulse{0%,100%{box-shadow:0 0 12px rgba(255,210,74,.35)}50%{box-shadow:0 0 24px rgba(255,210,74,.75)}}
+.si-panel .si-ic{position:relative;width:50px;height:50px;font-size:22px;
+  background:radial-gradient(circle,rgba(88,68,30,.95),rgba(10,8,5,.98));
+  border:1px solid rgba(212,175,55,.75);
+  box-shadow:inset 0 0 12px rgba(255,200,80,.22)}
+.si-panel .si-nm{font-size:10px}
+.si-done-tip{margin-top:12px;text-align:center;font-size:12px;letter-spacing:.1em;color:#5fdc4a}

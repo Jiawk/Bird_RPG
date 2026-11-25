@@ -1308,29 +1308,41 @@ function signinHtml() {
   const si = signinEnsure(p);
   const canToday = signinCanClaim(p);
   const days = DATA.SIGNIN.days;
-  let html = `<div class="si-head">
-    <div class="si-title">七 日 签 到</div>
-    <div class="si-sub">每天可签到一次，连续 7 天领完所有奖励　已领 <b style="color:#ffd98a">${si.idx}</b>/${days.length}</div>
-  </div><div class="si-grid">`;
+
+  let html = `<div class="si-panel">
+    <div class="si-deco tl"></div><div class="si-deco tr"></div>
+    <div class="si-deco bl"></div><div class="si-deco br"></div>
+
+    <div class="si-banner">
+      <div class="si-banner-glow"></div>
+      <div class="si-title">七 日 签 到</div>
+      <div class="si-sub2">每天可签到一次，连续 7 天领完所有奖励</div>
+      <div class="si-progress"><i style="width:${(si.idx / days.length * 100).toFixed(1)}%"></i></div>
+      <div class="si-progress-txt">已领 <b>${si.idx}</b> / ${days.length} 天</div>
+    </div>
+
+    <div class="si-grid">`;
+
   days.forEach((d, i) => {
     const claimed = si.idx > i;
     const isToday = canToday && si.idx === i;
     const cls = claimed ? 'done' : (isToday ? 'today' : '');
-    const btn = claimed ? '<div class="si-btn ok">已领取</div>'
+    const btn = claimed ? '<div class="si-btn ok">✓ 已领取</div>'
       : (isToday ? `<div class="si-btn can" data-signin-claim="1">领 取</div>`
                  : '<div class="si-btn">未开启</div>');
     html += `<div class="si-card ${cls}">
-      <div class="si-day">第 <b>${d.day}</b> 天</div>
+      <div class="si-ribbon">第 ${d.day} 天</div>
       <div class="si-ic" style="color:${d.color}">${d.icon}</div>
       <div class="si-nm" style="color:${d.color}">${d.name}</div>
       ${btn}
     </div>`;
   });
-  html += '</div>';
+
+  html += `</div>`;
   if (si.idx >= days.length) {
-    html += `<div class="si-sub" style="text-align:center;margin-top:12px;color:#5fdc4a">
-      本期七天奖励已全部领取完毕</div>`;
+    html += `<div class="si-done-tip">✦ 本期七天奖励已全部领取完毕 ✦</div>`;
   }
+  html += `</div>`;
   return html;
 }
 
@@ -1448,7 +1460,7 @@ function talentEffectText(key, lv) {
   return '';
 }
 
-/* 突破树 */
+/* 突破树（中轴 + 左右交替，参照 demo） */
 function talentTreeHtml() {
   const p = G.player;
   const t = talentEnsure(p);
@@ -1462,28 +1474,38 @@ function talentTreeHtml() {
     <div class="tree-mat">金币 <b>${fmt(p.gold || 0)}</b></div>
   </div>
   <div class="tree-sub">材料只有 <b style="color:#ff9a6b">BOSS</b> 掉落，掉率很低。每 10 级解锁一个突破节点。</div>
-  <div class="tree-wrap"><div class="tree-line"></div>`;
+  <div class="tb-tree"><div class="tb-axis"></div>`;
 
   for (let i = 0; i < DATA.TALENT_GATES.length; i++) {
-    const lv = i + 1;                      // 该节点对应天赋等级
+    const lv = i + 1;
     const needLv = DATA.TALENT_GATES[i];
     const tierObj = DATA.TALENT_TIERS[Math.min(lv, 9) - 1];
     const reached = t.key && t.lv >= lv;
     const isNext = !!(t.key && !next.none && !next.maxed && next.toLv === lv);
     const lvOk = p.level >= needLv;
     const cost = lv === 1 ? null : DATA.talentCost(lv);
-    const cls = reached ? 'done' : (isNext ? (lvOk ? 'next' : 'next locklv') : 'lock');
-    html += `<div class="tree-node ${cls}">
-      <div class="tn-dot" style="border-color:${tierObj.color};${reached ? 'background:' + tierObj.color : ''}">
-        ${lv === 1 ? '✦' : lv}</div>
-      <div class="tn-body">
-        <div class="tn-name" style="color:${tierObj.color}">${lv === 10 ? '超神圆满' : tierObj.name}
-          <small>Lv.${lv}</small></div>
-        <div class="tn-req">需要角色 Lv.${needLv} ${lvOk ? '✅' : '（未达到）'}</div>
-        ${cost ? `<div class="tn-cost">突破石 ${cost.stone}　源晶 ${cost.crystal}　金币 ${fmt(cost.gold)}</div>` : '<div class="tn-cost">觉醒节点（随机天赋）</div>'}
-        ${isNext ? `<button class="tn-btn ${next.ok ? '' : 'off'}" data-talent-break="1">
-          ${next.ok ? '突 破' : (lvOk ? '材料不足' : '等级不足')}</button>` : ''}
-      </div></div>`;
+    const side = (i % 2 === 0) ? 'left' : 'right';
+    const state = reached ? 'done' : (isNext ? (lvOk ? 'next' : 'next locklv') : 'lock');
+
+    const card = `<div class="tb-card">
+      <div class="tb-title" style="color:${tierObj.color}">
+        <span class="tb-dot" style="background:${reached ? tierObj.color : 'transparent'};border-color:${tierObj.color}"></span>
+        ${lv === 10 ? '超神圆满' : tierObj.name}
+        <small>Lv.${lv}</small>
+      </div>
+      <div class="tb-req">需要角色 Lv.${needLv} ${lvOk ? '<b class="ok">✓</b>' : '<span class="no">（未达到）</span>'}</div>
+      ${cost
+        ? `<div class="tb-cost">突破石 ${cost.stone}　源晶 ${cost.crystal}<br>金币 ${fmt(cost.gold)}</div>`
+        : `<div class="tb-cost">觉醒节点（随机获得一种天赋）</div>`}
+      ${isNext ? `<button class="tb-btn ${next.ok ? '' : 'off'}" data-talent-break="1">
+        ${next.ok ? '突 破' : (lvOk ? '材料不足' : '等级不足')}</button>` : ''}
+    </div>`;
+
+    html += `<div class="tb-row ${side} ${state}">
+      ${side === 'left'
+        ? `<div class="tb-cell">${card}</div><div class="tb-arrow"><i></i></div><div></div>`
+        : `<div></div><div class="tb-arrow"><i></i></div><div class="tb-cell">${card}</div>`}
+    </div>`;
   }
   html += `</div>`;
   if (!t.key) html += `<div class="tal-warn">先觉醒天赋，才能开始突破。</div>`;
@@ -2085,9 +2107,7 @@ function exchangeHtml() {
     <div class="wh-legend">${legend}</div>
     <div class="lot-rare">
       <span class="lr-star">★</span>
-      <span style="color:#9fe8ff">坐骑 · 幽灵狼</span>
-      <b class="lr-pct">0.1%</b>
-      <span class="lr-note">重复获得 → 源晶 ×1</span>
+      <span class="lr-txt">有概率抽到<b>源晶</b>和稀有坐骑<b>幽灵狼</b>、<b>多彩巨龙</b>！</span>
     </div>
 
     <div class="lot-actions">
@@ -2136,16 +2156,17 @@ function doLottery(times) {
       got.push({ id: z.id, name: z.name, color: z.color, ok: true });
     } else if (z.kind === 'mount') {
       const ms = mountEnsure(p);
+      const dupC = z.dupCrystal || 1;
       if (ms.owned.includes(z.key)) {
-        p.materials.sourceCrystal = (p.materials.sourceCrystal || 0) + 1;
-        got.push({ id: z.id, name: z.name + '（重复）→ 源晶×1', color: z.color, ok: true, big: true });
-        logMsg(`🎁 抽中重复坐骑 ${z.name}，兑换为源晶 ×1`, 'level');
+        p.materials.sourceCrystal = (p.materials.sourceCrystal || 0) + dupC;
+        got.push({ id: z.id, name: z.name + `（重复）→ 源晶×${dupC}`, color: z.color, ok: true, big: true });
+        logMsg(`🎁 抽中重复坐骑 ${z.name}，兑换为源晶 ×${dupC}`, 'level');
       } else {
         ms.owned.push(z.key);
         ms.active = z.key;
         got.push({ id: z.id, name: z.name, color: z.color, ok: true, big: true });
         logMsg(`🎁 抽中坐骑：${z.name}`, 'level');
-        bigAnnounce('🐺 抽中坐骑 · 幽灵狼', z.color);
+        bigAnnounce('✦ 抽中稀有坐骑 · ' + z.name.replace('坐骑 · ', ''), z.color);
       }
     } else if (z.kind === 'relic') {
       // 本职业 7 件套随机一件，直接进背包

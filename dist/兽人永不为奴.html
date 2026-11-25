@@ -2338,6 +2338,114 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .lot-rare .lr-pct{color:#ffd24a;font-size:13px;font-weight:700}
 .lot-rare .lr-note{font-size:10.5px;color:#8f8570}
 
+/* 抽奖稀有行（文案版） */
+.lot-rare .lr-txt{font-size:12px;color:#cfe6ff}
+.lot-rare .lr-txt b{color:#ffd24a;margin:0 2px}
+
+/* ===== 天赋突破树（中轴 + 左右交替，仿 demo） ===== */
+.tb-tree{position:relative;padding:6px 0 4px}
+.tb-axis{position:absolute;left:50%;top:4px;bottom:4px;width:2px;margin-left:-1px;
+  background:linear-gradient(180deg,rgba(120,100,60,0),#7a6238 8%,#7a6238 92%,rgba(120,100,60,0))}
+.tb-row{display:grid;grid-template-columns:1fr 62px 1fr;align-items:center;margin-bottom:10px}
+.tb-cell{min-width:0}
+.tb-card{position:relative;padding:8px 11px;border-radius:4px;
+  background:linear-gradient(170deg,rgba(38,32,20,.96),rgba(14,11,7,.97));
+  border:1px solid rgba(138,109,59,.5);box-shadow:0 2px 10px rgba(0,0,0,.5)}
+.tb-row.done .tb-card{border-color:rgba(255,210,74,.6);
+  background:linear-gradient(170deg,rgba(52,42,18,.95),rgba(20,16,7,.97))}
+.tb-row.next .tb-card{border-color:#ffd24a;box-shadow:0 0 16px rgba(255,210,74,.35)}
+.tb-row.lock .tb-card{opacity:.62}
+.tb-title{font-family:var(--serif);font-size:14.5px;letter-spacing:.05em;
+  display:flex;align-items:center;gap:6px}
+.tb-title small{font-size:10px;color:#8f8570;margin-left:auto}
+.tb-dot{width:9px;height:9px;border-radius:50%;border:2px solid;display:inline-block;flex:0 0 9px}
+.tb-req{font-size:11px;color:#8f8570;margin-top:3px}
+.tb-req .ok{color:#5fdc4a;font-weight:700}
+.tb-req .no{color:#ff8a6b}
+.tb-cost{font-size:11px;color:#c9bfa6;margin-top:3px;line-height:1.5}
+.tb-btn{margin-top:6px;padding:5px 22px;border-radius:3px;cursor:pointer;
+  font-family:var(--serif);font-size:13px;letter-spacing:.1em;color:#1a1206;
+  background:linear-gradient(180deg,#ffe9a8,#d4af37);border:1px solid #ffd24a;
+  box-shadow:0 0 12px rgba(255,210,74,.45)}
+.tb-btn.off{background:linear-gradient(180deg,#3a3428,#1a160f);color:#8f8570;
+  border-color:#4a3d28;box-shadow:none;cursor:not-allowed}
+
+/* 指向中轴的箭头 */
+.tb-arrow{position:relative;height:2px;background:linear-gradient(90deg,rgba(160,160,170,.15),#9aa4b0)}
+.tb-row.left .tb-arrow{margin-left:2px}
+.tb-row.right .tb-arrow{margin-right:2px;background:linear-gradient(270deg,rgba(160,160,170,.15),#9aa4b0)}
+.tb-arrow i{position:absolute;top:-4px;width:0;height:0;
+  border-top:5px solid transparent;border-bottom:5px solid transparent}
+.tb-row.left .tb-arrow i{right:-1px;border-left:8px solid #9aa4b0}
+.tb-row.right .tb-arrow i{left:-1px;border-right:8px solid #9aa4b0}
+/* 中轴上的连接点 */
+.tb-row .tb-arrow::after{content:'';position:absolute;top:-3px;width:8px;height:8px;
+  border-radius:50%;background:#7a6238}
+.tb-row.left .tb-arrow::after{right:-4px}
+.tb-row.right .tb-arrow::after{left:-4px}
+@media (max-width:620px){
+  .tb-row{grid-template-columns:1fr 34px 1fr}
+  .tb-title{font-size:12.5px}
+  .tb-cost{font-size:10px}
+}
+
+/* ===== 七天签到 · 装饰面板 ===== */
+.si-panel{position:relative;padding:12px 14px 16px;border-radius:6px;
+  background:
+    radial-gradient(120% 70% at 50% -10%,rgba(120,90,30,.30),rgba(0,0,0,0) 60%),
+    linear-gradient(180deg,#2a2214,#15110a 55%,#0c0905);
+  border:1px solid #7a6238;
+  box-shadow:inset 0 0 0 1px rgba(212,175,55,.22),0 0 26px rgba(0,0,0,.7)}
+/* 四角装饰 */
+.si-deco{position:absolute;width:26px;height:26px;pointer-events:none;
+  border:2px solid #d4af37;opacity:.85}
+.si-deco.tl{left:5px;top:5px;border-right:0;border-bottom:0;border-radius:5px 0 0 0}
+.si-deco.tr{right:5px;top:5px;border-left:0;border-bottom:0;border-radius:0 5px 0 0}
+.si-deco.bl{left:5px;bottom:5px;border-right:0;border-top:0;border-radius:0 0 0 5px}
+.si-deco.br{right:5px;bottom:5px;border-left:0;border-top:0;border-radius:0 0 5px 0}
+
+/* 顶部横幅 */
+.si-banner{position:relative;text-align:center;margin:2px 0 14px;padding:12px 10px 10px;
+  border-radius:4px;overflow:hidden;
+  background:linear-gradient(90deg,rgba(60,46,20,0),rgba(96,74,30,.55),rgba(60,46,20,0));
+  border-top:1px solid rgba(212,175,55,.35);
+  border-bottom:1px solid rgba(212,175,55,.35)}
+.si-banner-glow{position:absolute;left:50%;top:-46px;width:340px;height:120px;margin-left:-170px;
+  background:radial-gradient(ellipse,rgba(255,210,74,.42),rgba(255,210,74,0) 70%);pointer-events:none}
+.si-title{position:relative;font-family:var(--serif);font-size:26px;letter-spacing:.34em;
+  color:#ffe9a8;text-shadow:0 0 18px rgba(255,190,60,.85),0 0 34px rgba(255,150,30,.5),0 3px 6px #000}
+.si-sub2{position:relative;font-size:11.5px;color:#b3a78c;margin-top:5px;letter-spacing:.04em}
+.si-progress{position:relative;width:62%;height:7px;margin:10px auto 5px;border-radius:4px;
+  background:rgba(0,0,0,.55);border:1px solid rgba(138,109,59,.6);overflow:hidden}
+.si-progress i{display:block;height:100%;border-radius:3px;
+  background:linear-gradient(90deg,#ffd24a,#ff9a2e);
+  box-shadow:0 0 10px rgba(255,180,60,.8);transition:width .45s ease}
+.si-progress-txt{position:relative;font-size:11px;color:#8f8570}
+.si-progress-txt b{color:#ffd98a}
+
+/* 卡片：改造成「卷轴格」 */
+.si-panel .si-grid{position:relative}
+.si-panel .si-card{overflow:hidden;
+  background:linear-gradient(180deg,rgba(52,42,24,.95),rgba(14,11,6,.98));
+  border:1px solid rgba(138,109,59,.55);
+  box-shadow:inset 0 1px 0 rgba(255,220,140,.12),0 3px 10px rgba(0,0,0,.55)}
+.si-panel .si-card::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(80% 50% at 50% 0%,rgba(255,210,74,.10),rgba(0,0,0,0) 70%)}
+.si-ribbon{position:relative;margin:-8px -4px 6px;padding:3px 0;font-size:11px;letter-spacing:.08em;
+  color:#1a1206;background:linear-gradient(180deg,#d8b45c,#9c7a2e);
+  text-shadow:0 1px 0 rgba(255,255,255,.25)}
+.si-panel .si-card.done .si-ribbon{background:linear-gradient(180deg,#7fd45a,#3f7a35);color:#0b1608}
+.si-panel .si-card.today .si-ribbon{background:linear-gradient(180deg,#ffe9a8,#d4af37);
+  box-shadow:0 0 14px rgba(255,210,74,.7)}
+.si-panel .si-card.today{animation:siPulse 1.8s ease-in-out infinite}
+@keyframes siPulse{0%,100%{box-shadow:0 0 12px rgba(255,210,74,.35)}50%{box-shadow:0 0 24px rgba(255,210,74,.75)}}
+.si-panel .si-ic{position:relative;width:50px;height:50px;font-size:22px;
+  background:radial-gradient(circle,rgba(88,68,30,.95),rgba(10,8,5,.98));
+  border:1px solid rgba(212,175,55,.75);
+  box-shadow:inset 0 0 12px rgba(255,200,80,.22)}
+.si-panel .si-nm{font-size:10px}
+.si-done-tip{margin-top:12px;text-align:center;font-size:12px;letter-spacing:.1em;color:#5fdc4a}
+
 </style>
 <script id="orc-cfg" type="application/json">{}</script>
 </head>
@@ -3164,7 +3272,9 @@ DATA.LOTTERY = {
     { id:'relic', short:'圣物', icon:'🏆',  name:'圣物套装·随机一件', prob:0.01, color:'#ffd24a', kind:'relic',
       desc:'本职业 7 件套中随机 1 件' },
     { id:'mountwolf', short:'幽灵狼', icon:'🐺', name:'坐骑 · 幽灵狼', prob:0.001, color:'#9fe8ff', kind:'mount',
-      key:'spectralwolf', desc:'0.1% 概率；重复获得自动兑换为 源晶 ×1' },
+      key:'spectralwolf', dupCrystal:1, desc:'稀有坐骑；重复获得自动兑换为 源晶 ×1' },
+    { id:'mountdragon', short:'多彩巨龙', icon:'🐲', name:'坐骑 · 多彩巨龙', prob:0.0005, color:'#ff9a2e', kind:'mount',
+      key:'dragon', dupCrystal:2, desc:'稀有坐骑；重复获得自动兑换为 源晶 ×2' },
     { id:'token100', short:'凭证100', icon:'⬢', name:'BOSS击杀凭证 ×100', prob:0.05, color:'#ff9a3c', kind:'mat', key:'bossToken', amount:100 },
     { id:'token10', short:'凭证10', icon:'⬢',  name:'BOSS击杀凭证 ×10',  prob:0.10, color:'#ff9a3c', kind:'mat', key:'bossToken', amount:10 },
     { id:'scale10', short:'龙鳞10', icon:'▰',  name:'龙鳞片 ×10',        prob:0.10, color:'#ff9a2e', kind:'mat', key:'scale',     amount:10 },
@@ -10080,29 +10190,41 @@ function signinHtml() {
   const si = signinEnsure(p);
   const canToday = signinCanClaim(p);
   const days = DATA.SIGNIN.days;
-  let html = `<div class="si-head">
-    <div class="si-title">七 日 签 到</div>
-    <div class="si-sub">每天可签到一次，连续 7 天领完所有奖励　已领 <b style="color:#ffd98a">${si.idx}</b>/${days.length}</div>
-  </div><div class="si-grid">`;
+
+  let html = `<div class="si-panel">
+    <div class="si-deco tl"></div><div class="si-deco tr"></div>
+    <div class="si-deco bl"></div><div class="si-deco br"></div>
+
+    <div class="si-banner">
+      <div class="si-banner-glow"></div>
+      <div class="si-title">七 日 签 到</div>
+      <div class="si-sub2">每天可签到一次，连续 7 天领完所有奖励</div>
+      <div class="si-progress"><i style="width:${(si.idx / days.length * 100).toFixed(1)}%"></i></div>
+      <div class="si-progress-txt">已领 <b>${si.idx}</b> / ${days.length} 天</div>
+    </div>
+
+    <div class="si-grid">`;
+
   days.forEach((d, i) => {
     const claimed = si.idx > i;
     const isToday = canToday && si.idx === i;
     const cls = claimed ? 'done' : (isToday ? 'today' : '');
-    const btn = claimed ? '<div class="si-btn ok">已领取</div>'
+    const btn = claimed ? '<div class="si-btn ok">✓ 已领取</div>'
       : (isToday ? `<div class="si-btn can" data-signin-claim="1">领 取</div>`
                  : '<div class="si-btn">未开启</div>');
     html += `<div class="si-card ${cls}">
-      <div class="si-day">第 <b>${d.day}</b> 天</div>
+      <div class="si-ribbon">第 ${d.day} 天</div>
       <div class="si-ic" style="color:${d.color}">${d.icon}</div>
       <div class="si-nm" style="color:${d.color}">${d.name}</div>
       ${btn}
     </div>`;
   });
-  html += '</div>';
+
+  html += `</div>`;
   if (si.idx >= days.length) {
-    html += `<div class="si-sub" style="text-align:center;margin-top:12px;color:#5fdc4a">
-      本期七天奖励已全部领取完毕</div>`;
+    html += `<div class="si-done-tip">✦ 本期七天奖励已全部领取完毕 ✦</div>`;
   }
+  html += `</div>`;
   return html;
 }
 
@@ -10220,7 +10342,7 @@ function talentEffectText(key, lv) {
   return '';
 }
 
-/* 突破树 */
+/* 突破树（中轴 + 左右交替，参照 demo） */
 function talentTreeHtml() {
   const p = G.player;
   const t = talentEnsure(p);
@@ -10234,28 +10356,38 @@ function talentTreeHtml() {
     <div class="tree-mat">金币 <b>${fmt(p.gold || 0)}</b></div>
   </div>
   <div class="tree-sub">材料只有 <b style="color:#ff9a6b">BOSS</b> 掉落，掉率很低。每 10 级解锁一个突破节点。</div>
-  <div class="tree-wrap"><div class="tree-line"></div>`;
+  <div class="tb-tree"><div class="tb-axis"></div>`;
 
   for (let i = 0; i < DATA.TALENT_GATES.length; i++) {
-    const lv = i + 1;                      // 该节点对应天赋等级
+    const lv = i + 1;
     const needLv = DATA.TALENT_GATES[i];
     const tierObj = DATA.TALENT_TIERS[Math.min(lv, 9) - 1];
     const reached = t.key && t.lv >= lv;
     const isNext = !!(t.key && !next.none && !next.maxed && next.toLv === lv);
     const lvOk = p.level >= needLv;
     const cost = lv === 1 ? null : DATA.talentCost(lv);
-    const cls = reached ? 'done' : (isNext ? (lvOk ? 'next' : 'next locklv') : 'lock');
-    html += `<div class="tree-node ${cls}">
-      <div class="tn-dot" style="border-color:${tierObj.color};${reached ? 'background:' + tierObj.color : ''}">
-        ${lv === 1 ? '✦' : lv}</div>
-      <div class="tn-body">
-        <div class="tn-name" style="color:${tierObj.color}">${lv === 10 ? '超神圆满' : tierObj.name}
-          <small>Lv.${lv}</small></div>
-        <div class="tn-req">需要角色 Lv.${needLv} ${lvOk ? '✅' : '（未达到）'}</div>
-        ${cost ? `<div class="tn-cost">突破石 ${cost.stone}　源晶 ${cost.crystal}　金币 ${fmt(cost.gold)}</div>` : '<div class="tn-cost">觉醒节点（随机天赋）</div>'}
-        ${isNext ? `<button class="tn-btn ${next.ok ? '' : 'off'}" data-talent-break="1">
-          ${next.ok ? '突 破' : (lvOk ? '材料不足' : '等级不足')}</button>` : ''}
-      </div></div>`;
+    const side = (i % 2 === 0) ? 'left' : 'right';
+    const state = reached ? 'done' : (isNext ? (lvOk ? 'next' : 'next locklv') : 'lock');
+
+    const card = `<div class="tb-card">
+      <div class="tb-title" style="color:${tierObj.color}">
+        <span class="tb-dot" style="background:${reached ? tierObj.color : 'transparent'};border-color:${tierObj.color}"></span>
+        ${lv === 10 ? '超神圆满' : tierObj.name}
+        <small>Lv.${lv}</small>
+      </div>
+      <div class="tb-req">需要角色 Lv.${needLv} ${lvOk ? '<b class="ok">✓</b>' : '<span class="no">（未达到）</span>'}</div>
+      ${cost
+        ? `<div class="tb-cost">突破石 ${cost.stone}　源晶 ${cost.crystal}<br>金币 ${fmt(cost.gold)}</div>`
+        : `<div class="tb-cost">觉醒节点（随机获得一种天赋）</div>`}
+      ${isNext ? `<button class="tb-btn ${next.ok ? '' : 'off'}" data-talent-break="1">
+        ${next.ok ? '突 破' : (lvOk ? '材料不足' : '等级不足')}</button>` : ''}
+    </div>`;
+
+    html += `<div class="tb-row ${side} ${state}">
+      ${side === 'left'
+        ? `<div class="tb-cell">${card}</div><div class="tb-arrow"><i></i></div><div></div>`
+        : `<div></div><div class="tb-arrow"><i></i></div><div class="tb-cell">${card}</div>`}
+    </div>`;
   }
   html += `</div>`;
   if (!t.key) html += `<div class="tal-warn">先觉醒天赋，才能开始突破。</div>`;
@@ -10857,9 +10989,7 @@ function exchangeHtml() {
     <div class="wh-legend">${legend}</div>
     <div class="lot-rare">
       <span class="lr-star">★</span>
-      <span style="color:#9fe8ff">坐骑 · 幽灵狼</span>
-      <b class="lr-pct">0.1%</b>
-      <span class="lr-note">重复获得 → 源晶 ×1</span>
+      <span class="lr-txt">有概率抽到<b>源晶</b>和稀有坐骑<b>幽灵狼</b>、<b>多彩巨龙</b>！</span>
     </div>
 
     <div class="lot-actions">
@@ -10908,16 +11038,17 @@ function doLottery(times) {
       got.push({ id: z.id, name: z.name, color: z.color, ok: true });
     } else if (z.kind === 'mount') {
       const ms = mountEnsure(p);
+      const dupC = z.dupCrystal || 1;
       if (ms.owned.includes(z.key)) {
-        p.materials.sourceCrystal = (p.materials.sourceCrystal || 0) + 1;
-        got.push({ id: z.id, name: z.name + '（重复）→ 源晶×1', color: z.color, ok: true, big: true });
-        logMsg(`🎁 抽中重复坐骑 ${z.name}，兑换为源晶 ×1`, 'level');
+        p.materials.sourceCrystal = (p.materials.sourceCrystal || 0) + dupC;
+        got.push({ id: z.id, name: z.name + `（重复）→ 源晶×${dupC}`, color: z.color, ok: true, big: true });
+        logMsg(`🎁 抽中重复坐骑 ${z.name}，兑换为源晶 ×${dupC}`, 'level');
       } else {
         ms.owned.push(z.key);
         ms.active = z.key;
         got.push({ id: z.id, name: z.name, color: z.color, ok: true, big: true });
         logMsg(`🎁 抽中坐骑：${z.name}`, 'level');
-        bigAnnounce('🐺 抽中坐骑 · 幽灵狼', z.color);
+        bigAnnounce('✦ 抽中稀有坐骑 · ' + z.name.replace('坐骑 · ', ''), z.color);
       }
     } else if (z.kind === 'relic') {
       // 本职业 7 件套随机一件，直接进背包

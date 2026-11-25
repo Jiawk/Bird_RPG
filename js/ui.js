@@ -3896,11 +3896,17 @@ function bindModal() {
   body.querySelectorAll('[data-book]').forEach(el => el.onclick = () => {
     const p = G.player;
     const stat = el.dataset.book;
-    const n = useBook(p, stat, 1);
+    // 一键全部使用（背包里同属性的书会合并成一本，count 即总本数）
+    const bk = p.bag.find(x => x.type === 'book' && x.stat === stat);
+    const total = bk ? (bk.count || 1) : 0;
+    if (!total) return;
+    const n = useBook(p, stat, total);
     if (!n) return;
     const nm = { str:'力量', agi:'敏捷', int:'智力', vit:'体质' }[stat] || stat;
-    toast(`${DATA.BOOKS[stat].name} 使用：${nm} +1（永久）`);
-    logMsg(`永久属性：${nm} +1`, 'level');
+    toast(`${DATA.BOOKS[stat].name} ×${n} 全部使用：${nm} +${n}（永久）`);
+    logMsg(`永久属性：${nm} +${n}（${DATA.BOOKS[stat].name} ×${n}）`, 'level');
+    if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
+    floatText(p.x, p.y - 40, `${nm} +${n}`, DATA.BOOKS[stat].color, 20);
     saveGame();
     openModal('bag', '背包 · 装备', bagHtml());
   });

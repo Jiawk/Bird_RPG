@@ -345,9 +345,9 @@ DATA.BOOKS = {
 
 /* ---------------- 难度（每次进图选择） ---------------- */
 DATA.DIFFICULTY = {
-  normal:{key:'normal', name:'简单', hpMul:1.00, atkMul:1.00, dropMul:1.00, expMul:1.00, color:'#7fd4a8', req:'绿装'},
-  hard:  {key:'hard',   name:'困难', hpMul:2.20, atkMul:1.45, dropMul:1.35, expMul:1.60, color:'#ffb347', req:'蓝装'},
-  hell:  {key:'hell',   name:'地狱', hpMul:4.60, atkMul:2.60, dropMul:1.80, expMul:2.40, color:'#ff5a40', req:'紫装'}
+  normal:{key:'normal', name:'简单', hpMul:1.00, atkMul:1.00, dropMul:1.00, expMul:1.00, asMul:1.20, color:'#7fd4a8', req:'绿装'},
+  hard:  {key:'hard',   name:'困难', hpMul:2.20, atkMul:1.45, dropMul:1.35, expMul:1.60, asMul:1.50, color:'#ffb347', req:'蓝装'},
+  hell:  {key:'hell',   name:'地狱', hpMul:4.60, atkMul:2.60, dropMul:1.80, expMul:2.40, asMul:1.90, color:'#ff5a40', req:'紫装'}
 };
 DATA.DIFF_ORDER = ['normal', 'hard', 'hell'];
 /* 难度解锁：需要先击杀上一难度的 BOSS
@@ -844,6 +844,9 @@ DATA.ROOM_CP = [1800, 3600, 7800, 15000, 27000, 46000, 82000,
                 120000, 185000, 280000, 420000, 640000, 950000];   // 7-12 圣光大陆
 /* 难度对战力的要求倍率（困难/地狱的怪强度提升远大于血量线性成长） */
 DATA.DIFF_CP_MUL = { normal: 1.00, hard: 1.75, hell: 3.20 };
+
+/* 小怪/BOSS 近身攻击范围倍率（v216：当前范围 ×3） */
+DATA.MON_ATK_RANGE_MUL = 3;
 
 
 

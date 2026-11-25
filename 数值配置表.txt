@@ -933,3 +933,20 @@ MNT-SRN-66AAA  MNT-SRN-79AAA  MNT-SRN-8CA2A  MNT-SRN-9FAAA  MNT-SRN-10JAAA
    backjump → character_yanwu                backstab → attack_daoguang1
    poisonBlade → impact_grass                fanOfKnives → impact_light
    火球命中 impact_fire，箭矢命中 impact_light
+
+========================================================================
+[2026-11-25] 怪物攻击节奏（v216）
+========================================================================
+一、攻击频率：新增 DATA.DIFFICULTY[].asMul（乘在小怪/BOSS 的 attackSpeed 上）
+   简单 1.20 ×   困难 1.50 ×   地狱 1.90 ×
+   小怪基础 1.10 → 简单 1.32 / 困难 1.65 / 地狱 2.09（次/秒）
+   BOSS 基础 1.40 → 简单 1.68 / 困难 2.10 / 地狱 2.66（次/秒）
+   全地图全等级生效（makeMonster 统一处理）
+
+二、攻击范围：DATA.MON_ATK_RANGE_MUL = 3
+   近身判定 (m.r + p.r + 4) × 3
+   小怪 r=18 时：原 40px → 现 120px（站在 100px 外也能打到）
+
+三、打击音效移除（v216）
+   去掉：普攻挥砍 attack、暴击 crit、受击 hurt
+   保留：技能 cast / 怒吼 beastRoar / 升级 lvlup / 死亡 playerDie / BOSS 死 bossDie / 界面音

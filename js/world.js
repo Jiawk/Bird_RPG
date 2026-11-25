@@ -165,7 +165,9 @@ function makeMonster(kindKey, x, y, isBoss, level, diff, isElite) {
     gold: isElite ? [tpl.gold[0]*3, tpl.gold[1]*3] : tpl.gold,
     level,
     alive: true,
-    attackCd: 0, attackSpeed: isBoss ? 1.4 : 1.1,
+    attackCd: 0,
+    attackSpeed: (isBoss ? 1.4 : 1.1) * (d.asMul || 1),   // 难度越高攻击越快
+    atkRangeMul: (DATA.MON_ATK_RANGE_MUL || 1),
     stun: 0, root: 0, slow: 0, frozen: 0,
     burn: null, poison: null,
     aggro: false,
@@ -319,7 +321,8 @@ function updateMonsters(dt) {
     if (m.aggro) {
       const spd = m.spd * (m.root > 0 ? 0 : 1);
       if (m.root > 0) m.root -= dt;
-      if (d > m.r + p.r + 4) {
+      const _reach = (m.r + p.r + 4) * (m.atkRangeMul || 1);
+      if (d > _reach) {
         const ang = Math.atan2(p.y - m.y, p.x - m.x);
         m.faceAng = ang;
         m.x += Math.cos(ang) * spd * dt;

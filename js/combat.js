@@ -98,7 +98,7 @@ function damageMonster(m, amount, type, isDot) {
   if (m.hp > 0) { m.hp -= dmg; }
   m.hitFlash = 0.12;
 
-  if (!isDot && type !== 'skill' && crit && typeof Sfx !== 'undefined') Sfx.play('crit');
+  // v216：去掉打击音效（暴击不再发声），技能音效保留
   // 暴击星爆特效
   if (!isDot && crit && typeof spawnSpriteFx === 'function') {
     spawnSpriteFx('criticalhiteffect', m.x, m.y, { scale: 0.72, oy: 24 });
@@ -146,7 +146,7 @@ function damagePlayer(amount, source) {
   const _hdr = ((typeof hltDyn === 'function') ? hltDyn(p).dr : 0);
   const dmg = Math.max(1, Math.round(amount * (1 - Math.min(0.85, p.stats.dr + _hdr))));
   p.hp -= dmg;
-  if (typeof Sfx !== 'undefined') Sfx.play('hurt');
+  // v216：去掉受击打击音效
   floatText(p.x, p.y - 34, '-' + dmg, '#ff5a40', 17);
   burst(p.x, p.y, '#ff5a40', 4, 90);
   if (p.hp <= 0) playerDie();
@@ -208,7 +208,7 @@ function playerAttack() {
   p.attackCd = 1 / atkSpeed;
   if (typeof hltOnAttack === 'function') hltOnAttack(p);
   p.attackAnim = fast ? 0.06 : 0.18;
-  if (typeof Sfx !== 'undefined') Sfx.play('attack');   // 普通攻击（挥砍）
+  // v216：去掉普攻挥砍音效（技能音效保留）
 
   const w = G.world;
   const _meta = !!p.stats.metamorph;

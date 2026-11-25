@@ -2271,3 +2271,4 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .eq2-row b{color:#e8e2d4;font-weight:700}
 .eq2-row.eff em{color:#8fd0ff;font-size:10.5px;white-space:normal}
+.m-crystal{font-size:9px;color:#ff7ae0;text-align:center;line-height:1.2;margin-top:1px}

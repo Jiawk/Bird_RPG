@@ -1128,4 +1128,4 @@ DATA.talentCost = (toLv) => {
 };
 
 /* BOSS 掉落新材料（概率极低，随难度微增） */
-DATA.TALENT_DROP = { stone: 0.045, crystal: 0.030 };   // 每次 BOSS 击杀
+DATA.TALENT_DROP = { stone: 0.020, crystal: 0.010 };   // v219：突破石 2% / 源晶 1%（再 ×难度系数）

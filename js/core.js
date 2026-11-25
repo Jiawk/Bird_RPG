@@ -447,13 +447,19 @@ function mythicSalvageList(p) {
 function salvageMythic(p) {
   const list = mythicSalvageList(p);
   if (!list.length) return { n: 0 };
+  let stone = 0, crystal = 0;
   list.forEach(it => {
     p.materials.scale = (p.materials.scale || 0) + 1;
     p.materials.shard = (p.materials.shard || 0) + 2;
+    // v219：每件红装 0.1% 概率额外产出 1 个突破石 或 1 个源晶
+    if (Math.random() < 0.001) {
+      if (Math.random() < 0.5) { stone++; p.materials.talentStone = (p.materials.talentStone || 0) + 1; }
+      else { crystal++; p.materials.sourceCrystal = (p.materials.sourceCrystal || 0) + 1; }
+    }
     removeFromBag(p, it);
   });
   recalcStats(p);
-  return { n: list.length, scale: list.length, shard: list.length * 2 };
+  return { n: list.length, scale: list.length, shard: list.length * 2, stone, crystal };
 }
 
 /* 安全取槽位名（旧存档可能残留已删除的槽位） */

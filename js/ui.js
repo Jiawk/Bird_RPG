@@ -1862,6 +1862,7 @@ function relicSideHtml(key) {
   const w = (DATA.RELIC_WEAPONS || []).find(x => x.key === key);
   if (!w) return relicSideHtml(null);
   const okLv = p.level >= w.reqLv, okGold = p.gold >= w.price;
+  const okCrystal = (p.materials.sourceCrystal || 0) >= 1;
   const own = (p.bag || []).some(x => x.relicKey === key) ||
               (p.equip.weapon && p.equip.weapon.relicKey === key);
   const pct = ['crit','critDmg','lifesteal','hit','dodge','as','skillDmg','cdr','dr'];
@@ -1881,11 +1882,13 @@ function relicSideHtml(key) {
     <div class="rl-tip">${w.desc}</div>
     <div class="rl-actions">
       <button data-relic-cancel>取消</button>
-      <button data-buy-relic="${w.key}" ${(okLv && okGold && !own) ? '' : 'disabled'}>
-        ${own ? '已拥有' : (okLv ? (okGold ? '兑换 ' + fmt(w.price) + ' 金' : '金币不足') : '等级不足 Lv.' + w.reqLv)}
+      <button data-buy-relic="${w.key}" ${(okLv && okGold && okCrystal && !own) ? '' : 'disabled'}>
+        ${own ? '已拥有' : (!okLv ? '等级不足 Lv.' + w.reqLv
+          : (!okGold ? '金币不足'
+          : (!okCrystal ? '源晶不足' : '兑换 ' + fmt(w.price) + ' 金 + 源晶×1')))}
       </button>
     </div>
-    <div class="msh-gold">当前金币 <b>${fmt(p.gold)}</b></div>
+    <div class="msh-gold">当前金币 <b>${fmt(p.gold)}</b>　源晶 <b style="color:${okCrystal ? '#5fdc4a' : '#ff6b5a'}">${p.materials.sourceCrystal || 0}</b></div>
   </div>`;
 }
 
@@ -1936,7 +1939,8 @@ function relicWeaponCell(cl, sel) {
   return `<div class="m-cell relic${sel === w.key ? ' sel' : ''}" data-relic="${w.key}">
     ${iconTag('weapon', 34, w.wtype, w.key)}
     <div class="m-nm relic-nm">${w.name.replace('圣物·', '')}</div>
-    <div class="m-price ${okLv && okGold ? 'ok' : 'no'}">${fmt(w.price)}</div></div>`;
+    <div class="m-price ${okLv && okGold && (p.materials.sourceCrystal || 0) >= 1 ? 'ok' : 'no'}">${fmt(w.price)}</div>
+    <div class="m-crystal">源晶×1</div></div>`;
 }
 
 /* 圣物套装件格 */
@@ -1954,7 +1958,8 @@ function relicPieceCell(cl, sl, sel) {
   return `<div class="m-cell relic${sel === key ? ' sel' : ''}" data-relic="${key}">
     ${iconTag(sl, 30)}
     <div class="m-nm relic-nm">${piece.slotName}</div>
-    <div class="m-price ${okLv && okGold ? 'ok' : 'no'}">${fmt(S.price)}</div></div>`;
+    <div class="m-price ${okLv && okGold && (p.materials.sourceCrystal || 0) >= 1 ? 'ok' : 'no'}">${fmt(S.price)}</div>
+    <div class="m-crystal">源晶×1</div></div>`;
 }
 
 /* 构造一件圣物套装装备（不入背包） */
@@ -2051,8 +2056,16 @@ function doLottery(times) {
   };
 
   const got = [];
+  let luckyStone = 0, luckyCrystal = 0;
   for (let i = 0; i < times; i++) {
     const z = roll();
+    // v219：每次抽奖 0.1% 概率额外获得 1 个突破石 或 1 个源晶
+    if (Math.random() < 0.001) {
+      if (Math.random() < 0.5) { luckyStone++; p.materials.talentStone = (p.materials.talentStone || 0) + 1; }
+      else { luckyCrystal++; p.materials.sourceCrystal = (p.materials.sourceCrystal || 0) + 1; }
+      got.push({ id: 'lucky_' + i, name: luckyStone ? '天赋突破石' : '源晶',
+                 color: luckyStone ? '#ffd24a' : '#ff7ae0', ok: true, big: true });
+    }
     if (z.kind === 'mat') {
       p.materials[z.key] = (p.materials[z.key] || 0) + z.amount;
       got.push({ id: z.id, name: z.name, color: z.color, ok: true });
@@ -2075,6 +2088,12 @@ function doLottery(times) {
   }
   recalcStats(p);
   saveGame();
+  if (luckyStone || luckyCrystal) {
+    const nm = luckyStone ? '天赋突破石' : '源晶';
+    const cnt = luckyStone || luckyCrystal;
+    bigAnnounce('✦ 抽中了 ' + nm + ' ×' + cnt, luckyStone ? '#ffd24a' : '#ff7ae0');
+    logMsg(`✦ 抽奖额外获得 ${nm} ×${cnt}`, 'level');
+  }
   return got;
 }
 
@@ -2665,7 +2684,7 @@ function relicPieceSideHtml(key) {
     </div>
     <div class="rl-actions">
       <button data-relic-cancel>取消</button>
-      <button data-buy-relic-piece="${cl}|${sl}" ${(okLv && okGold && !own) ? '' : 'disabled'}>
+      <button data-buy-relic-piece="${cl}|${sl}" ${(okLv && okGold && (p.materials.sourceCrystal || 0) >= 1 && !own) ? '' : 'disabled'}>
         ${own ? '已拥有' : (okLv ? (okGold ? '兑换 ' + fmt(S.price) + ' 金' : '金币不足') : '等级不足 Lv.' + S.reqLv)}
       </button>
     </div>
@@ -2680,14 +2699,16 @@ function buyRelicPiece(cl, sl) {
   if (!S || !S.pieces[sl]) return;
   if (p.level < S.reqLv) { toast(`等级不足：需要 Lv.${S.reqLv}`); return; }
   if (p.gold < S.price) { toast('金币不足'); return; }
+  if ((p.materials.sourceCrystal || 0) < 1) { toast('源晶不足（圣物需要 1 个源晶）'); return; }
   const it = relicPieceItem(cl, sl);
   if ((p.bag || []).some(x => x.relicPieceKey === it.relicPieceKey) ||
       ['helm','chest','legs','boots','neck','ring','trinket'].some(s2 => p.equip[s2] && p.equip[s2].relicPieceKey === it.relicPieceKey)) {
     toast('这件圣物你已经拥有了'); return;
   }
   p.gold -= S.price;
+  p.materials.sourceCrystal -= 1;
   it.id = 'rp' + Math.random().toString(36).slice(2, 8);
-  if (!addToBag(p, it)) { p.gold += S.price; toast('背包已满'); return; }
+  if (!addToBag(p, it)) { p.gold += S.price; p.materials.sourceCrystal += 1; toast('背包已满'); return; }
   if (typeof Sfx !== 'undefined') Sfx.play('shopSuccess');
   toast(`兑换成功：${it.name}`);
   logMsg(`🎖 获得圣物 ${it.name}`, 'level');
@@ -2854,11 +2875,13 @@ function buyRelic(key) {
   if (!w) return;
   if (p.level < w.reqLv) { toast(`等级不足：需要 Lv.${w.reqLv}`); return; }
   if (p.gold < w.price) { toast('金币不足'); return; }
+  if ((p.materials.sourceCrystal || 0) < 1) { toast('源晶不足（圣物需要 1 个源晶）'); return; }
   const own = (p.bag || []).some(x => x.relicKey === key) ||
               (p.equip.weapon && p.equip.weapon.relicKey === key);
   if (own) { toast('这件圣物你已经拥有了'); return; }
 
   p.gold -= w.price;
+  p.materials.sourceCrystal -= 1;
   const item = {
     id: 'rl' + Math.random().toString(36).slice(2, 8),
     slot: 'weapon', type: 'equip', quality: 'relic', qKey: 'relic',
@@ -2867,7 +2890,7 @@ function buyRelic(key) {
     stats: Object.assign({}, w.stats), enh: 0, locked: true
   };
   const ok = addToBag(p, item);
-  if (!ok) { p.gold += w.price; toast('背包已满'); return; }
+  if (!ok) { p.gold += w.price; p.materials.sourceCrystal += 1; toast('背包已满'); return; }
   if (typeof Sfx !== 'undefined') Sfx.play('shopSuccess');
   toast(`兑换成功：${w.name}`);
   logMsg(`🎖 获得圣物 ${w.name}`, 'level');

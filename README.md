@@ -3655,3 +3655,15 @@ HUD：剑圣/恶魔猎手/大法师 三种职业头像均正确，无种族图 �
 - **动画格式 = Spine 3.6.3 二进制 + raw deflate，且无 .atlas**，
   现有 `tools/bake_spine.py`（JSON+atlas）读不了，需写 3.6 二进制解析器（1–2 天）
 - 动画集齐全：wait/walk/run/attack/skill/skill_hit/damage/dead/win
+
+### v212 · 立绘接入 UI（1125 角色包 C 路线）
+1. 新图集 `assets/wow/portraits.png`（1024×160，8 格 128×160）
+   - 剑圣/大法师/月之女祭司/恶魔猎手 + 传送员/商人/抽奖专员/铁匠
+   - `ASSETS.portraits` + `DATA.PORTRAIT` / `PORTRAIT_W` / `PORTRAIT_H`
+2. 四处接入：
+   - `render.js drawPortrait()`：HUD 头像改为立绘 + 中性深色背景
+   - `ui.js buildCreateScreen()`：建角职业卡用 `.av-img.big.pt`（120×150 等比）
+   - `ui.js drawCharPortraitTo()`：角色面板大立绘
+   - `ui.js npcFace()`：NPC 弹窗（传送/商人/抽奖/铁匠）浮左缩略立绘
+3. 兜底链：portraits → avatarsHd → avatars → units → 纯色圆
+4. 包体 3.9M → 4.3M（+390KB）

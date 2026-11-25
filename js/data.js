@@ -993,12 +993,6 @@ DATA.RACE_AVATAR  = { human:0, orc:1, undead:2, elf:3 };
 DATA.CLASS_AVATAR = { warrior:4, mage:5, archer:6, assassin:7 };
 /* 高清职业头像（avatarsHd 图集）：0=剑圣 1=恶魔猎手，未列出的职业用 CLASS_AVATAR */
 DATA.AVATAR_HD = { warrior:0, assassin:1 };
-/* 全量立绘头像（portraits 图集，128×160 × 8 格） */
-DATA.PORTRAIT_W = 128; DATA.PORTRAIT_H = 160; DATA.PORTRAIT_N = 8;
-DATA.PORTRAIT = {
-  warrior:0, mage:1, archer:2, assassin:3,
-  npc_teleport:4, npc_merchant:5, npc_exchange:6, npc_blacksmith:7
-};
 
 DATA.MAX_LEVEL = 60;
 /* 经验曲线：1~25 级沿用原版 100×lv^1.5；26 级起每级 ×2.4（25 级之后非常慢） */

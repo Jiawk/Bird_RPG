@@ -3667,3 +3667,26 @@ HUD：剑圣/恶魔猎手/大法师 三种职业头像均正确，无种族图 �
    - `ui.js npcFace()`：NPC 弹窗（传送/商人/抽奖/铁匠）浮左缩略立绘
 3. 兜底链：portraits → avatarsHd → avatars → units → 纯色圆
 4. 包体 3.9M → 4.3M（+390KB）
+
+### v213 · 回退立绘 UI + 自动技能改 1.5 秒顺序释放
+1. **回退 v212 的全部立绘接入**（用户不需要改头像/建角）
+   - `js/assets.js` / `js/data.js` / `js/render.js` / `js/ui.js` / `css/style.css` 全部还原到 v211
+   - 删除 `assets/wow/portraits.png`，包体 4.2M → **3.9M**
+   - HUD 头像、建角职业卡、角色面板、NPC 弹窗恢复原样（剑圣=兽人剑圣、恶魔猎手=伊利丹）
+2. **自动释放技能改为顺序 + 间隔 1.5 秒**
+   - 新增常量 `AUTO_SKILL_GAP = 1.5`
+   - 顺序仍是 Q → W → E → R 轮转（沿用 `G.autoSkillIdx`），
+     但每次成功施法后统一 `autoSkillCd = 1.5`（原 0.35 秒 → 太快）
+   - 应急后撤（D）同样吃 1.5 秒节奏
+
+**验证**
+```
+模拟 30 秒（0.1s 步进）：
+  t=0.1  charge
+  t=1.6  whirlwind
+  t=3.1  shieldwall
+  t=4.6  battleShout
+  t=6.1  bladestorm
+→ 顺序正确，间隔精确 1.5s ✅
+打包产物中 DATA.PORTRAIT / npcFace 残留 = 0 ✅
+```

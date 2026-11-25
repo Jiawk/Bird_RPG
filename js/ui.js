@@ -80,8 +80,8 @@ function buildCreateScreen() {
     const km = c.keymap;
     const ci = Object.keys(DATA.CLASSES).indexOf(k);
     el.innerHTML = `
-      <div class="cls-portrait" style="--pi:${DATA.PORTRAIT && DATA.PORTRAIT[k] !== undefined ? DATA.PORTRAIT[k] : 0}">
-        <span class="av-img big pt"></span>
+      <div class="cls-portrait" style="--ai:${DATA.CLASS_AVATAR[k] !== undefined ? DATA.CLASS_AVATAR[k] : 0}${DATA.AVATAR_HD && DATA.AVATAR_HD[k] !== undefined ? ';--hi:' + DATA.AVATAR_HD[k] : ''}">
+        <span class="av-img big${DATA.AVATAR_HD && DATA.AVATAR_HD[k] !== undefined ? ' hd' : ''}"></span>
         <span class="cls-badge" style="background-position:${-ci * 64}px 0"></span>
         <span class="cls-name-plate">${c.name}</span>
       </div>
@@ -113,7 +113,6 @@ function uiInit() {
   if (ASSETS.mounts) document.documentElement.style.setProperty('--mount-sheet', `url(${ASSETS.mounts})`);
   if (ASSETS.avatars) document.documentElement.style.setProperty('--avatar-sheet', `url(${ASSETS.avatars})`);
   if (ASSETS.avatarsHd) document.documentElement.style.setProperty('--avatar-hd-sheet', `url(${ASSETS.avatarsHd})`);
-  if (ASSETS.portraits) document.documentElement.style.setProperty('--portrait-sheet', `url(${ASSETS.portraits})`);
   bindSkillTips();
   // 任务追踪：事件委托（内容重建后依然可点）
   const qt = $('questTracker');
@@ -768,19 +767,6 @@ function drawCharPortraitTo(cv) {
   g.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, cv.width, cv.height);
-
-  // 优先：立绘头像（portraits 图集）
-  const pi = (DATA.PORTRAIT && DATA.PORTRAIT[p.cls] !== undefined) ? DATA.PORTRAIT[p.cls] : -1;
-  if (pi >= 0 && imgReady('portraits')) {
-    const PW = DATA.PORTRAIT_W || 128, PH = DATA.PORTRAIT_H || 160;
-    ctx.imageSmoothingEnabled = true;
-    // 等比铺满高度，水平居中裁切
-    const scale = cv.height / PH;
-    const dw = PW * scale, dh = cv.height;
-    ctx.drawImage(IMG.portraits, pi * PW, 0, PW, PH,
-                  (cv.width - dw) / 2, 0, dw, dh);
-    return;
-  }
 
   if (!imgReady('units')) return;
   const ci = ['warrior','mage','archer','assassin'].indexOf(p.cls);
@@ -1616,22 +1602,15 @@ function npcAt(wx, wy) {
   return null;
 }
 
-/* NPC 立绘条（立绘头像图集） */
-function npcFace(kind) {
-  const i = (DATA.PORTRAIT && DATA.PORTRAIT['npc_' + kind] !== undefined) ? DATA.PORTRAIT['npc_' + kind] : -1;
-  if (i < 0 || !ASSETS.portraits) return '';
-  return `<div class="npc-face" style="--pi:${i}"></div>`;
-}
-
 function interactNPC(target) {
   const n = target || nearestNPC();
   if (!n) return;
   if (typeof Sfx !== 'undefined') Sfx.play(n.kind === 'warehouse' ? 'warehouse' : 'openBig');
   switch (n.kind) {
-    case 'teleport': openModal('tel', '传送员 · 岳跃冲', npcFace('teleport') + teleportHtml()); break;
-    case 'merchant': toggleModal('merchant', '商人 · 赵帅帅', () => npcFace('merchant') + merchantHtml()); break;
-    case 'exchange': toggleModal('exchange', '抽奖专员 · 李准', () => npcFace('exchange') + exchangeHtml()); break;
-    case 'blacksmith': toggleModal('smith', '铁匠 · 范在英', () => npcFace('blacksmith') + smithHtml()); break;
+    case 'teleport': openModal('tel', '传送员 · 岳跃冲', teleportHtml()); break;
+    case 'merchant': toggleModal('merchant', '商人 · 赵帅帅', merchantHtml); break;
+    case 'exchange': toggleModal('exchange', '抽奖专员 · 李准', exchangeHtml); break;
+    case 'blacksmith': toggleModal('smith', '铁匠 · 范在英', smithHtml); break;
     case 'save': saveGame() ? toast('进度已保存') : toast('保存失败'); break;
     case 'quest': toggleModal('quest', '任务官 · 黄仁勋', questHtml); break;
     case 'craft': toggleModal('craft', '锻造台', craftHtml); break;

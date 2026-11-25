@@ -1438,48 +1438,31 @@ function drawPortrait(p) {
   const cls = DATA.CLASSES[p.cls];
   const col = cls.color;
 
-  // 背景：有立绘时用中性深色，衬托人物；没有时用职业色
-  const hasPt = DATA.PORTRAIT && DATA.PORTRAIT[p.cls] !== undefined && imgReady('portraits');
-  const g = PRX.createRadialGradient(W * 0.5, H * 0.34, 4, W / 2, H * 0.62, W * 0.95);
-  if (hasPt) {
-    g.addColorStop(0, '#2a2b33');
-    g.addColorStop(0.6, '#14151a');
-    g.addColorStop(1, '#07080a');
-  } else {
-    g.addColorStop(0, shade(col, 34));
-    g.addColorStop(0.55, shade(col, -46));
-    g.addColorStop(1, '#07080a');
-  }
+  // 背景
+  const g = PRX.createRadialGradient(W * 0.42, H * 0.30, 4, W / 2, H * 0.62, W * 0.95);
+  g.addColorStop(0, shade(col, 34));
+  g.addColorStop(0.55, shade(col, -46));
+  g.addColorStop(1, '#07080a');
   PRX.fillStyle = g;
   PRX.fillRect(0, 0, W, H);
 
-  // 头像一个：portraits 立绘图集（等比裁成方形）→ 高清图集 → 职业图集 → 单位贴图
-  const pi = (DATA.PORTRAIT && DATA.PORTRAIT[p.cls] !== undefined) ? DATA.PORTRAIT[p.cls] : -1;
-  if (pi >= 0 && imgReady('portraits')) {
-    const PW = DATA.PORTRAIT_W || 128, PH = DATA.PORTRAIT_H || 160;
-    const scale = W / PW;                 // 铺满宽度
-    const sh = PH * scale, sy = (sh - H) * 0.04;   // 几乎贴顶，人物完整
+  // 头像只展示「职业」：高清图集优先，其余用 CLASS_AVATAR
+  const hi = (DATA.AVATAR_HD && DATA.AVATAR_HD[p.cls] !== undefined) ? DATA.AVATAR_HD[p.cls] : null;
+  if (hi !== null && imgReady('avatarsHd')) {
     PRX.imageSmoothingEnabled = true;
-    PRX.drawImage(IMG.portraits, pi * PW, sy / scale, PW, H / scale,
-                  0, 0, W, H);
+    PRX.drawImage(IMG.avatarsHd, hi * 128, 0, 128, 128, 0, 0, W, H);
+  } else if (imgReady('avatars') && DATA.CLASS_AVATAR[p.cls] !== undefined) {
+    PRX.imageSmoothingEnabled = true;
+    PRX.drawImage(IMG.avatars, DATA.CLASS_AVATAR[p.cls] * 64, 0, 64, 64, 0, 0, W, H);
+  } else if (imgReady('units') && ['warrior','mage','archer','assassin'].indexOf(p.cls) >= 0) {
+    const k = ['warrior','mage','archer','assassin'].indexOf(p.cls);
+    const scale = Math.max(W / 32, H / 34) * 1.02;
+    PRX.imageSmoothingEnabled = false;
+    PRX.drawImage(IMG.units, k * 128, 0, 32, 48,
+      (W - 32 * scale) / 2, (H - 48 * scale) / 2, 32 * scale, 48 * scale);
   } else {
-    const hi = (DATA.AVATAR_HD && DATA.AVATAR_HD[p.cls] !== undefined) ? DATA.AVATAR_HD[p.cls] : null;
-    if (hi !== null && imgReady('avatarsHd')) {
-    PRX.imageSmoothingEnabled = true;
-      PRX.drawImage(IMG.avatarsHd, hi * 128, 0, 128, 128, 0, 0, W, H);
-    } else if (imgReady('avatars') && DATA.CLASS_AVATAR[p.cls] !== undefined) {
-      PRX.imageSmoothingEnabled = true;
-      PRX.drawImage(IMG.avatars, DATA.CLASS_AVATAR[p.cls] * 64, 0, 64, 64, 0, 0, W, H);
-    } else if (imgReady('units') && ['warrior','mage','archer','assassin'].indexOf(p.cls) >= 0) {
-      const k = ['warrior','mage','archer','assassin'].indexOf(p.cls);
-      const scale2 = Math.max(W / 32, H / 34) * 1.02;
-      PRX.imageSmoothingEnabled = false;
-      PRX.drawImage(IMG.units, k * 128, 0, 32, 48,
-        (W - 32 * scale2) / 2, (H - 48 * scale2) / 2, 32 * scale2, 48 * scale2);
-    } else {
-      PRX.fillStyle = col;
-      PRX.beginPath(); PRX.arc(W / 2, H / 2, W * 0.34, 0, 6.283); PRX.fill();
-    }
+    PRX.fillStyle = col;
+    PRX.beginPath(); PRX.arc(W / 2, H / 2, W * 0.34, 0, 6.283); PRX.fill();
   }
 }
 

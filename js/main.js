@@ -13,6 +13,7 @@ const Input = {
 let prevBossKills = 0;
 let autoSaveAcc = 0;
 let autoSkillCd = 0;
+const AUTO_SKILL_GAP = 1.5;   // 自动技能：每个技能之间至少 1.5 秒
 
 /* ---------------- 启动 ---------------- */
 /* 效率统计：10 个 6 秒桶滑动窗口 */
@@ -407,7 +408,7 @@ function autoBattleTick(dt) {
   // 血少先用 D 拉开距离
   if (hpPct < 0.30 && (p.cd[p.dash] || 0) <= 0) {
     castSkillKey('d');
-    autoSkillCd = 0.35;
+    autoSkillCd = AUTO_SKILL_GAP;
     return;
   }
 
@@ -433,7 +434,7 @@ function autoBattleTick(dt) {
 
     castSkillKey(k);
     G.autoSkillIdx = (idx + 1) % ORDER.length;   // 下次从下一个技能开始找
-    autoSkillCd = 0.35;
+    autoSkillCd = AUTO_SKILL_GAP;                // 固定间隔 1.5 秒
     return;
   }
 }

@@ -4335,14 +4335,39 @@ function weightedPick(entries) { // [{key, weight}]
 }
 
 /* ---------------- 玩家创建 ---------------- */
+/* ---------------- 自动出售偏好（设备级记忆） ---------------- */
+const AUTOSELL_KEY = 'orc_autosell_v1';
+function autoSellPrefs() {
+  try { return JSON.parse(localStorage.getItem(AUTOSELL_KEY) || '{}') || {}; } catch (e) { return {}; }
+}
+function autoSellSavePrefs(p) {
+  try {
+    localStorage.setItem(AUTOSELL_KEY, JSON.stringify({
+      equip: !!(p ? p.autoSell : G.autoSell),
+      weapon: !!(p ? p.autoSellWeapon : G.autoSellWeapon)
+    }));
+  } catch (e) {}
+}
+/* 把偏好同步到 G（进入游戏/切角色时调用） */
+function autoSellSync(p) {
+  if (!p) return;
+  const pre = autoSellPrefs();
+  if (p.autoSell === undefined) p.autoSell = !!pre.equip;
+  if (p.autoSellWeapon === undefined) p.autoSellWeapon = !!pre.weapon;
+  G.autoSell = !!p.autoSell;
+  G.autoSellWeapon = !!p.autoSellWeapon;
+}
+
 function createPlayer(raceKey, clsKey) {
   const race = DATA.RACES[raceKey], cls = DATA.CLASSES[clsKey];
+  const _pre = autoSellPrefs();
   const p = {
     race: raceKey, cls: clsKey,
     level: 1, exp: 0, gold: 0,
     attrs: { str: 10, agi: 10, int: 10, vit: 10 },
     bonus: { str: 0, agi: 0, int: 0, vit: 0 },   // 属性书永久加成
     equip: {}, bag: [], warehouse: [], whPage: 0,
+    autoSell: !!_pre.equip, autoSellWeapon: !!_pre.weapon,   // 自动出售偏好（会存档）
     mails: [], mailSeq: 1, mailTimer: 0, welfareClaimed: false,
     tutorial: { done: {}, seen: false },
     heirloom: { active: null, sign: {}, days: {}, owned: [] },
@@ -6025,6 +6050,7 @@ function switchChar(idx) {
   G.player = G.chars[idx];
   migrateItemSlots(G.player);
   if (typeof migrateSkills === 'function') migrateSkills(G.player);
+  if (typeof autoSellSync === 'function') autoSellSync(G.player);
   recalcStats(G.player);
   return true;
 }
@@ -6088,6 +6114,8 @@ function loadGame() {
   }
   // 技能改版迁移（vanish→metamorphosis / execute→bladestorm）
   if (typeof migrateSkills === 'function') migrateSkills(G.player);
+  // 自动出售偏好（记住勾选状态）
+  if (typeof autoSellSync === 'function') autoSellSync(G.player);
   G.player.kills = G.player.kills || 0;
   G.player.materials = G.player.materials || { iron:0, mithril:0, scale:0, shard:0 };
   // 旧存档迁移：单个 quest → 数组
@@ -9808,6 +9836,7 @@ function handleCommand(act) {
     }
     case 'autoSell':
       G.autoSell = !G.autoSell;
+      if (G.player) { G.player.autoSell = G.autoSell; autoSellSavePrefs(G.player); }
       toast(G.autoSell ? '自动出售：开（低战力装备直接折现）' : '自动出售：关');
       break;
     case 'save': saveGame() ? toast('已存档') : toast('存档失败'); break;
@@ -13510,11 +13539,17 @@ function mountSound(key) {
   });
   body.querySelectorAll('[data-toggle-autosellweapon]').forEach(cb => cb.onchange = () => {
     G.autoSellWeapon = cb.checked;
-    toast('自动出售低战力武器：' + (cb.checked ? '开' : '关'));
+    G.player.autoSellWeapon = cb.checked;
+    autoSellSavePrefs(G.player);
+    toast('自动出售低战力武器：' + (cb.checked ? '开（已记住）' : '关（已记住）'));
     saveGame();
   });
   body.querySelectorAll('[data-toggle-autosell]').forEach(cb => cb.onchange = () => {
-    G.autoSell = cb.checked; toast(G.autoSell ? '自动出售：开' : '自动出售：关');
+    G.autoSell = cb.checked;
+    G.player.autoSell = cb.checked;
+    autoSellSavePrefs(G.player);
+    toast('自动出售低战力装备：' + (G.autoSell ? '开（已记住）' : '关（已记住）'));
+    saveGame();
   });
   body.querySelectorAll('[data-quest-accept]').forEach(b => b.onclick = () => acceptQuest(b.dataset.questAccept));
   body.querySelectorAll('[data-quest-accept-all]').forEach(b => b.onclick = acceptAllQuests);

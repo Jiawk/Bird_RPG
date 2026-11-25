@@ -921,6 +921,7 @@ function handleCommand(act) {
     }
     case 'autoSell':
       G.autoSell = !G.autoSell;
+      if (G.player) { G.player.autoSell = G.autoSell; autoSellSavePrefs(G.player); }
       toast(G.autoSell ? '自动出售：开（低战力装备直接折现）' : '自动出售：关');
       break;
     case 'save': saveGame() ? toast('已存档') : toast('存档失败'); break;
@@ -4623,11 +4624,17 @@ function mountSound(key) {
   });
   body.querySelectorAll('[data-toggle-autosellweapon]').forEach(cb => cb.onchange = () => {
     G.autoSellWeapon = cb.checked;
-    toast('自动出售低战力武器：' + (cb.checked ? '开' : '关'));
+    G.player.autoSellWeapon = cb.checked;
+    autoSellSavePrefs(G.player);
+    toast('自动出售低战力武器：' + (cb.checked ? '开（已记住）' : '关（已记住）'));
     saveGame();
   });
   body.querySelectorAll('[data-toggle-autosell]').forEach(cb => cb.onchange = () => {
-    G.autoSell = cb.checked; toast(G.autoSell ? '自动出售：开' : '自动出售：关');
+    G.autoSell = cb.checked;
+    G.player.autoSell = cb.checked;
+    autoSellSavePrefs(G.player);
+    toast('自动出售低战力装备：' + (G.autoSell ? '开（已记住）' : '关（已记住）'));
+    saveGame();
   });
   body.querySelectorAll('[data-quest-accept]').forEach(b => b.onclick = () => acceptQuest(b.dataset.questAccept));
   body.querySelectorAll('[data-quest-accept-all]').forEach(b => b.onclick = acceptAllQuests);

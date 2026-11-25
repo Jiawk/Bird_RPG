@@ -39,14 +39,39 @@ function weightedPick(entries) { // [{key, weight}]
 }
 
 /* ---------------- 玩家创建 ---------------- */
+/* ---------------- 自动出售偏好（设备级记忆） ---------------- */
+const AUTOSELL_KEY = 'orc_autosell_v1';
+function autoSellPrefs() {
+  try { return JSON.parse(localStorage.getItem(AUTOSELL_KEY) || '{}') || {}; } catch (e) { return {}; }
+}
+function autoSellSavePrefs(p) {
+  try {
+    localStorage.setItem(AUTOSELL_KEY, JSON.stringify({
+      equip: !!(p ? p.autoSell : G.autoSell),
+      weapon: !!(p ? p.autoSellWeapon : G.autoSellWeapon)
+    }));
+  } catch (e) {}
+}
+/* 把偏好同步到 G（进入游戏/切角色时调用） */
+function autoSellSync(p) {
+  if (!p) return;
+  const pre = autoSellPrefs();
+  if (p.autoSell === undefined) p.autoSell = !!pre.equip;
+  if (p.autoSellWeapon === undefined) p.autoSellWeapon = !!pre.weapon;
+  G.autoSell = !!p.autoSell;
+  G.autoSellWeapon = !!p.autoSellWeapon;
+}
+
 function createPlayer(raceKey, clsKey) {
   const race = DATA.RACES[raceKey], cls = DATA.CLASSES[clsKey];
+  const _pre = autoSellPrefs();
   const p = {
     race: raceKey, cls: clsKey,
     level: 1, exp: 0, gold: 0,
     attrs: { str: 10, agi: 10, int: 10, vit: 10 },
     bonus: { str: 0, agi: 0, int: 0, vit: 0 },   // 属性书永久加成
     equip: {}, bag: [], warehouse: [], whPage: 0,
+    autoSell: !!_pre.equip, autoSellWeapon: !!_pre.weapon,   // 自动出售偏好（会存档）
     mails: [], mailSeq: 1, mailTimer: 0, welfareClaimed: false,
     tutorial: { done: {}, seen: false },
     heirloom: { active: null, sign: {}, days: {}, owned: [] },
@@ -1729,6 +1754,7 @@ function switchChar(idx) {
   G.player = G.chars[idx];
   migrateItemSlots(G.player);
   if (typeof migrateSkills === 'function') migrateSkills(G.player);
+  if (typeof autoSellSync === 'function') autoSellSync(G.player);
   recalcStats(G.player);
   return true;
 }
@@ -1792,6 +1818,8 @@ function loadGame() {
   }
   // 技能改版迁移（vanish→metamorphosis / execute→bladestorm）
   if (typeof migrateSkills === 'function') migrateSkills(G.player);
+  // 自动出售偏好（记住勾选状态）
+  if (typeof autoSellSync === 'function') autoSellSync(G.player);
   G.player.kills = G.player.kills || 0;
   G.player.materials = G.player.materials || { iron:0, mithril:0, scale:0, shard:0 };
   // 旧存档迁移：单个 quest → 数组

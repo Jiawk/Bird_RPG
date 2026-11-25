@@ -3973,3 +3973,24 @@ BOSS 掉率 2%/1%，地狱 3.6%/1.8% ✅
 ```
 背包 370 本力量之书 → 点击后 bonus.str = 370，背包清空，攻击力随之提升 ✅
 ```
+
+### v224 · 自动出售勾选状态记忆
+**问题**：背包工具栏的「自动出售低战力」「自动出售低战力武器」两个勾选框，每次重新上线都会复位成未勾选。
+
+**改法**
+1. `core.js` 新增偏好持久化
+   - `AUTOSELL_KEY = 'orc_autosell_v1'`（localStorage，设备级）
+   - `autoSellPrefs()` 读、`autoSellSavePrefs(p)` 写
+   - `autoSellSync(p)`：把角色上的 `autoSell / autoSellWeapon` 同步到 `G`，缺字段时用设备偏好补
+2. 勾选/取消时**同时写三处**：`G` → `p` → `localStorage`，并 `saveGame()`
+3. `loadGame()`、`switchChar()`、`createPlayer()` 三处都会调用 `autoSellSync`
+   - 老角色：首次加载时用设备偏好补齐字段
+   - 新角色：直接继承设备偏好
+
+**验证**
+```
+勾选两项 → localStorage = {"equip":true,"weapon":true}
+重新 loadGame() → G.autoSell / G.autoSellWeapon 均为 true ✅
+新建角色 → 直接继承 true/true ✅
+背包工具栏两个勾选框显示为已勾选 ✅
+```

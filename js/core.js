@@ -1387,6 +1387,60 @@ function talentBreak(p) {
   return true;
 }
 
+
+/* ================= 七天签到 ================= */
+function signinEnsure(p) {
+  if (!p.signin || typeof p.signin !== 'object') p.signin = { idx: 0, last: null };
+  if (typeof p.signin.idx !== 'number') p.signin.idx = 0;
+  if (p.signin.last === undefined) p.signin.last = null;
+  return p.signin;
+}
+/* 今天是否可以签到 */
+function signinCanClaim(p) {
+  const si = signinEnsure(p);
+  if (si.idx >= DATA.SIGNIN.days.length) return false;
+  return si.last !== todayStr();
+}
+
+/* 领取第 idx+1 天奖励 */
+function signinClaim(p) {
+  const si = signinEnsure(p);
+  if (si.idx >= DATA.SIGNIN.days.length) return { ok:false, msg:'七天奖励已全部领取' };
+  if (si.last === todayStr()) return { ok:false, msg:'今天已经签到过了，明天再来' };
+  const d = DATA.SIGNIN.days[si.idx];
+  const out = { ok:true, day:d.day, name:d.name, extra:'' };
+
+  if (d.kind === 'gold') {
+    p.gold = (p.gold || 0) + d.amount;
+    if (typeof ensureGold === 'function') ensureGold(p);
+  } else if (d.kind === 'mat') {
+    for (const k in d.items) p.materials[k] = (p.materials[k] || 0) + d.items[k];
+  } else if (d.kind === 'pet') {
+    const ps = petEnsure(p);
+    if (ps.owned.includes(d.key)) {
+      p.materials.sourceCrystal = (p.materials.sourceCrystal || 0) + 1;
+      out.extra = '（已拥有，兑换为源晶 ×1）';
+    } else {
+      ps.owned.push(d.key);
+      if (!ps.active) ps.active = d.key;
+    }
+  } else if (d.kind === 'mount') {
+    const ms = mountEnsure(p);
+    if (ms.owned.includes(d.key)) {
+      p.materials.sourceCrystal = (p.materials.sourceCrystal || 0) + 1;
+      out.extra = '（已拥有，兑换为源晶 ×1）';
+    } else {
+      ms.owned.push(d.key);
+      ms.active = d.key;
+    }
+  }
+
+  si.idx += 1;
+  si.last = todayStr();
+  recalcStats(p);
+  return out;
+}
+
 function ensureGold(p) {
   if (!p) return 0;
   const v = p.gold;

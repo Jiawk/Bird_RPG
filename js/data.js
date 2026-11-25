@@ -559,6 +559,8 @@ DATA.LOTTERY = {
   prizes: [
     { id:'relic', short:'圣物', icon:'🏆',  name:'圣物套装·随机一件', prob:0.01, color:'#ffd24a', kind:'relic',
       desc:'本职业 7 件套中随机 1 件' },
+    { id:'mountwolf', short:'幽灵狼', icon:'🐺', name:'坐骑 · 幽灵狼', prob:0.001, color:'#9fe8ff', kind:'mount',
+      key:'spectralwolf', desc:'0.1% 概率；重复获得自动兑换为 源晶 ×1' },
     { id:'token100', short:'凭证100', icon:'⬢', name:'BOSS击杀凭证 ×100', prob:0.05, color:'#ff9a3c', kind:'mat', key:'bossToken', amount:100 },
     { id:'token10', short:'凭证10', icon:'⬢',  name:'BOSS击杀凭证 ×10',  prob:0.10, color:'#ff9a3c', kind:'mat', key:'bossToken', amount:10 },
     { id:'scale10', short:'龙鳞10', icon:'▰',  name:'龙鳞片 ×10',        prob:0.10, color:'#ff9a2e', kind:'mat', key:'scale',     amount:10 },
@@ -1129,3 +1131,19 @@ DATA.talentCost = (toLv) => {
 
 /* BOSS 掉落新材料（概率极低，随难度微增） */
 DATA.TALENT_DROP = { stone: 0.020, crystal: 0.010 };   // v219：突破石 2% / 源晶 1%（再 ×难度系数）
+
+/* ================= 七天签到 ================= */
+/* 每天可领一次，共 7 天；同一天不能重复领 */
+DATA.SIGNIN = {
+  days: [
+    { day:1, name:'100,000 金币',        icon:'金', color:'#ffd24a', kind:'gold',  amount:100000 },
+    { day:2, name:'强化石×100 + 保护券×10', icon:'石', color:'#9aa0a6', kind:'mat',
+      items:{ stone:100, protect:10 } },
+    { day:3, name:'BOSS击杀凭证×1000（100 抽）', icon:'⬢', color:'#ff9a3c', kind:'mat',
+      items:{ bossToken:1000 } },
+    { day:4, name:'天赋突破石×1',        icon:'◆', color:'#ffd24a', kind:'mat', items:{ talentStone:1 } },
+    { day:5, name:'源晶×1',              icon:'❖', color:'#ff7ae0', kind:'mat', items:{ sourceCrystal:1 } },
+    { day:6, name:'耐久光环（宠物）',     icon:'宠', color:'#5fd45f', kind:'pet',  key:'endurance' },
+    { day:7, name:'坐骑 · 幽灵战马',      icon:'马', color:'#c06bff', kind:'mount', key:'spectralhorse' }
+  ]
+};

@@ -450,13 +450,16 @@ function updateHUD(dt) {
   $('cpVal').textContent = fmt(combatPower(p));
 
   const gt = gearTier(p);
-  $('gearVal').textContent = gt.tierName;
-  $('gearVal').style.color = gt.filled === 8 ? DATA.QUALITY[Math.max(0,gt.minIdx)].color : '#b8ad93';
+  const _gv = $('gearVal');
+  if (_gv) { _gv.textContent = gt.tierName;
+    _gv.style.color = gt.filled === 8 ? DATA.QUALITY[Math.max(0,gt.minIdx)].color : '#b8ad93'; }
 
-  $('diffVal').textContent = DATA.DIFFICULTY[G.diff].name;
-  $('diffVal').style.color = DATA.DIFFICULTY[G.diff].color;
+  const _dv = $('diffVal');
+  if (_dv) { _dv.textContent = DATA.DIFFICULTY[G.diff].name;
+    _dv.style.color = DATA.DIFFICULTY[G.diff].color; }
 
   const isTown = w.isTown;
+  if (typeof updateSigninDot === 'function') updateSigninDot();
   const _tb = document.querySelector('.codex-btn.talent-btn');
   if (_tb && G.player) _tb.classList.toggle('awake', !!(talentEnsure(G.player) || {}).key);
   $('roomName').textContent = isTown ? (w.roomId === HOLY_TOWN ? '圣光大陆 · 安全区' : '暴风城 · 安全区') : (getRoom(w.roomId) || DATA.ROOMS[w.roomId]).name;
@@ -874,6 +877,7 @@ function handleCommand(act) {
     case 'map': toggleModal('map', '传送 / 回城', () => townMapHtml()); break;
     case 'town': goTown(); break;
     case 'talent': openModal('talent', '天赋', talentHtml()); break;
+    case 'signin': openModal('signin', '七天签到', signinHtml()); break;
     case 'holyportal': interactNPC({ kind:'holyportal' }); break;
     case 'holygate': interactNPC({ kind:'holygate' }); break;
     case 'holytownback': interactNPC({ kind:'holytownback' }); break;
@@ -1296,6 +1300,61 @@ function skillHtml() {
 }
 
 /* ---------------- 关卡 / 难度选择 ---------------- */
+
+
+/* ================= 七天签到 ================= */
+function signinHtml() {
+  const p = G.player;
+  const si = signinEnsure(p);
+  const canToday = signinCanClaim(p);
+  const days = DATA.SIGNIN.days;
+  let html = `<div class="si-head">
+    <div class="si-title">七 日 签 到</div>
+    <div class="si-sub">每天可签到一次，连续 7 天领完所有奖励　已领 <b style="color:#ffd98a">${si.idx}</b>/${days.length}</div>
+  </div><div class="si-grid">`;
+  days.forEach((d, i) => {
+    const claimed = si.idx > i;
+    const isToday = canToday && si.idx === i;
+    const cls = claimed ? 'done' : (isToday ? 'today' : '');
+    const btn = claimed ? '<div class="si-btn ok">已领取</div>'
+      : (isToday ? `<div class="si-btn can" data-signin-claim="1">领 取</div>`
+                 : '<div class="si-btn">未开启</div>');
+    html += `<div class="si-card ${cls}">
+      <div class="si-day">第 <b>${d.day}</b> 天</div>
+      <div class="si-ic" style="color:${d.color}">${d.icon}</div>
+      <div class="si-nm" style="color:${d.color}">${d.name}</div>
+      ${btn}
+    </div>`;
+  });
+  html += '</div>';
+  if (si.idx >= days.length) {
+    html += `<div class="si-sub" style="text-align:center;margin-top:12px;color:#5fdc4a">
+      本期七天奖励已全部领取完毕</div>`;
+  }
+  return html;
+}
+
+function bindSigninControls(body) {
+  body.querySelectorAll('[data-signin-claim]').forEach(b => b.onclick = () => {
+    const r = signinClaim(G.player);
+    if (!r.ok) { toast(r.msg); return; }
+    if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
+    bigAnnounce(`第 ${r.day} 天 · 签到成功`, '#ffd24a');
+    toast(`领取第 ${r.day} 天奖励：${r.name}${r.extra || ''}`);
+    logMsg(`📅 签到第 ${r.day} 天：${r.name}`, 'level');
+    saveGame();
+    updateSigninDot();
+    openModal('signin', '七天签到', signinHtml());
+  });
+}
+
+/* 右上角红点：今天还没签到就显示 */
+function updateSigninDot() {
+  const dot = document.getElementById('signinDot');
+  if (!dot || !G.player) return;
+  const can = signinCanClaim(G.player);
+  dot.classList.toggle('hidden', !can);
+}
 
 /* ================= 天赋页面 ================= */
 function talentTab() { return G._talentTab === 'tree' ? 'tree' : 'desc'; }
@@ -2024,6 +2083,12 @@ function exchangeHtml() {
     </div>
 
     <div class="wh-legend">${legend}</div>
+    <div class="lot-rare">
+      <span class="lr-star">★</span>
+      <span style="color:#9fe8ff">坐骑 · 幽灵狼</span>
+      <b class="lr-pct">0.1%</b>
+      <span class="lr-note">重复获得 → 源晶 ×1</span>
+    </div>
 
     <div class="lot-actions">
       <button class="lot-btn one" data-lot-draw="1" ${can1 ? '' : 'disabled'}>
@@ -2069,6 +2134,19 @@ function doLottery(times) {
     if (z.kind === 'mat') {
       p.materials[z.key] = (p.materials[z.key] || 0) + z.amount;
       got.push({ id: z.id, name: z.name, color: z.color, ok: true });
+    } else if (z.kind === 'mount') {
+      const ms = mountEnsure(p);
+      if (ms.owned.includes(z.key)) {
+        p.materials.sourceCrystal = (p.materials.sourceCrystal || 0) + 1;
+        got.push({ id: z.id, name: z.name + '（重复）→ 源晶×1', color: z.color, ok: true, big: true });
+        logMsg(`🎁 抽中重复坐骑 ${z.name}，兑换为源晶 ×1`, 'level');
+      } else {
+        ms.owned.push(z.key);
+        ms.active = z.key;
+        got.push({ id: z.id, name: z.name, color: z.color, ok: true, big: true });
+        logMsg(`🎁 抽中坐骑：${z.name}`, 'level');
+        bigAnnounce('🐺 抽中坐骑 · 幽灵狼', z.color);
+      }
     } else if (z.kind === 'relic') {
       // 本职业 7 件套随机一件，直接进背包
       const cls = p.cls || 'warrior';
@@ -4398,6 +4476,7 @@ function mountSound(key) {
     openModal('chars', '选择角色', charListHtml());
   });
   body.querySelectorAll('[data-act-town]').forEach(b => b.onclick = () => { closeModal(); goTown(); });
+  if (typeof bindSigninControls === 'function') bindSigninControls(body);
   if (typeof bindTalentControls === 'function') bindTalentControls(body);
   body.querySelectorAll('[data-holy-go]').forEach(b => b.onclick = () => {
     closeModal(); enterRoom(HOLY_TOWN); logMsg('穿过光门，来到圣光大陆', 'level');

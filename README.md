@@ -3631,3 +3631,16 @@ HUD：剑圣/恶魔猎手/大法师 三种职业头像均正确，无种族图 �
 剑圣 QTS: Q=29 W=1 E=2 R=0 ✅
 恶魔猎手: Q=21 W=22 E=23 R=28 ✅
 ```
+
+### v210 · 素材归档 + 角色素材调研 + units 换装工具
+1. **所有素材标注集中到 `素材标注/`**
+   - 18 个 `.md/.csv/.png` + 子目录 `角色素材/`
+   - 修正文档内的相对链接（`assets/spinefx/` → `../assets/spinefx/`）
+2. **新增 `tools/make_units.py` + `assets/units_map.json`**
+   - 把任意 RPG Maker 行走图（32×48 / 4方向×4帧）拼进 `units.png`
+   - 自动缩放到 128×192，未配置的槽位沿用旧图，不会误伤
+   - 用法：`python3 tools/make_units.py --map assets/units_map.json`
+3. **调研结论**：`UI技能特效1000个【SPINE格式】` **不含任何角色模型**
+   - 扫描 965 个 skeleton，身体部件槽位命中 3 个且全是文字特效误报
+   - `中/role/` 是"按角色分组的技能特效"，不是模型库
+   - 替代方案：`人物行走图素材(XP)(2937个)/Characters`（1249 张，格式与 units.png **完全一致**）

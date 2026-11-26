@@ -3801,16 +3801,11 @@ DATA.expForLevel = (lv) => {
   const n29 = Math.round(b0 * Math.pow(DATA.EXP_TAIL_MUL, 29 - (DATA.EXP_TAIL_FROM - 1)));
   if (lv < 60) return Math.round(n29 * Math.pow(DATA.EXP_GEOM_MUL, lv - 29));
 
-  /* ===== 60~120：以「挂机天数」为锚点反推 =====
-     目标：60→70 共 7 天；110→120 共 180 天（约 6 个月）
-     设计：每级需求 = 该等级「一天的挂机收益」× 「需要挂几天」
-       - 日收益 income(lv) = I60 × 2^((lv-60)/10)   （每 10 级翻倍，与怪物经验同步）
-       - 天数     days(lv)   = D60 × R^((lv-60)/50)  （R 由两个锚点解出）
-       两个锚点：Σ(60..69) days = 7；Σ(110..119) days = 180
-       → R = (180/7)^(1/50) = 1.06710，D60 = 0.7 */
+  // 60~119：每级经验需求 = 预计日收益 × 该级预计挂机天数。
+  // 模型按每十级日收益翻倍、每级挂机天数增长 6.71% 估算。
   const n59 = Math.round(n29 * Math.pow(DATA.EXP_GEOM_MUL, 30));
   const I60 = 3310000000;         // 60 级一天的实测经验收益（2.3M/分钟 × 1440 ≈ 3.31B）
-  const D60 = 0.513;              // 60 级每级 0.513 天（10 级合计 ≈ 7 天）
+  const D60 = 0.35;               // 60→61 的基准天数
   const RATE = 1.06710;           // 每级天数 ×1.0671 → 50 级后 ×25.71
   const need = I60 * Math.pow(2, (lv - 60) / 10) * D60 * Math.pow(RATE, lv - 60);
   return Math.round(Math.max(n59, need));

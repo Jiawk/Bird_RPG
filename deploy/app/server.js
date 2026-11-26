@@ -184,6 +184,19 @@ function authRequired(req, res, next) {
   }
 }
 
+/* 页面级鉴权：未登录 / 过期 → 跳登录页（而不是返回 JSON 401） */
+function pageAuthRequired(req, res, next) {
+  const t = req.cookies[COOKIE_NAME];
+  if (!t) return res.redirect(302, '/login');
+  try {
+    req.user = jwt.verify(t, JWT_SECRET);
+    return next();
+  } catch (e) {
+    res.clearCookie(COOKIE_NAME, { path: '/' });
+    return res.redirect(302, '/login');
+  }
+}
+
 /* ---------- 注册 / 登录 / 登出 ---------- */
 app.post('/api/register', authLimiter, (req, res) => {
   const { username, password } = req.body || {};
@@ -529,12 +542,12 @@ app.use(express.static(path.join(__dirname, '..', 'public'), { index: false, max
 app.get('/', (req, res) => res.redirect('/login'));
 app.get('/login', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'login.html')));
 
-app.get('/game', authRequired, (req, res) => {
+app.get('/game', pageAuthRequired, (req, res) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate');   // 避免玩家跑到旧版本
   res.sendFile(path.join(PUBLIC_DIR, 'game.html'));
 });
 
-app.get('/admin', authRequired, adminRequired,
+app.get('/admin', pageAuthRequired, adminRequired,
   (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'admin.html')));
 
 app.use((req, res) => res.status(404).send('Not Found'));

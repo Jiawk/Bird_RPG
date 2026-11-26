@@ -208,6 +208,20 @@ function uiInit() {
     ic.style.backgroundRepeat = 'no-repeat';
   });
 
+  const dock = $('hudDock');
+  const trigger = dock.querySelector('.dock-trigger');
+  function expandDock(open) {
+    dock.classList.toggle('expanded', open);
+    trigger.setAttribute('aria-expanded', String(open));
+  }
+  trigger.onclick = () => expandDock(!dock.classList.contains('expanded'));
+  dock.querySelector('.dock-actions').addEventListener('click', e => {
+    if (e.target.closest('button')) expandDock(false);
+  });
+  document.addEventListener('pointerdown', e => {
+    if (dock.classList.contains('expanded') && !dock.contains(e.target)) expandDock(false);
+  });
+  trigger.addEventListener('keydown', e => { if (e.key === 'Escape') expandDock(false); });
   document.querySelectorAll('.cc-btn, .codex-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       if (btn.dataset.skill) castSkillKey(btn.dataset.skill);

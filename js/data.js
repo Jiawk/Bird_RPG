@@ -1144,3 +1144,30 @@ DATA.SIGNIN = {
     { day:7, name:'坐骑 · 幽灵战马',      sprite:'mount0',    color:'#c06bff', kind:'mount', key:'spectralhorse' }
   ]
 };
+
+/* ================= 装备图鉴（按地图收集 → 升级） ================= */
+/* 每张地图 = 一本图鉴，6 个部位各收集过 1 件即算「集齐 1 套」。
+   之后继续收集可升到 2 / 3 / 5 套，逐级给永久加成。 */
+DATA.CODEX_SLOTS = ['weapon', 'helm', 'chest', 'legs', 'boots', 'neck'];
+DATA.CODEX_STEPS = [
+  { sets: 1, bonus: { hpPct:0.03, armorPct:0.02, atkPct:0.02, all: 2  }, goldMul: 1.0 },
+  { sets: 2, bonus: { hpPct:0.06, armorPct:0.04, atkPct:0.04, all: 4  }, goldMul: 3.0 },
+  { sets: 3, bonus: { hpPct:0.09, armorPct:0.06, atkPct:0.06, all: 6  }, goldMul: 8.0 },
+  { sets: 5, bonus: { hpPct:0.15, armorPct:0.10, atkPct:0.10, all: 10 }, goldMul: 20.0 }
+];
+/* 升级基础金币（按地图等级放大） */
+DATA.CODEX_GOLD_BASE = 20000;
+DATA.codexGold = (room, stepIdx) => {
+  const lv = Math.max(1, room ? (room.lv || 1) : 1);
+  const mul = (DATA.CODEX_STEPS[stepIdx] || {}).goldMul || 1;
+  return Math.round(DATA.CODEX_GOLD_BASE * mul * (1 + lv / 12));
+};
+/* 物品等级 → 归属地图（取 lv 不大于 ilvl 的最高档） */
+DATA.codexRoomOfIlvl = (ilvl) => {
+  const rooms = DATA.ROOMS.filter(r => !r.daily && r.id <= 12);
+  let best = null;
+  for (const r of rooms) {
+    if ((r.lv || 1) <= ilvl && (!best || r.lv > best.lv)) best = r;
+  }
+  return best || rooms[0] || null;
+};

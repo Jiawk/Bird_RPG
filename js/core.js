@@ -153,6 +153,10 @@ function recalcStats(p) {
     }
   }
 
+  // 装备图鉴：永久加成（生命/护甲/攻击/三维）
+  const CXB = (typeof equipCodexBonus === 'function') ? equipCodexBonus(p) : { hpPct:0, armorPct:0, atkPct:0, all:0 };
+  if (CXB.all) { A.str += CXB.all; A.agi += CXB.all; A.int += CXB.all; A.vit += CXB.all; }
+
   // 套装：主属性加成
   const SB = setBonus(p);
   if (SB.pct) A[SB.primary] = Math.round(A[SB.primary] * (1 + SB.pct));
@@ -205,7 +209,7 @@ function recalcStats(p) {
   if (HL.int) { A.int += HL.int; }
   if (HL.vit) { A.vit += HL.vit; }
 
-  const armor = cls.base.armor + (p.level - 1) * cls.growth.armor + eq.armor + (HL.armor || 0);
+  const armor = (cls.base.armor + (p.level - 1) * cls.growth.armor + eq.armor + (HL.armor || 0)) * (1 + (CXB.armorPct || 0));
   const dr = armor / (armor + 1000 + p.level * 50) + (bonus.dr || 0);
 
   const baseHp = cls.base.hp + (p.level - 1) * cls.growth.hp + A.vit * 6 + p.level * 10;
@@ -216,9 +220,9 @@ function recalcStats(p) {
   const AURA = (typeof petAuraStats === 'function') ? petAuraStats(p) : { armor:0, moveSpd:0, as:0, mpRegenFlat:0, hpRegenPct:0, lifesteal:0, rangedAtk:0, thorns:0 };
   p.stats = {
     A,
-    hpMax: Math.floor((baseHp * (1 + pas.hpPct) + eq.hp + (HL.hp || 0)) * (1 + (bf.hpPct || 0))),
+    hpMax: Math.floor((baseHp * (1 + pas.hpPct) + eq.hp + (HL.hp || 0)) * (1 + (bf.hpPct || 0) + (CXB.hpPct || 0))),
     mpMax: Math.floor(baseMp + eq.mp * MP_EQ_MUL + (HL.mp || 0) * MP_HL_MUL),
-    power: (power + (HL.atk || 0) + (isMagic ? (HL.spell || 0) : 0)) * (1 + berserk),
+    power: (power + (HL.atk || 0) + (isMagic ? (HL.spell || 0) : 0)) * (1 + berserk) * (1 + (CXB.atkPct || 0)),
     isMagic,
     skillMul: 1 + SB.skillDmg,
     weaponBonus, weaponFx, wtype: wpn ? wpn.wtype : null,
@@ -363,6 +367,90 @@ function makeItem(slot, ilvl, forcedQuality, preferMagic) {
   };
 }
 
+
+/* ================= 装备图鉴 ================= */
+function codexEnsure(p) {
+  if (!p) return {};
+  if (!p.codex || typeof p.codex !== 'object') p.codex = {};
+  return p.codex;
+}
+
+/* 记录「获得过某地图某部位的装备」（分解/丢弃不影响，只加不减） */
+function codexMark(p, item) {
+  if (!p || !item || item.type === 'potion' || item.type === 'book') return;
+  if (!item.slot || DATA.CODEX_SLOTS.indexOf(item.slot) < 0) return;
+  if (item.qKey === 'relic' || item.relicKey || item.relicPieceKey) return;   // 圣物不进图鉴
+  const room = DATA.codexRoomOfIlvl(item.ilvl || 1);
+  if (!room) return;
+  const cx = codexEnsure(p);
+  const rec = cx[room.id] || (cx[room.id] = { slots: {} });
+  rec.slots[item.slot] = (rec.slots[item.slot] || 0) + 1;
+}
+
+/* 某地图图鉴的收集情况 */
+function codexState(p, room) {
+  const cx = codexEnsure(p);
+  const rec = cx[room.id] || { slots: {}, lv: 0 };
+  const slots = rec.slots || {};
+  const counts = DATA.CODEX_SLOTS.map(sl => slots[sl] || 0);
+  const total = counts.reduce((a, b) => a + b, 0);
+  const got = counts.filter(n => n > 0).length;
+  const lv = rec.lv || 0;
+  const next = DATA.CODEX_STEPS[lv] || null;
+  return { room, slots, counts, total, got, lv, next, maxed: !next };
+}
+
+/* 全部图鉴的累计加成 */
+function equipCodexBonus(p) {
+  const out = { hpPct:0, armorPct:0, atkPct:0, all:0, lvSum:0, done:0 };
+  if (!p) return out;
+  const cx = codexEnsure(p);
+  for (const r of DATA.ROOMS) {
+    if (r.daily) continue;
+    const rec = cx[r.id];
+    if (!rec || !rec.lv) continue;
+    out.done++;
+    out.lvSum += rec.lv;
+    for (let i = 0; i < rec.lv && i < DATA.CODEX_STEPS.length; i++) {
+      const b = DATA.CODEX_STEPS[i].bonus;
+      out.hpPct += b.hpPct;               // 小数，0.03 = +3%
+      out.armorPct += b.armorPct;
+      out.atkPct += b.atkPct;
+      out.all += b.all;
+    }
+  }
+  return out;
+}
+
+/* 升级一本图鉴 */
+function codexUpgrade(p, roomId) {
+  const room = getRoom(roomId) || DATA.ROOMS[roomId];
+  if (!room || room.daily) return { ok:false, msg:'该地图没有图鉴' };
+  const st = codexState(p, room);
+  if (st.maxed) return { ok:false, msg:'该图鉴已满级' };
+  if (st.got < DATA.CODEX_SLOTS.length) {
+    return { ok:false, msg:`还差 ${DATA.CODEX_SLOTS.length - st.got} 个部位没收集到` };
+  }
+  const need = st.next.sets * DATA.CODEX_SLOTS.length;
+  if (st.total < need) return { ok:false, msg:`需要累计 ${need} 件（当前 ${st.total} 件）` };
+  // 每个部位都要集齐对应套数，避免只刷一个部位
+  const lack = DATA.CODEX_SLOTS.filter((sl, i) => st.counts[i] < st.next.sets);
+  if (lack.length) {
+    return { ok:false, msg:`还有 ${lack.length} 个部位不足 ${st.next.sets} 件` };
+  }
+  const cost = DATA.codexGold(room, st.lv);
+  if ((p.gold || 0) < cost) return { ok:false, msg:`金币不足（需 ${cost.toLocaleString()}）` };
+  p.gold -= cost;
+  if (typeof ensureGold === 'function') ensureGold(p);
+  const cx = codexEnsure(p);
+  const rec = cx[room.id] || (cx[room.id] = { slots: {} });
+  rec.lv = st.lv + 1;
+  rec.slots = rec.slots || {};
+  rec.upgradedAt = Date.now();
+  recalcStats(p);
+  return { ok:true, lv: rec.lv, cost };
+}
+
 /* ---------------- 装备 / 背包 ---------------- */
 const BAG_PAGE_SIZE = 144;        // 每页 12 列 × 12 行
 const BAG_PAGES = 2;              // 装备背包 1 / 装备背包 2
@@ -399,6 +487,8 @@ function unequipItem(p, slot) {
 }
 
 function addToBag(p, item) {
+  // 装备图鉴：拿到就记，分解/丢弃不影响
+  if (typeof codexMark === 'function') { try { codexMark(p, item); } catch (e) {} }
   // 药水堆叠
   if (item.type === 'potion') {
     const ex = p.bag.find(x => x.type === 'potion' && x.key === item.key);

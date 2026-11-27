@@ -1221,18 +1221,14 @@ function charHtml() {
   stats += row('智力', Math.round(A.int)); stats += row('体质', Math.round(A.vit));
   stats += '</div>';
 
-  // 套装
-  const sets = DATA.SETS[p.cls];
-  const activeKey = (st.setBonus && st.setBonus.key) || null;
-  stats += '<div class="s-group"><div class="s-title">职业套装（仅地狱掉落）</div>';
-  sets.forEach(set => {
-    const n = setCount(p, set.key);
-    stats += `<div class="set-line${set.key === activeKey ? ' active' : ''}" data-set-info="${set.key}">
-      <span class="set-dot" style="background:${n > 0 ? set.color : '#3a3020'}"></span>
-      <span class="set-nm">${set.name}</span>
-      <span class="set-cnt" style="color:${n >= 6 ? '#5fdc4a' : n > 0 ? '#ffd24a' : '#6b6558'}">${n}/6</span>
-    </div>`;
-  });
+  // 装备图鉴加成（套装展示已移出本面板）
+  const cxB = (typeof equipCodexBonus === 'function') ? equipCodexBonus(p) : { hpPct:0, armorPct:0, atkPct:0, all:0, done:0 };
+  stats += '<div class="s-group"><div class="s-title">装备图鉴</div>';
+  stats += row('已激活图鉴', cxB.done + ' 本');
+  stats += row('生命', '+' + (cxB.hpPct * 100).toFixed(1) + '%');
+  stats += row('护甲', '+' + (cxB.armorPct * 100).toFixed(1) + '%');
+  stats += row('攻击', '+' + (cxB.atkPct * 100).toFixed(1) + '%');
+  stats += row('三维', '+' + cxB.all);
   stats += '</div>';
 
   stats += '<div class="s-group"><div class="s-title">额外</div>';
@@ -3215,40 +3211,6 @@ function charListHtml() {
 }
 
 /* ---------------- 套装图鉴 ---------------- */
-function setDetailHtml(key) {
-  const p = G.player;
-  const set = (DATA.SETS[p.cls] || []).find(x => x.key === key);
-  if (!set) return '<div>套装不存在</div>';
-  const n = setCount(p, set.key);
-
-  let html = `<div class="set-head" style="border-left-color:${set.color}">
-    <div class="enh-name" style="color:${set.color}">${set.name}</div>
-    <div class="enh-sub">职业套装 · ${DATA.CLASSES[p.cls].name}专属 · 已集齐 ${n}/6</div>
-    <div class="enh-sub" style="color:#ff9a6a">掉落来源：${DATA.ROOMS[set.room].name} · <b>仅地狱难度</b> · 7% 概率</div>
-  </div>`;
-
-  html += '<div class="col-title" style="margin:10px 0 8px">套装部件</div><div class="eq-grid" style="grid-template-columns:repeat(3,1fr)">';
-  DATA.SET_SLOTS.forEach(sl => {
-    const it = p.equip[sl];
-    const mine = it && it.setKey === set.key;
-    const anyInSlot = p.bag.find(x => x.type !== 'potion' && x.setKey === set.key && x.slot === sl);
-    html += `<div class="eq-slot ${mine ? 'q-border-rare' : ''}" style="cursor:default;opacity:${mine || anyInSlot ? 1 : .45}"
-      ${it ? `data-item="${it.id}" data-slot="${sk}"` : ''}>
-      <span class="eq-lv">${DATA.SLOTS[sl].name}</span>
-      ${iconTag(sl, 34)}
-      <span class="eq-nm" style="${mine ? 'color:#5fdc4a' : anyInSlot ? 'color:#ffd24a' : ''}">
-        ${mine ? '已穿戴' : anyInSlot ? '在背包' : '未获得'}</span>
-    </div>`;
-  });
-  html += '</div>';
-
-  html += '<div class="col-title" style="margin:14px 0 8px">套装效果</div>';
-  html += `<div class="enh-line"><span>4 件</span><b class="${n>=4?'ok':''}">主属性（${statName(set.primary)}）+${Math.round(set.b4.pct*100)}%　${n>=4?'✅ 已生效':'未激活'}</b></div>`;
-  html += `<div class="enh-line"><span>6 件</span><b class="${n>=6?'ok':''}">${statName(set.primary)} +${set.b6.flat} · 技能伤害 +${Math.round(set.b6.skillDmg*100)}%　${n>=6?'✅ 已生效':'未激活'}</b></div>`;
-  html += `<div style="margin-top:12px;font-size:11px;color:#8f8570">
-    高图套装更强：第 1 图 4件+10%，第 6 图 4件+35%。同一时间只有集齐件数最多的那套生效。</div>`;
-  return html;
-}
 
 /* 进图确认 */
 function doEnterRoom(room, diff) {
@@ -3290,47 +3252,83 @@ function warnHtml(room, diff) {
 /* ---------------- 装备图鉴 ---------------- */
 function codexEquipHtml() {
   const p = G.player;
-  const sets = DATA.SETS[p.cls] || [];
-  const owned = sets.filter(st => setCount(p, st.key) >= 6).length;
+  const rooms = DATA.ROOMS.filter(r => !r.daily && r.id <= 12);
+  const total = rooms.reduce((n, r) => n + (codexBonusState(p, r).lv || 0), 0);
+  const done = rooms.reduce((n, r) => n + (codexBonusState(p, r).lv ? 1 : 0), 0);
+  const allLv = rooms.reduce((n, r) => n + codexBonusState(p, r).counts.filter(x => x > 0).length, 0);
+  const allNeed = rooms.length * DATA.CODEX_SLOTS.length;
 
-  let html = `<div class="col-title" style="margin-bottom:8px">职业套装 ${owned}/${sets.length} 套已集齐</div>`;
-  html += '<div class="npc-list">';
-  sets.forEach(st => {
-    const n = setCount(p, st.key);
-    html += `<div class="cx-row">
-      <span class="set-dot" style="background:${n ? st.color : '#3a3020'}"></span>
-      <span class="cx-nm">${st.name}</span>
-      <span style="font-size:10px;color:#8f8570">${DATA.ROOMS[st.room].name}</span>
-      <span class="cx-cnt" style="color:${n >= 6 ? '#5fdc4a' : n ? '#ffd24a' : '#6b6558'}">${n}/6</span>
+  const sel = (G._codexRoom !== undefined && G._codexRoom !== null) ? +G._codexRoom : (rooms[0] && rooms[0].id);
+  let html = `<div class="cx-top">
+    <div class="cx-title">按地图收集 · 集齐即可升级</div>
+    <div class="cx-sum">已激活 <b>${done}</b>/${rooms.length} 本　部位收集 <b>${allLv}</b>/${allNeed}</div>
+  </div>
+  <div class="cx-wrap">
+    <div class="cx-rooms">`;
+  rooms.forEach(r => {
+    const st = codexState(p, r);
+    const on = r.id === sel;
+    html += `<button class="cx-room${on ? ' on' : ''}" data-codex-room="${r.id}">
+      <span class="cxr-lv">${r.lv}-${r.lv + 9}级</span>
+      <span class="cxr-nm" style="color:${on ? '#ffe9a8' : '#b8ad93'}">${r.name}</span>
+      <span class="cxr-lv2">${st.lv ? 'Lv.' + st.lv : st.got + '/6'}</span>
+    </button>`;
+  });
+  html += `</div><div class="cx-detail">`;
+
+  const room = getRoom(sel) || rooms[0];
+  if (!room) return '<div>暂无可收集的图鉴</div>';
+  const st = codexState(p, room);
+  const cxB = (typeof equipCodexBonus === 'function') ? equipCodexBonus(p) : { hpPct:0, armorPct:0, atkPct:0, all:0 };
+  const cost = st.maxed ? 0 : DATA.codexGold(room, st.lv);
+  const needTotal = st.maxed ? 0 : st.next.sets * DATA.CODEX_SLOTS.length;
+  const canUp = !st.maxed && st.got >= 6 && st.total >= needTotal && (p.gold || 0) >= cost;
+
+  html += `<div class="cxd-head">
+    <div>
+      <div class="cxd-name">${room.name} · ${room.lv}-${room.lv + 9} 级装备</div>
+      <div class="cxd-sub">打怪获得即记录，分解/丢弃不影响　已集齐 <b>${st.got}</b>/6 部位　累计 <b>${st.total}</b> 件</div>
+    </div>
+    <div class="cxd-lv">Lv.<b>${st.lv}</b><span>/4</span></div>
+  </div>
+  <div class="cxd-slots">`;
+  DATA.CODEX_SLOTS.forEach((sl, i) => {
+    const n = st.counts[i];
+    html += `<div class="cxd-slot${n ? ' got' : ''}">
+      ${iconTag(sl, 40)}
+      <div class="cxds-nm">${DATA.SLOTS[sl].name}</div>
+      <div class="cxds-cnt" style="color:${n ? '#5fdc4a' : '#6b6558'}">${n ? '×' + n : '未获得'}</div>
     </div>`;
   });
-  html += '</div>';
+  html += `</div>`;
 
-  html += `<div class="col-title" style="margin:14px 0 8px">特戒</div>`;
-  html += '<div class="npc-list">';
-  DATA.RING_SLOTS.forEach(rs => {
-    const bossKey = Object.keys(DATA.BOSS_RINGS).find(k => DATA.BOSS_RINGS[k].ring === rs.ring);
-    const killed = !!(p.firstKills && bossKey && p.firstKills[bossKey]);
-    const claimed = bossKey ? ringClaimed(p, bossKey) : false;
-    const wearing = !!(p.equip[rs.slot]);
-    const owned = claimed || wearing ||
-      (p.bag || []).some(x => x.ringKey === rs.ring);
-
-    let btn = '';
-    if (killed && !claimed) {
-      btn = `<button class="cx-claim" data-claim-ring="${bossKey}">领取</button>`;
-    }
-    html += `<div class="cx-row">
-      <span class="set-dot" style="background:${owned ? rs.color : '#3a3020'}"></span>
-      <span class="cx-nm" style="color:${owned ? rs.color : '#6b6558'}">${rs.name}</span>
-      <span style="font-size:10px;color:#8f8570">${bossKey ? DATA.BOSSES[bossKey].name : '—'}</span>
-      <span class="cx-cnt" style="color:${owned ? '#5fdc4a' : killed ? '#ffd24a' : '#6b6558'}">${owned ? '已获得' : killed ? '待领取' : '未获得'}</span>
-      ${btn}
+  html += `<div class="cxd-steps">`;
+  DATA.CODEX_STEPS.forEach((sp, i) => {
+    const on = st.lv > i;
+    const b = sp.bonus;
+    html += `<div class="cxd-step${on ? ' on' : ''}">
+      <div class="cxs-t">${sp.sets} 套</div>
+      <div class="cxs-b">生命 +${Math.round(b.hpPct * 100)}%　护甲 +${Math.round(b.armorPct * 100)}%<br>攻击 +${Math.round(b.atkPct * 100)}%　三维 +${b.all}</div>
+      <div class="cxs-s">${on ? '已激活' : '需 ' + sp.sets * 6 + ' 件'}</div>
     </div>`;
   });
-  html += '</div>';
-  html += `<div style="margin-top:10px;font-size:11px;color:#8f8570">套装仅「地狱」难度掉落（7%）；首杀后可在此领取特戒（进背包，需自己穿戴）</div>`;
+  html += `</div>`;
+
+  html += `<div class="cxd-foot">
+    <div class="cxd-cost">${st.maxed ? '该图鉴已满级' : `升级消耗 <b>${cost.toLocaleString()}</b> 金币　当前 <b>${(p.gold || 0).toLocaleString()}</b>`}</div>
+    <button class="cxd-up${canUp ? '' : ' off'}" data-codex-up="${room.id}" ${canUp ? '' : 'disabled'}>
+      ${st.maxed ? '已满级' : (st.lv === 0 ? '激 活' : '升 级')}
+    </button>
+  </div>
+  <div class="cxd-tip">全套图鉴当前加成：生命 +${(cxB.hpPct * 100).toFixed(1)}%　护甲 +${(cxB.armorPct * 100).toFixed(1)}%　攻击 +${(cxB.atkPct * 100).toFixed(1)}%　三维 +${cxB.all}</div>
+  </div></div>`;
   return html;
+}
+
+/* 图鉴的轻量状态（给列表用） */
+function codexBonusState(p, room) {
+  const st = codexState(p, room);
+  return { lv: st.lv, counts: st.counts, got: st.got, total: st.total };
 }
 
 /* ---------------- 收藏图鉴 ---------------- */
@@ -4556,8 +4554,19 @@ function mountSound(key) {
   });
   body.querySelectorAll('[data-act-enhance]').forEach(b => b.onclick = () => openModal('enhance', '铁匠 · 装备强化', enhanceHtml()));
   body.querySelectorAll('[data-tower-start]').forEach(b => b.onclick = () => enterTower(+b.dataset.towerStart));
-  body.querySelectorAll('[data-set-info]').forEach(b => b.onclick = () => {
-    openModal('setinfo', '套装图鉴', setDetailHtml(b.dataset.setInfo));
+  body.querySelectorAll('[data-codex-room]').forEach(b => b.onclick = () => {
+    G._codexRoom = +b.dataset.codexRoom;
+    openModal('codexEquip', '装备图鉴', codexEquipHtml());
+  });
+  body.querySelectorAll('[data-codex-up]').forEach(b => b.onclick = () => {
+    const r = codexUpgrade(G.player, +b.dataset.codexUp);
+    if (!r.ok) { toast(r.msg); return; }
+    const room = getRoom(+b.dataset.codexUp);
+    if (typeof Sfx !== 'undefined') Sfx.play('lvlup');
+    bigAnnounce('图鉴升级 · ' + (room ? room.name : '') + ' Lv.' + r.lv, '#ffd24a');
+    toast(`图鉴升级成功：Lv.${r.lv}（消耗 ${r.cost.toLocaleString()} 金）`);
+    saveGame();
+    openModal('codexEquip', '装备图鉴', codexEquipHtml());
   });
   body.querySelectorAll('[data-codex-claim]').forEach(b => b.onclick = () => {
     const bk = b.dataset.codexClaim;

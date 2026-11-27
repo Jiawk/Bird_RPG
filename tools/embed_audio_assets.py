@@ -34,6 +34,9 @@ MANIFEST = (
     ("petOrder", "游戏素材/铃声/1音效2/猫咪叫.wav", "assets/sfx/petOrder.m4a"),
     ("petAttack", "游戏素材/铃声/1音效2/野兽叫2.wav", "assets/sfx/petAttack.m4a"),
     ("petDie", "游戏素材/铃声/1音效2/mixkit-werewolf-roar-1730-野兽吼叫.mp3", "assets/sfx/petDie.m4a"),
+    ("petFire", "游戏素材/铃声/1音效2/mixkit-impact-of-a-strong-punch-2155-打击1声.mp3", "assets/sfx/petFire.m4a"),
+    ("petIce", "游戏素材/铃声/1音效2/mixkit-cinematic-glass-hit-suspense-677-进入副本音效.wav", "assets/sfx/petIce.m4a"),
+    ("petSpore", "游戏素材/铃声/1音效2/mixkit-fairy-arcade-sparkle-866-在商店成功兑换装备后的声音.wav", "assets/sfx/petSpore.m4a"),
 )
 
 SIGNATURES = {".mp3": (b"ID3", b"\xff\xfb", b"\xff\xf3", b"\xff\xf2"), ".wav": (b"RIFF",)}

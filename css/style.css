@@ -2538,7 +2538,7 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .bp-card.lock{opacity:.72}
 .bp-icon{--sz:52px;width:var(--sz);height:var(--sz);flex:0 0 var(--sz);border-radius:3px;
   background-image:var(--units-sheet);background-repeat:no-repeat;
-  background-size:calc(92 * var(--sz)) calc(4 * var(--sz));
+  background-size:calc(var(--uframes, 112) * var(--sz)) calc(4 * var(--sz));
   background-position:calc(var(--f) * -1 * var(--sz)) 0;
   border:1px solid rgba(138,109,59,.5);image-rendering:pixelated;
   background-color:#12100b}
@@ -2572,7 +2572,7 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .hud-pet.hidden{display:none}
 .pet-ic{--sz:38px;width:var(--sz);height:var(--sz);border-radius:3px;
   background-image:var(--units-sheet);background-repeat:no-repeat;
-  background-size:calc(92 * var(--sz)) calc(4 * var(--sz));
+  background-size:calc(var(--uframes, 112) * var(--sz)) calc(4 * var(--sz));
   background-position:calc(var(--f) * -1 * var(--sz)) 0;
   border:1px solid #8a6d3b;background-color:#12100b;image-rendering:pixelated;
   box-shadow:0 0 10px rgba(0,0,0,.5)}

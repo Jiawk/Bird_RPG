@@ -106,7 +106,18 @@ function buildCreateScreen() {
 function uiInit() {
   document.documentElement.style.setProperty('--icon-sheet', `url(${ASSETS.equip || ASSETS.icons})`);
   document.documentElement.style.setProperty('--skill-sheet', `url(${ASSETS.skills})`);
-  if (ASSETS.units) document.documentElement.style.setProperty('--units-sheet', `url(${ASSETS.units})`);
+  if (ASSETS.units) {
+    document.documentElement.style.setProperty('--units-sheet', `url(${ASSETS.units})`);
+    // 图标取帧依赖图集帧数（每槽 4 帧）
+    try {
+      const im = new Image();
+      im.onload = () => {
+        const n = Math.round(im.width / 32);
+        if (n > 0) document.documentElement.style.setProperty('--uframes', String(n));
+      };
+      im.src = ASSETS.units;
+    } catch (e) {}
+  }
   if (ASSETS.classicons) document.documentElement.style.setProperty('--class-sheet', `url(${ASSETS.classicons})`);
   if (ASSETS.heirlooms) document.documentElement.style.setProperty('--hlt-sheet', `url(${ASSETS.heirlooms})`);
   if (ASSETS.lorePortraits) document.documentElement.style.setProperty('--lore-sheet', `url(${ASSETS.lorePortraits})`);
@@ -4394,7 +4405,7 @@ function mountSound(key) {
     const r = battlePetToggle(G.player, k);
     if (!r.ok) { toast(r.msg); return; }
     const def = battlePetByKey(k);
-    if (typeof Sfx !== 'undefined') Sfx.play(r.active ? 'petSummon' : 'petOrder');
+    if (typeof Sfx !== 'undefined') Sfx.play(r.active ? (def.summonSound || 'petSummon') : 'petOrder');
     toast(r.active ? `🐾 ${def.name} 已出战` : `${def.name} 已收回`);
     saveGame(); updatePetHud();
     openModal('bpet', '宠物 · 驯兽师', battlePetHtml());

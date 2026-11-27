@@ -456,11 +456,40 @@ function updateBattlePet(dt) {
       pet.dir = dx >= 0 ? 1 : -1;
       // 法师技能
       if (def.skill && pet.skillCd <= 0) {
-        pet.skillCd = def.skill.cd;
-        const dmg = pet.atk * def.skill.mul;
-        damageMonster(t, dmg, 'pet');
-        spawnVfx(t.x, t.y, def.skill.color, def.skill.r, 'aoe', 0.5);
-        if (typeof Sfx !== 'undefined') Sfx.play('cast');
+        const sk = def.skill;
+        pet.skillCd = sk.cd;
+        const dmg = pet.atk * sk.mul;
+        let dealt = 0;
+        if (sk.aoe) {
+          // 范围：命中半径内所有怪物
+          for (const m2 of w.monsters) {
+            if (!m2.alive) continue;
+            if (Math.hypot(m2.x - t.x, m2.y - t.y) <= (sk.r || 80)) {
+              damageMonster(m2, dmg, 'pet');
+              dealt += dmg;
+              if (sk.burn) m2.burn = { dps: dmg * sk.burn.dps, t: sk.burn.dur };
+            }
+          }
+        } else {
+          damageMonster(t, dmg, 'pet');
+          dealt = dmg;
+          if (sk.burn) t.burn = { dps: dmg * sk.burn.dps, t: sk.burn.dur };
+        }
+        spawnVfx(t.x, t.y, sk.color, sk.r || 70, sk.aoe ? 'aoe' : 'hit', 0.55);
+        if (sk.heal) {                       // 命中回血（蘑菇精）
+          pet.hp = Math.min(pet.hpMax, pet.hp + pet.hpMax * sk.heal);
+          spawnVfx(pet.x, pet.y, '#9aef7a', 40, 'pillar', 0.4);
+        }
+        if (sk.drain) {                      // 吸血（幽影兽）
+          pet.hp = Math.min(pet.hpMax, pet.hp + dealt * sk.drain);
+        }
+        if (typeof Sfx !== 'undefined') {
+          const now2 = Date.now();
+          if (now2 - (G._petSkillSfxAt || 0) > 1200) {
+            G._petSkillSfxAt = now2;
+            Sfx.play(def.skillSound || 'cast', 0.7);
+          }
+        }
       } else if (def.type === 'melee') {
         damageMonster(t, pet.atk, 'pet');
         spawnVfx(t.x, t.y, def.color || '#9fe8ff', 40, 'melee', 0.28);

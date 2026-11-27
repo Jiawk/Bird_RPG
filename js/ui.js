@@ -2840,6 +2840,11 @@ function mailHtml() {
         const M = DATA.MATERIALS[it.key] || { name: it.key, color: '#ccc' };
         return `<span class="mi" style="color:${M.color}">${M.name} ×${it.amount}</span>`;
       }
+      if (it.type === 'pet') {
+        const D = (DATA.BATTLE_PETS || []).find(x => x.key === it.key) || { name: it.key, color: '#c08cff' };
+        const own = (G.player && battlePetEnsure(G.player).owned.includes(it.key));
+        return `<span class="mi" style="color:${D.color}">🐾 宠物 · ${D.name}${own ? '（已有）' : ''}</span>`;
+      }
       return '';
     }).join('');
     html += `<div class="mail-item${m.read ? '' : ' unread'}${m.claimed ? ' claimed' : ''}">
@@ -3273,6 +3278,15 @@ function debugTogglesHtml() {
       <div class="nr-name" style="color:#3fd45a">发放技能强化材料 ×100</div>
       <div class="nr-info">技能强化券 ×100 + 技能突破券 ×100</div></div>
       <button data-dbg-skillmat="1" style="border-color:#3fd45a;color:#b9ffb0">领取</button></div>
+
+    <div class="npc-row" style="display:block">
+      <div class="nr-name" style="color:#c08cff;margin-bottom:6px">发放宠物（发到邮箱，去邮箱领取）</div>
+      <div class="dbg-gear-grid">
+        ${DATA.BATTLE_PETS.map(pt => `
+          <button class="dbg-gear" data-dbg-pet="${pt.key}"
+            style="color:${pt.color};border-color:${pt.color}88">${pt.name}</button>`).join('')}
+      </div>
+    </div>
 
     <div class="npc-row"><div>
       <div class="nr-name" style="color:#ff3b3b">获取特戒 ×8（每种）</div>
@@ -4537,6 +4551,26 @@ function mountSound(key) {
     saveGame();
     toast(`已发放传家宝【${w.alias}】`);
     logMsg(`🛠 调试：发放传家宝 ${w.alias}`, 'loot');
+    openModal('debug', '调试面板 · N', debugHtml());
+  });
+  body.querySelectorAll('[data-dbg-pet]').forEach(b => b.onclick = () => {
+    const key = b.dataset.dbgPet;
+    const def = (DATA.BATTLE_PETS || []).find(x => x.key === key);
+    if (!def) return;
+    const p = G.player;
+    const own = battlePetEnsure(p).owned.includes(key);
+    mailPush(p, {
+      title: '调试发放 · 宠物「' + def.name + '」',
+      from: '调试面板',
+      body: own
+        ? '你已经有这只宠物了，领取后会换成宠物缰绳 ×2。'
+        : '这是调试面板发放的宠物，领取后可在「驯兽师 · 铃 → 出战宠物」里让它出战。',
+      items: [{ type:'pet', key, amount:1 }]
+    });
+    saveGame();
+    if (typeof mailRefreshDot === 'function') mailRefreshDot();
+    toast(`已发送到邮箱：宠物「${def.name}」，去邮箱领取`);
+    logMsg(`🛠 调试：宠物「${def.name}」已发送到邮箱`, 'loot');
     openModal('debug', '调试面板 · N', debugHtml());
   });
   body.querySelectorAll('[data-dbg-token]').forEach(b => b.onclick = () => {

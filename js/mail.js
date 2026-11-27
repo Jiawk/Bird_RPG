@@ -57,6 +57,14 @@ function mailClaimOne(p, m, silent) {
       p.materials[it.key] = (p.materials[it.key] || 0) + it.amount; n++;
     } else if (it.type === 'item' && it.item) {
       if (addToBag(p, it.item)) n++;
+    } else if (it.type === 'pet') {
+      // 宠物附件：已有则换成宠物缰绳 ×2
+      if (typeof battlePetGrant === 'function' && battlePetGrant(p, it.key)) n++;
+      else {
+        p.materials.petRein = (p.materials.petRein || 0) + 2;
+        n++;
+      }
+      if (typeof updatePetHud === 'function') updatePetHud();
     }
   });
   if (m.welfare) p.welfareClaimed = true;

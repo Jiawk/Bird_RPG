@@ -1878,33 +1878,33 @@ function battlePetHtml() {
     const stt = battlePetStats(p, def) || { hpMax: 0, atk: 0 };
     const cost = def.cost;
     const canBuy = cost && rein >= cost.rein && (p.gold || 0) >= cost.gold;
-    html += `<div class="bp-card${active ? ' act' : ''}${owned ? '' : ' lock'}" style="border-color:${def.color}66">
+    const rare = def.cost && def.cost.gold >= 50000000;
+    html += `<div class="bp-card${active ? ' act' : ''}${owned ? '' : ' lock'}${rare ? ' rare' : ''}"
+        style="border-color:${def.color}66">
       <div class="bp-icon" style="--f:${def.sprite * 4}"></div>
-      <div class="bp-main">
-        <div class="bp-name" style="color:${def.color}">${def.name}
-          <i style="color:${type.color}">${type.name}</i>${def.lottery ? '<i class="bp-lot">抽奖限定</i>' : ''}</div>
-        <div class="bp-desc">${def.desc}</div>
-        <div class="bp-stat">生命 <b>${stt.hpMax.toLocaleString()}</b>　攻击 <b>${stt.atk.toLocaleString()}</b>　攻速 <b>${def.as.toFixed(1)}</b></div>
-        ${def.skill ? `<div class="bp-skill" style="color:${def.skill.color}">技能：${def.skill.name}（${def.skill.cd}s 冷却，${def.skill.mul}× 伤害）</div>` : ''}
-      </div>
-      <div class="bp-act">`;
+      <div class="bp-name" style="color:${def.color}">${def.name}</div>
+      <div class="bp-tag" style="color:${type.color}">${type.name}${def.lottery ? ' · 抽奖限定' : ''}${rare ? ' · 最稀有' : ''}</div>
+      <div class="bp-stat">生命 <b>${stt.hpMax.toLocaleString()}</b></div>
+      <div class="bp-stat">攻击 <b>${stt.atk.toLocaleString()}</b>　攻速 <b>${def.as.toFixed(1)}</b></div>
+      <div class="bp-desc">${def.skill ? `<span style="color:${def.skill.color}">${def.skill.name}</span> · ` : ''}${def.desc}</div>
+      <div class="bp-foot">`;
     if (!owned) {
       if (!cost) {
-        html += `<button class="bp-btn off" disabled>抽奖获得</button>`;
+        html += `<button class="mm-btn dis" disabled>抽奖获得</button>`;
       } else {
-        html += `<button class="bp-btn buy${canBuy ? '' : ' off'}" ${canBuy ? `data-bpet-recruit="${def.key}"` : 'disabled'}>
-          缰绳×${cost.rein}<br><span>${fmt(cost.gold)} 金</span></button>`;
+        html += `<button class="mm-btn buy${canBuy ? '' : ' dis'}" ${canBuy ? `data-bpet-recruit="${def.key}"` : 'disabled'}>
+          缰绳×${cost.rein} · ${fmt(cost.gold)} 金</button>`;
       }
     } else if (active) {
-      html += `<button class="bp-btn on" data-bpet-use="${def.key}">收回</button>`;
+      html += `<button class="mm-btn on" data-bpet-use="${def.key}">收回</button>`;
     } else {
-      html += `<button class="bp-btn" data-bpet-use="${def.key}">出战</button>`;
+      html += `<button class="mm-btn" data-bpet-use="${def.key}">出战</button>`;
     }
     html += `</div></div>`;
   });
   html += `</div>
-  <div style="margin-top:8px;font-size:11px;color:#8f8570">
-    宠物的生命/攻击随你的属性成长；血量归零会暂时退场，几秒后自动回来。</div>`;
+  <div style="margin-top:10px;font-size:11px;color:#8f8570;text-align:center">
+    宠物的生命/攻击随你的属性成长；血量归零会暂时退场，8 秒后自动回来。</div>`;
   return html;
 }
 

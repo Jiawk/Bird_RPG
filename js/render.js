@@ -70,50 +70,44 @@ function render() {
   list.sort((a, b) => a.y - b.y);
   for (const it of list) it.f();
 
-  // 召唤灵兽「月影灵狼」：专用精灵（units 槽位 22）+ 灵光 + 血条
+  // 召唤灵兽「幼龙」：units 槽位 8 + 龙焰灵光 + 血条
   if (G.pet && imgReady('units')) {
     const pet = G.pet;
     const gx = px(pet.x), gy = py(pet.y);
     const bob = Math.sin(pet.phase * 4) * 3;
-    const scale = 1.3;
-    const sw = U_FRAME_W * scale, sh = U_FRAME_H * scale;
+    const scale = 1.15;
+    const sw = 32 * scale, sh = 48 * scale;
     const facing = pet.dir >= 0 ? 1 : -1;
     const rushing = !!pet.target;
 
-    const g0 = CTX.createRadialGradient(gx, gy, 2, gx, gy, rushing ? 42 : 34);
-    g0.addColorStop(0, rushing ? 'rgba(120,240,255,.5)' : 'rgba(74,212,255,.36)');
-    g0.addColorStop(1, 'rgba(74,212,255,0)');
+    // 地面龙焰光
+    const g0 = CTX.createRadialGradient(gx, gy, 2, gx, gy, rushing ? 44 : 36);
+    g0.addColorStop(0, rushing ? 'rgba(255,150,60,.45)' : 'rgba(120,235,180,.32)');
+    g0.addColorStop(1, 'rgba(0,0,0,0)');
     CTX.fillStyle = g0;
-    CTX.beginPath(); CTX.arc(gx, gy, rushing ? 42 : 34, 0, 6.283); CTX.fill();
+    CTX.beginPath(); CTX.arc(gx, gy, rushing ? 44 : 36, 0, 6.283); CTX.fill();
 
+    // 旋转符文圈
     CTX.save();
-    CTX.globalAlpha = 0.55;
-    CTX.strokeStyle = 'rgba(140,236,255,.85)';
+    CTX.globalAlpha = 0.5;
+    CTX.strokeStyle = 'rgba(140,255,190,.85)';
     CTX.lineWidth = 1.6;
     CTX.translate(gx, gy); CTX.rotate(pet.phase * 1.1);
-    CTX.beginPath(); CTX.ellipse(0, 0, 24, 24 * YS, 0, 0, 6.283); CTX.stroke();
-    for (let i = 0; i < 4; i++) {
-      const ang = i * Math.PI / 2;
-      CTX.beginPath();
-      CTX.moveTo(Math.cos(ang) * 24, Math.sin(ang) * 24 * YS);
-      CTX.lineTo(Math.cos(ang) * 30, Math.sin(ang) * 30 * YS);
-      CTX.stroke();
-    }
+    CTX.beginPath(); CTX.ellipse(0, 0, 22, 22 * YS, 0, 0, 6.283); CTX.stroke();
     CTX.restore();
 
-    // 身后灵光柱（让黑色灵兽在小地图块上也看得清）
-    const back = CTX.createLinearGradient(gx, gy - sh, gx, gy + 6);
-    back.addColorStop(0, 'rgba(120,235,255,0)');
-    back.addColorStop(0.55, 'rgba(90,210,255,.30)');
-    back.addColorStop(1, 'rgba(90,210,255,.05)');
-    CTX.fillStyle = back;
-    CTX.beginPath();
-    CTX.ellipse(gx, gy - sh * 0.45 + bob, sw * 0.42, sh * 0.52, 0, 0, 6.283);
-    CTX.fill();
+    // 龙身
+    const frame = Math.floor(pet.phase * (rushing ? 9 : 5)) % 4;
+    const row = pet.target ? (pet.dir >= 0 ? 2 : 1) : 0;
+    CTX.save();
+    CTX.translate(gx, gy - sh + 12 + bob);
+    if (facing < 0) CTX.scale(-1, 1);
+    CTX.imageSmoothingEnabled = false;
+    CTX.drawImage(IMG.units, 8 * 128 + frame * 32, row * 48, 32, 48,
+                  -sw / 2, 0, sw, sh);
+    CTX.restore();
 
-    // 灵狼本体：程序化绘制（半透明灵体 + 发光眼 + 四足步态）
-    drawSpiritWolf(gx, gy + 4 + bob * 0.4, pet.phase, rushing, facing, sw, sh);
-
+    // 名字 + 血条
     const bw = 46;
     const hpPct = clamp(pet.hp / Math.max(1, pet.hpMax), 0, 1);
     CTX.fillStyle = 'rgba(0,0,0,.65)';
@@ -124,9 +118,9 @@ function render() {
     CTX.font = '700 10px "KaiTi",serif';
     CTX.textAlign = 'center';
     CTX.lineWidth = 3; CTX.strokeStyle = 'rgba(0,0,0,.9)';
-    CTX.strokeText('月影灵狼', gx, gy - sh - 4 + bob);
-    CTX.fillStyle = '#9fe8ff';
-    CTX.fillText('月影灵狼', gx, gy - sh - 4 + bob);
+    CTX.strokeText('幼龙', gx, gy - sh - 4 + bob);
+    CTX.fillStyle = '#8cf0b0';
+    CTX.fillText('幼龙', gx, gy - sh - 4 + bob);
   }
 
   // 出战宠物：units 图集精灵 + 名字 + 血条 + 类型标记

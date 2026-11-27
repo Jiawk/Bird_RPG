@@ -1586,6 +1586,20 @@ function ensureGold(p) {
 
 /* ---------------- 坐骑 / 宠物 ---------------- */
 
+
+/* 宠物改动迁移：幼龙改为召唤物后，把旧存档里的幼龙退回资源 */
+function migrateBattlePets(p) {
+  const st = battlePetEnsure(p);
+  if (!st.owned.length) return;
+  if (st.owned.includes('dragonling')) {
+    st.owned = st.owned.filter(k => k !== 'dragonling');
+    if (st.active === 'dragonling') st.active = null;
+    p.materials.petRein = (p.materials.petRein || 0) + 5;
+    p.gold = (p.gold || 0) + 5000000;
+    if (typeof toast === 'function') toast('幼龙已改为召唤之戒召唤物：退回宠物缰绳×5 + 500万金');
+  }
+}
+
 /* ================= 出战宠物 ================= */
 function battlePetEnsure(p) {
   if (!p.bpets) p.bpets = { owned: [], active: null, cd: 0 };
@@ -1904,6 +1918,7 @@ function switchChar(idx) {
   G.player = G.chars[idx];
   migrateItemSlots(G.player);
   if (typeof migrateSkills === 'function') migrateSkills(G.player);
+  if (typeof migrateBattlePets === 'function') migrateBattlePets(G.player);
   if (typeof autoSellSync === 'function') autoSellSync(G.player);
   recalcStats(G.player);
   return true;
@@ -1968,6 +1983,7 @@ function loadGame() {
   }
   // 技能改版迁移（vanish→metamorphosis / execute→bladestorm）
   if (typeof migrateSkills === 'function') migrateSkills(G.player);
+  if (typeof migrateBattlePets === 'function') migrateBattlePets(G.player);
   // 自动出售偏好（记住勾选状态）
   if (typeof autoSellSync === 'function') autoSellSync(G.player);
   G.player.kills = G.player.kills || 0;

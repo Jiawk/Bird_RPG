@@ -825,7 +825,7 @@ DATA.BOSS_RINGS = {
 DATA.RING_SLOTS = [
   {slot:'ring_exp',    ring:'exp',    name:'经验之戒', color:'#b45cff', desc:'经验获取 +25%'},
   {slot:'ring_revive', ring:'revive', name:'复活之戒', color:'#f7e26b', desc:'死亡后原地复活（120 秒冷却）'},
-  {slot:'ring_summon', ring:'summon', name:'召唤之戒', color:'#4ad4ff', desc:'召唤灵兽协战，替你扛伤害'},
+  {slot:'ring_summon', ring:'summon', name:'召唤之戒', color:'#4ad4ff', desc:'战斗中召唤幼龙协战（30 秒 / 冷却 60 秒）'},
   {slot:'ring_cleave', ring:'cleave', name:'切割之戒', color:'#ff5a4a', desc:'8% 概率削减目标 5% 最大生命'},
   {slot:'ring_drop',   ring:'drop',   name:'爆率之戒', color:'#3fd45a', desc:'掉落品质 +35%'},
   {slot:'ring_gather', ring:'gather', name:'聚合之戒', color:'#ffd24a', desc:'按 X 把全图怪物吸到身边（30s CD）'}
@@ -934,13 +934,11 @@ DATA.PET_TYPES = {
   magic:  { name:'远程法师', color:'#c08cff' }
 };
 DATA.BATTLE_PETS = [
-  { key:'wolf',      name:'月影狼',   sprite:22, type:'melee',  color:'#9fe8ff',
-    hpMul:0.55, atkMul:0.55, as:1.0, range:56, speed:280,
-    desc:'近战扑咬，攻速快，血中等', cost:{ rein:1, gold:1000000 } },
-  { key:'dragonling',name:'幼龙',     sprite:8,  type:'magic',  color:'#6fe08a',
-    hpMul:0.42, atkMul:0.48, as:1.6, range:300, speed:250,
-    skill:{ name:'龙息火球', cd:6, mul:1.8, r:76, color:'#ff7a28' },
-    desc:'远程火球，每 6 秒喷一口龙息（范围伤害）', cost:{ rein:2, gold:2000000 } },
+  { key:'wolf',      name:'月影灵狼', sprite:22, type:'melee',  color:'#9fe8ff',
+    hpMul:1.15, atkMul:1.05, as:1.4, range:58, speed:320,
+    summonSound:'beastRoar', skillSound:'petAttack',
+    skill:{ name:'月影撕咬', cd:4, mul:3.2, r:80, color:'#9fe8ff', aoe:true, drain:0.35 },
+    desc:'最强近战：范围撕咬并吸取生命，攻速与体型全面压制', cost:{ rein:50, gold:100000000 } },
   { key:'slime',     name:'岩石史莱姆', sprite:11, type:'melee', color:'#b9b09a',
     hpMul:0.95, atkMul:0.34, as:1.3, range:54, speed:210,
     desc:'血厚皮糙，伤害偏低，适合扛怪', cost:{ rein:1, gold:1200000 } },

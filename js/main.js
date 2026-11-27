@@ -334,8 +334,8 @@ function updatePet(dt) {
     G.summonState.left = SUMMON_LIFE;
     spawnVfx(p.x - 40, p.y + 24, '#7ae6ff', 64, 'pillar', 0.75);
     if (typeof Sfx !== 'undefined') Sfx.play('beastRoar');
-    if (typeof toast === 'function') toast(`✦ 召唤之戒：月影灵狼出战 ${SUMMON_LIFE}s`);
-    if (typeof logMsg === 'function') logMsg(`召唤灵狼「月影」协助战斗 ${SUMMON_LIFE}s`, 'level');
+    if (typeof toast === 'function') toast(`✦ 召唤之戒：幼龙出战 ${SUMMON_LIFE}s`);
+    if (typeof logMsg === 'function') logMsg(`召唤幼龙协助战斗 ${SUMMON_LIFE}s`, 'level');
   }
 
   // 存在时间
@@ -345,7 +345,7 @@ function updatePet(dt) {
     if (pet) spawnVfx(pet.x, pet.y, '#7ae6ff', 46, 'pillar', 0.5);
     G.pet = null;
     G.summonState.cd = SUMMON_CD;
-    if (typeof toast === 'function') toast(`灵狼消散，冷却 ${SUMMON_CD}s`);
+    if (typeof toast === 'function') toast(`幼龙消散，冷却 ${SUMMON_CD}s`);
     return;
   }
 

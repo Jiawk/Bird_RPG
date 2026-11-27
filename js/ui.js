@@ -21,9 +21,9 @@ const RING_IDX = {
   ring_cleave:24, ring_drop:25, ring_gather:26
 };
 const MAT_IDX = { iron:27, mithril:28, scale:29, shard:30, stone:31, protect:32, skillT:33, breakT:34, bossToken:35,
-  talentStone:37, sourceCrystal:38, petRein:44 };
+  talentStone:37, sourceCrystal:38, petRein:44, soulEner:45 };
 const TALENT_IDX = { soulPoison:39, recovery:40, execute:41, revive:42 };
-const EQUIP_COUNT = 45;
+const EQUIP_COUNT = 46;
 const BOOK_IDX = 36;
 const POTION_IDX  = { hp:18, mp:19 };
 
@@ -106,6 +106,7 @@ function buildCreateScreen() {
 function uiInit() {
   document.documentElement.style.setProperty('--icon-sheet', `url(${ASSETS.equip || ASSETS.icons})`);
   document.documentElement.style.setProperty('--skill-sheet', `url(${ASSETS.skills})`);
+  if (ASSETS.souls) document.documentElement.style.setProperty('--soul-sheet', `url(${ASSETS.souls})`);
   if (ASSETS.units) {
     document.documentElement.style.setProperty('--units-sheet', `url(${ASSETS.units})`);
     // 图标取帧依赖图集帧数（每槽 4 帧）
@@ -927,6 +928,7 @@ function handleCommand(act) {
     case 'mail': toggleModal('mail', '邮箱', mailHtml); break;
     case 'ringup': toggleModal('ringup', '特戒强化', ringUpHtml); break;
     case 'codexEquip': toggleModal('codexEquip', '装备图鉴', codexEquipHtml); break;
+    case 'soul': toggleModal('soul', '魂器', soulHtml); break;
     case 'codexCollect': toggleModal('codexCollect', '收藏图鉴', codexCollectHtml); break;
     case 'debug': toggleModal('debug', '调试面板 · N', debugHtml); break;
     case 'tower': toggleModal('tower', '爬塔 · 试炼之塔', towerHtml); break;
@@ -1811,7 +1813,7 @@ function updateAuraHud() {
 
 /* ---------------- 出战宠物 HUD ---------------- */
 function js_setPetIcon(ic, def) {
-  if (def.render === 'spiritwolf') {
+  if (def.render === 'spiritwolf' || def.beast) {
     const style = petIconStyle(def);
     ic.style.backgroundImage = '';
     ic.style.backgroundSize = '';
@@ -1881,30 +1883,33 @@ function beastMenuHtml() {
 /* 宠物图标：灵狼用离屏画布生成，其它用 units 图集取帧 */
 const _petIconCache = {};
 function petIconStyle(def) {
-  if (def.render !== 'spiritwolf') return `--f:${def.sprite * 4}`;
+  if (def.render !== 'spiritwolf' && !def.beast) return `--f:${def.sprite * 4}`;
   if (_petIconCache[def.key]) return _petIconCache[def.key];
   try {
     const cv = document.createElement('canvas');
-    cv.width = 96; cv.height = 96;
+    cv.width = 128; cv.height = 128;
     const c2 = cv.getContext('2d');
     // 灵光底
-    const bg = c2.createRadialGradient(48, 62, 4, 48, 62, 46);
-    bg.addColorStop(0, 'rgba(120,230,255,.55)');
+    const bg = c2.createRadialGradient(64, 82, 4, 64, 82, 60);
+    bg.addColorStop(0, 'rgba(120,230,255,.50)');
     bg.addColorStop(1, 'rgba(60,140,200,0)');
     c2.fillStyle = bg;
-    c2.beginPath(); c2.arc(48, 62, 46, 0, 6.283); c2.fill();
-    drawSpiritWolf(48, 90, 0.9, false, 1, 64, 68, c2);
+    c2.beginPath(); c2.arc(64, 82, 60, 0, 6.283); c2.fill();
+    drawBeast(def.beast || 'wolf', 64, 118, 0.9, false, 1, 74, 78, c2);
     // 图标尺寸小，把暗色灵体提亮成亮青色，避免糊成黑块
     try {
-      const img = c2.getImageData(0, 0, 96, 96);
+      const hex = (def.color || '#9fe8ff').replace('#', '');
+      const cr = parseInt(hex.slice(0, 2), 16), cg = parseInt(hex.slice(2, 4), 16), cb = parseInt(hex.slice(4, 6), 16);
+      const img = c2.getImageData(0, 0, 128, 128);
       const d = img.data;
       for (let i = 0; i < d.length; i += 4) {
         if (d[i + 3] < 12) continue;
         const lum = (d[i] * 0.3 + d[i + 1] * 0.6 + d[i + 2] * 0.1) / 255;
-        d[i]     = Math.min(255, 60 + lum * 150);
-        d[i + 1] = Math.min(255, 190 + lum * 65);
-        d[i + 2] = Math.min(255, 225 + lum * 30);
-        d[i + 3] = Math.min(255, d[i + 3] + 30);
+        // 用宠物专属色提亮，保证图标之间颜色可区分
+        d[i]     = Math.min(255, 30 + cr * 0.45 + lum * cr * 0.55);
+        d[i + 1] = Math.min(255, 30 + cg * 0.45 + lum * cg * 0.55);
+        d[i + 2] = Math.min(255, 30 + cb * 0.45 + lum * cb * 0.55);
+        d[i + 3] = Math.min(255, d[i + 3] + 25);
       }
       c2.putImageData(img, 0, 0);
     } catch (e) {}
@@ -3536,6 +3541,66 @@ function codexBonusState(p, room) {
   return { lv: st.lv, counts: st.counts, got: st.got, total: st.total };
 }
 
+
+/* ---------------- 魂器 ---------------- */
+function soulHtml() {
+  const p = G.player;
+  const st = soulEnsure(p);
+  const ener = p.materials.soulEner || 0;
+  const sel = (G._soulSel && DATA.SOULS.some(x => x.key === G._soulSel)) ? G._soulSel : DATA.SOULS[0].key;
+  const sd = DATA.SOULS.find(x => x.key === sel) || DATA.SOULS[0];
+  const lv = soulLevel(p, sd.key);
+  const maxed = lv >= DATA.SOUL_TIERS;
+  const cur = DATA.soulValue(sd.stat, lv);
+  const next = maxed ? cur : DATA.soulValue(sd.stat, lv + 1);
+  const cost = maxed ? null : DATA.soulCost(lv + 1);
+  const canUp = !!cost && ener >= cost.ener && (p.gold || 0) >= cost.gold;
+  const fmtVal = v => {
+    if (sd.stat === 'crit') return '+' + (v * 100).toFixed(1) + '%';
+    if (sd.stat === 'as') return '+' + (v * 100).toFixed(1) + '%';
+    if (sd.stat === 'lifesteal') return '+' + (v * 100).toFixed(1) + '%';
+    if (sd.stat === 'critDmg') return '+' + (v * 100).toFixed(0) + '%';
+    return '+' + (v * 100).toFixed(0) + '%';
+  };
+  const statName = { atk:'攻击', hp:'生命上限', armor:'护甲', as:'攻击速度', crit:'暴击率', critDmg:'暴击伤害', lifesteal:'吸血' };
+
+  let html = `<div class="sl-wrap">
+    <div class="sl-list">`;
+  DATA.SOULS.forEach(x => {
+    const l = soulLevel(p, x.key);
+    html += `<div class="sl-item${x.key === sel ? ' on' : ''}" data-soul-sel="${x.key}"
+        style="border-color:${l ? x.color + 'aa' : '#3a3123'}">
+      <div class="sl-ic" style="background-position:${x.idx * 100 / 6}% 0"></div>
+      <div class="sl-nm" style="color:${l ? x.color : '#8f8570'}">${x.name}</div>
+      <div class="sl-lv">${l ? 'Lv.' + l : '未激活'}</div>
+    </div>`;
+  });
+  html += `</div><div class="sl-main">
+    <div class="sl-head">
+      <div class="sl-art" style="background-position:${sd.idx * 100 / 6}% 0;border-color:${sd.color}88"></div>
+      <div class="sl-info">
+        <div class="sl-title" style="color:${sd.color}">${sd.name}</div>
+        <div class="sl-desc">${sd.desc}</div>
+        <div class="sl-ener">魂能 <b>${ener}</b>　金币 <b>${fmt(p.gold || 0)}</b></div>
+      </div>
+      <div class="sl-lvbig">Lv.<b>${lv}</b><span>/${DATA.SOUL_TIERS}</span></div>
+    </div>
+    <div class="sl-grid">
+      <div class="sl-box"><div class="sb-t">当前属性</div><div class="sb-v">${statName[sd.stat]} <b>${fmtVal(cur)}</b></div></div>
+      <div class="sl-box next"><div class="sb-t">下一阶</div><div class="sb-v">${maxed ? '已满阶' : statName[sd.stat] + ' <b>' + fmtVal(next) + '</b>'}</div></div>
+    </div>
+    <div class="sl-dots">${Array.from({ length: DATA.SOUL_TIERS }, (_, i) =>
+      `<i class="${i < lv ? 'on' : ''}" style="${i < lv ? 'background:' + sd.color : ''}"></i>`).join('')}</div>
+    <div class="sl-foot">
+      <div class="sl-cost">${maxed ? '该魂器已满阶' : `进阶消耗　魂能 <b>${cost.ener}</b>　金币 <b>${fmt(cost.gold)}</b>`}</div>
+      <button class="sl-btn${canUp ? '' : ' off'}" data-soul-up="${sd.key}" ${canUp ? '' : 'disabled'}>
+        ${maxed ? '已满阶' : (lv === 0 ? '激 活' : '进 阶')}</button>
+    </div>
+    <div class="sl-tip">魂器加成永久生效，全部 7 件可同时装备；魂能由 BOSS 掉落。</div>
+  </div></div>`;
+  return html;
+}
+
 /* ---------------- 收藏图鉴 ---------------- */
 function codexCollectHtml() {
   const p = G.player;
@@ -4801,6 +4866,20 @@ function mountSound(key) {
   });
   body.querySelectorAll('[data-act-enhance]').forEach(b => b.onclick = () => openModal('enhance', '铁匠 · 装备强化', enhanceHtml()));
   body.querySelectorAll('[data-tower-start]').forEach(b => b.onclick = () => enterTower(+b.dataset.towerStart));
+  body.querySelectorAll('[data-soul-sel]').forEach(b => b.onclick = () => {
+    G._soulSel = b.dataset.soulSel;
+    openModal('soul', '魂器', soulHtml());
+  });
+  body.querySelectorAll('[data-soul-up]').forEach(b => b.onclick = () => {
+    const r = soulUpgrade(G.player, b.dataset.soulUp);
+    if (!r.ok) { toast(r.msg); return; }
+    const sd = DATA.SOULS.find(x => x.key === b.dataset.soulUp);
+    if (typeof Sfx !== 'undefined') Sfx.play('success');
+    bigAnnounce('魂器进阶 · ' + sd.name + ' Lv.' + r.lv, sd.color);
+    toast(`${sd.name} 进阶到 Lv.${r.lv}`);
+    saveGame();
+    openModal('soul', '魂器', soulHtml());
+  });
   body.querySelectorAll('[data-codex-room]').forEach(b => b.onclick = () => {
     G._codexRoom = +b.dataset.codexRoom;
     openModal('codexEquip', '装备图鉴', codexEquipHtml());

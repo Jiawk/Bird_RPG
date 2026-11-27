@@ -153,6 +153,9 @@ function recalcStats(p) {
     }
   }
 
+  // 魂器：永久加成
+  const SLB = (typeof soulBonus === 'function') ? soulBonus(p) : { atkPct:0, hpPct:0, armorPct:0, asPct:0, crit:0, critDmg:0, lifesteal:0 };
+
   // 装备图鉴：永久加成（生命/护甲/攻击/三维）
   const CXB = (typeof equipCodexBonus === 'function') ? equipCodexBonus(p) : { hpPct:0, armorPct:0, atkPct:0, allPct:0 };
   if (CXB.allPct) {
@@ -213,7 +216,7 @@ function recalcStats(p) {
   if (HL.int) { A.int += HL.int; }
   if (HL.vit) { A.vit += HL.vit; }
 
-  const armor = (cls.base.armor + (p.level - 1) * cls.growth.armor + eq.armor + (HL.armor || 0)) * (1 + (CXB.armorPct || 0));
+  const armor = (cls.base.armor + (p.level - 1) * cls.growth.armor + eq.armor + (HL.armor || 0)) * (1 + (CXB.armorPct || 0) + (SLB.armorPct || 0));
   const dr = armor / (armor + 1000 + p.level * 50) + (bonus.dr || 0);
 
   const baseHp = cls.base.hp + (p.level - 1) * cls.growth.hp + A.vit * 6 + p.level * 10;
@@ -224,20 +227,20 @@ function recalcStats(p) {
   const AURA = (typeof petAuraStats === 'function') ? petAuraStats(p) : { armor:0, moveSpd:0, as:0, mpRegenFlat:0, hpRegenPct:0, lifesteal:0, rangedAtk:0, thorns:0 };
   p.stats = {
     A,
-    hpMax: Math.floor((baseHp * (1 + pas.hpPct) + eq.hp + (HL.hp || 0)) * (1 + (bf.hpPct || 0) + (CXB.hpPct || 0))),
+    hpMax: Math.floor((baseHp * (1 + pas.hpPct) + eq.hp + (HL.hp || 0)) * (1 + (bf.hpPct || 0) + (CXB.hpPct || 0) + (SLB.hpPct || 0))),
     mpMax: Math.floor(baseMp + eq.mp * MP_EQ_MUL + (HL.mp || 0) * MP_HL_MUL),
-    power: (power + (HL.atk || 0) + (isMagic ? (HL.spell || 0) : 0)) * (1 + berserk) * (1 + (CXB.atkPct || 0)),
+    power: (power + (HL.atk || 0) + (isMagic ? (HL.spell || 0) : 0)) * (1 + berserk) * (1 + (CXB.atkPct || 0) + (SLB.atkPct || 0)),
     isMagic,
     skillMul: 1 + SB.skillDmg,
     weaponBonus, weaponFx, wtype: wpn ? wpn.wtype : null,
     setBonus: SB,
-    as: cls.base.as * (1 + A.agi / 500) * (1 + pas.asPct + bf.asPct + (HL.as || 0)),
-    crit: clamp(0.05 + A.agi / 2000 + eq.crit + pas.crit + (bonus.crit || 0) + (HL.crit || 0), 0, 0.6),
-    critDmg: 1.5 + eq.critDmg + pas.critDmg + RFX.critDmg + (HL.critDmg || 0),
+    as: cls.base.as * (1 + A.agi / 500) * (1 + pas.asPct + bf.asPct + (HL.as || 0) + (SLB.asPct || 0)),
+    crit: clamp(0.05 + A.agi / 2000 + eq.crit + pas.crit + (bonus.crit || 0) + (HL.crit || 0) + (SLB.crit || 0), 0, 0.6),
+    critDmg: 1.5 + eq.critDmg + pas.critDmg + RFX.critDmg + (HL.critDmg || 0) + (SLB.critDmg || 0),
     dodge: clamp(A.agi / 3000 + eq.dodge, 0, 0.3),
     armor: armor + (AURA.armor || 0),
     dr: clamp(dr + bf.dr + (eq.dr || 0) + (HL.dr || 0), 0, 0.85),
-    lifesteal: (eq.lifesteal || 0) + RFX.lifesteal + (RSET.lifesteal || 0) + (HL.lifesteal || 0)
+    lifesteal: (eq.lifesteal || 0) + RFX.lifesteal + (RSET.lifesteal || 0) + (HL.lifesteal || 0) + (SLB.lifesteal || 0)
                + ((AURA.lifesteal && (p.cls === 'warrior' || p.cls === 'assassin')) ? AURA.lifesteal : 0),
     finalDmg: (RSET.finalDmg || 0),
     skillDmg: (eq.skillDmg || 0) + (HL.skillDmg || 0) + ((hltActive(p) && hltActive(p).skillDmgExtra) || 0),
@@ -1598,6 +1601,52 @@ function migrateBattlePets(p) {
     p.gold = (p.gold || 0) + 5000000;
     if (typeof toast === 'function') toast('幼龙已改为召唤之戒召唤物：退回宠物缰绳×5 + 500万金');
   }
+}
+
+
+/* ================= 魂器 ================= */
+function soulEnsure(p) {
+  if (!p.souls || typeof p.souls !== 'object') p.souls = {};
+  return p.souls;
+}
+function soulLevel(p, key) { return Math.max(0, Math.min(DATA.SOUL_TIERS, soulEnsure(p)[key] || 0)); }
+
+function soulBonus(p) {
+  const out = { atkPct:0, hpPct:0, armorPct:0, asPct:0, crit:0, critDmg:0, lifesteal:0, total:0 };
+  if (!p) return out;
+  const st = soulEnsure(p);
+  DATA.SOULS.forEach(sd => {
+    const lv = Math.max(0, Math.min(DATA.SOUL_TIERS, st[sd.key] || 0));
+    if (!lv) return;
+    out.total += lv;
+    const v = DATA.soulValue(sd.stat, lv);
+    if (sd.stat === 'atk') out.atkPct += v;
+    else if (sd.stat === 'hp') out.hpPct += v;
+    else if (sd.stat === 'armor') out.armorPct += v;
+    else if (sd.stat === 'as') out.asPct += v;
+    else if (sd.stat === 'crit') out.crit += v;
+    else if (sd.stat === 'critDmg') out.critDmg += v;
+    else if (sd.stat === 'lifesteal') out.lifesteal += v;
+  });
+  return out;
+}
+
+/* 进阶一件魂器 */
+function soulUpgrade(p, key) {
+  const sd = DATA.SOULS.find(x => x.key === key);
+  if (!sd) return { ok:false, msg:'没有这件魂器' };
+  const lv = soulLevel(p, key);
+  if (lv >= DATA.SOUL_TIERS) return { ok:false, msg:'已经满阶' };
+  const cost = DATA.soulCost(lv + 1);
+  const ener = p.materials.soulEner || 0;
+  if (ener < cost.ener) return { ok:false, msg:`魂能不足（需 ${cost.ener}，现有 ${ener}）` };
+  if ((p.gold || 0) < cost.gold) return { ok:false, msg:`金币不足（需 ${cost.gold.toLocaleString()}）` };
+  p.materials.soulEner = ener - cost.ener;
+  p.gold -= cost.gold;
+  if (typeof ensureGold === 'function') ensureGold(p);
+  soulEnsure(p)[key] = lv + 1;
+  recalcStats(p);
+  return { ok:true, lv: lv + 1, cost };
 }
 
 /* ================= 出战宠物 ================= */

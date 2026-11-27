@@ -378,6 +378,9 @@ DATA.MATERIALS = {
   protect:{name:'强化保护券', color:'#4a9eff', icon:'◇',
     desc:'强化失败时保护装备不掉级。所需数量随等级提升，成功率提高 50%。',
     use:'锻造台（按 T 打开）→ 装备强化 → 勾选「使用保护券」'},
+  soulEner:{name:'魂能', color:'#8ad4ff', icon:'✦',
+    desc:'魂器进阶用的精华，只有 BOSS 才会掉落。',
+    use:'右上角「魂器」→ 选择魂器 → 进阶'},
   petRein:{name:'宠物缰绳', color:'#c8a26a', icon:'❖',
     desc:'驯服出战宠物用的缰绳，只有 BOSS 才会掉落。',
     use:'主城左下角「驯兽师 · 铃」→ 宠物 → 招募'},
@@ -939,38 +942,38 @@ DATA.BATTLE_PETS = [
     summonSound:'beastRoar', skillSound:'petAttack',
     skill:{ name:'月影撕咬', cd:4, mul:3.2, r:80, color:'#9fe8ff', aoe:true, drain:0.35 },
     desc:'最强近战：范围撕咬并吸取生命，攻速与体型全面压制', cost:{ rein:50, gold:100000000 } },
-  { key:'slime',     name:'岩石史莱姆', sprite:11, type:'melee', color:'#b9b09a',
+  { key:'slime',     name:'磐岩玄龟', render:'beast', beast:'turtle', sprite:11, type:'melee', color:'#c8b48a',
     hpMul:0.95, atkMul:0.34, as:1.3, range:54, speed:210,
     desc:'血厚皮糙，伤害偏低，适合扛怪', cost:{ rein:1, gold:1200000 } },
-  { key:'waterslime',name:'碧水史莱姆', sprite:12, type:'ranged', color:'#7fd4ff',
+  { key:'waterslime',name:'碧水灵鹿', render:'beast', beast:'deer', sprite:12, type:'ranged', color:'#a8f0c8',
     hpMul:0.5,  atkMul:0.44, as:1.2, range:260, speed:230,
     desc:'远程喷射水弹，安全输出', cost:{ rein:1, gold:1500000 } },
-  { key:'lava',      name:'熔岩史莱姆', sprite:23, type:'melee',  color:'#ff6a3c',
+  { key:'lava',      name:'炎羽凤', render:'beast', beast:'phoenix', sprite:23, type:'melee',  color:'#ffb04a',
     hpMul:0.85, atkMul:0.42, as:1.1, range:56, speed:220,
     summonSound:'petAttack', skillSound:'petFire',
     skill:{ name:'岩浆喷发', cd:6, mul:1.4, r:96, color:'#ff5a28', aoe:true, burn:{ dps:0.35, dur:3 } },
     desc:'血厚近战，每 6 秒喷发岩浆（范围 + 点燃）', cost:{ rein:5, gold:5000000 } },
-  { key:'frost',     name:'霜语史莱姆', sprite:24, type:'ranged', color:'#7fd4ff',
+  { key:'frost',     name:'霜语狐', render:'beast', beast:'fox', sprite:24, type:'ranged', color:'#ffb86a',
     hpMul:0.5, atkMul:0.5, as:1.2, range:280, speed:230,
     summonSound:'petIce', skillSound:'petIce',
     skill:{ name:'寒冰锥', cd:5, mul:1.9, r:70, color:'#9fe8ff' },
     desc:'远程冰锥，单体高伤', cost:{ rein:5, gold:5000000 } },
-  { key:'fungus',    name:'蘑菇精', sprite:25, type:'magic', color:'#7fe08a',
+  { key:'fungus',    name:'青木麒麟', render:'beast', beast:'qilin', sprite:25, type:'magic', color:'#c9a8ff',
     hpMul:0.6, atkMul:0.45, as:1.4, range:260, speed:235,
     summonSound:'petSpore', skillSound:'petSpore',
     skill:{ name:'孢子爆发', cd:8, mul:2.0, r:110, color:'#9aef7a', aoe:true, heal:0.25 },
     desc:'范围孢子爆发，命中后给自己回血', cost:{ rein:5, gold:5000000 } },
-  { key:'voiddragon',name:'虚空幼龙', sprite:26, type:'magic', color:'#c08cff',
+  { key:'voiddragon',name:'虚空麒麟', render:'beast', beast:'qilin', sprite:26, type:'magic', color:'#c08cff',
     hpMul:0.55, atkMul:0.6, as:1.5, range:300, speed:250,
     summonSound:'beastRoar', skillSound:'cast',
     skill:{ name:'暗影新星', cd:7, mul:2.4, r:120, color:'#b45cff', aoe:true },
     desc:'远程法师，暗影新星大范围伤害', cost:{ rein:5, gold:5000000 } },
-  { key:'shade',     name:'幽影兽', sprite:27, type:'melee', color:'#4ff0d0',
+  { key:'shade',     name:'影豹', render:'beast', beast:'panther', sprite:27, type:'melee', color:'#6ff0d8',
     hpMul:0.65, atkMul:0.62, as:1.6, range:58, speed:290,
     summonSound:'petAttack', skillSound:'petAttack',
     skill:{ name:'撕裂', cd:5, mul:2.6, r:60, color:'#4ff0d0', drain:0.5 },
     desc:'高速近战，撕裂并吸取生命', cost:{ rein:5, gold:5000000 } },
-  { key:'voidling',  name:'虚空幼崽', sprite:13, type:'magic',  color:'#c08cff',
+  { key:'voidling',  name:'虚空之眼', render:'beast', beast:'voidling', sprite:13, type:'magic',  color:'#c08cff',
     hpMul:0.45, atkMul:0.66, as:1.7, range:280, speed:260,
     skill:{ name:'暗影箭', cd:8, mul:2.4, r:60, color:'#b45cff' },
     desc:'抽奖限定，远程暗影箭（单体高伤）', cost:null, lottery:true }
@@ -1223,3 +1226,43 @@ DATA.codexRoomOfIlvl = (ilvl) => {
   }
   return best || rooms[0] || null;
 };
+/* ================= 魂器系统 ================= */
+/* 7 件魂器，各自专精一条属性；每件可升 10 阶，属性按阶线性放大 */
+DATA.SOULS = [
+  { key:'spear', name:'破晓枪', color:'#ffd24a', idx:0, stat:'atk',
+    desc:'专精攻击，越阶越锋锐' },
+  { key:'armilla', name:'浑天仪', color:'#6fe0b0', idx:1, stat:'hp',
+    desc:'专精生命上限，扛伤更稳' },
+  { key:'blade', name:'死灵刀', color:'#9a7fff', idx:2, stat:'critDmg',
+    desc:'专精暴击伤害，越打越痛' },
+  { key:'wood', name:'空桑之木', color:'#c88a5a', idx:3, stat:'as',
+    desc:'专精攻击速度，出手更快' },
+  { key:'vase', name:'流云瓶', color:'#8fe8ff', idx:4, stat:'armor',
+    desc:'专精护甲，物理伤害减免' },
+  { key:'feather', name:'孔雀翎', color:'#7fd4ff', idx:5, stat:'crit',
+    desc:'专精暴击率，频繁出暴击' },
+  { key:'scythe', name:'噬魂刃', color:'#9fe86a', idx:6, stat:'lifesteal',
+    desc:'专精吸血，边打边回血' }
+];
+/* 每阶数值（第 1 阶 ~ 第 10 阶）：按专精给不同成长 */
+DATA.SOUL_TIERS = 10;
+DATA.soulValue = (stat, lv) => {
+  const n = Math.max(0, Math.min(DATA.SOUL_TIERS, lv));
+  switch (stat) {
+    case 'atk':      return 0.02 * n;      // 攻击 +2%/阶
+    case 'hp':       return 0.03 * n;      // 生命 +3%/阶
+    case 'armor':    return 0.04 * n;      // 护甲 +4%/阶
+    case 'as':       return 0.008 * n;     // 攻速 +0.8%/阶
+    case 'crit':     return 0.004 * n;     // 暴击率 +0.4%/阶
+    case 'critDmg':  return 0.03 * n;      // 暴击伤害 +3%/阶
+    case 'lifesteal':return 0.004 * n;     // 吸血 +0.4%/阶
+    default: return 0;
+  }
+};
+/* 升到第 lv 阶的花费 */
+DATA.soulCost = (lv) => ({
+  ener: 3 + lv * 3,
+  gold: Math.round(400000 * Math.pow(1.85, lv - 1))
+});
+/* BOSS 掉魂能 */
+DATA.SOUL_DROP = 0.020;

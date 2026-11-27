@@ -736,6 +736,11 @@ function dropLoot(m) {
       p.materials.talentStone = (p.materials.talentStone || 0) + n;
       push({ type:'mat', mat:'talentStone', amount:n, color:'#ffd24a', label:'天赋突破石×' + n });
     }
+    if (DATA.SOUL_DROP && Math.random() < DATA.SOUL_DROP * dropMul) {
+      const n = 1;
+      p.materials.soulEner = (p.materials.soulEner || 0) + n;
+      push({ type:'mat', mat:'soulEner', amount:n, color:'#8ad4ff', label:'魂能×' + n });
+    }
     if (DATA.TALENT_DROP.petRein && Math.random() < DATA.TALENT_DROP.petRein * dropMul) {
       const n = 1;
       p.materials.petRein = (p.materials.petRein || 0) + n;

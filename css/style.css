@@ -2572,3 +2572,65 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
 .hud-pet:hover .pet-tip,.hud-pet.show .pet-tip{display:block}
 .pet-tip b{color:#ffd98a}
 .pet-tip .bp-v{color:#5fdc4a;font-weight:700}
+
+/* ============ 魂器 ============ */
+:root{ --soul-sheet: none; }
+.fnx.soul-fn .fn-ic{background:linear-gradient(180deg,rgba(46,26,64,.96),rgba(12,8,26,.98));
+  box-shadow:0 0 14px rgba(180,92,255,.45)}
+.fnx.soul-fn .fn-ic::after{background:var(--soul-sheet) 0 0/700% 100%;background-position:0 0;
+  clip-path:none;left:2px;top:6px;width:42px;height:34px;border-radius:3px}
+.sl-wrap{display:flex;gap:12px;min-height:420px}
+.sl-list{width:132px;flex:0 0 132px;display:flex;flex-direction:column;gap:6px;max-height:58vh;overflow-y:auto}
+.sl-item{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:4px;cursor:pointer;
+  border:1px solid #3a3123;background:linear-gradient(180deg,rgba(30,26,16,.95),rgba(10,8,4,.98))}
+.sl-item.on{border-color:#b45cff;box-shadow:0 0 12px rgba(180,92,255,.35)}
+.sl-ic{width:34px;height:34px;flex:0 0 34px;border-radius:50%;
+  background-image:var(--soul-sheet);background-size:700% 100%;background-repeat:no-repeat;
+  background-color:#0a0810;border:1px solid #3a3123}
+.sl-nm{font-family:var(--serif);font-size:12.5px;flex:1;overflow:hidden;white-space:nowrap}
+.sl-lv{font-size:10px;color:#8f8570}
+.sl-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
+.sl-head{display:flex;gap:12px;align-items:flex-start}
+.sl-art{width:96px;height:96px;flex:0 0 96px;border-radius:50%;
+  background-image:var(--soul-sheet);background-size:700% 100%;background-repeat:no-repeat;
+  background-color:#0a0810;border:1px solid #3a3123;box-shadow:0 0 18px rgba(120,180,255,.18)}
+.sl-info{flex:1;min-width:0}
+.sl-title{font-family:var(--serif);font-size:19px;letter-spacing:.08em}
+.sl-desc{font-size:11.5px;color:#a89e88;margin-top:4px}
+.sl-ener{font-size:11.5px;color:#8f8570;margin-top:6px}
+.sl-ener b{color:#8ad4ff}
+.sl-lvbig{margin-left:auto;font-family:var(--serif);font-size:13px;color:#c9bfa6;white-space:nowrap}
+.sl-lvbig b{font-size:26px;color:#8ad4ff}
+.sl-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sl-box{padding:8px 10px;border-radius:4px;border:1px solid rgba(138,109,59,.4);background:rgba(20,16,9,.8)}
+.sl-box.next{border-color:rgba(95,220,74,.45);background:rgba(20,36,18,.8)}
+.sb-t{font-size:10.5px;color:#8f8570}
+.sb-v{font-size:13px;color:#c9bfa6;margin-top:3px}
+.sb-v b{color:#5fdc4a}
+.sl-dots{display:flex;gap:5px}
+.sl-dots i{width:22px;height:6px;border-radius:3px;background:rgba(120,110,90,.30);display:block}
+.sl-foot{display:flex;align-items:center;gap:10px;padding-top:8px;border-top:1px solid rgba(138,109,59,.3)}
+.sl-cost{font-size:11.5px;color:#8f8570}
+.sl-cost b{color:#ffd98a}
+.sl-btn{margin-left:auto;padding:8px 30px;border-radius:3px;cursor:pointer;
+  font-family:var(--serif);font-size:15px;letter-spacing:.16em;color:#1a1206;
+  background:linear-gradient(180deg,#cfe9ff,#7fb3e0);border:1px solid #a8d4ff}
+.sl-btn.off{background:linear-gradient(180deg,#3a3428,#1a160f);color:#8f8570;border-color:#4a3d28;cursor:not-allowed}
+.sl-tip{font-size:10.5px;color:#8f8570;text-align:center}
+@media(max-width:820px){
+  .sl-wrap{flex-direction:column;min-height:0}
+  .sl-list{width:100%;flex:none;flex-direction:row;overflow-x:auto;max-height:none}
+  .sl-item{flex:0 0 auto;flex-direction:column;gap:2px;padding:5px 7px}
+  .sl-art{width:70px;height:70px;flex:0 0 70px}
+  .sl-lvbig b{font-size:20px}
+}
+
+/* 魂器按钮：独立的紫色魂光，排在设置之后 */
+#hudDock .codex-btn.soul-btn{--dock-position:100%}
+#hudDock .codex-btn.soul-btn::before{content:'';background-image:var(--soul-sheet);
+  background-size:700% 100%;background-position:0 0;background-repeat:no-repeat;
+  width:42px;height:42px;clip-path:none;background-color:#0b0816;border-radius:4px;
+  border:1px solid rgba(180,92,255,.55);box-shadow:0 0 10px rgba(180,92,255,.45)}
+@media(max-width:960px){
+  #hudDock .codex-btn.soul-btn::before{width:32px;height:32px}
+}

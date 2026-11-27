@@ -143,10 +143,12 @@ function render() {
     CTX.strokeStyle = gc + 'cc'; CTX.lineWidth = 1.6;
     CTX.beginPath(); CTX.ellipse(gx, gy, 18, 18 * YS, 0, 0, 6.283); CTX.stroke();
 
-    if (def.render === 'spiritwolf') {
-      // 月影灵狼：与召唤灵兽同一套程序化灵体剪影
-      drawSpiritWolf(gx, gy + 4 + bob * 0.4, bp.phase, !!bp.target, bp.dir >= 0 ? 1 : -1,
-                     62, 66);
+    if (def.beast || def.render === 'spiritwolf') {
+      // 灵兽：矢量剪影（与月影灵狼同一套画法）
+      const kind = def.beast || 'wolf';
+      const bsz = (BEAST_PRESET[kind] && BEAST_PRESET[kind].size) || 66;
+      drawBeast(kind, gx, gy + 4 + bob * 0.4, bp.phase, !!bp.target, bp.dir >= 0 ? 1 : -1,
+                bsz, bsz);
     } else {
       CTX.save();
       CTX.translate(gx, gy - sh + 14 + bob);
@@ -410,82 +412,223 @@ function selRing(x, y, rx, ry, color, alpha) {
 
 /* ---------------- 玩家 ---------------- */
 
-/* 召唤物「月影灵狼」：侧视狼形剪影（灵体描边 + 发光眼） */
-function drawSpiritWolf(gx, gy, t, rushing, facing, sw, sh, ctx) {
+/* ============================================================
+   灵兽绘制：灵狼同款矢量剪影，按参数生成不同兽形
+   kind: wolf / deer / fox / qilin / phoenix / turtle / panther / voidling
+   ============================================================ */
+const BEAST_PRESET = {
+  wolf:     { neck:10, headR:8,  ear:'point', horn:null,   tail:'bush', legs:4, bodyL:21, bodyH:9.5, legLen:26, color:'#9fe8ff', deep:'rgba(16,52,80,.97)', size:66 },
+  deer:     { neck:22, headR:6.0,ear:'long',  horn:'antler',tail:'short',legs:4, bodyL:18, bodyH:8.0, legLen:38, color:'#a8f0c8', deep:'rgba(18,60,48,.97)', size:76 },
+  fox:      { neck:11, headR:7,  ear:'big',   horn:null,   tail:'big',  legs:4, bodyL:20, bodyH:9,   legLen:24, color:'#ffb86a', deep:'rgba(74,34,12,.97)', size:66 },
+  qilin:    { neck:17, headR:7.5,ear:'point', horn:'uni',   tail:'flame',legs:4, bodyL:21, bodyH:10,  legLen:28, color:'#c9a8ff', deep:'rgba(48,26,74,.97)', size:72 },
+  panther:  { neck:9,  headR:7.5,ear:'round', horn:null,   tail:'long', legs:4, bodyL:23, bodyH:9,   legLen:22, color:'#6ff0d8', deep:'rgba(12,58,54,.97)', size:64 },
+  turtle:   { neck:7,  headR:6.0,ear:'none',  horn:null,   tail:'short',legs:4, bodyL:22, bodyH:13,  legLen:9,  color:'#c8b48a', deep:'rgba(48,40,26,.97)', shell:true, size:62 },
+  phoenix:  { bird:true, neck:19, headR:6, ear:'crest', horn:null, tail:'plume', legs:2, bodyL:14, bodyH:8.5, legLen:18, color:'#ffb04a', deep:'rgba(84,32,10,.97)', wings:true, size:84 },
+  voidling: { neck:8,  headR:9,  ear:'point', horn:'twin',  tail:'wisp', legs:0, bodyL:14, bodyH:14,  legLen:0,  color:'#c08cff', deep:'rgba(38,18,64,.97)', float:true, size:70 }
+};
+
+function drawBeast(kind, gx, gy, t, rushing, facing, sw, sh, ctx) {
   const C = ctx || CTX;
-  const S = sh / 58;
+  const P = BEAST_PRESET[kind] || BEAST_PRESET.wolf;
+  const S = (sh || 66) / 58;
   const gait = Math.sin(t * (rushing ? 15 : 8));
+  const RIM = P.color;
+  const FILL = P.deep;
   C.save();
   C.translate(gx, gy);
   C.scale(facing * S, S);
 
-  const FILL = 'rgba(26,74,108,.97)';
-  const RIM  = 'rgba(122,230,255,.98)';
+  const legX = [-P.bodyL * 0.62, -P.bodyL * 0.3, P.bodyL * 0.42, P.bodyL * 0.72];
+  const backY = -P.legLen - P.bodyH * 0.4;
 
-  // 尾巴
-  C.strokeStyle = RIM; C.lineWidth = 2.6; C.lineCap = 'round'; C.globalAlpha = .9;
-  C.beginPath();
-  C.moveTo(-22, -36);
-  C.quadraticCurveTo(-34, -38 + gait * 2, -39, -48 + gait * 4);
-  C.stroke();
+  // ---- 尾巴 ----
+  C.lineCap = 'round';
+  C.strokeStyle = RIM; C.globalAlpha = .9;
+  if (P.tail === 'bush') {
+    C.lineWidth = 2.4;
+    C.beginPath(); C.moveTo(-P.bodyL, backY + 2);
+    C.quadraticCurveTo(-P.bodyL - 12, backY - 2 + gait * 2, -P.bodyL - 18, backY - 12 + gait * 4);
+    C.stroke();
+  } else if (P.tail === 'big') {
+    C.lineWidth = 4;
+    C.beginPath(); C.moveTo(-P.bodyL, backY + 2);
+    C.quadraticCurveTo(-P.bodyL - 14, backY - 6 + gait * 2, -P.bodyL - 12, backY - 20 + gait * 3);
+    C.stroke();
+  } else if (P.tail === 'long') {
+    C.lineWidth = 2.2;
+    C.beginPath(); C.moveTo(-P.bodyL, backY + 2);
+    C.quadraticCurveTo(-P.bodyL - 14, backY + 6, -P.bodyL - 20, backY - 6 + gait * 5);
+    C.stroke();
+  } else if (P.tail === 'flame') {
+    C.lineWidth = 3;
+    C.beginPath(); C.moveTo(-P.bodyL, backY + 2);
+    C.quadraticCurveTo(-P.bodyL - 12, backY - 4, -P.bodyL - 16, backY - 16 + gait * 3);
+    C.stroke();
+    C.globalAlpha = .5;
+    C.beginPath(); C.moveTo(-P.bodyL - 4, backY + 2);
+    C.quadraticCurveTo(-P.bodyL - 16, backY - 8, -P.bodyL - 10, backY - 22 + gait * 3);
+    C.stroke();
+  } else if (P.tail === 'plume') {
+    for (let i = 0; i < 3; i++) {
+      C.lineWidth = 2.6 - i * 0.5;
+      C.globalAlpha = .85 - i * 0.15;
+      C.beginPath(); C.moveTo(-P.bodyL, backY + 2);
+      C.quadraticCurveTo(-P.bodyL - 14 - i * 4, backY + 4, -P.bodyL - 20 - i * 5, backY - 14 + gait * 4 + i * 5);
+      C.stroke();
+    }
+  } else if (P.tail === 'wisp') {
+    C.lineWidth = 2;
+    C.globalAlpha = .7;
+    C.beginPath(); C.moveTo(-P.bodyL, backY + 2);
+    C.quadraticCurveTo(-P.bodyL - 10, backY + 8 + gait * 3, -P.bodyL - 6, backY + 18 + gait * 4);
+    C.stroke();
+  } else {
+    C.lineWidth = 2; C.beginPath(); C.moveTo(-P.bodyL, backY + 2); C.lineTo(-P.bodyL - 8, backY + 6); C.stroke();
+  }
 
-  // 后腿（摆动）
-  const backLeg = gait * 4;
-  C.strokeStyle = FILL; C.lineWidth = 6; C.lineCap = 'round';
-  C.beginPath(); C.moveTo(-16, -26); C.lineTo(-18 + backLeg, 0); C.stroke();
-  C.strokeStyle = RIM; C.lineWidth = 1.2; C.globalAlpha = .45;
-  C.beginPath(); C.moveTo(-16, -26); C.lineTo(-18 + backLeg, 0); C.stroke();
-
-  // 前腿（反向摆动）
-  const frontLeg = -gait * 4;
-  C.strokeStyle = FILL; C.lineWidth = 6; C.globalAlpha = 1;
-  C.beginPath(); C.moveTo(14, -26); C.lineTo(17 + frontLeg, 0); C.stroke();
-  C.strokeStyle = RIM; C.lineWidth = 1.2; C.globalAlpha = .45;
-  C.beginPath(); C.moveTo(14, -26); C.lineTo(17 + frontLeg, 0); C.stroke();
-
-  // 躯干 + 颈 + 头 + 吻（一条闭合路径，狼的侧面轮廓）
+  // ---- 四肢 ----
   C.globalAlpha = 1;
-  C.beginPath();
-  C.moveTo(-24, -34);                 // 臀
-  C.quadraticCurveTo(-14, -40, -2, -39);   // 背
-  C.quadraticCurveTo(8, -38, 13, -42);     // 颈后
-  C.lineTo(16, -55);                        // 耳后
-  C.lineTo(21, -47);                        // 耳尖
-  C.quadraticCurveTo(27, -48, 31, -45);     // 头顶
-  C.lineTo(43, -42);                        // 吻尖
-  C.lineTo(43, -38);                        // 鼻下
-  C.lineTo(30, -37);                        // 下颌
-  C.quadraticCurveTo(22, -34, 18, -28);     // 胸口
-  C.lineTo(16, -24);                        // 前胸
-  C.quadraticCurveTo(4, -22, -6, -24);      // 腹
-  C.lineTo(-16, -26);                       // 后腿根
-  C.quadraticCurveTo(-22, -30, -24, -34);   // 回到臀
-  C.closePath();
-  C.shadowColor = 'rgba(95,224,255,.75)'; C.shadowBlur = 12;
-  C.fillStyle = FILL; C.fill();
-  C.shadowBlur = 0;
-  C.strokeStyle = RIM; C.lineWidth = 1.8; C.stroke();
+  if (P.legs) {
+    const pairs = P.legs === 2 ? [legX[0], legX[3]] : legX;
+    pairs.forEach((x, i) => {
+      const swing = (i % 2 === 0 ? 1 : -1) * gait * 4;
+      C.strokeStyle = FILL; C.lineWidth = 5.4; C.globalAlpha = 1;
+      C.beginPath(); C.moveTo(x, backY + 4); C.lineTo(x + swing, 0); C.stroke();
+      C.strokeStyle = RIM; C.lineWidth = 1.1; C.globalAlpha = .5;
+      C.beginPath(); C.moveTo(x, backY + 4); C.lineTo(x + swing, 0); C.stroke();
+    });
+  }
 
-  // 背脊鬃毛
-  C.fillStyle = RIM; C.globalAlpha = .9;
-  for (let i = 0; i < 3; i++) {
-    const x = -12 + i * 8;
-    C.beginPath(); C.moveTo(x, -39); C.lineTo(x + 3, -46); C.lineTo(x + 6, -39); C.closePath(); C.fill();
+  // ---- 躯干 ----
+  C.globalAlpha = 1;
+  C.shadowColor = RIM; C.shadowBlur = 10;
+  C.fillStyle = FILL;
+  C.beginPath(); C.ellipse(0, backY, P.bodyL, P.bodyH, -0.03, 0, 6.283); C.fill();
+  C.shadowBlur = 0;
+  C.strokeStyle = RIM; C.lineWidth = 1.7;
+  C.beginPath(); C.ellipse(0, backY, P.bodyL, P.bodyH, -0.03, 0, 6.283); C.stroke();
+
+  // 龟甲
+  if (P.shell) {
+    C.globalAlpha = .55;
+    C.strokeStyle = RIM; C.lineWidth = 1.4;
+    for (let i = -1; i <= 1; i++) {
+      C.beginPath(); C.ellipse(0, backY - 2, P.bodyL * 0.72, P.bodyH * 0.78, -0.03, i * 0.8, i * 0.8 + 1.6); C.stroke();
+    }
+    C.globalAlpha = 1;
+  }
+
+  // 背脊尖刺（狼/豹/麒麟）
+  if (!P.bird && !P.shell) {
+    C.fillStyle = FILL; C.globalAlpha = 1;
+    const n = P.horn === 'uni' ? 4 : 3;
+    for (let i = 0; i < n; i++) {
+      const x = -P.bodyL * 0.5 + i * (P.bodyL * 0.5);
+      C.beginPath(); C.moveTo(x, backY - P.bodyH + 1);
+      C.lineTo(x + 3, backY - P.bodyH - 7); C.lineTo(x + 6, backY - P.bodyH + 1);
+      C.closePath(); C.fill();
+    }
+  }
+
+  // ---- 颈 + 头 ----
+  const neckTopY = backY - P.neck;
+  C.fillStyle = FILL;
+  C.beginPath();
+  C.moveTo(P.bodyL * 0.55, backY - P.bodyH * 0.2);
+  C.lineTo(P.bodyL * 0.55 + 6, neckTopY);
+  C.lineTo(P.bodyL * 0.55 + 14, neckTopY - 4);
+  C.lineTo(P.bodyL * 0.72, backY + 1);
+  C.closePath(); C.fill();
+
+  const hx = P.bodyL * 0.55 + 16, hy = neckTopY - 5;
+  C.beginPath(); C.ellipse(hx, hy, P.headR, P.headR * 0.82, -0.15, 0, 6.283); C.fill();
+  C.strokeStyle = RIM; C.lineWidth = 1.5;
+  C.beginPath(); C.ellipse(hx, hy, P.headR, P.headR * 0.82, -0.15, 0, 6.283); C.stroke();
+
+  // 吻部
+  C.fillStyle = FILL;
+  C.beginPath(); C.moveTo(hx + P.headR * 0.7, hy - 2);
+  C.lineTo(hx + P.headR * 1.9, hy + 1); C.lineTo(hx + P.headR * 0.7, hy + 4);
+  C.closePath(); C.fill();
+
+  // 耳
+  C.fillStyle = FILL;
+  if (P.ear === 'point') {
+    C.beginPath(); C.moveTo(hx - 5, hy - P.headR * 0.7); C.lineTo(hx - 2, hy - P.headR - 9); C.lineTo(hx + 3, hy - P.headR * 0.6); C.closePath(); C.fill();
+    C.beginPath(); C.moveTo(hx + 3, hy - P.headR * 0.7); C.lineTo(hx + 7, hy - P.headR - 8); C.lineTo(hx + 10, hy - P.headR * 0.4); C.closePath(); C.fill();
+  } else if (P.ear === 'long') {
+    C.beginPath(); C.ellipse(hx - 4, hy - P.headR - 7, 2.4, 8, 0.3, 0, 6.283); C.fill();
+    C.beginPath(); C.ellipse(hx + 5, hy - P.headR - 7, 2.4, 8, -0.2, 0, 6.283); C.fill();
+  } else if (P.ear === 'big') {
+    C.beginPath(); C.moveTo(hx - 4, hy - P.headR); C.lineTo(hx - 2, hy - P.headR - 13); C.lineTo(hx + 5, hy - P.headR * 0.7); C.closePath(); C.fill();
+    C.beginPath(); C.moveTo(hx + 5, hy - P.headR); C.lineTo(hx + 9, hy - P.headR - 12); C.lineTo(hx + 12, hy - P.headR * 0.5); C.closePath(); C.fill();
+  } else if (P.ear === 'round') {
+    C.beginPath(); C.arc(hx - 5, hy - P.headR * 0.9, 3.2, 0, 6.283); C.fill();
+    C.beginPath(); C.arc(hx + 6, hy - P.headR * 0.9, 3.2, 0, 6.283); C.fill();
+  } else if (P.ear === 'crest') {
+    C.strokeStyle = RIM; C.lineWidth = 2;
+    for (let i = 0; i < 3; i++) {
+      C.beginPath(); C.moveTo(hx - 2 + i * 3, hy - P.headR);
+      C.quadraticCurveTo(hx - 6 + i * 4, hy - P.headR - 10, hx + i * 2, hy - P.headR - 16);
+      C.stroke();
+    }
+  }
+
+  // 角
+  if (P.horn === 'antler') {
+    C.strokeStyle = RIM; C.lineWidth = 2; C.globalAlpha = .95;
+    for (const sgn of [-1, 1]) {
+      const bx = hx - 1 + sgn * 3;
+      C.beginPath(); C.moveTo(bx, hy - P.headR - 6); C.lineTo(bx + sgn * 4, hy - P.headR - 18); C.stroke();
+      C.beginPath(); C.moveTo(bx + sgn * 2, hy - P.headR - 12); C.lineTo(bx + sgn * 9, hy - P.headR - 16); C.stroke();
+    }
+    C.globalAlpha = 1;
+  } else if (P.horn === 'uni') {
+    C.fillStyle = RIM; C.globalAlpha = .95;
+    C.beginPath(); C.moveTo(hx + 1, hy - P.headR - 2); C.lineTo(hx + 10, hy - P.headR - 16);
+    C.lineTo(hx + 5, hy - P.headR); C.closePath(); C.fill();
+    C.globalAlpha = 1;
+  } else if (P.horn === 'twin') {
+    C.fillStyle = RIM; C.globalAlpha = .9;
+    C.beginPath(); C.moveTo(hx - 3, hy - P.headR); C.lineTo(hx - 8, hy - P.headR - 13); C.lineTo(hx + 1, hy - P.headR - 2); C.closePath(); C.fill();
+    C.beginPath(); C.moveTo(hx + 4, hy - P.headR); C.lineTo(hx + 9, hy - P.headR - 12); C.lineTo(hx + 9, hy - P.headR - 1); C.closePath(); C.fill();
+    C.globalAlpha = 1;
+  }
+
+  // 翅膀（凤凰/虚空）
+  if (P.wings) {
+    const flap = Math.sin(t * (rushing ? 16 : 7)) * 8;
+    C.globalAlpha = .85; C.strokeStyle = RIM; C.lineWidth = 2;
+    for (const sgn of [-1, 1]) {
+      C.beginPath();
+      C.moveTo(-2, backY - P.bodyH * 0.5);
+      C.quadraticCurveTo(-10, backY - 26 - flap, -24, backY - 16 - flap * 0.6);
+      C.stroke();
+      C.beginPath();
+      C.moveTo(-2, backY - P.bodyH * 0.3);
+      C.quadraticCurveTo(-8, backY - 16 - flap * 0.7, -20, backY - 6 - flap * 0.3);
+      C.stroke();
+    }
+    C.globalAlpha = 1;
   }
 
   // 眼
-  C.globalAlpha = 1;
   C.fillStyle = '#eafeff';
-  C.shadowColor = '#7fe8ff'; C.shadowBlur = 10;
-  C.beginPath(); C.ellipse(26, -44, 2.6, 1.8, 0, 0, 6.283); C.fill();
+  C.shadowColor = RIM; C.shadowBlur = 9;
+  C.beginPath(); C.ellipse(hx + P.headR * 0.42, hy - 1.5, 2.4, 1.7, 0, 0, 6.283); C.fill();
   C.shadowBlur = 0;
 
   // 胸腹灵光
-  C.globalAlpha = .45;
-  C.fillStyle = 'rgba(120,225,255,.9)';
-  C.beginPath(); C.ellipse(4, -30, 12, 6, 0, 0, 6.283); C.fill();
+  C.globalAlpha = .38; C.fillStyle = RIM;
+  C.beginPath(); C.ellipse(-2, backY + 2, P.bodyL * 0.55, P.bodyH * 0.6, 0, 0, 6.283); C.fill();
 
+  C.globalAlpha = 1;
   C.restore();
+}
+
+/* 兼容旧调用：灵狼 */
+function drawSpiritWolf(gx, gy, t, rushing, facing, sw, sh, ctx) {
+  drawBeast('wolf', gx, gy, t, rushing, facing, sw, sh, ctx);
 }
 
 function drawPlayer(p) {

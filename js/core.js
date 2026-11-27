@@ -1585,6 +1585,62 @@ function ensureGold(p) {
 }
 
 /* ---------------- 坐骑 / 宠物 ---------------- */
+
+/* ================= 出战宠物 ================= */
+function battlePetEnsure(p) {
+  if (!p.bpets) p.bpets = { owned: [], active: null, cd: 0 };
+  if (!Array.isArray(p.bpets.owned)) p.bpets.owned = [];
+  if (p.bpets.cd === undefined) p.bpets.cd = 0;
+  return p.bpets;
+}
+function battlePetByKey(k) { return DATA.BATTLE_PETS.find(x => x.key === k) || null; }
+function activeBattlePet(p) {
+  const st = battlePetEnsure(p);
+  if (!st.active || !st.owned.includes(st.active)) return null;
+  return battlePetByKey(st.active);
+}
+/* 宠物实战数值：随主人成长 */
+function battlePetStats(p, def) {
+  if (!def || !p.stats) return null;
+  const d = def || activeBattlePet(p);
+  if (!d) return null;
+  const hpMax = Math.round(p.stats.hpMax * d.hpMul);
+  const atk = Math.round(p.stats.power * d.atkMul);
+  return { hpMax, atk, as: d.as, range: d.range, speed: d.speed };
+}
+/* 招募 / 出战 / 收回 */
+function battlePetRecruit(p, key) {
+  const def = battlePetByKey(key);
+  if (!def) return { ok:false, msg:'没有这只宠物' };
+  const st = battlePetEnsure(p);
+  if (st.owned.includes(key)) return { ok:false, msg:'已经拥有' };
+  const cost = def.cost;
+  if (!cost) return { ok:false, msg:'这只宠物只能通过抽奖获得' };
+  const rein = p.materials.petRein || 0;
+  if (rein < cost.rein) return { ok:false, msg:`宠物缰绳不足（需 ${cost.rein}）` };
+  if ((p.gold || 0) < cost.gold) return { ok:false, msg:`金币不足（需 ${cost.gold.toLocaleString()}）` };
+  p.materials.petRein = rein - cost.rein;
+  p.gold -= cost.gold;
+  if (typeof ensureGold === 'function') ensureGold(p);
+  st.owned.push(key);
+  return { ok:true, key };
+}
+function battlePetToggle(p, key) {
+  const st = battlePetEnsure(p);
+  if (st.active === key) { st.active = null; if (G.bpet) G.bpet = null; return { ok:true, active:false }; }
+  if (!st.owned.includes(key)) return { ok:false, msg:'还没拥有这只宠物' };
+  st.active = key;
+  G.bpet = null;                     // 重新生成
+  return { ok:true, active:true };
+}
+/* 抽奖直接给宠物 */
+function battlePetGrant(p, key) {
+  const st = battlePetEnsure(p);
+  if (st.owned.includes(key)) return false;
+  st.owned.push(key);
+  return true;
+}
+
 function mountEnsure(p) {
   if (!p.mounts) p.mounts = { owned: [], active: null };
   if (!p.mounts.usedCodes) p.mounts.usedCodes = [];

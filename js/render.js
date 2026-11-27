@@ -129,6 +129,49 @@ function render() {
     CTX.fillText('月影灵狼', gx, gy - sh - 4 + bob);
   }
 
+  // 出战宠物：units 图集精灵 + 名字 + 血条 + 类型标记
+  if (G.bpet && G.bpet.def && imgReady('units')) {
+    const bp = G.bpet, def = bp.def;
+    const gx = px(bp.x), gy = py(bp.y);
+    const bob = Math.sin(bp.phase * 4) * 2.5;
+    const scale = 2.1;                       // 32×48 原图放大
+    const sw = 32 * scale, sh = 48 * scale;
+    const frame = Math.floor(bp.phase * (bp.target ? 9 : 5)) % 4;
+    const row = bp.target ? (bp.dir >= 0 ? 2 : 1) : 0;
+
+    // 脚下类型光圈
+    const gc = def.color || '#9fe8ff';
+    const g0 = CTX.createRadialGradient(gx, gy, 2, gx, gy, 30);
+    g0.addColorStop(0, gc + '55');
+    g0.addColorStop(1, 'rgba(0,0,0,0)');
+    CTX.fillStyle = g0;
+    CTX.beginPath(); CTX.arc(gx, gy, 30, 0, 6.283); CTX.fill();
+    CTX.strokeStyle = gc + 'cc'; CTX.lineWidth = 1.6;
+    CTX.beginPath(); CTX.ellipse(gx, gy, 18, 18 * YS, 0, 0, 6.283); CTX.stroke();
+
+    CTX.save();
+    CTX.translate(gx, gy - sh + 14 + bob);
+    if (bp.dir < 0) CTX.scale(-1, 1);
+    CTX.imageSmoothingEnabled = false;
+    CTX.drawImage(IMG.units, def.sprite * 128 + frame * 32, row * 48, 32, 48,
+                  -sw / 2, 0, sw, sh);
+    CTX.restore();
+
+    // 名字 + 血条
+    const bw = 48;
+    const pct = clamp(bp.hp / Math.max(1, bp.hpMax), 0, 1);
+    CTX.fillStyle = 'rgba(0,0,0,.65)';
+    CTX.fillRect(gx - bw / 2, gy - sh + 4 + bob, bw, 5);
+    CTX.fillStyle = pct > 0.5 ? '#3fd45a' : pct > 0.25 ? '#ffd24a' : '#ff5a40';
+    CTX.fillRect(gx - bw / 2 + 1, gy - sh + 5 + bob, (bw - 2) * pct, 3);
+    CTX.font = '700 10px "KaiTi",serif';
+    CTX.textAlign = 'center';
+    CTX.lineWidth = 3; CTX.strokeStyle = 'rgba(0,0,0,.9)';
+    CTX.strokeText(def.name, gx, gy - sh - 2 + bob);
+    CTX.fillStyle = gc;
+    CTX.fillText(def.name, gx, gy - sh - 2 + bob);
+  }
+
   // 技能特效
   drawVfx(w);
 

@@ -553,7 +553,7 @@ function onProjectileHit(pr, m) {
   if (pr.burn) m.burn = { dps: pr.burn.dps, t: pr.burn.dur };
   burst(m.x, m.y, pr.color, 6, 130);
   // 天赋：灵魂之毒（远程普攻同样触发）
-  if (!pr.isSkill && typeof talentEffect === 'function') {
+  if (!pr.isSkill && !pr.isPet && typeof talentEffect === 'function') {
     const _te3 = talentEffect(p);
     if (_te3.poison > 0) {
       m.talentPoison = { pct:_te3.poison, t:_te3.poisonDur, max:_te3.poisonDur };
@@ -735,6 +735,11 @@ function dropLoot(m) {
       const n = 1 + (Math.random() < 0.25 ? 1 : 0);
       p.materials.talentStone = (p.materials.talentStone || 0) + n;
       push({ type:'mat', mat:'talentStone', amount:n, color:'#ffd24a', label:'天赋突破石×' + n });
+    }
+    if (DATA.TALENT_DROP.petRein && Math.random() < DATA.TALENT_DROP.petRein * dropMul) {
+      const n = 1;
+      p.materials.petRein = (p.materials.petRein || 0) + n;
+      push({ type:'mat', mat:'petRein', amount:n, color:'#c8a26a', label:'宠物缰绳×' + n });
     }
     if (Math.random() < DATA.TALENT_DROP.crystal * dropMul) {
       const n = 1;

@@ -378,6 +378,9 @@ DATA.MATERIALS = {
   protect:{name:'强化保护券', color:'#4a9eff', icon:'◇',
     desc:'强化失败时保护装备不掉级。所需数量随等级提升，成功率提高 50%。',
     use:'锻造台（按 T 打开）→ 装备强化 → 勾选「使用保护券」'},
+  petRein:{name:'宠物缰绳', color:'#c8a26a', icon:'❖',
+    desc:'驯服出战宠物用的缰绳，只有 BOSS 才会掉落。',
+    use:'主城左下角「驯兽师 · 铃」→ 宠物 → 招募'},
   skillT: {name:'技能强化券', color:'#3fd45a', icon:'✦',
     desc:'直接提升技能熟练度，让你更快攒满一次突破所需的熟练度。',
     use:'技能页（按 K 打开）→ 每个技能右侧的「强化券」按钮'},
@@ -563,6 +566,8 @@ DATA.LOTTERY = {
       key:'spectralwolf', dupCrystal:1, desc:'稀有坐骑；重复获得自动兑换为 源晶 ×1' },
     { id:'mountdragon', short:'多彩巨龙', icon:'🐲', name:'坐骑 · 多彩巨龙', prob:0.0005, color:'#ff9a2e', kind:'mount',
       key:'dragon', dupCrystal:2, desc:'稀有坐骑；重复获得自动兑换为 源晶 ×2' },
+    { id:'petvoid', short:'虚空幼崽', icon:'🐾', name:'宠物 · 虚空幼崽', prob:0.001, color:'#c08cff', kind:'pet',
+      key:'voidling', desc:'唯一宠物来源；重复获得自动兑换为 宠物缰绳 ×2' },
     { id:'token100', short:'凭证100', icon:'⬢', name:'BOSS击杀凭证 ×100', prob:0.05, color:'#ff9a3c', kind:'mat', key:'bossToken', amount:100 },
     { id:'token10', short:'凭证10', icon:'⬢',  name:'BOSS击杀凭证 ×10',  prob:0.10, color:'#ff9a3c', kind:'mat', key:'bossToken', amount:10 },
     { id:'scale10', short:'龙鳞10', icon:'▰',  name:'龙鳞片 ×10',        prob:0.10, color:'#ff9a2e', kind:'mat', key:'scale',     amount:10 },
@@ -673,20 +678,14 @@ BOSS击杀凭证 ×10　10%<br>
 <b>白嫖途径</b>：<br>
 · 邮箱里有一封<b>一次性福利</b>（1000 凭证）<br>
 · <b>每晚 20 点</b>在线，邮箱自动发 <b>100 抽</b>` },
-  { key:'beast', title:'坐骑与宠物（驯兽师）', reward:'gold',
+  { key:'beast', title:'坐骑、光环与宠物（驯兽师）', reward:'gold',
     body:`主城<b>左下角</b>找 <b>驯兽师 · 铃</b>（快捷键 <b>G</b>）。<br><br>
-<b>🐎 坐骑</b>：只加移动速度，不影响战斗<br>
-· 普通（蓝）<b>50 万</b>金 · 稀有（紫）<b>100 万</b> · 史诗（橙）<b>200 万</b><br>
-· 同时只能骑 1 只，<b>买下自动骑乘</b>，可随时下马<br>
-· 也可以用<b>兑换码</b>直接获得（坐骑页最上方输入）<br><br>
-<b>🐾 宠物</b>：出战提供一条<b>光环</b>，共 7 种<br>
-· <b>辉煌</b>（回蓝）· <b>专注</b>（护甲）· <b>耐久</b>（移速+攻速）<br>
-· <b>邪恶</b>（移速+回血）· <b>吸血</b>（仅近战）<br>
-· <b>强击</b>（仅远程攻击）· <b>荆棘</b>（近战反伤）<br>
-· 用<b>兑换码</b>获取，光环最高 <b>L3</b>（金币升级）<br><br>
-出战后<b>头像右侧</b>会显示坐骑和光环图标，鼠标悬停（手机点一下）可看效果。<br>
-<b>骑乘状态与光环选择都会自动保存</b>，下次上线无需重新设置。` },
-
+      里面分三块：<br>
+      <b>坐骑</b>：只加移动速度，用金币直接买。<br>
+      <b>光环</b>：给全队增益（回蓝/护甲/攻速…），用兑换码获得。<br>
+      <b>出战宠物</b>：会跟着你打怪的伙伴，需要在 BOSS 身上刷 <b>宠物缰绳</b> 来招募。<br><br>
+      宠物分 <b>物理近战 / 物理远程 / 远程法师</b>，同时只能出战一只；<br>
+      血量与攻击随你的属性成长，左上角头像旁边能看到当前宠物。` },
   { key:'heirloom', title:'如何获得传家宝', reward:'gold',
     body:`主城找 <b>传家宝 · 古籍</b>（新手指引左边），打开一本可以翻页的古书。<br><br>
 每一页记载一件魔兽经典武器：<b>风剑、橙锤、鸡腿杖、蛋刀、橙弓、奶橙锤、橙斧、CTM 橙杖、霜之哀伤</b>。<br><br>
@@ -927,6 +926,34 @@ DATA.PETS = [
 
 DATA.PET_UP_COST = [0, 1000000, 2000000];   // 升到 L2 / L3 的花费
 
+/* ================= 出战宠物（会打怪的伙伴） ================= */
+/* sprite：units 图集槽位；type：melee 物理近战 / ranged 物理远程 / magic 远程法师（带小技能） */
+DATA.PET_TYPES = {
+  melee:  { name:'物理近战', color:'#ff9a5a' },
+  ranged: { name:'物理远程', color:'#7fd4ff' },
+  magic:  { name:'远程法师', color:'#c08cff' }
+};
+DATA.BATTLE_PETS = [
+  { key:'wolf',      name:'月影狼',   sprite:22, type:'melee',  color:'#9fe8ff',
+    hpMul:0.55, atkMul:0.55, as:1.0, range:56, speed:280,
+    desc:'近战扑咬，攻速快，血中等', cost:{ rein:1, gold:1000000 } },
+  { key:'dragonling',name:'幼龙',     sprite:8,  type:'magic',  color:'#6fe08a',
+    hpMul:0.42, atkMul:0.48, as:1.6, range:300, speed:250,
+    skill:{ name:'龙息火球', cd:6, mul:1.8, r:76, color:'#ff7a28' },
+    desc:'远程火球，每 6 秒喷一口龙息（范围伤害）', cost:{ rein:2, gold:2000000 } },
+  { key:'slime',     name:'岩石史莱姆', sprite:11, type:'melee', color:'#b9b09a',
+    hpMul:0.95, atkMul:0.34, as:1.3, range:54, speed:210,
+    desc:'血厚皮糙，伤害偏低，适合扛怪', cost:{ rein:1, gold:1200000 } },
+  { key:'waterslime',name:'碧水史莱姆', sprite:12, type:'ranged', color:'#7fd4ff',
+    hpMul:0.5,  atkMul:0.44, as:1.2, range:260, speed:230,
+    desc:'远程喷射水弹，安全输出', cost:{ rein:1, gold:1500000 } },
+  { key:'voidling',  name:'虚空幼崽', sprite:13, type:'magic',  color:'#c08cff',
+    hpMul:0.45, atkMul:0.66, as:1.7, range:280, speed:260,
+    skill:{ name:'暗影箭', cd:8, mul:2.4, r:60, color:'#b45cff' },
+    desc:'抽奖限定，远程暗影箭（单体高伤）', cost:null, lottery:true }
+];
+
+
 /* 坐骑兑换码：9 种 × 10 个 */
 DATA.MOUNT_CODES = (function () {
   const LET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -1127,7 +1154,7 @@ DATA.talentCost = (toLv) => {
 };
 
 /* BOSS 掉落新材料（概率极低，随难度微增） */
-DATA.TALENT_DROP = { stone: 0.020, crystal: 0.010 };   // v219：突破石 2% / 源晶 1%（再 ×难度系数）
+DATA.TALENT_DROP = { stone: 0.020, crystal: 0.010, petRein: 0.010 };   // 宠物缰绳与源晶同爆率（再 ×难度系数）
 
 /* ================= 七天签到 ================= */
 /* 每天可领一次，共 7 天；同一天不能重复领 */

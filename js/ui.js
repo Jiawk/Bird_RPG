@@ -21,9 +21,9 @@ const RING_IDX = {
   ring_cleave:24, ring_drop:25, ring_gather:26
 };
 const MAT_IDX = { iron:27, mithril:28, scale:29, shard:30, stone:31, protect:32, skillT:33, breakT:34, bossToken:35,
-  talentStone:37, sourceCrystal:38 };
+  talentStone:37, sourceCrystal:38, petRein:44 };
 const TALENT_IDX = { soulPoison:39, recovery:40, execute:41, revive:42 };
-const EQUIP_COUNT = 44;
+const EQUIP_COUNT = 45;
 const BOOK_IDX = 36;
 const POTION_IDX  = { hp:18, mp:19 };
 
@@ -208,6 +208,12 @@ function uiInit() {
     ic.style.backgroundRepeat = 'no-repeat';
   });
 
+  // 点左上角头像 = 按 C 打开角色面板
+  const pf = document.querySelector('.portrait-frame');
+  if (pf) {
+    pf.style.cursor = 'pointer';
+    pf.onclick = () => { if (G.screen === 'game') handleCommand('char'); };
+  }
   const dock = $('hudDock');
   const trigger = dock.querySelector('.dock-trigger');
   function expandDock(open) {
@@ -313,7 +319,7 @@ const NEWBIE_GUIDE_STEPS = [
   { title:'挑战试炼之塔', text:'试炼之塔每天有限次数，层数越高，奖励越好。', npc:'tower', action:'npc', actionText:'查看试炼之塔' },
   { title:'收集图鉴与特戒', text:'右上角的装备图鉴和收藏图鉴记录进度，首杀奖励需要手动领取。', selector:'.codex-btn[data-act="codexCollect"]', action:'codexCollect', actionText:'打开收藏图鉴' },
   { title:'BOSS 凭证抽奖', text:'抽奖专员使用 BOSS 击杀凭证。圣物稀有，建议把日常和副本作为主要成长来源。', npc:'exchange', action:'npc', actionText:'打开抽奖' },
-  { title:'坐骑、宠物与传家宝', text:'驯兽师提供坐骑和宠物；古籍记录传家宝签到。它们都会保存到你的角色存档。', npc:'beastmaster', action:'npc', actionText:'打开驯兽师' },
+  { title:'坐骑、光环与出战宠物', text:'驯兽师这里有坐骑（加速）、光环（团队增益）和出战宠物（跟着你打怪）。宠物要用 BOSS 掉的宠物缰绳招募。', npc:'beastmaster', action:'npc', actionText:'打开驯兽师' },
   { title:'你已准备好', text:'优先完成副本、任务和每日活动。装备、技能和挑战会逐步解锁。随时可在主城的新手指引 NPC 查看帮助。', npc:'tutorial', action:'npc', actionText:'查看新手指引' }
 ];
 
@@ -423,6 +429,7 @@ function updateHUD(dt) {
   const mpPct = clamp(p.mp / p.stats.mpMax, 0, 1) * 100;
   if (typeof updateAuraHud === 'function') updateAuraHud();
   if (typeof updateMountHud === 'function') updateMountHud();
+  if (typeof updatePetHud === 'function') updatePetHud();
   const need = DATA.expForLevel(p.level);
   const xpPct = p.level >= DATA.MAX_LEVEL ? 100 : clamp(p.exp / need, 0, 1) * 100;
 
@@ -1702,6 +1709,31 @@ function openTownMap() {
   openModal('map', '选择关卡 · 难度', townMapHtml());
 }
 
+/* ---------------- 左上角提示框：点击显示 5 秒，点别处也收起 ---------------- */
+let _hudTipTimer = null;
+function hudTipOpen(box) {
+  ['hudMount', 'hudAura', 'hudPet'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el !== box) el.classList.remove('show');
+  });
+  const on = box.classList.toggle('show');
+  if (_hudTipTimer) { clearTimeout(_hudTipTimer); _hudTipTimer = null; }
+  if (on) {
+    _hudTipTimer = setTimeout(() => {
+      box.classList.remove('show');
+      _hudTipTimer = null;
+    }, 5000);
+  }
+}
+document.addEventListener('pointerdown', e => {
+  if (e.target.closest && e.target.closest('#hudMount, #hudAura, #hudPet')) return;
+  ['hudMount', 'hudAura', 'hudPet'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('show');
+  });
+  if (_hudTipTimer) { clearTimeout(_hudTipTimer); _hudTipTimer = null; }
+});
+
 /* ---------------- 坐骑状态 HUD ---------------- */
 function updateMountHud() {
   const box = document.getElementById('hudMount');
@@ -1736,7 +1768,7 @@ function updateMountHud() {
     `<span style="color:${tier.color}">${tier.name}</span><br>` +
     `<span class="mv">移速 +${Math.round(m.spd * 100)}%</span><br>` +
     `<span style="color:#a89e88">${m.desc}</span>`;
-  box.onclick = () => box.classList.toggle('show');
+  box.onclick = () => hudTipOpen(box);
 }
 
 /* ---------------- 光环 HUD ---------------- */
@@ -1763,31 +1795,103 @@ function updateAuraHud() {
     `<span class="at-v">${valTxt}</span><br>` +
     `<span style="color:#a89e88">${def.desc}</span><br>` +
     `<span style="color:#6b6558">范围 90 码 · 同名光环不叠加</span>`;
-  // 点击展开/收起（移动端）
-  box.onclick = () => box.classList.toggle('show');
+  box.onclick = () => hudTipOpen(box);
 }
 
-/* ---------------- 驯兽师：坐骑 / 宠物 ---------------- */
+/* ---------------- 出战宠物 HUD ---------------- */
+function updatePetHud() {
+  const box = document.getElementById('hudPet');
+  const ic = document.getElementById('petIc');
+  const tip = document.getElementById('petTip');
+  if (!box || !ic || !tip) return;
+  const p = G.player;
+  const def = (p && typeof activeBattlePet === 'function') ? activeBattlePet(p) : null;
+  if (!def) { box.classList.add('hidden'); box.classList.remove('show'); return; }
+  box.classList.remove('hidden');
+  ic.style.setProperty('--f', String(def.sprite * 4));
+  ic.style.borderColor = def.color;
+  ic.style.boxShadow = `0 0 10px ${def.color}88`;
+  const st = battlePetStats(p, def) || { hpMax: 0, atk: 0 };
+  const type = DATA.PET_TYPES[def.type];
+  tip.innerHTML = `<b>宠物：${def.name}</b><br>` +
+    `<span style="color:${type.color}">${type.name}</span><br>` +
+    `<span class="bp-v">生命 ${st.hpMax.toLocaleString()}　攻击 ${st.atk.toLocaleString()}</span><br>` +
+    `<span style="color:#a89e88">${def.desc}</span><br>` +
+    `<span style="color:#6b6558">只出战这一只 · 点「驯兽师 · 铃」更换</span>`;
+  box.onclick = () => hudTipOpen(box);
+}
+
+/* ---------------- 驯兽师：坐骑 / 光环 / 宠物 ---------------- */
 function beastMenuHtml() {
   const p = G.player;
-  const ms = mountEnsure(p), pt = petEnsure(p);
+  const ms = mountEnsure(p), pt = petEnsure(p), bp = battlePetEnsure(p);
   const mAct = ms.active ? mountByKey(ms.active) : null;
   const pAct = activePet(p);
+  const bAct = activeBattlePet(p);
   return `<div class="bm-wrap">
     <div class="bm-head">
       <div class="bm-face">🐾</div>
       <div>
         <div class="bm-title">驯兽师 · 铃</div>
-        <div class="bm-sub">坐骑：<b>${mAct ? mAct.name : '未乘骑'}</b>　宠物：<b>${pAct ? pAct.def.name : '未出战'}</b></div>
+        <div class="bm-sub">坐骑：<b>${mAct ? mAct.name : '未乘骑'}</b>　光环：<b>${pAct ? pAct.def.aura : '未开启'}</b>　宠物：<b>${bAct ? bAct.name : '未出战'}</b></div>
       </div>
     </div>
     <button class="bm-big" data-beast="mount">
       <b>🐎 坐骑</b><span>提升移动速度 · 普通 500K / 稀有 1M / 史诗 2M</span>
     </button>
+    <button class="bm-big" data-beast="aura">
+      <b>✨ 光环</b><span>提供团队增益 · 兑换码获取（已拥有 ${pt.owned.length}/7）</span>
+    </button>
     <button class="bm-big" data-beast="pet">
-      <b>🐾 宠物</b><span>出战提供光环 · 兑换码获取（已拥有 ${pt.owned.length}/7）</span>
+      <b>🐾 出战宠物</b><span>会跟着你打怪 · 缰绳招募（已拥有 ${bp.owned.length}/${DATA.BATTLE_PETS.length}）</span>
     </button>
   </div>`;
+}
+
+function battlePetHtml() {
+  const p = G.player, st = battlePetEnsure(p);
+  const rein = p.materials.petRein || 0;
+  let html = `<div class="mm-head">🐾 出战宠物 <span>同时只能出战一只 · 会跟随你战斗</span></div>
+  <div class="pc-codes" style="background:rgba(60,48,28,.5);border:1px solid rgba(200,162,106,.5)">
+    <span style="font-size:12px;color:#c8a26a">宠物缰绳 × <b>${rein}</b></span>
+    <span style="font-size:11px;color:#8f8570;margin-left:auto">BOSS 掉落（与源晶同爆率）</span>
+  </div>
+  <div class="bp-grid">`;
+  DATA.BATTLE_PETS.forEach(def => {
+    const owned = st.owned.includes(def.key);
+    const active = st.active === def.key;
+    const type = DATA.PET_TYPES[def.type];
+    const stt = battlePetStats(p, def) || { hpMax: 0, atk: 0 };
+    const cost = def.cost;
+    const canBuy = cost && rein >= cost.rein && (p.gold || 0) >= cost.gold;
+    html += `<div class="bp-card${active ? ' act' : ''}${owned ? '' : ' lock'}" style="border-color:${def.color}66">
+      <div class="bp-icon" style="--f:${def.sprite * 4}"></div>
+      <div class="bp-main">
+        <div class="bp-name" style="color:${def.color}">${def.name}
+          <i style="color:${type.color}">${type.name}</i>${def.lottery ? '<i class="bp-lot">抽奖限定</i>' : ''}</div>
+        <div class="bp-desc">${def.desc}</div>
+        <div class="bp-stat">生命 <b>${stt.hpMax.toLocaleString()}</b>　攻击 <b>${stt.atk.toLocaleString()}</b>　攻速 <b>${def.as.toFixed(1)}</b></div>
+        ${def.skill ? `<div class="bp-skill" style="color:${def.skill.color}">技能：${def.skill.name}（${def.skill.cd}s 冷却，${def.skill.mul}× 伤害）</div>` : ''}
+      </div>
+      <div class="bp-act">`;
+    if (!owned) {
+      if (!cost) {
+        html += `<button class="bp-btn off" disabled>抽奖获得</button>`;
+      } else {
+        html += `<button class="bp-btn buy${canBuy ? '' : ' off'}" ${canBuy ? `data-bpet-recruit="${def.key}"` : 'disabled'}>
+          缰绳×${cost.rein}<br><span>${fmt(cost.gold)} 金</span></button>`;
+      }
+    } else if (active) {
+      html += `<button class="bp-btn on" data-bpet-use="${def.key}">收回</button>`;
+    } else {
+      html += `<button class="bp-btn" data-bpet-use="${def.key}">出战</button>`;
+    }
+    html += `</div></div>`;
+  });
+  html += `</div>
+  <div style="margin-top:8px;font-size:11px;color:#8f8570">
+    宠物的生命/攻击随你的属性成长；血量归零会暂时退场，几秒后自动回来。</div>`;
+  return html;
 }
 
 function mountHtml() {
@@ -1825,7 +1929,7 @@ function mountHtml() {
 
 function petHtml() {
   const p = G.player, st = petEnsure(p);
-  let html = `<div class="mm-head">🐾 宠物光环 <span>同名光环不叠加 · 范围 90 码</span></div>`;
+  let html = `<div class="mm-head">✨ 光环 <span>同名光环不叠加 · 范围 90 码</span></div>`;
   html += `<div class="pc-codes">
     <input id="petCodeInput" class="pc-input" type="text" inputmode="text"
       autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"
@@ -2210,6 +2314,23 @@ function doLottery(times) {
         logMsg(`🎁 抽中坐骑：${z.name}`, 'level');
         bigAnnounce('✦ 抽中稀有坐骑 · ' + z.name.replace('坐骑 · ', ''), z.color);
       }
+    } else if (z.kind === 'pet') {
+      const st = battlePetEnsure(p);
+      const isNew = !st.owned.includes(z.key);
+      if (isNew) {
+        st.owned.push(z.key);
+        st.active = z.key;                 // 抽到直接出战
+        G.bpet = null;
+        got.push({ id: z.id, name: z.name, color: z.color, ok: true, big: true });
+        logMsg(`🎁 抽中宠物：${z.key === 'voidling' ? '虚空幼崽' : z.name}`, 'level');
+        bigAnnounce('✦ 抽中稀有宠物 · 虚空幼崽', z.color || '#c08cff');
+        if (typeof Sfx !== 'undefined') Sfx.play('beastRoar');
+      } else {
+        p.materials.petRein = (p.materials.petRein || 0) + 2;
+        got.push({ id: z.id, name: z.name + '（重复）→ 宠物缰绳×2', color: z.color, ok: true, big: true });
+        logMsg('🎁 抽中重复宠物，兑换为宠物缰绳 ×2', 'level');
+      }
+      if (typeof updatePetHud === 'function') updatePetHud();
     } else if (z.kind === 'relic') {
       // 本职业 7 件套随机一件，直接进背包
       const cls = p.cls || 'warrior';
@@ -4236,8 +4357,30 @@ function mountSound(key) {
 
   /* ---- 驯兽师 ---- */
   body.querySelectorAll('[data-beast]').forEach(b => b.onclick = () => {
-    if (b.dataset.beast === 'mount') openModal('mount', '坐骑 · 驯兽师', mountHtml());
-    else openModal('pet', '宠物 · 驯兽师', petHtml());
+    const k = b.dataset.beast;
+    if (k === 'mount') openModal('mount', '坐骑 · 驯兽师', mountHtml());
+    else if (k === 'aura') openModal('pet', '光环 · 驯兽师', petHtml());
+    else openModal('bpet', '宠物 · 驯兽师', battlePetHtml());
+  });
+  body.querySelectorAll('[data-bpet-recruit]').forEach(b => b.onclick = () => {
+    const r = battlePetRecruit(G.player, b.dataset.bpetRecruit);
+    if (!r.ok) { toast(r.msg); return; }
+    const def = battlePetByKey(r.key);
+    if (typeof Sfx !== 'undefined') Sfx.play('beastRoar');
+    if (typeof bigAnnounce === 'function') bigAnnounce('🐾 招募成功 · ' + def.name, def.color);
+    toast(`招募成功：${def.name}`);
+    saveGame(); updatePetHud();
+    openModal('bpet', '宠物 · 驯兽师', battlePetHtml());
+  });
+  body.querySelectorAll('[data-bpet-use]').forEach(b => b.onclick = () => {
+    const k = b.dataset.bpetUse;
+    const r = battlePetToggle(G.player, k);
+    if (!r.ok) { toast(r.msg); return; }
+    const def = battlePetByKey(k);
+    if (typeof Sfx !== 'undefined') Sfx.play('beastRoar');
+    toast(r.active ? `🐾 ${def.name} 已出战` : `${def.name} 已收回`);
+    saveGame(); updatePetHud();
+    openModal('bpet', '宠物 · 驯兽师', battlePetHtml());
   });
   body.querySelectorAll('[data-mount-paste]').forEach(b => b.onclick = async () => {
     const inp = document.getElementById('mountCodeInput');

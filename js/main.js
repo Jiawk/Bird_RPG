@@ -297,27 +297,58 @@ function useGatherRing() {
   toast(`聚合之戒：吸来 ${n} 只怪物`);
 }
 
-/* ---------------- 召唤灵兽 ---------------- */
+/* ---------------- 召唤灵兽（召唤之戒） ----------------
+   进入战斗才触发；存在 30 秒；结束后冷却 60 秒 */
+const SUMMON_LIFE = 30, SUMMON_CD = 60;
+
+function summonInCombat() {
+  const w = G.world;
+  if (!w || w.isTown) return false;
+  for (const m of w.monsters) {
+    if (m.alive) return true;
+  }
+  return false;
+}
+
 function updatePet(dt) {
   const p = G.player, w = G.world;
-  if (!p || !p.stats || !p.stats.summonRing || !w) { G.pet = null; return; }
+  if (!p || !p.stats || !w) { G.pet = null; return; }
+  const has = !!p.stats.summonRing;
+  if (!has) { G.pet = null; if (G.summonCd) G.summonCd = Math.max(0, G.summonCd - dt); return; }
 
+  if (!G.summonState) G.summonState = { left: 0, cd: 0 };
+
+  // 冷却倒计时
+  if (G.summonState.cd > 0) G.summonState.cd = Math.max(0, G.summonState.cd - dt);
+
+  // 未召唤：只有进入战斗且冷却好了才召唤
   if (!G.pet) {
+    if (G.summonState.cd > 0) return;
+    if (!summonInCombat()) return;
     G.pet = {
       x: p.x - 40, y: p.y + 24, atkCd: 0, phase: 0, dir: 1,
       hpMax: Math.round(p.stats.hpMax * 0.45), hp: 0,
       atk: p.stats.power * 0.55, target: null
     };
     G.pet.hp = G.pet.hpMax;
-    // 首次召唤：落场特效 + 提示
+    G.summonState.left = SUMMON_LIFE;
     spawnVfx(p.x - 40, p.y + 24, '#7ae6ff', 64, 'pillar', 0.75);
     if (typeof Sfx !== 'undefined') Sfx.play('beastRoar');
-    if (!G._petToastShown) {
-      G._petToastShown = true;
-      if (typeof toast === 'function') toast('✦ 召唤之戒：月影灵狼已随行');
-      if (typeof logMsg === 'function') logMsg('召唤灵狼「月影」协助战斗', 'level');
-    }
+    if (typeof toast === 'function') toast(`✦ 召唤之戒：月影灵狼出战 ${SUMMON_LIFE}s`);
+    if (typeof logMsg === 'function') logMsg(`召唤灵狼「月影」协助战斗 ${SUMMON_LIFE}s`, 'level');
   }
+
+  // 存在时间
+  G.summonState.left -= dt;
+  if (G.summonState.left <= 0) {
+    const pet = G.pet;
+    if (pet) spawnVfx(pet.x, pet.y, '#7ae6ff', 46, 'pillar', 0.5);
+    G.pet = null;
+    G.summonState.cd = SUMMON_CD;
+    if (typeof toast === 'function') toast(`灵狼消散，冷却 ${SUMMON_CD}s`);
+    return;
+  }
+
   const pet = G.pet;
   pet.phase += dt;
   pet.hpMax = Math.round(p.stats.hpMax * 0.45);     // 随主人成长
@@ -341,7 +372,7 @@ function updatePet(dt) {
   if (pet.target) {
     const t = pet.target;
     const dx = t.x - pet.x, dy = t.y - pet.y, d = Math.hypot(dx, dy) || 1;
-    if (d > 52) {                                    // 追向目标
+    if (d > 52) {
       pet.x += dx / d * SPEED * dt;
       pet.y += dy / d * SPEED * dt;
       pet.dir = dx >= 0 ? 1 : -1;
@@ -354,7 +385,6 @@ function updatePet(dt) {
       spawnVfx(pet.x, pet.y, '#4ad4ff', 30, 'melee', 0.25);
     }
   } else {
-    // 无目标：跟随主人
     const dx = p.x - pet.x, dy = p.y - pet.y, d = Math.hypot(dx, dy) || 1;
     if (d > 64) {
       pet.x += dx / d * SPEED * dt;
@@ -364,14 +394,111 @@ function updatePet(dt) {
     pet.atkCd = Math.min(pet.atkCd, 0.3);
   }
 
-  // 超远距离直接拉回
   if (Math.hypot(p.x - pet.x, p.y - pet.y) > 600) { pet.x = p.x - 40; pet.y = p.y + 24; }
+}
 
-  // 灵兽不会真正死亡，血量归零后短暂消散再满血归来
+/* ---------------- 出战宠物 ----------------
+   跟随主人、自动索敌、按类型攻击；血量归零则收回 */
+function updateBattlePet(dt) {
+  const p = G.player, w = G.world;
+  if (!p || !p.stats || !w) { G.bpet = null; return; }
+  const def = (typeof activeBattlePet === 'function') ? activeBattlePet(p) : null;
+  if (!def) { G.bpet = null; return; }
+
+  // 阵亡冷却
+  if (!G.bpet && G.bpetCd > 0) { G.bpetCd = Math.max(0, G.bpetCd - dt); return; }
+
+  const st = battlePetStats(p, def);
+  if (!G.bpet) {
+    G.bpet = {
+      def, x: p.x + 44, y: p.y + 26, atkCd: 0, phase: 0, dir: -1,
+      hpMax: st.hpMax, hp: st.hpMax, atk: st.atk, target: null, skillCd: def.skill ? def.skill.cd : 0
+    };
+  }
+  const pet = G.bpet;
+  pet.def = def;
+  pet.phase += dt;
+  pet.hpMax = st.hpMax; pet.atk = st.atk;
+
+  // 索敌
+  if (w.isTown) pet.target = null;
+  else if (!pet.target || !pet.target.alive || Math.hypot(pet.target.x - pet.x, pet.target.y - pet.y) > 420) {
+    pet.target = null;
+    let best = null, bd = 360;
+    for (const m of w.monsters) {
+      if (!m.alive) continue;
+      const d = Math.hypot(m.x - pet.x, m.y - pet.y);
+      if (d < bd) { bd = d; best = m; }
+    }
+    pet.target = best;
+  }
+
+  const SPEED = def.speed || 250;
+  const RANGE = def.range || 60;
+  if (pet.target) {
+    const t = pet.target;
+    const dx = t.x - pet.x, dy = t.y - pet.y, d = Math.hypot(dx, dy) || 1;
+    if (d > RANGE - 10) {
+      pet.x += dx / d * SPEED * dt;
+      pet.y += dy / d * SPEED * dt;
+      pet.dir = dx >= 0 ? 1 : -1;
+    }
+    pet.atkCd -= dt;
+    if (pet.skillCd > 0) pet.skillCd -= dt;
+    if (pet.atkCd <= 0 && d <= RANGE + 12) {
+      pet.atkCd = 1 / (def.as || 1) + 0.35;
+      pet.dir = dx >= 0 ? 1 : -1;
+      // 法师技能
+      if (def.skill && pet.skillCd <= 0) {
+        pet.skillCd = def.skill.cd;
+        const dmg = pet.atk * def.skill.mul;
+        damageMonster(t, dmg, 'pet');
+        spawnVfx(t.x, t.y, def.skill.color, def.skill.r, 'aoe', 0.5);
+        if (typeof Sfx !== 'undefined') Sfx.play('cast');
+      } else if (def.type === 'melee') {
+        damageMonster(t, pet.atk, 'pet');
+        spawnVfx(t.x, t.y, def.color || '#9fe8ff', 40, 'melee', 0.28);
+      } else {
+        // 远程：飞一个弹道（朝目标方向）
+        const ang = Math.atan2(t.y - pet.y, t.x - pet.x);
+        const spd = 620;
+        w.projectiles.push({
+          x: pet.x + Math.cos(ang) * 20, y: pet.y - 18 + Math.sin(ang) * 20,
+          vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
+          life: 1.3, dead: false, pierce: false, dmg: pet.atk,
+          color: def.color || '#7fd4ff', shape: 'orb',
+          hitSet: new Set(), isSkill: false, isPet: true, target: t,
+          splash: null, hitFx: null
+        });
+      }
+    }
+  } else {
+    const dx = p.x + 44 - pet.x, dy = p.y + 26 - pet.y, d = Math.hypot(dx, dy) || 1;
+    if (d > 70) {
+      pet.x += dx / d * SPEED * dt;
+      pet.y += dy / d * SPEED * dt;
+      pet.dir = dx >= 0 ? 1 : -1;
+    }
+    pet.atkCd = Math.min(pet.atkCd, 0.4);
+  }
+
+  // 离太远拉回
+  if (Math.hypot(p.x - pet.x, p.y - pet.y) > 700) { pet.x = p.x + 44; pet.y = p.y + 26; }
+
+  // 被近身怪物攻击 → 掉血；归零退场 8 秒
+  if (pet.target && pet.target.alive) {
+    const mt = pet.target;
+    const dm = Math.hypot(mt.x - pet.x, mt.y - pet.y);
+    const diff = (G.diff && DATA.DIFFICULTY[G.diff]) ? DATA.DIFFICULTY[G.diff].atkMul : 1;
+    if (dm < (mt.r + 22) * (mt.atkRangeMul || 1)) {
+      pet.hp -= (mt.atk * diff * 0.9) * dt;
+    }
+  }
   if (pet.hp <= 0) {
-    pet.hp = pet.hpMax;
-    pet.x = p.x - 40; pet.y = p.y + 24;
-    pet.atkCd = 1.5;
+    spawnVfx(pet.x, pet.y, '#ff6a4a', 40, 'pillar', 0.5);
+    if (typeof toast === 'function') toast(`${def.name} 血量归零，8 秒后回来`);
+    G.bpet = null;
+    G.bpetCd = 8;
   }
 }
 
@@ -480,6 +607,7 @@ function stepGame(dt) {
   updatePlayer(dt);
   updateWorld(dt);
   updatePet(dt);
+  updateBattlePet(dt);
   updateTimers(dt);
   if (typeof hltTickStacks === 'function') hltTickStacks(G.player);
   updateCamera();

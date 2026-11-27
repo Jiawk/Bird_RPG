@@ -2529,3 +2529,57 @@ html,body{height:100%;overflow:hidden;background:var(--ink);color:var(--bone);
   .cxd-slots{grid-template-columns:repeat(3,1fr)}
   .cxd-steps{grid-template-columns:repeat(2,1fr)}
 }
+
+/* ============ 出战宠物面板 ============ */
+.bp-grid{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.bp-card{display:flex;gap:10px;align-items:center;padding:9px 11px;border-radius:4px;
+  border:1px solid rgba(138,109,59,.45);background:rgba(20,16,9,.82)}
+.bp-card.act{background:rgba(46,38,16,.92);box-shadow:0 0 12px rgba(255,210,74,.28)}
+.bp-card.lock{opacity:.72}
+.bp-icon{--sz:52px;width:var(--sz);height:var(--sz);flex:0 0 var(--sz);border-radius:3px;
+  background-image:var(--units-sheet);background-repeat:no-repeat;
+  background-size:calc(92 * var(--sz)) calc(4 * var(--sz));
+  background-position:calc(var(--f) * -1 * var(--sz)) 0;
+  border:1px solid rgba(138,109,59,.5);image-rendering:pixelated;
+  background-color:#12100b}
+.bp-main{flex:1;min-width:0}
+.bp-name{font-family:var(--serif);font-size:14.5px;display:flex;align-items:center;gap:6px}
+.bp-name i{font-style:normal;font-size:10px;padding:0 5px;border-radius:2px;
+  background:rgba(0,0,0,.35);border:1px solid currentColor}
+.bp-name i.bp-lot{color:#ffb84a}
+.bp-desc{font-size:11px;color:#a89e88;margin-top:2px}
+.bp-stat{font-size:11px;color:#8f8570;margin-top:3px}
+.bp-stat b{color:#ffd98a}
+.bp-skill{font-size:10.5px;margin-top:2px}
+.bp-act{flex:0 0 auto}
+.bp-btn{min-width:88px;padding:8px 10px;border-radius:3px;cursor:pointer;line-height:1.3;
+  font-family:var(--serif);font-size:13px;color:#1a1206;
+  background:linear-gradient(180deg,#ffe9a8,#d4af37);border:1px solid #ffd24a}
+.bp-btn span{font-size:10px;font-weight:400}
+.bp-btn.on{background:linear-gradient(180deg,#8a3b2a,#5a2118);color:#ffd9c8;border-color:#c06a4a}
+.bp-btn.buy{background:linear-gradient(180deg,#c8a26a,#8a6d3f);color:#1a1206;border-color:#e0c090}
+.bp-btn.off{background:linear-gradient(180deg,#3a3428,#1a160f);color:#8f8570;
+  border-color:#4a3d28;cursor:not-allowed}
+@media(max-width:760px){
+  .bp-card{flex-wrap:wrap}
+  .bp-icon{--sz:44px}
+  .bp-act{width:100%}
+  .bp-btn{width:100%}
+}
+
+/* ============ 出战宠物 HUD 图标 ============ */
+.hud-pet{position:relative;width:38px;height:38px;flex:0 0 auto;cursor:pointer}
+.hud-pet.hidden{display:none}
+.pet-ic{--sz:38px;width:var(--sz);height:var(--sz);border-radius:3px;
+  background-image:var(--units-sheet);background-repeat:no-repeat;
+  background-size:calc(92 * var(--sz)) calc(4 * var(--sz));
+  background-position:calc(var(--f) * -1 * var(--sz)) 0;
+  border:1px solid #8a6d3b;background-color:#12100b;image-rendering:pixelated;
+  box-shadow:0 0 10px rgba(0,0,0,.5)}
+.pet-tip{display:none;position:absolute;left:44px;top:-4px;width:240px;z-index:120;
+  padding:8px 10px;border-radius:3px;font-size:11px;line-height:1.6;color:#c9bfa6;
+  background:linear-gradient(180deg,rgba(40,32,18,.98),rgba(12,9,5,.99));
+  border:1px solid var(--bronze);box-shadow:0 6px 24px rgba(0,0,0,.9)}
+.hud-pet:hover .pet-tip,.hud-pet.show .pet-tip{display:block}
+.pet-tip b{color:#ffd98a}
+.pet-tip .bp-v{color:#5fdc4a;font-weight:700}

@@ -154,8 +154,12 @@ function recalcStats(p) {
   }
 
   // 装备图鉴：永久加成（生命/护甲/攻击/三维）
-  const CXB = (typeof equipCodexBonus === 'function') ? equipCodexBonus(p) : { hpPct:0, armorPct:0, atkPct:0, all:0 };
-  if (CXB.all) { A.str += CXB.all; A.agi += CXB.all; A.int += CXB.all; A.vit += CXB.all; }
+  const CXB = (typeof equipCodexBonus === 'function') ? equipCodexBonus(p) : { hpPct:0, armorPct:0, atkPct:0, allPct:0 };
+  if (CXB.allPct) {
+    const m = 1 + CXB.allPct;
+    A.str = Math.round(A.str * m); A.agi = Math.round(A.agi * m);
+    A.int = Math.round(A.int * m); A.vit = Math.round(A.vit * m);
+  }
 
   // 套装：主属性加成
   const SB = setBonus(p);
@@ -402,7 +406,7 @@ function codexState(p, room) {
 
 /* 全部图鉴的累计加成 */
 function equipCodexBonus(p) {
-  const out = { hpPct:0, armorPct:0, atkPct:0, all:0, lvSum:0, done:0 };
+  const out = { hpPct:0, armorPct:0, atkPct:0, allPct:0, lvSum:0, done:0 };
   if (!p) return out;
   const cx = codexEnsure(p);
   for (const r of DATA.ROOMS) {
@@ -416,7 +420,7 @@ function equipCodexBonus(p) {
       out.hpPct += b.hpPct;               // 小数，0.03 = +3%
       out.armorPct += b.armorPct;
       out.atkPct += b.atkPct;
-      out.all += b.all;
+      out.allPct += (b.allPct || 0);
     }
   }
   return out;

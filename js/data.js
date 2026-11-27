@@ -1150,17 +1150,19 @@ DATA.SIGNIN = {
    之后继续收集可升到 2 / 3 / 5 套，逐级给永久加成。 */
 DATA.CODEX_SLOTS = ['weapon', 'helm', 'chest', 'legs', 'boots', 'neck'];
 DATA.CODEX_STEPS = [
-  { sets: 1, bonus: { hpPct:0.03, armorPct:0.02, atkPct:0.02, all: 2  }, goldMul: 1.0 },
-  { sets: 2, bonus: { hpPct:0.06, armorPct:0.04, atkPct:0.04, all: 4  }, goldMul: 3.0 },
-  { sets: 3, bonus: { hpPct:0.09, armorPct:0.06, atkPct:0.06, all: 6  }, goldMul: 8.0 },
-  { sets: 5, bonus: { hpPct:0.15, armorPct:0.10, atkPct:0.10, all: 10 }, goldMul: 20.0 }
+  { sets: 1,  cost: 1000000,  bonus: { hpPct:0.02, armorPct:0.01, atkPct:0.01, allPct:0.01 } },
+  { sets: 2,  cost: 2000000,  bonus: { hpPct:0.02, armorPct:0.01, atkPct:0.01, allPct:0.01 } },
+  { sets: 3,  cost: 3000000,  bonus: { hpPct:0.03, armorPct:0.02, atkPct:0.02, allPct:0.015 } },
+  { sets: 5,  cost: 5000000,  bonus: { hpPct:0.04, armorPct:0.02, atkPct:0.02, allPct:0.02 } },
+  { sets: 8,  cost: 10000000, bonus: { hpPct:0.05, armorPct:0.03, atkPct:0.03, allPct:0.02 } },
+  { sets: 12, cost: 15000000, bonus: { hpPct:0.06, armorPct:0.04, atkPct:0.04, allPct:0.025 } },
+  { sets: 15, cost: 20000000, bonus: { hpPct:0.07, armorPct:0.05, atkPct:0.05, allPct:0.03 } },
+  { sets: 20, cost: 25000000, bonus: { hpPct:0.09, armorPct:0.06, atkPct:0.06, allPct:0.04 } }
 ];
-/* 升级基础金币（按地图等级放大） */
-DATA.CODEX_GOLD_BASE = 20000;
+/* 激活/升级金币：固定档位价，与地图等级无关 */
 DATA.codexGold = (room, stepIdx) => {
-  const lv = Math.max(1, room ? (room.lv || 1) : 1);
-  const mul = (DATA.CODEX_STEPS[stepIdx] || {}).goldMul || 1;
-  return Math.round(DATA.CODEX_GOLD_BASE * mul * (1 + lv / 12));
+  const st = DATA.CODEX_STEPS[stepIdx];
+  return st ? st.cost : 0;
 };
 /* 物品等级 → 归属地图（取 lv 不大于 ilvl 的最高档） */
 DATA.codexRoomOfIlvl = (ilvl) => {

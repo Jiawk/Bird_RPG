@@ -1228,7 +1228,7 @@ function charHtml() {
   stats += row('生命', '+' + (cxB.hpPct * 100).toFixed(1) + '%');
   stats += row('护甲', '+' + (cxB.armorPct * 100).toFixed(1) + '%');
   stats += row('攻击', '+' + (cxB.atkPct * 100).toFixed(1) + '%');
-  stats += row('三维', '+' + cxB.all);
+  stats += row('三维', '+' + (cxB.allPct * 100).toFixed(1) + '%');
   stats += '</div>';
 
   stats += '<div class="s-group"><div class="s-title">额外</div>';
@@ -3282,14 +3282,15 @@ function codexEquipHtml() {
   const cxB = (typeof equipCodexBonus === 'function') ? equipCodexBonus(p) : { hpPct:0, armorPct:0, atkPct:0, all:0 };
   const cost = st.maxed ? 0 : DATA.codexGold(room, st.lv);
   const needTotal = st.maxed ? 0 : st.next.sets * DATA.CODEX_SLOTS.length;
-  const canUp = !st.maxed && st.got >= 6 && st.total >= needTotal && (p.gold || 0) >= cost;
+  const slotOk = st.maxed ? false : st.counts.every(n => n >= st.next.sets);
+  const canUp = !st.maxed && st.got >= 6 && st.total >= needTotal && slotOk && (p.gold || 0) >= cost;
 
   html += `<div class="cxd-head">
     <div>
       <div class="cxd-name">${room.name} · ${room.lv}-${room.lv + 9} 级装备</div>
       <div class="cxd-sub">打怪获得即记录，分解/丢弃不影响　已集齐 <b>${st.got}</b>/6 部位　累计 <b>${st.total}</b> 件</div>
     </div>
-    <div class="cxd-lv">Lv.<b>${st.lv}</b><span>/4</span></div>
+    <div class="cxd-lv">Lv.<b>${st.lv}</b><span>/${DATA.CODEX_STEPS.length}</span></div>
   </div>
   <div class="cxd-slots">`;
   DATA.CODEX_SLOTS.forEach((sl, i) => {
@@ -3308,7 +3309,7 @@ function codexEquipHtml() {
     const b = sp.bonus;
     html += `<div class="cxd-step${on ? ' on' : ''}">
       <div class="cxs-t">${sp.sets} 套</div>
-      <div class="cxs-b">生命 +${Math.round(b.hpPct * 100)}%　护甲 +${Math.round(b.armorPct * 100)}%<br>攻击 +${Math.round(b.atkPct * 100)}%　三维 +${b.all}</div>
+      <div class="cxs-b">生命 +${(b.hpPct * 100).toFixed(1)}%　护甲 +${(b.armorPct * 100).toFixed(0)}%<br>攻击 +${(b.atkPct * 100).toFixed(0)}%　三维 +${(b.allPct * 100).toFixed(1)}%</div>
       <div class="cxs-s">${on ? '已激活' : '需 ' + sp.sets * 6 + ' 件'}</div>
     </div>`;
   });
@@ -3320,7 +3321,7 @@ function codexEquipHtml() {
       ${st.maxed ? '已满级' : (st.lv === 0 ? '激 活' : '升 级')}
     </button>
   </div>
-  <div class="cxd-tip">全套图鉴当前加成：生命 +${(cxB.hpPct * 100).toFixed(1)}%　护甲 +${(cxB.armorPct * 100).toFixed(1)}%　攻击 +${(cxB.atkPct * 100).toFixed(1)}%　三维 +${cxB.all}</div>
+  <div class="cxd-tip">全套图鉴当前加成：生命 +${(cxB.hpPct * 100).toFixed(1)}%　护甲 +${(cxB.armorPct * 100).toFixed(1)}%　攻击 +${(cxB.atkPct * 100).toFixed(1)}%　三维 +${(cxB.allPct * 100).toFixed(1)}%</div>
   </div></div>`;
   return html;
 }

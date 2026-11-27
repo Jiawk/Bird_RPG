@@ -3952,17 +3952,19 @@ DATA.SIGNIN = {
    之后继续收集可升到 2 / 3 / 5 套，逐级给永久加成。 */
 DATA.CODEX_SLOTS = ['weapon', 'helm', 'chest', 'legs', 'boots', 'neck'];
 DATA.CODEX_STEPS = [
-  { sets: 1, bonus: { hpPct:0.03, armorPct:0.02, atkPct:0.02, all: 2  }, goldMul: 1.0 },
-  { sets: 2, bonus: { hpPct:0.06, armorPct:0.04, atkPct:0.04, all: 4  }, goldMul: 3.0 },
-  { sets: 3, bonus: { hpPct:0.09, armorPct:0.06, atkPct:0.06, all: 6  }, goldMul: 8.0 },
-  { sets: 5, bonus: { hpPct:0.15, armorPct:0.10, atkPct:0.10, all: 10 }, goldMul: 20.0 }
+  { sets: 1,  cost: 1000000,  bonus: { hpPct:0.02, armorPct:0.01, atkPct:0.01, allPct:0.01 } },
+  { sets: 2,  cost: 2000000,  bonus: { hpPct:0.02, armorPct:0.01, atkPct:0.01, allPct:0.01 } },
+  { sets: 3,  cost: 3000000,  bonus: { hpPct:0.03, armorPct:0.02, atkPct:0.02, allPct:0.015 } },
+  { sets: 5,  cost: 5000000,  bonus: { hpPct:0.04, armorPct:0.02, atkPct:0.02, allPct:0.02 } },
+  { sets: 8,  cost: 10000000, bonus: { hpPct:0.05, armorPct:0.03, atkPct:0.03, allPct:0.02 } },
+  { sets: 12, cost: 15000000, bonus: { hpPct:0.06, armorPct:0.04, atkPct:0.04, allPct:0.025 } },
+  { sets: 15, cost: 20000000, bonus: { hpPct:0.07, armorPct:0.05, atkPct:0.05, allPct:0.03 } },
+  { sets: 20, cost: 25000000, bonus: { hpPct:0.09, armorPct:0.06, atkPct:0.06, allPct:0.04 } }
 ];
-/* 升级基础金币（按地图等级放大） */
-DATA.CODEX_GOLD_BASE = 20000;
+/* 激活/升级金币：固定档位价，与地图等级无关 */
 DATA.codexGold = (room, stepIdx) => {
-  const lv = Math.max(1, room ? (room.lv || 1) : 1);
-  const mul = (DATA.CODEX_STEPS[stepIdx] || {}).goldMul || 1;
-  return Math.round(DATA.CODEX_GOLD_BASE * mul * (1 + lv / 12));
+  const st = DATA.CODEX_STEPS[stepIdx];
+  return st ? st.cost : 0;
 };
 /* 物品等级 → 归属地图（取 lv 不大于 ilvl 的最高档） */
 DATA.codexRoomOfIlvl = (ilvl) => {
@@ -4557,8 +4559,12 @@ function recalcStats(p) {
   }
 
   // 装备图鉴：永久加成（生命/护甲/攻击/三维）
-  const CXB = (typeof equipCodexBonus === 'function') ? equipCodexBonus(p) : { hpPct:0, armorPct:0, atkPct:0, all:0 };
-  if (CXB.all) { A.str += CXB.all; A.agi += CXB.all; A.int += CXB.all; A.vit += CXB.all; }
+  const CXB = (typeof equipCodexBonus === 'function') ? equipCodexBonus(p) : { hpPct:0, armorPct:0, atkPct:0, allPct:0 };
+  if (CXB.allPct) {
+    const m = 1 + CXB.allPct;
+    A.str = Math.round(A.str * m); A.agi = Math.round(A.agi * m);
+    A.int = Math.round(A.int * m); A.vit = Math.round(A.vit * m);
+  }
 
   // 套装：主属性加成
   const SB = setBonus(p);
@@ -4805,7 +4811,7 @@ function codexState(p, room) {
 
 /* 全部图鉴的累计加成 */
 function equipCodexBonus(p) {
-  const out = { hpPct:0, armorPct:0, atkPct:0, all:0, lvSum:0, done:0 };
+  const out = { hpPct:0, armorPct:0, atkPct:0, allPct:0, lvSum:0, done:0 };
   if (!p) return out;
   const cx = codexEnsure(p);
   for (const r of DATA.ROOMS) {
@@ -4819,7 +4825,7 @@ function equipCodexBonus(p) {
       out.hpPct += b.hpPct;               // 小数，0.03 = +3%
       out.armorPct += b.armorPct;
       out.atkPct += b.atkPct;
-      out.all += b.all;
+      out.allPct += (b.allPct || 0);
     }
   }
   return out;
@@ -10434,7 +10440,7 @@ function charHtml() {
   stats += row('生命', '+' + (cxB.hpPct * 100).toFixed(1) + '%');
   stats += row('护甲', '+' + (cxB.armorPct * 100).toFixed(1) + '%');
   stats += row('攻击', '+' + (cxB.atkPct * 100).toFixed(1) + '%');
-  stats += row('三维', '+' + cxB.all);
+  stats += row('三维', '+' + (cxB.allPct * 100).toFixed(1) + '%');
   stats += '</div>';
 
   stats += '<div class="s-group"><div class="s-title">额外</div>';
@@ -12488,14 +12494,15 @@ function codexEquipHtml() {
   const cxB = (typeof equipCodexBonus === 'function') ? equipCodexBonus(p) : { hpPct:0, armorPct:0, atkPct:0, all:0 };
   const cost = st.maxed ? 0 : DATA.codexGold(room, st.lv);
   const needTotal = st.maxed ? 0 : st.next.sets * DATA.CODEX_SLOTS.length;
-  const canUp = !st.maxed && st.got >= 6 && st.total >= needTotal && (p.gold || 0) >= cost;
+  const slotOk = st.maxed ? false : st.counts.every(n => n >= st.next.sets);
+  const canUp = !st.maxed && st.got >= 6 && st.total >= needTotal && slotOk && (p.gold || 0) >= cost;
 
   html += `<div class="cxd-head">
     <div>
       <div class="cxd-name">${room.name} · ${room.lv}-${room.lv + 9} 级装备</div>
       <div class="cxd-sub">打怪获得即记录，分解/丢弃不影响　已集齐 <b>${st.got}</b>/6 部位　累计 <b>${st.total}</b> 件</div>
     </div>
-    <div class="cxd-lv">Lv.<b>${st.lv}</b><span>/4</span></div>
+    <div class="cxd-lv">Lv.<b>${st.lv}</b><span>/${DATA.CODEX_STEPS.length}</span></div>
   </div>
   <div class="cxd-slots">`;
   DATA.CODEX_SLOTS.forEach((sl, i) => {
@@ -12514,7 +12521,7 @@ function codexEquipHtml() {
     const b = sp.bonus;
     html += `<div class="cxd-step${on ? ' on' : ''}">
       <div class="cxs-t">${sp.sets} 套</div>
-      <div class="cxs-b">生命 +${Math.round(b.hpPct * 100)}%　护甲 +${Math.round(b.armorPct * 100)}%<br>攻击 +${Math.round(b.atkPct * 100)}%　三维 +${b.all}</div>
+      <div class="cxs-b">生命 +${(b.hpPct * 100).toFixed(1)}%　护甲 +${(b.armorPct * 100).toFixed(0)}%<br>攻击 +${(b.atkPct * 100).toFixed(0)}%　三维 +${(b.allPct * 100).toFixed(1)}%</div>
       <div class="cxs-s">${on ? '已激活' : '需 ' + sp.sets * 6 + ' 件'}</div>
     </div>`;
   });
@@ -12526,7 +12533,7 @@ function codexEquipHtml() {
       ${st.maxed ? '已满级' : (st.lv === 0 ? '激 活' : '升 级')}
     </button>
   </div>
-  <div class="cxd-tip">全套图鉴当前加成：生命 +${(cxB.hpPct * 100).toFixed(1)}%　护甲 +${(cxB.armorPct * 100).toFixed(1)}%　攻击 +${(cxB.atkPct * 100).toFixed(1)}%　三维 +${cxB.all}</div>
+  <div class="cxd-tip">全套图鉴当前加成：生命 +${(cxB.hpPct * 100).toFixed(1)}%　护甲 +${(cxB.armorPct * 100).toFixed(1)}%　攻击 +${(cxB.atkPct * 100).toFixed(1)}%　三维 +${(cxB.allPct * 100).toFixed(1)}%</div>
   </div></div>`;
   return html;
 }

@@ -70,47 +70,63 @@ function render() {
   list.sort((a, b) => a.y - b.y);
   for (const it of list) it.f();
 
-  // 召唤灵兽：用行走精灵（恶魔/灵体）绘制 + 血条
+  // 召唤灵兽「月影灵狼」：专用精灵（units 槽位 22）+ 灵光 + 血条
   if (G.pet && imgReady('units')) {
     const pet = G.pet;
     const gx = px(pet.x), gy = py(pet.y);
     const bob = Math.sin(pet.phase * 4) * 3;
-    const scale = 0.95;
+    const scale = 1.3;
     const sw = U_FRAME_W * scale, sh = U_FRAME_H * scale;
+    const facing = pet.dir >= 0 ? 1 : -1;
+    const rushing = !!pet.target;
 
-    // 脚下光环
-    const glow = CTX.createRadialGradient(gx, gy, 2, gx, gy, 34);
-    glow.addColorStop(0, 'rgba(74,212,255,.42)');
-    glow.addColorStop(1, 'rgba(74,212,255,0)');
-    CTX.fillStyle = glow;
-    CTX.beginPath(); CTX.arc(gx, gy, 34, 0, 6.283); CTX.fill();
-    CTX.strokeStyle = 'rgba(120,230,255,.75)'; CTX.lineWidth = 2;
-    CTX.beginPath(); CTX.ellipse(gx, gy, 20, 20 * YS, 0, 0, 6.283); CTX.stroke();
+    const g0 = CTX.createRadialGradient(gx, gy, 2, gx, gy, rushing ? 42 : 34);
+    g0.addColorStop(0, rushing ? 'rgba(120,240,255,.5)' : 'rgba(74,212,255,.36)');
+    g0.addColorStop(1, 'rgba(74,212,255,0)');
+    CTX.fillStyle = g0;
+    CTX.beginPath(); CTX.arc(gx, gy, rushing ? 42 : 34, 0, 6.283); CTX.fill();
 
-    // 精灵：取 units 图集第 12 帧（恶魔），4 向行走
-    const frame = Math.floor(pet.phase * 6) % 4;
-    const row = 0;
     CTX.save();
-    CTX.globalAlpha = 0.95;
-    CTX.imageSmoothingEnabled = false;
-    const baseX = 12 * 128 + frame * U_FRAME_W;
-    CTX.drawImage(IMG.units, baseX, row * U_FRAME_H, U_FRAME_W, U_FRAME_H,
-                  gx - sw / 2, gy - sh + 10 + bob, sw, sh);
+    CTX.globalAlpha = 0.55;
+    CTX.strokeStyle = 'rgba(140,236,255,.85)';
+    CTX.lineWidth = 1.6;
+    CTX.translate(gx, gy); CTX.rotate(pet.phase * 1.1);
+    CTX.beginPath(); CTX.ellipse(0, 0, 24, 24 * YS, 0, 0, 6.283); CTX.stroke();
+    for (let i = 0; i < 4; i++) {
+      const ang = i * Math.PI / 2;
+      CTX.beginPath();
+      CTX.moveTo(Math.cos(ang) * 24, Math.sin(ang) * 24 * YS);
+      CTX.lineTo(Math.cos(ang) * 30, Math.sin(ang) * 30 * YS);
+      CTX.stroke();
+    }
     CTX.restore();
 
-    // 名字 + 血条
-    const bw = 40;
+    // 身后灵光柱（让黑色灵兽在小地图块上也看得清）
+    const back = CTX.createLinearGradient(gx, gy - sh, gx, gy + 6);
+    back.addColorStop(0, 'rgba(120,235,255,0)');
+    back.addColorStop(0.55, 'rgba(90,210,255,.30)');
+    back.addColorStop(1, 'rgba(90,210,255,.05)');
+    CTX.fillStyle = back;
+    CTX.beginPath();
+    CTX.ellipse(gx, gy - sh * 0.45 + bob, sw * 0.42, sh * 0.52, 0, 0, 6.283);
+    CTX.fill();
+
+    // 灵狼本体：程序化绘制（半透明灵体 + 发光眼 + 四足步态）
+    drawSpiritWolf(gx, gy + 4 + bob * 0.4, pet.phase, rushing, facing, sw, sh);
+
+    const bw = 46;
     const hpPct = clamp(pet.hp / Math.max(1, pet.hpMax), 0, 1);
-    CTX.fillStyle = 'rgba(0,0,0,.62)';
+    CTX.fillStyle = 'rgba(0,0,0,.65)';
     CTX.fillRect(gx - bw / 2, gy - sh + 2 + bob, bw, 5);
     CTX.fillStyle = hpPct > 0.5 ? '#5fdc4a' : hpPct > 0.25 ? '#ffd24a' : '#ff5a40';
     CTX.fillRect(gx - bw / 2 + 1, gy - sh + 3 + bob, (bw - 2) * hpPct, 3);
+
     CTX.font = '700 10px "KaiTi",serif';
     CTX.textAlign = 'center';
     CTX.lineWidth = 3; CTX.strokeStyle = 'rgba(0,0,0,.9)';
-    CTX.strokeText('灵兽', gx, gy - sh - 3 + bob);
+    CTX.strokeText('月影灵狼', gx, gy - sh - 4 + bob);
     CTX.fillStyle = '#9fe8ff';
-    CTX.fillText('灵兽', gx, gy - sh - 3 + bob);
+    CTX.fillText('月影灵狼', gx, gy - sh - 4 + bob);
   }
 
   // 技能特效
@@ -350,6 +366,84 @@ function selRing(x, y, rx, ry, color, alpha) {
 }
 
 /* ---------------- 玩家 ---------------- */
+
+/* 召唤物「月影灵狼」：侧视狼形剪影（灵体描边 + 发光眼） */
+function drawSpiritWolf(gx, gy, t, rushing, facing, sw, sh) {
+  const S = sh / 58;
+  const gait = Math.sin(t * (rushing ? 15 : 8));
+  CTX.save();
+  CTX.translate(gx, gy);
+  CTX.scale(facing * S, S);
+
+  const FILL = 'rgba(26,74,108,.97)';
+  const RIM  = 'rgba(122,230,255,.98)';
+
+  // 尾巴
+  CTX.strokeStyle = RIM; CTX.lineWidth = 2.6; CTX.lineCap = 'round'; CTX.globalAlpha = .9;
+  CTX.beginPath();
+  CTX.moveTo(-22, -36);
+  CTX.quadraticCurveTo(-34, -38 + gait * 2, -39, -48 + gait * 4);
+  CTX.stroke();
+
+  // 后腿（摆动）
+  const backLeg = gait * 4;
+  CTX.strokeStyle = FILL; CTX.lineWidth = 6; CTX.lineCap = 'round';
+  CTX.beginPath(); CTX.moveTo(-16, -26); CTX.lineTo(-18 + backLeg, 0); CTX.stroke();
+  CTX.strokeStyle = RIM; CTX.lineWidth = 1.2; CTX.globalAlpha = .45;
+  CTX.beginPath(); CTX.moveTo(-16, -26); CTX.lineTo(-18 + backLeg, 0); CTX.stroke();
+
+  // 前腿（反向摆动）
+  const frontLeg = -gait * 4;
+  CTX.strokeStyle = FILL; CTX.lineWidth = 6; CTX.globalAlpha = 1;
+  CTX.beginPath(); CTX.moveTo(14, -26); CTX.lineTo(17 + frontLeg, 0); CTX.stroke();
+  CTX.strokeStyle = RIM; CTX.lineWidth = 1.2; CTX.globalAlpha = .45;
+  CTX.beginPath(); CTX.moveTo(14, -26); CTX.lineTo(17 + frontLeg, 0); CTX.stroke();
+
+  // 躯干 + 颈 + 头 + 吻（一条闭合路径，狼的侧面轮廓）
+  CTX.globalAlpha = 1;
+  CTX.beginPath();
+  CTX.moveTo(-24, -34);                 // 臀
+  CTX.quadraticCurveTo(-14, -40, -2, -39);   // 背
+  CTX.quadraticCurveTo(8, -38, 13, -42);     // 颈后
+  CTX.lineTo(16, -55);                        // 耳后
+  CTX.lineTo(21, -47);                        // 耳尖
+  CTX.quadraticCurveTo(27, -48, 31, -45);     // 头顶
+  CTX.lineTo(43, -42);                        // 吻尖
+  CTX.lineTo(43, -38);                        // 鼻下
+  CTX.lineTo(30, -37);                        // 下颌
+  CTX.quadraticCurveTo(22, -34, 18, -28);     // 胸口
+  CTX.lineTo(16, -24);                        // 前胸
+  CTX.quadraticCurveTo(4, -22, -6, -24);      // 腹
+  CTX.lineTo(-16, -26);                       // 后腿根
+  CTX.quadraticCurveTo(-22, -30, -24, -34);   // 回到臀
+  CTX.closePath();
+  CTX.shadowColor = 'rgba(95,224,255,.75)'; CTX.shadowBlur = 12;
+  CTX.fillStyle = FILL; CTX.fill();
+  CTX.shadowBlur = 0;
+  CTX.strokeStyle = RIM; CTX.lineWidth = 1.8; CTX.stroke();
+
+  // 背脊鬃毛
+  CTX.fillStyle = RIM; CTX.globalAlpha = .9;
+  for (let i = 0; i < 3; i++) {
+    const x = -12 + i * 8;
+    CTX.beginPath(); CTX.moveTo(x, -39); CTX.lineTo(x + 3, -46); CTX.lineTo(x + 6, -39); CTX.closePath(); CTX.fill();
+  }
+
+  // 眼
+  CTX.globalAlpha = 1;
+  CTX.fillStyle = '#eafeff';
+  CTX.shadowColor = '#7fe8ff'; CTX.shadowBlur = 10;
+  CTX.beginPath(); CTX.ellipse(26, -44, 2.6, 1.8, 0, 0, 6.283); CTX.fill();
+  CTX.shadowBlur = 0;
+
+  // 胸腹灵光
+  CTX.globalAlpha = .45;
+  CTX.fillStyle = 'rgba(120,225,255,.9)';
+  CTX.beginPath(); CTX.ellipse(4, -30, 12, 6, 0, 0, 6.283); CTX.fill();
+
+  CTX.restore();
+}
+
 function drawPlayer(p) {
   const gx = px(p.x), gy = py(p.y);
   const cls = DATA.CLASSES[p.cls], race = DATA.RACES[p.race];

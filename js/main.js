@@ -300,7 +300,7 @@ function useGatherRing() {
 /* ---------------- 召唤灵兽 ---------------- */
 function updatePet(dt) {
   const p = G.player, w = G.world;
-  if (!p || !p.stats || !p.stats.summonRing || !w || w.isTown) { G.pet = null; return; }
+  if (!p || !p.stats || !p.stats.summonRing || !w) { G.pet = null; return; }
 
   if (!G.pet) {
     G.pet = {
@@ -309,6 +309,14 @@ function updatePet(dt) {
       atk: p.stats.power * 0.55, target: null
     };
     G.pet.hp = G.pet.hpMax;
+    // 首次召唤：落场特效 + 提示
+    spawnVfx(p.x - 40, p.y + 24, '#7ae6ff', 64, 'pillar', 0.75);
+    if (typeof Sfx !== 'undefined') Sfx.play('beastRoar');
+    if (!G._petToastShown) {
+      G._petToastShown = true;
+      if (typeof toast === 'function') toast('✦ 召唤之戒：月影灵狼已随行');
+      if (typeof logMsg === 'function') logMsg('召唤灵狼「月影」协助战斗', 'level');
+    }
   }
   const pet = G.pet;
   pet.phase += dt;
@@ -316,8 +324,9 @@ function updatePet(dt) {
   pet.atk = p.stats.power * 0.55;
   if (pet.hp > pet.hpMax) pet.hp = pet.hpMax;
 
-  // 找目标：优先附近怪物
-  if (!pet.target || !pet.target.alive || Math.hypot(pet.target.x - pet.x, pet.target.y - pet.y) > 380) {
+  // 找目标：优先附近怪物（城镇里只跟随）
+  if (w.isTown) { pet.target = null; }
+  else if (!pet.target || !pet.target.alive || Math.hypot(pet.target.x - pet.x, pet.target.y - pet.y) > 380) {
     pet.target = null;
     let best = null, bd = 300;
     for (const m of w.monsters) {

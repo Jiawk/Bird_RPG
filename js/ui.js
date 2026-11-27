@@ -1810,6 +1810,21 @@ function updateAuraHud() {
 }
 
 /* ---------------- 出战宠物 HUD ---------------- */
+function js_setPetIcon(ic, def) {
+  if (def.render === 'spiritwolf') {
+    const style = petIconStyle(def);
+    ic.style.backgroundImage = '';
+    ic.style.backgroundSize = '';
+    // 从 petIconStyle 里取 url
+    ic.style.background = 'none';
+    const m = style.match(/url\('([^']+)'\)/);
+    if (m) { ic.style.backgroundImage = `url('${m[1]}')`; ic.style.backgroundSize = 'contain'; ic.style.backgroundPosition = 'center'; }
+  } else {
+    ic.style.backgroundImage = '';
+    ic.style.backgroundSize = '';
+    ic.style.setProperty('--f', String(def.sprite * 4));
+  }
+}
 function updatePetHud() {
   const box = document.getElementById('hudPet');
   const ic = document.getElementById('petIc');
@@ -1819,7 +1834,7 @@ function updatePetHud() {
   const def = (p && typeof activeBattlePet === 'function') ? activeBattlePet(p) : null;
   if (!def) { box.classList.add('hidden'); box.classList.remove('show'); return; }
   box.classList.remove('hidden');
-  ic.style.setProperty('--f', String(def.sprite * 4));
+  js_setPetIcon(ic, def);
   ic.style.borderColor = def.color;
   ic.style.boxShadow = `0 0 10px ${def.color}88`;
   const st = battlePetStats(p, def) || { hpMax: 0, atk: 0 };
@@ -1862,6 +1877,46 @@ function beastMenuHtml() {
   </div>`;
 }
 
+
+/* 宠物图标：灵狼用离屏画布生成，其它用 units 图集取帧 */
+const _petIconCache = {};
+function petIconStyle(def) {
+  if (def.render !== 'spiritwolf') return `--f:${def.sprite * 4}`;
+  if (_petIconCache[def.key]) return _petIconCache[def.key];
+  try {
+    const cv = document.createElement('canvas');
+    cv.width = 96; cv.height = 96;
+    const c2 = cv.getContext('2d');
+    // 灵光底
+    const bg = c2.createRadialGradient(48, 62, 4, 48, 62, 46);
+    bg.addColorStop(0, 'rgba(120,230,255,.55)');
+    bg.addColorStop(1, 'rgba(60,140,200,0)');
+    c2.fillStyle = bg;
+    c2.beginPath(); c2.arc(48, 62, 46, 0, 6.283); c2.fill();
+    drawSpiritWolf(48, 90, 0.9, false, 1, 64, 68, c2);
+    // 图标尺寸小，把暗色灵体提亮成亮青色，避免糊成黑块
+    try {
+      const img = c2.getImageData(0, 0, 96, 96);
+      const d = img.data;
+      for (let i = 0; i < d.length; i += 4) {
+        if (d[i + 3] < 12) continue;
+        const lum = (d[i] * 0.3 + d[i + 1] * 0.6 + d[i + 2] * 0.1) / 255;
+        d[i]     = Math.min(255, 60 + lum * 150);
+        d[i + 1] = Math.min(255, 190 + lum * 65);
+        d[i + 2] = Math.min(255, 225 + lum * 30);
+        d[i + 3] = Math.min(255, d[i + 3] + 30);
+      }
+      c2.putImageData(img, 0, 0);
+    } catch (e) {}
+    const url = cv.toDataURL('image/png');
+    const style = `background-image:url('${url}');background-size:contain;background-position:center;filter:brightness(1.2) saturate(1.2)`;
+    _petIconCache[def.key] = style;
+    return style;
+  } catch (e) {
+    return `--f:${def.sprite * 4}`;
+  }
+}
+
 function battlePetHtml() {
   const p = G.player, st = battlePetEnsure(p);
   const rein = p.materials.petRein || 0;
@@ -1881,7 +1936,7 @@ function battlePetHtml() {
     const rare = def.cost && def.cost.gold >= 50000000;
     html += `<div class="bp-card${active ? ' act' : ''}${owned ? '' : ' lock'}${rare ? ' rare' : ''}"
         style="border-color:${def.color}66">
-      <div class="bp-icon" style="--f:${def.sprite * 4}"></div>
+      <div class="bp-icon" style="${petIconStyle(def)}"></div>
       <div class="bp-name" style="color:${def.color}">${def.name}</div>
       <div class="bp-tag" style="color:${type.color}">${type.name}${def.lottery ? ' · 抽奖限定' : ''}${rare ? ' · 最稀有' : ''}</div>
       <div class="bp-stat">生命 <b>${stt.hpMax.toLocaleString()}</b></div>

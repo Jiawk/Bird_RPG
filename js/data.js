@@ -934,7 +934,7 @@ DATA.PET_TYPES = {
   magic:  { name:'远程法师', color:'#c08cff' }
 };
 DATA.BATTLE_PETS = [
-  { key:'wolf',      name:'月影灵狼', sprite:22, type:'melee',  color:'#9fe8ff',
+  { key:'wolf',      name:'月影灵狼', sprite:22, render:'spiritwolf', type:'melee', color:'#9fe8ff',
     hpMul:1.15, atkMul:1.05, as:1.4, range:58, speed:320,
     summonSound:'beastRoar', skillSound:'petAttack',
     skill:{ name:'月影撕咬', cd:4, mul:3.2, r:80, color:'#9fe8ff', aoe:true, drain:0.35 },

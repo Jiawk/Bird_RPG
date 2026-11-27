@@ -143,13 +143,19 @@ function render() {
     CTX.strokeStyle = gc + 'cc'; CTX.lineWidth = 1.6;
     CTX.beginPath(); CTX.ellipse(gx, gy, 18, 18 * YS, 0, 0, 6.283); CTX.stroke();
 
-    CTX.save();
-    CTX.translate(gx, gy - sh + 14 + bob);
-    if (bp.dir < 0) CTX.scale(-1, 1);
-    CTX.imageSmoothingEnabled = false;
-    CTX.drawImage(IMG.units, def.sprite * 128 + frame * 32, row * 48, 32, 48,
-                  -sw / 2, 0, sw, sh);
-    CTX.restore();
+    if (def.render === 'spiritwolf') {
+      // 月影灵狼：与召唤灵兽同一套程序化灵体剪影
+      drawSpiritWolf(gx, gy + 4 + bob * 0.4, bp.phase, !!bp.target, bp.dir >= 0 ? 1 : -1,
+                     62, 66);
+    } else {
+      CTX.save();
+      CTX.translate(gx, gy - sh + 14 + bob);
+      if (bp.dir < 0) CTX.scale(-1, 1);
+      CTX.imageSmoothingEnabled = false;
+      CTX.drawImage(IMG.units, def.sprite * 128 + frame * 32, row * 48, 32, 48,
+                    -sw / 2, 0, sw, sh);
+      CTX.restore();
+    }
 
     // 名字 + 血条
     const bw = 48;
@@ -405,80 +411,81 @@ function selRing(x, y, rx, ry, color, alpha) {
 /* ---------------- 玩家 ---------------- */
 
 /* 召唤物「月影灵狼」：侧视狼形剪影（灵体描边 + 发光眼） */
-function drawSpiritWolf(gx, gy, t, rushing, facing, sw, sh) {
+function drawSpiritWolf(gx, gy, t, rushing, facing, sw, sh, ctx) {
+  const C = ctx || CTX;
   const S = sh / 58;
   const gait = Math.sin(t * (rushing ? 15 : 8));
-  CTX.save();
-  CTX.translate(gx, gy);
-  CTX.scale(facing * S, S);
+  C.save();
+  C.translate(gx, gy);
+  C.scale(facing * S, S);
 
   const FILL = 'rgba(26,74,108,.97)';
   const RIM  = 'rgba(122,230,255,.98)';
 
   // 尾巴
-  CTX.strokeStyle = RIM; CTX.lineWidth = 2.6; CTX.lineCap = 'round'; CTX.globalAlpha = .9;
-  CTX.beginPath();
-  CTX.moveTo(-22, -36);
-  CTX.quadraticCurveTo(-34, -38 + gait * 2, -39, -48 + gait * 4);
-  CTX.stroke();
+  C.strokeStyle = RIM; C.lineWidth = 2.6; C.lineCap = 'round'; C.globalAlpha = .9;
+  C.beginPath();
+  C.moveTo(-22, -36);
+  C.quadraticCurveTo(-34, -38 + gait * 2, -39, -48 + gait * 4);
+  C.stroke();
 
   // 后腿（摆动）
   const backLeg = gait * 4;
-  CTX.strokeStyle = FILL; CTX.lineWidth = 6; CTX.lineCap = 'round';
-  CTX.beginPath(); CTX.moveTo(-16, -26); CTX.lineTo(-18 + backLeg, 0); CTX.stroke();
-  CTX.strokeStyle = RIM; CTX.lineWidth = 1.2; CTX.globalAlpha = .45;
-  CTX.beginPath(); CTX.moveTo(-16, -26); CTX.lineTo(-18 + backLeg, 0); CTX.stroke();
+  C.strokeStyle = FILL; C.lineWidth = 6; C.lineCap = 'round';
+  C.beginPath(); C.moveTo(-16, -26); C.lineTo(-18 + backLeg, 0); C.stroke();
+  C.strokeStyle = RIM; C.lineWidth = 1.2; C.globalAlpha = .45;
+  C.beginPath(); C.moveTo(-16, -26); C.lineTo(-18 + backLeg, 0); C.stroke();
 
   // 前腿（反向摆动）
   const frontLeg = -gait * 4;
-  CTX.strokeStyle = FILL; CTX.lineWidth = 6; CTX.globalAlpha = 1;
-  CTX.beginPath(); CTX.moveTo(14, -26); CTX.lineTo(17 + frontLeg, 0); CTX.stroke();
-  CTX.strokeStyle = RIM; CTX.lineWidth = 1.2; CTX.globalAlpha = .45;
-  CTX.beginPath(); CTX.moveTo(14, -26); CTX.lineTo(17 + frontLeg, 0); CTX.stroke();
+  C.strokeStyle = FILL; C.lineWidth = 6; C.globalAlpha = 1;
+  C.beginPath(); C.moveTo(14, -26); C.lineTo(17 + frontLeg, 0); C.stroke();
+  C.strokeStyle = RIM; C.lineWidth = 1.2; C.globalAlpha = .45;
+  C.beginPath(); C.moveTo(14, -26); C.lineTo(17 + frontLeg, 0); C.stroke();
 
   // 躯干 + 颈 + 头 + 吻（一条闭合路径，狼的侧面轮廓）
-  CTX.globalAlpha = 1;
-  CTX.beginPath();
-  CTX.moveTo(-24, -34);                 // 臀
-  CTX.quadraticCurveTo(-14, -40, -2, -39);   // 背
-  CTX.quadraticCurveTo(8, -38, 13, -42);     // 颈后
-  CTX.lineTo(16, -55);                        // 耳后
-  CTX.lineTo(21, -47);                        // 耳尖
-  CTX.quadraticCurveTo(27, -48, 31, -45);     // 头顶
-  CTX.lineTo(43, -42);                        // 吻尖
-  CTX.lineTo(43, -38);                        // 鼻下
-  CTX.lineTo(30, -37);                        // 下颌
-  CTX.quadraticCurveTo(22, -34, 18, -28);     // 胸口
-  CTX.lineTo(16, -24);                        // 前胸
-  CTX.quadraticCurveTo(4, -22, -6, -24);      // 腹
-  CTX.lineTo(-16, -26);                       // 后腿根
-  CTX.quadraticCurveTo(-22, -30, -24, -34);   // 回到臀
-  CTX.closePath();
-  CTX.shadowColor = 'rgba(95,224,255,.75)'; CTX.shadowBlur = 12;
-  CTX.fillStyle = FILL; CTX.fill();
-  CTX.shadowBlur = 0;
-  CTX.strokeStyle = RIM; CTX.lineWidth = 1.8; CTX.stroke();
+  C.globalAlpha = 1;
+  C.beginPath();
+  C.moveTo(-24, -34);                 // 臀
+  C.quadraticCurveTo(-14, -40, -2, -39);   // 背
+  C.quadraticCurveTo(8, -38, 13, -42);     // 颈后
+  C.lineTo(16, -55);                        // 耳后
+  C.lineTo(21, -47);                        // 耳尖
+  C.quadraticCurveTo(27, -48, 31, -45);     // 头顶
+  C.lineTo(43, -42);                        // 吻尖
+  C.lineTo(43, -38);                        // 鼻下
+  C.lineTo(30, -37);                        // 下颌
+  C.quadraticCurveTo(22, -34, 18, -28);     // 胸口
+  C.lineTo(16, -24);                        // 前胸
+  C.quadraticCurveTo(4, -22, -6, -24);      // 腹
+  C.lineTo(-16, -26);                       // 后腿根
+  C.quadraticCurveTo(-22, -30, -24, -34);   // 回到臀
+  C.closePath();
+  C.shadowColor = 'rgba(95,224,255,.75)'; C.shadowBlur = 12;
+  C.fillStyle = FILL; C.fill();
+  C.shadowBlur = 0;
+  C.strokeStyle = RIM; C.lineWidth = 1.8; C.stroke();
 
   // 背脊鬃毛
-  CTX.fillStyle = RIM; CTX.globalAlpha = .9;
+  C.fillStyle = RIM; C.globalAlpha = .9;
   for (let i = 0; i < 3; i++) {
     const x = -12 + i * 8;
-    CTX.beginPath(); CTX.moveTo(x, -39); CTX.lineTo(x + 3, -46); CTX.lineTo(x + 6, -39); CTX.closePath(); CTX.fill();
+    C.beginPath(); C.moveTo(x, -39); C.lineTo(x + 3, -46); C.lineTo(x + 6, -39); C.closePath(); C.fill();
   }
 
   // 眼
-  CTX.globalAlpha = 1;
-  CTX.fillStyle = '#eafeff';
-  CTX.shadowColor = '#7fe8ff'; CTX.shadowBlur = 10;
-  CTX.beginPath(); CTX.ellipse(26, -44, 2.6, 1.8, 0, 0, 6.283); CTX.fill();
-  CTX.shadowBlur = 0;
+  C.globalAlpha = 1;
+  C.fillStyle = '#eafeff';
+  C.shadowColor = '#7fe8ff'; C.shadowBlur = 10;
+  C.beginPath(); C.ellipse(26, -44, 2.6, 1.8, 0, 0, 6.283); C.fill();
+  C.shadowBlur = 0;
 
   // 胸腹灵光
-  CTX.globalAlpha = .45;
-  CTX.fillStyle = 'rgba(120,225,255,.9)';
-  CTX.beginPath(); CTX.ellipse(4, -30, 12, 6, 0, 0, 6.283); CTX.fill();
+  C.globalAlpha = .45;
+  C.fillStyle = 'rgba(120,225,255,.9)';
+  C.beginPath(); C.ellipse(4, -30, 12, 6, 0, 0, 6.283); C.fill();
 
-  CTX.restore();
+  C.restore();
 }
 
 function drawPlayer(p) {

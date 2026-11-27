@@ -29,6 +29,11 @@ MANIFEST = (
     ("page", "游戏素材/铃声/1音效2/mixkit-page-turn-single-1104-翻书一声.wav", "assets/sfx/page.m4a"),
     ("openBig", "游戏素材/铃声/1音效2/mixkit-single-book-paging-1101-翻书2声.wav", "assets/sfx/openBig.m4a"),
     ("cast", "游戏素材/铃声/1音效2/mixkit-voice-from-effort-to-punch-2174-放技能的时候用力的哼声.wav", "assets/sfx/cast.m4a"),
+    # 宠物音效（新增，不改动上面任何一条）
+    ("petSummon", "游戏素材/铃声/1音效2/mixkit-wolves-pack-howling-1776-狼嚎.wav", "assets/sfx/petSummon.m4a"),
+    ("petOrder", "游戏素材/铃声/1音效2/猫咪叫.wav", "assets/sfx/petOrder.m4a"),
+    ("petAttack", "游戏素材/铃声/1音效2/野兽叫2.wav", "assets/sfx/petAttack.m4a"),
+    ("petDie", "游戏素材/铃声/1音效2/mixkit-werewolf-roar-1730-野兽吼叫.mp3", "assets/sfx/petDie.m4a"),
 )
 
 SIGNATURES = {".mp3": (b"ID3", b"\xff\xfb", b"\xff\xf3", b"\xff\xf2"), ".wav": (b"RIFF",)}

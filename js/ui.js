@@ -1818,7 +1818,10 @@ function updatePetHud() {
     `<span class="bp-v">生命 ${st.hpMax.toLocaleString()}　攻击 ${st.atk.toLocaleString()}</span><br>` +
     `<span style="color:#a89e88">${def.desc}</span><br>` +
     `<span style="color:#6b6558">只出战这一只 · 点「驯兽师 · 铃」更换</span>`;
-  box.onclick = () => hudTipOpen(box);
+  box.onclick = () => {
+    if (typeof Sfx !== 'undefined') Sfx.play('petOrder', 0.6);
+    hudTipOpen(box);
+  };
 }
 
 /* ---------------- 驯兽师：坐骑 / 光环 / 宠物 ---------------- */
@@ -2324,7 +2327,7 @@ function doLottery(times) {
         got.push({ id: z.id, name: z.name, color: z.color, ok: true, big: true });
         logMsg(`🎁 抽中宠物：${z.key === 'voidling' ? '虚空幼崽' : z.name}`, 'level');
         bigAnnounce('✦ 抽中稀有宠物 · 虚空幼崽', z.color || '#c08cff');
-        if (typeof Sfx !== 'undefined') Sfx.play('beastRoar');
+        if (typeof Sfx !== 'undefined') Sfx.play('petSummon');
       } else {
         p.materials.petRein = (p.materials.petRein || 0) + 2;
         got.push({ id: z.id, name: z.name + '（重复）→ 宠物缰绳×2', color: z.color, ok: true, big: true });
@@ -4366,7 +4369,7 @@ function mountSound(key) {
     const r = battlePetRecruit(G.player, b.dataset.bpetRecruit);
     if (!r.ok) { toast(r.msg); return; }
     const def = battlePetByKey(r.key);
-    if (typeof Sfx !== 'undefined') Sfx.play('beastRoar');
+    if (typeof Sfx !== 'undefined') Sfx.play('petSummon');
     if (typeof bigAnnounce === 'function') bigAnnounce('🐾 招募成功 · ' + def.name, def.color);
     toast(`招募成功：${def.name}`);
     saveGame(); updatePetHud();
@@ -4377,7 +4380,7 @@ function mountSound(key) {
     const r = battlePetToggle(G.player, k);
     if (!r.ok) { toast(r.msg); return; }
     const def = battlePetByKey(k);
-    if (typeof Sfx !== 'undefined') Sfx.play('beastRoar');
+    if (typeof Sfx !== 'undefined') Sfx.play(r.active ? 'petSummon' : 'petOrder');
     toast(r.active ? `🐾 ${def.name} 已出战` : `${def.name} 已收回`);
     saveGame(); updatePetHud();
     openModal('bpet', '宠物 · 驯兽师', battlePetHtml());

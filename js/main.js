@@ -447,6 +447,12 @@ function updateBattlePet(dt) {
     if (pet.skillCd > 0) pet.skillCd -= dt;
     if (pet.atkCd <= 0 && d <= RANGE + 12) {
       pet.atkCd = 1 / (def.as || 1) + 0.35;
+      // 宠物出手音效（节流，避免连发吵闹）
+      const _now = Date.now();
+      if (typeof Sfx !== 'undefined' && _now - (G._petSfxAt || 0) > 2500) {
+        G._petSfxAt = _now;
+        Sfx.play('petAttack', 0.55);
+      }
       pet.dir = dx >= 0 ? 1 : -1;
       // 法师技能
       if (def.skill && pet.skillCd <= 0) {
@@ -496,6 +502,7 @@ function updateBattlePet(dt) {
   }
   if (pet.hp <= 0) {
     spawnVfx(pet.x, pet.y, '#ff6a4a', 40, 'pillar', 0.5);
+    if (typeof Sfx !== 'undefined') Sfx.play('petDie', 0.7);
     if (typeof toast === 'function') toast(`${def.name} 血量归零，8 秒后回来`);
     G.bpet = null;
     G.bpetCd = 8;
